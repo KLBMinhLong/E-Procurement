@@ -1,0 +1,805 @@
+---
+description: Quy tắc Docker, Docker Compose, resource limits và cấu hình container cho môi trường eProcure. Bắt buộc áp dụng cho mọi Dockerfile và docker-compose file.
+globs:
+  - "**/Dockerfile*"
+  - "**/docker-compose*.yml"
+  - "**/docker-compose*.yaml"
+  - "**/.dockerignore"
+alwaysApply: true
+---
+
+# DOCKER RESOURCE RULES — eProcure Enterprise
+
+## 1. RESOURCE BUDGET (8GB RAM MACHINE)
+
+> Máy dev thực tế có 4–5GB RAM cho Docker. Mỗi service PHẢI có resource limits.
+
+```
+Tổng RAM available cho Docker: ~4.5GB (4608MB)
+Tổng CPU (4 cores): cần để lại 0.5 core cho OS
+
+Resource allocation dev environment:
+┌─────────────────────────┬──────┬────────┬──────────────────────────────┐
+│ Service                 │ CPU  │ RAM    │ Ghi chú                      │
+├─────────────────────────┼──────┼────────┼──────────────────────────────┤
+│ nginx (frontend)        │ 0.10 │  64MB  │ Static file serving          │
+│ api-gateway             │ 0.25 │ 256MB  │ Spring Cloud Gateway         │
+│ iam-service             │ 0.25 │ 512MB  │ Auth + RBAC                  │
+│ pr-service              │ 0.25 │ 512MB  │ Purchase Request             │
+│ approval-service        │ 0.50 │ 768MB  │ Camunda BPMN (memory heavy)  │
+│ finance-service         │ 0.25 │ 512MB  │ Budget + Invoice             │
+│ inventory-service       │ 0.25 │ 256MB  │ Stock management             │
+│ vendor-service          │ 0.25 │ 256MB  │ Vendor + RFQ                 │
+│ analytics-service       │ 0.25 │ 256MB  │ Dashboard + Reports          │
+│ notification-service    │ 0.10 │ 256MB  │ Email + WebSocket            │
+│ admin-service           │ 0.10 │ 256MB  │ Config + Audit               │
+│ postgres                │ 0.50 │ 512MB  │ Tất cả DB (dev: 1 instance)  │
+│ redis                   │ 0.10 │ 128MB  │ Cache + Session              │
+│ kafka                   │ 0.50 │ 512MB  │ Message broker               │
+│ zookeeper               │ 0.10 │ 128MB  │ Kafka coordination           │
+│ keycloak                │ 0.25 │ 512MB  │ Auth provider                │
+│ prometheus              │ 0.10 │ 128MB  │ Metrics                      │
+│ grafana                 │ 0.10 │ 128MB  │ Dashboard                    │
+│ loki                    │ 0.10 │ 128MB  │ Log aggregation              │
+│ tempo                   │ 0.10 │ 128MB  │ Tracing                      │
+├─────────────────────────┼──────┼────────┼──────────────────────────────┤
+│ TOTAL                   │ ~4.0 │~5.4GB  │                              │
+└─────────────────────────┴──────┴────────┴──────────────────────────────┘
+
+⚠️ Nếu thiếu RAM → tắt: grafana/loki/tempo/prometheus (chạy khi cần)
+⚠️ Dev lite mode: chỉ chạy postgres + redis + kafka + iam + pr + approval
+```
+
+---
+
+## 2. DOCKERFILE CHUẨN (SPRING BOOT)
+
+```dockerfile
+# ✅ Multi-stage build — giảm image size
+FROM eclipse-temurin:17-jdk-alpine AS builder
+WORKDIR /app
+
+# Copy pom.xml trước để cache layer dependencies
+COPY pom.xml .
+COPY .mvn/ .mvn/
+COPY mvnw .
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+
+# Copy source và build
+COPY src/ ./src/
+RUN ./mvnw package -DskipTests -B
+
+# ─────────────────────────────────────────────────────────────
+# Runtime image — chỉ JRE, không JDK (nhỏ hơn ~200MB)
+FROM eclipse-temurin:17-jre-alpine AS runtime
+WORKDIR /app
+
+# ✅ Tạo non-root user cho security
+RUN addgroup -S eprocure && adduser -S eprocure -G eprocure
+USER eprocure
+
+# ✅ OpenTelemetry Java Agent
+COPY --from=builder /root/.m2/repository/io/opentelemetry/javaagent/ ./agents/
+# Hoặc download cố định:
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.0.0/opentelemetry-javaagent.jar ./agents/
+
+# ✅ Copy JAR từ builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# ✅ Expose port
+EXPOSE 8080
+
+# ✅ JVM options: tối ưu cho container + OTel agent
+ENV JAVA_OPTS="-Xms128m -Xmx384m \
+    -XX:+UseContainerSupport \
+    -XX:MaxRAMPercentage=75.0 \
+    -XX:+UseG1GC \
+    -XX:+OptimizeStringConcat \
+    -Djava.security.egd=file:/dev/./urandom \
+    -javaagent:/app/agents/opentelemetry-javaagent.jar"
+
+# ✅ Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+```
+
+---
+
+## 3. DOCKERFILE CHUẨN (ANGULAR / NGINX)
+
+```dockerfile
+# ── Stage 1: Build Angular ────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Cache dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --prefer-offline
+
+# Copy source và build production
+COPY . .
+RUN npm run build -- --configuration production
+
+# ── Stage 2: Serve với NGINX ──────────────────────────────────
+FROM nginx:1.25-alpine AS runtime
+WORKDIR /usr/share/nginx/html
+
+# Xóa default nginx content
+RUN rm -rf ./*
+
+# Copy build artifacts
+COPY --from=builder /app/dist/eprocure-frontend/ .
+
+# Copy nginx config
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/security.conf /etc/nginx/conf.d/security.conf
+
+# ✅ Non-root user
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    touch /var/run/nginx.pid && \
+    chown nginx:nginx /var/run/nginx.pid
+USER nginx
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s \
+    CMD wget -q --spider http://localhost:80/health || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+---
+
+## 4. DOCKER COMPOSE — DEV ENVIRONMENT
+
+```yaml
+# docker-compose.dev.yml
+version: '3.9'
+
+# ── Shared settings ───────────────────────────────────────────
+x-java-service: &java-service
+  restart: unless-stopped
+  environment:
+    TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    SPRING_PROFILES_ACTIVE: dev
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+    OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+    ENCRYPTION_ENABLED: "false"
+    X_API_KEY: ${X_API_KEY:-dev-internal-api-key}
+  networks:
+    - eprocure-net
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+# ── Resource template ─────────────────────────────────────────
+x-small-service: &small-limits
+  deploy:
+    resources:
+      limits:
+        cpus: '0.25'
+        memory: 512M
+      reservations:
+        cpus: '0.10'
+        memory: 256M
+
+x-medium-service: &medium-limits
+  deploy:
+    resources:
+      limits:
+        cpus: '0.50'
+        memory: 768M
+      reservations:
+        cpus: '0.25'
+        memory: 384M
+
+x-tiny-service: &tiny-limits
+  deploy:
+    resources:
+      limits:
+        cpus: '0.10'
+        memory: 256M
+      reservations:
+        cpus: '0.05'
+        memory: 128M
+
+services:
+  # ── Infrastructure ─────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: ep-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASS:-postgres}
+      POSTGRES_MULTIPLE_DATABASES: >
+        db_iam,db_procurement,db_finance,db_inventory,
+        db_vendor,db_notification,db_audit,db_camunda
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ep-redis
+    command: >
+      redis-server
+      --maxmemory 100mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: ep-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: ep-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_HEAP_OPTS: "-Xmx384m -Xms256m"
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    ports:
+      - "9092:9092"
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 384M
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: ep-keycloak
+    command: start-dev --db postgres --db-url jdbc:postgresql://postgres:5432/db_keycloak
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASS:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/db_keycloak
+      KC_DB_USERNAME: keycloak_user
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASS:-keycloak_pass}
+      KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      JAVA_OPTS_APPEND: "-Xmx256m -Xms128m"
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    ports:
+      - "8180:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+        reservations:
+          cpus: '0.10'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080; echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\n\r\n' >&3; cat <&3 | grep -q '200 OK'"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+
+  # ── Application Services ────────────────────────────────────
+  iam-service:
+    <<: *java-service
+    <<: *small-limits
+    image: eprocure/iam-service:dev
+    container_name: ep-iam
+    build:
+      context: ./services/iam-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: iam-service
+      IAM_DB_HOST: postgres
+      IAM_DB_NAME: ${IAM_DB_NAME:-db_iam}
+      IAM_DB_USER: ${IAM_DB_USER:-iam_user}
+      IAM_DB_PASS: ${IAM_DB_PASS:-iam_pass_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-eprocure}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-eprocure-iam}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-dev-secret}
+      OTEL_SERVICE_NAME: iam-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  pr-service:
+    <<: *java-service
+    <<: *small-limits
+    image: eprocure/pr-service:dev
+    container_name: ep-pr
+    build:
+      context: ./services/pr-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: pr-service
+      PR_DB_HOST: postgres
+      PR_DB_NAME: ${PR_DB_NAME:-db_procurement}
+      PR_DB_USER: ${PR_DB_USER:-pr_user}
+      PR_DB_PASS: ${PR_DB_PASS:-pr_pass_dev}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REDIS_HOST: redis
+      IAM_SERVICE_URL: http://iam-service:8080
+      FINANCE_SERVICE_URL: http://finance-service:8080
+      INVENTORY_SERVICE_URL: http://inventory-service:8080
+      OTEL_SERVICE_NAME: pr-service
+    ports:
+      - "8082:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      iam-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  approval-service:
+    <<: *java-service
+    <<: *medium-limits             # Camunda cần nhiều RAM hơn
+    image: eprocure/approval-service:dev
+    container_name: ep-approval
+    build:
+      context: ./services/approval-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: approval-service
+      APPROVAL_DB_HOST: postgres
+      APPROVAL_DB_NAME: ${PR_DB_NAME:-db_procurement}
+      APPROVAL_DB_USER: ${APPROVAL_DB_USER:-approval_user}
+      APPROVAL_DB_PASS: ${APPROVAL_DB_PASS:-approval_pass_dev}
+      CAMUNDA_DB_HOST: postgres
+      CAMUNDA_DB_NAME: ${CAMUNDA_DB_NAME:-db_camunda}
+      CAMUNDA_DB_USER: ${CAMUNDA_DB_USER:-camunda_user}
+      CAMUNDA_DB_PASS: ${CAMUNDA_DB_PASS:-camunda_pass_dev}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REDIS_HOST: redis
+      IAM_SERVICE_URL: http://iam-service:8080
+      OTEL_SERVICE_NAME: approval-service
+    ports:
+      - "8083:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      iam-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 90s             # Camunda startup chậm hơn
+
+  finance-service:
+    <<: *java-service
+    <<: *small-limits
+    image: eprocure/finance-service:dev
+    container_name: ep-finance
+    build:
+      context: ./services/finance-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: finance-service
+      FINANCE_DB_HOST: postgres
+      FINANCE_DB_NAME: ${FINANCE_DB_NAME:-db_finance}
+      FINANCE_DB_USER: ${FINANCE_DB_USER:-finance_user}
+      FINANCE_DB_PASS: ${FINANCE_DB_PASS:-finance_pass_dev}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REDIS_HOST: redis
+      OTEL_SERVICE_NAME: finance-service
+    ports:
+      - "8084:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  inventory-service:
+    <<: *java-service
+    image: eprocure/inventory-service:dev
+    container_name: ep-inventory
+    build:
+      context: ./services/inventory-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: inventory-service
+      INVENTORY_DB_HOST: postgres
+      INVENTORY_DB_NAME: ${INVENTORY_DB_NAME:-db_inventory}
+      INVENTORY_DB_USER: ${INVENTORY_DB_USER:-inventory_user}
+      INVENTORY_DB_PASS: ${INVENTORY_DB_PASS:-inv_pass_dev}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      OTEL_SERVICE_NAME: inventory-service
+    ports:
+      - "8085:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  vendor-service:
+    <<: *java-service
+    image: eprocure/vendor-service:dev
+    container_name: ep-vendor
+    build:
+      context: ./services/vendor-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: vendor-service
+      VENDOR_DB_HOST: postgres
+      VENDOR_DB_NAME: ${VENDOR_DB_NAME:-db_vendor}
+      VENDOR_DB_USER: ${VENDOR_DB_USER:-vendor_user}
+      VENDOR_DB_PASS: ${VENDOR_DB_PASS:-vendor_pass_dev}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      OTEL_SERVICE_NAME: vendor-service
+    ports:
+      - "8086:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  notification-service:
+    <<: *java-service
+    <<: *tiny-limits
+    image: eprocure/notification-service:dev
+    container_name: ep-notification
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: notification-service
+      NOTIFICATION_DB_HOST: postgres
+      NOTIFICATION_DB_NAME: ${NOTIFICATION_DB_NAME:-db_notification}
+      NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER:-notif_user}
+      NOTIFICATION_DB_PASS: ${NOTIFICATION_DB_PASS:-notif_pass_dev}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REDIS_HOST: redis
+      EMAIL_ENABLED: "false"
+      OTEL_SERVICE_NAME: notification-service
+    ports:
+      - "8088:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── Frontend ────────────────────────────────────────────────
+  frontend:
+    image: eprocure/frontend:dev
+    container_name: ep-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 64M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Observability (Optional — tắt khi thiếu RAM) ────────────
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: ep-prometheus
+    profiles: ["monitoring"]      # Chỉ chạy khi: docker-compose --profile monitoring up
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: ep-grafana
+    profiles: ["monitoring"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASS:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: ep-loki
+    profiles: ["monitoring"]
+    volumes:
+      - ./infra/loki/loki-config.yml:/etc/loki/config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
+
+  tempo:
+    image: grafana/tempo:2.2.0
+    container_name: ep-tempo
+    profiles: ["monitoring"]
+    volumes:
+      - ./infra/tempo/tempo-config.yml:/etc/tempo/config.yaml
+      - tempo-data:/var/tempo
+    command: -config.file=/etc/tempo/config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "3200:3200"   # HTTP query
+    networks:
+      - eprocure-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
+
+volumes:
+  postgres-data:
+  redis-data:
+  kafka-data:
+  zookeeper-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  tempo-data:
+
+networks:
+  eprocure-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+```
+
+---
+
+## 5. .dockerignore (mỗi service)
+
+```dockerignore
+# ── Build artifacts ──────────────────────────────────────────
+target/
+*.jar
+!target/app.jar          # Chỉ giữ jar cuối cùng nếu build ngoài
+
+# ── Development files ────────────────────────────────────────
+.git/
+.gitignore
+*.md
+.idea/
+*.iml
+.vscode/
+
+# ── Sensitive ────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ── Test files ───────────────────────────────────────────────
+src/test/
+**/*Test.java
+**/*Spec.java
+
+# ── Logs ─────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+```
+
+---
+
+## 6. DOCKER RULES CHECKLIST
+
+```
+□ Mọi service đều có deploy.resources.limits (cpus + memory)
+□ Mọi service đều có healthcheck với start_period phù hợp
+□ JAVA_OPTS có -Xmx không vượt quá 75% memory limit
+□ Dùng multi-stage build để giảm image size
+□ Non-root user trong mọi Dockerfile
+□ .dockerignore có đủ các pattern cần thiết
+□ Không copy .env vào Docker image
+□ Không COPY src/ trước khi COPY pom.xml (phá cache)
+□ Observability services dùng profiles để tắt khi cần
+□ Volume mount cho data persistence (postgres, redis, kafka)
+□ healthcheck depends_on đảm bảo startup order đúng
+□ TZ environment variable được set trong mọi container
+□ SPRING_PROFILES_ACTIVE được set đúng môi trường
+□ restart: unless-stopped cho mọi service production
+□ Logging driver json-file với max-size giới hạn
+```

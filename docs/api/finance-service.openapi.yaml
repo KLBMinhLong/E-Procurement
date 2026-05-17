@@ -1,0 +1,686 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Finance Service API
+  description: Quản lý ngân sách, Purchase Order, hóa đơn, 3-way match và thanh toán.
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+tags:
+  - name: Budget
+  - name: Purchase Orders
+  - name: Invoices
+  - name: Payments
+security:
+  - cookieAuth: []
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        isFirst: { type: boolean }
+        isLast: { type: boolean }
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  reason: { type: string }
+    BudgetDashboard:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        departmentId:     { type: string, format: uuid }
+        departmentName:   { type: string }
+        fiscalYear:       { type: integer }
+        quarter:          { type: integer, nullable: true }
+        glAccountCode:    { type: string }
+        allocated:        { type: string, example: "500000000.0000" }
+        committed:        { type: string, example: "120000000.0000" }
+        spent:            { type: string, example: "80000000.0000" }
+        available:        { type: string, example: "300000000.0000" }
+        availablePercent: { type: number, format: float, example: 60.0 }
+        burnRatePerMonth: { type: string, nullable: true }
+        forecastExhaustedAt: { type: string, format: date, nullable: true }
+        status:           { type: string, enum: [PLANNING, SUBMITTED, APPROVED, ACTIVE, CLOSED] }
+        topCategories:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryCode: { type: string }
+              categoryName: { type: string }
+              spent:        { type: string }
+              percent:      { type: number, format: float }
+    PoLineItem:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        lineNumber:   { type: integer }
+        prLineItemId: { type: string, format: uuid }
+        itemName:     { type: string }
+        categoryCode: { type: string }
+        quantity:
+          type: object
+          properties:
+            amount: { type: string }
+            unit:   { type: string }
+        unitPrice:  { type: string }
+        totalPrice: { type: string }
+        currency:   { type: string }
+    PurchaseOrderDetail:
+      type: object
+      properties:
+        id:                   { type: string, format: uuid }
+        poNumber:             { type: string, example: PO-2025-01-00001 }
+        prId:                 { type: string, format: uuid }
+        prNumber:             { type: string }
+        vendor:
+          type: object
+          properties:
+            id:     { type: string, format: uuid }
+            name:   { type: string }
+            email:  { type: string }
+            taxCode:{ type: string }
+        purchasingOfficer:
+          type: object
+          properties:
+            id:       { type: string, format: uuid }
+            fullName: { type: string }
+        status:
+          type: string
+          enum: [DRAFT, PENDING_APPROVAL, APPROVED, SENT_TO_VENDOR,
+                 PARTIALLY_RECEIVED, FULLY_RECEIVED, INVOICED, PAID, CLOSED, CANCELLED]
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoLineItem'
+        totalAmount:      { type: string }
+        currency:         { type: string }
+        deliveryAddress:  { type: string }
+        deliveryDeadline: { type: string, format: date, nullable: true }
+        paymentTerms:     { type: string, nullable: true }
+        issuedAt:         { type: string, format: date-time, nullable: true }
+        sentToVendorAt:   { type: string, format: date-time, nullable: true }
+        createdAt:        { type: string, format: date-time }
+    InvoiceDetail:
+      type: object
+      properties:
+        id:            { type: string, format: uuid }
+        invoiceNumber: { type: string }
+        vendor:
+          type: object
+          properties:
+            id:   { type: string, format: uuid }
+            name: { type: string }
+        po:
+          type: object
+          properties:
+            id:       { type: string, format: uuid }
+            poNumber: { type: string }
+        lineItems:
+          type: array
+          items:
+            type: object
+            properties:
+              lineNumber:  { type: integer }
+              description: { type: string }
+              quantity:    { type: string }
+              unitPrice:   { type: string }
+              totalPrice:  { type: string }
+        subtotal:    { type: string }
+        taxAmount:   { type: string }
+        totalAmount: { type: string }
+        currency:    { type: string }
+        invoiceDate: { type: string, format: date }
+        dueDate:     { type: string, format: date }
+        status:
+          type: string
+          enum: [PENDING_MATCH, MATCHED, MISMATCHED, APPROVED, DISPUTED, PAID, CANCELLED]
+        matchResult:
+          type: object
+          nullable: true
+          properties:
+            poMatchStatus:  { type: string, enum: [MATCHED, MISMATCHED, PARTIAL] }
+            grMatchStatus:  { type: string, enum: [MATCHED, MISMATCHED, PARTIAL] }
+            qtyVariance:    { type: string, nullable: true }
+            priceVariance:  { type: string, nullable: true }
+            matchedAt:      { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+paths:
+  /budgets:
+    get:
+      tags: [Budget]
+      summary: Danh sách ngân sách
+      operationId: listBudgets
+      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      parameters:
+        - name: department_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: fiscal_year
+          in: query
+          schema: { type: integer, example: 2025 }
+        - name: quarter
+          in: query
+          schema: { type: integer, enum: [1, 2, 3, 4] }
+        - name: status
+          in: query
+          schema: { type: string }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách ngân sách
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BudgetDashboard'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+  /budgets/{id}/dashboard:
+    get:
+      tags: [Budget]
+      summary: Dashboard ngân sách real-time (từ Redis cache)
+      operationId: getBudgetDashboard
+      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Dashboard ngân sách
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BudgetDashboard'
+
+  /budgets/{id}/override-approval:
+    post:
+      tags: [Budget]
+      summary: Phê duyệt chi vượt ngân sách
+      operationId: approveBudgetOverride
+      x-required-permission: BUDGET_OVERRIDE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prId, overrideReason, overrideAmount]
+              properties:
+                prId:
+                  type: string
+                  format: uuid
+                overrideReason:
+                  type: string
+                  minLength: 50
+                overrideAmount:
+                  type: string
+                  example: "28000000"
+      responses:
+        '200':
+          description: Override được phê duyệt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Vượt 30% ngân sách, cần CEO duyệt (FIN_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /budgets/{id}/transfer:
+    post:
+      tags: [Budget]
+      summary: Điều chuyển ngân sách giữa phòng ban
+      operationId: transferBudget
+      x-required-permission: BUDGET_TRANSFER_APPROVE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetBudgetId, amount, reason]
+              properties:
+                targetBudgetId: { type: string, format: uuid }
+                amount:         { type: string, example: "10000000" }
+                reason:         { type: string, minLength: 20 }
+      responses:
+        '200':
+          description: Điều chuyển thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /purchase-orders:
+    get:
+      tags: [Purchase Orders]
+      summary: Danh sách Purchase Order
+      operationId: listPurchaseOrders
+      x-required-permission: PO_VIEW_OWN
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: vendor_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: from_date
+          in: query
+          schema: { type: string, format: date }
+        - name: to_date
+          in: query
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách PO
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PurchaseOrderDetail'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [Purchase Orders]
+      summary: Tạo Purchase Order từ PR đã approved
+      operationId: createPurchaseOrder
+      x-required-permission: PO_CREATE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prId, vendorId, deliveryAddress]
+              properties:
+                prId:            { type: string, format: uuid }
+                vendorId:        { type: string, format: uuid }
+                deliveryAddress: { type: string }
+                deliveryDeadline:{ type: string, format: date, nullable: true }
+                paymentTerms:    { type: string, nullable: true, example: NET30 }
+                notes:           { type: string, nullable: true }
+      responses:
+        '201':
+          description: PO được tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PurchaseOrderDetail'
+
+  /purchase-orders/{id}:
+    get:
+      tags: [Purchase Orders]
+      summary: Chi tiết Purchase Order
+      operationId: getPurchaseOrderById
+      x-required-permission: PO_VIEW_OWN
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Chi tiết PO
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PurchaseOrderDetail'
+
+  /purchase-orders/{id}/send:
+    post:
+      tags: [Purchase Orders]
+      summary: Gửi PO cho nhà cung cấp qua email
+      operationId: sendPurchaseOrder
+      x-required-permission: PO_SEND_TO_VENDOR
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                additionalNote: { type: string, nullable: true }
+      responses:
+        '200':
+          description: PO đã được gửi qua Brevo SMTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /purchase-orders/{id}/cancel:
+    patch:
+      tags: [Purchase Orders]
+      summary: Hủy Purchase Order
+      operationId: cancelPurchaseOrder
+      x-required-permission: PO_CANCEL
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 10 }
+      responses:
+        '200':
+          description: Hủy thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /invoices:
+    get:
+      tags: [Invoices]
+      summary: Danh sách hóa đơn
+      operationId: listInvoices
+      x-required-permission: INVOICE_VIEW
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: vendor_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: po_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: overdue_only
+          in: query
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách hóa đơn
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvoiceDetail'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [Invoices]
+      summary: Nhập hóa đơn từ nhà cung cấp
+      operationId: createInvoice
+      x-required-permission: INVOICE_CREATE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoiceNumber, vendorId, poId, invoiceDate, dueDate, lineItems]
+              properties:
+                invoiceNumber: { type: string }
+                vendorId:      { type: string, format: uuid }
+                poId:          { type: string, format: uuid }
+                invoiceDate:   { type: string, format: date }
+                dueDate:       { type: string, format: date }
+                lineItems:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [description, quantity, unitPrice]
+                    properties:
+                      description: { type: string }
+                      quantity:    { type: string }
+                      unitPrice:   { type: string }
+                      taxRate:     { type: number, default: 0.1 }
+                attachmentIds:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Hóa đơn được tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceDetail'
+
+  /invoices/{id}/match:
+    post:
+      tags: [Invoices]
+      summary: Thực hiện 3-Way Match (PO + GR + Invoice)
+      operationId: matchInvoice
+      x-required-permission: INVOICE_MATCH
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Kết quả match
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          matchStatus:   { type: string, enum: [MATCHED, MISMATCHED, PARTIAL] }
+                          matchResult:
+                            type: object
+                            properties:
+                              poMatchStatus:  { type: string }
+                              grMatchStatus:  { type: string }
+                              qtyVariance:    { type: string, nullable: true }
+                              priceVariance:  { type: string, nullable: true }
+                          requiresManualReview: { type: boolean }
+
+  /invoices/{id}/approve:
+    post:
+      tags: [Invoices]
+      summary: Phê duyệt hóa đơn để thanh toán
+      operationId: approveInvoice
+      x-required-permission: INVOICE_APPROVE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment: { type: string }
+      responses:
+        '200':
+          description: Hóa đơn đã được phê duyệt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /invoices/{id}/dispute:
+    post:
+      tags: [Invoices]
+      summary: Tranh chấp hóa đơn với nhà cung cấp
+      operationId: disputeInvoice
+      x-required-permission: INVOICE_APPROVE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 20 }
+      responses:
+        '200':
+          description: Đã đánh dấu tranh chấp
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /invoices/{id}/confirm-payment:
+    post:
+      tags: [Payments]
+      summary: Xác nhận đã thanh toán hóa đơn
+      operationId: confirmPayment
+      x-required-permission: PAYMENT_CONFIRM
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentDate, paymentReference]
+              properties:
+                paymentDate:      { type: string, format: date }
+                paymentReference: { type: string, description: "Số tham chiếu chuyển khoản" }
+                paidAmount:       { type: string }
+                notes:            { type: string, nullable: true }
+      responses:
+        '200':
+          description: Xác nhận thanh toán thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'

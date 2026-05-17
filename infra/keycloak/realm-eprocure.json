@@ -1,0 +1,88 @@
+{
+  "realm": "eprocure",
+  "enabled": true,
+  "displayName": "eProcure Enterprise",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "sslRequired": "external",
+  "clients": [
+    {
+      "clientId": "eprocure-iam",
+      "name": "eProcure IAM Service",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "dev-secret",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:8080/*",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080",
+        "http://localhost:4200"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "requester",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Request",
+      "lastName": "User",
+      "email": "requester@eprocure.local",
+      "credentials": [
+        { "type": "password", "value": "Password@123", "temporary": false }
+      ]
+    },
+    {
+      "username": "manager",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Manager",
+      "lastName": "User",
+      "email": "manager@eprocure.local",
+      "credentials": [
+        { "type": "password", "value": "Password@123", "temporary": false }
+      ]
+    },
+    {
+      "username": "director",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Director",
+      "lastName": "User",
+      "email": "director@eprocure.local",
+      "credentials": [
+        { "type": "password", "value": "Password@123", "temporary": false }
+      ]
+    },
+    {
+      "username": "finance",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Finance",
+      "lastName": "User",
+      "email": "finance@eprocure.local",
+      "credentials": [
+        { "type": "password", "value": "Password@123", "temporary": false }
+      ]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@eprocure.local",
+      "credentials": [
+        { "type": "password", "value": "Password@123", "temporary": false }
+      ]
+    }
+  ]
+}

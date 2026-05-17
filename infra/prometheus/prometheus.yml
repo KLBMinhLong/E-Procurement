@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: spring-services
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - "iam-service:8081"
+          - "pr-service:8082"
+          - "approval-service:8083"
+          - "finance-service:8084"
+          - "inventory-service:8085"
+          - "vendor-service:8086"
+          - "analytics-service:8087"
+          - "notification-service:8088"
+          - "admin-service:8089"

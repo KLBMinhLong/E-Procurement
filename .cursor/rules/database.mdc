@@ -1,0 +1,364 @@
+---
+description: Quy tắc thiết kế và viết SQL cho PostgreSQL trong dự án eProcure. Áp dụng cho mọi Flyway migration script, MyBatis mapper XML và DDL statement.
+globs:
+  - "**/db/migration/**/*.sql"
+  - "**/mapper/**/*.xml"
+  - "**/*Mapper.java"
+  - "**/*Entity.java"
+alwaysApply: true
+---
+
+# DATABASE RULES — eProcure Enterprise
+
+## 1. SCHEMA & NAMING
+
+```sql
+-- ✅ KHÔNG dùng schema 'public' — mỗi service có schema riêng
+CREATE SCHEMA IF NOT EXISTS iam;        -- IAM Service
+CREATE SCHEMA IF NOT EXISTS pr;         -- PR Service
+CREATE SCHEMA IF NOT EXISTS approval;   -- Approval Engine
+CREATE SCHEMA IF NOT EXISTS finance;    -- Finance Service
+CREATE SCHEMA IF NOT EXISTS inventory;  -- Inventory Service
+CREATE SCHEMA IF NOT EXISTS vendor;     -- Vendor Service
+CREATE SCHEMA IF NOT EXISTS notification; -- Notification Service
+CREATE SCHEMA IF NOT EXISTS audit;      -- Audit Log (immutable)
+-- Camunda tự quản lý schema của nó
+
+-- ✅ Table names: lowercase_snake_case, plural
+CREATE TABLE pr.purchase_requests (...);      -- ✅
+CREATE TABLE pr.PurchaseRequests (...);       -- ❌
+CREATE TABLE pr.purchase_request (...);       -- ❌ (không plural)
+
+-- ✅ Column names: lowercase_snake_case
+pr_number VARCHAR(20) NOT NULL,               -- ✅
+prNumber  VARCHAR(20) NOT NULL,               -- ❌
+PRNumber  VARCHAR(20) NOT NULL,               -- ❌
+```
+
+---
+
+## 2. SOFT DELETE — BẮT BUỘC MỌI ENTITY TABLE
+
+```sql
+-- ✅ Mọi bảng entity đều phải có 3 cột soft delete
+is_deleted  BOOLEAN     NOT NULL DEFAULT FALSE,
+deleted_at  TIMESTAMPTZ,
+deleted_by  UUID,                              -- Reference to iam.users(id) — không FK để tránh cross-DB
+
+-- ✅ Audit trail columns — bắt buộc
+created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+created_by  UUID,                              -- userId của người tạo
+
+-- ❌ Không có DELETE statement trong application code
+DELETE FROM pr.purchase_requests WHERE id = :id;  -- ❌ TUYỆT ĐỐI KHÔNG
+
+-- ✅ Soft delete thay thế
+UPDATE pr.purchase_requests
+SET is_deleted = TRUE,
+    deleted_at = NOW(),
+    deleted_by = :deletedBy,
+    updated_at = NOW()
+WHERE id = :id AND is_deleted = FALSE;
+
+-- ✅ Mọi SELECT chính phải filter soft delete
+SELECT * FROM pr.purchase_requests
+WHERE is_deleted = FALSE;    -- ✅ Luôn có
+
+-- ❌ Không SELECT tất cả không filter
+SELECT * FROM pr.purchase_requests;  -- ❌ Sẽ lấy cả deleted records
+```
+
+---
+
+## 3. DATA TYPES — CHỌN ĐÚNG TYPE
+
+```sql
+-- ✅ Primary key: UUID
+id  UUID  PRIMARY KEY DEFAULT gen_random_uuid()
+
+-- ✅ Tiền tệ: NUMERIC(19,4) — TUYỆT ĐỐI KHÔNG dùng FLOAT/DOUBLE
+total_amount   NUMERIC(19,4) NOT NULL DEFAULT 0,   -- ✅
+budget_amount  REAL,                               -- ❌ Float precision error
+price_amount   DOUBLE PRECISION,                   -- ❌
+
+-- ✅ Timestamp: TIMESTAMPTZ (UTC) — KHÔNG dùng TIMESTAMP without TZ
+created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),   -- ✅
+created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),   -- ❌ Không có timezone info
+
+-- ✅ Boolean: BOOLEAN (không dùng TINYINT/SMALLINT)
+is_deleted  BOOLEAN  NOT NULL DEFAULT FALSE,       -- ✅
+is_deleted  SMALLINT NOT NULL DEFAULT 0,           -- ❌
+
+-- ✅ Enum values: VARCHAR với CHECK constraint
+status  VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+CONSTRAINT chk_pr_status CHECK (status IN (
+    'DRAFT','SUBMITTED','PENDING_APPROVAL','CHANGES_REQUESTED',
+    'APPROVED','REJECTED','CONVERTED_TO_PO','CANCELLED','CLOSED'
+))
+
+-- ✅ Array (PostgreSQL native): VARCHAR[]
+allowed_categories  VARCHAR(50)[],     -- ✅ PostgreSQL array
+roles               TEXT[],            -- ✅
+
+-- ✅ JSON data: JSONB (có index support)
+metadata    JSONB,                     -- ✅
+old_value   JSONB,                     -- ✅
+```
+
+---
+
+## 4. INDEX STRATEGY
+
+```sql
+-- ✅ Index cho EVERY Foreign Key column
+CREATE INDEX idx_pr_line_items_pr_id
+    ON pr.pr_line_items(pr_id);
+
+-- ✅ Partial index cho soft delete queries (WHERE is_deleted = false)
+CREATE INDEX idx_pr_status_active
+    ON pr.purchase_requests(status)
+    WHERE is_deleted = FALSE;
+
+CREATE INDEX idx_pr_requester_active
+    ON pr.purchase_requests(requester_id)
+    WHERE is_deleted = FALSE;
+
+-- ✅ Composite index cho common query patterns
+CREATE INDEX idx_pr_dept_status
+    ON pr.purchase_requests(department_id, status)
+    WHERE is_deleted = FALSE;
+
+CREATE INDEX idx_approval_steps_approver_pending
+    ON approval.approval_steps(approver_id, status)
+    WHERE status = 'PENDING';
+
+-- ✅ Index cho timestamp-based queries (DESC vì query mới nhất trước)
+CREATE INDEX idx_pr_created_at
+    ON pr.purchase_requests(created_at DESC)
+    WHERE is_deleted = FALSE;
+
+-- ✅ Partial index cho SLA deadline monitoring
+CREATE INDEX idx_approval_steps_sla_pending
+    ON approval.approval_steps(sla_deadline)
+    WHERE status = 'PENDING';
+
+-- ✅ Full-text search index (GIN)
+CREATE INDEX idx_catalog_items_fts
+    ON pr.catalog_items
+    USING GIN(to_tsvector('simple', name || ' ' || COALESCE(description, '')));
+
+-- ✅ UNIQUE index (prefer over UNIQUE constraint cho flexibility)
+CREATE UNIQUE INDEX idx_users_email_unique
+    ON iam.users(email)
+    WHERE is_deleted = FALSE;       -- Partial unique: cho phép soft-delete rồi tạo lại cùng email
+
+-- ❌ KHÔNG index tràn lan — chỉ index khi có query cần
+-- Mỗi index = overhead cho INSERT/UPDATE
+-- Rule: có query thực tế mới tạo index
+```
+
+---
+
+## 5. FLYWAY MIGRATION RULES
+
+```
+Naming convention:
+V{version}__{description}.sql        ← Forward migration (bắt buộc)
+U{version}__{description}.sql        ← Undo migration (optional)
+R__{description}.sql                 ← Repeatable migration (seed data, views)
+
+Version: sequential integer — KHÔNG skip, KHÔNG dùng timestamp
+  V1__create_schema_and_extensions.sql
+  V2__create_users_roles_tables.sql
+  V3__create_departments_org.sql
+  V4__seed_permissions.sql
+  V5__seed_default_roles.sql
+  V6__seed_super_admin.sql
+  V7__add_google_oauth_column.sql     ← Thêm feature mới
+  V8__add_index_pr_fiscal_year.sql    ← Thêm index
+```
+
+```sql
+-- ✅ Template chuẩn cho một migration file
+-- V2__create_users_roles_tables.sql
+
+-- Tạo schema trước (nếu chưa có)
+CREATE SCHEMA IF NOT EXISTS iam;
+
+-- Extension cần thiết
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";    -- gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";     -- Fuzzy search (nếu cần)
+
+-- Tạo table
+CREATE TABLE iam.users (
+    id                  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_code       VARCHAR(20)  NOT NULL,
+    username            VARCHAR(50)  NOT NULL,
+    -- ... các cột khác ...
+    created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_by          UUID,
+    is_deleted          BOOLEAN      NOT NULL DEFAULT FALSE,
+    deleted_at          TIMESTAMPTZ,
+    deleted_by          UUID
+);
+
+-- Comment table và columns (quan trọng)
+COMMENT ON TABLE iam.users IS 'Thông tin người dùng hệ thống eProcure';
+COMMENT ON COLUMN iam.users.employee_code IS 'Mã nhân viên nội bộ (VD: EMP-2025-00123)';
+COMMENT ON COLUMN iam.users.password_hash IS 'BCrypt hash. Salt bao gồm userId để tránh cross-user rainbow table';
+
+-- Indexes SAU khi tạo table
+CREATE UNIQUE INDEX idx_users_email_unique
+    ON iam.users(email) WHERE is_deleted = FALSE;
+CREATE UNIQUE INDEX idx_users_username_unique
+    ON iam.users(username) WHERE is_deleted = FALSE;
+CREATE INDEX idx_users_department
+    ON iam.users(department_id) WHERE is_deleted = FALSE;
+CREATE INDEX idx_users_status
+    ON iam.users(status) WHERE is_deleted = FALSE;
+
+-- Constraints riêng biệt (dễ disable nếu cần)
+ALTER TABLE iam.users
+    ADD CONSTRAINT chk_users_status
+    CHECK (status IN ('ACTIVE','INACTIVE','LOCKED','PENDING_VERIFY'));
+```
+
+### Migration Rules
+```
+□ KHÔNG sửa file migration đã commit và deploy — tạo V_new__ để ALTER
+□ Mỗi file migration CHỈ làm 1 việc (tạo table, thêm column, tạo index)
+□ Luôn có comment cho table và column quan trọng
+□ Index tạo SAU table, không tạo inline trong CREATE TABLE
+□ Test migration trên DB clean trước khi commit
+□ Không dùng IF EXISTS/IF NOT EXISTS trong migration chính (chỉ dùng trong setup script)
+□ Không viết SELECT trong migration — chỉ DDL/DML data seed
+```
+
+---
+
+## 6. QUERY PERFORMANCE RULES
+
+```sql
+-- ✅ Luôn dùng EXPLAIN ANALYZE để kiểm tra trước khi commit query phức tạp
+EXPLAIN ANALYZE
+SELECT p.*, a.status as approval_status
+FROM pr.purchase_requests p
+LEFT JOIN approval.approval_processes a ON a.entity_id = p.id AND a.entity_type = 'PURCHASE_REQUEST'
+WHERE p.department_id = 'uuid'
+  AND p.is_deleted = FALSE
+  AND p.status = 'PENDING_APPROVAL'
+ORDER BY p.created_at DESC
+LIMIT 20 OFFSET 0;
+
+-- ✅ Dùng window function COUNT(*) OVER() thay vì 2 queries riêng
+SELECT
+    p.*,
+    COUNT(*) OVER() AS total_count   -- Tổng record (cho pagination)
+FROM pr.purchase_requests p
+WHERE p.is_deleted = FALSE
+LIMIT #{page.size} OFFSET #{page.offset};
+
+-- ✅ JOIN optimization — INNER JOIN trước LEFT JOIN
+SELECT p.*, d.name as dept_name, u.full_name as requester_name
+FROM pr.purchase_requests p
+INNER JOIN iam.departments d ON d.id = p.department_id   -- INNER trước
+LEFT JOIN iam.users u ON u.id = p.requester_id           -- LEFT sau
+WHERE p.is_deleted = FALSE;
+
+-- ❌ KHÔNG dùng SELECT * trong production query
+SELECT * FROM pr.purchase_requests;    -- ❌ Lấy tất cả column không cần thiết
+
+-- ✅ Chỉ select columns cần thiết
+SELECT id, pr_number, title, status, total_amount, created_at
+FROM pr.purchase_requests
+WHERE is_deleted = FALSE;
+
+-- ❌ KHÔNG N+1 query — dùng JOIN hoặc IN clause
+-- Xấu: query 1 lần lấy IDs, rồi query từng ID
+-- Tốt: JOIN hoặc WHERE id IN (...)
+```
+
+---
+
+## 7. GENERATED COLUMNS & TRIGGERS
+
+```sql
+-- ✅ Generated column cho computed values (PostgreSQL 12+)
+CREATE TABLE pr.pr_line_items (
+    ...
+    quantity    NUMERIC(10,2) NOT NULL,
+    unit_price  NUMERIC(19,4) NOT NULL,
+    total_price NUMERIC(19,4) NOT NULL
+        GENERATED ALWAYS AS (quantity * unit_price) STORED,  -- ✅ Auto-computed
+    ...
+);
+
+-- ✅ Trigger để auto-update updated_at
+CREATE OR REPLACE FUNCTION iam.update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_users_updated_at
+    BEFORE UPDATE ON iam.users
+    FOR EACH ROW
+    EXECUTE FUNCTION iam.update_updated_at();
+
+-- Áp dụng trigger này cho MỌI entity table
+```
+
+---
+
+## 8. CONNECTION POOL (HIKARICP)
+
+```yaml
+# application.yml — HikariCP config
+spring:
+  datasource:
+    hikari:
+      minimum-idle:         ${DB_POOL_MIN:2}
+      maximum-pool-size:    ${DB_POOL_MAX:10}
+      idle-timeout:         300000    # 5 phút
+      connection-timeout:   20000     # 20 giây
+      max-lifetime:         1200000   # 20 phút (< PostgreSQL idle timeout)
+      validation-timeout:   3000      # 3 giây
+      connection-test-query: SELECT 1 # Validate connection
+      pool-name: ${SERVICE_NAME:service}-HikariPool
+      # Quan trọng: luôn set schema sau khi connect
+      connection-init-sql: SET search_path TO ${DB_SCHEMA:public}
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+```
+
+---
+
+## 9. DATABASE CHECKLIST
+
+```
+□ Không dùng schema 'public' — dùng schema có tên service rõ ràng
+□ Tất cả entity table có is_deleted, deleted_at, deleted_by
+□ Tất cả entity table có created_at, updated_at, created_by
+□ Trigger auto-update updated_at trên mọi entity table
+□ Primary key là UUID với gen_random_uuid()
+□ Tiền tệ dùng NUMERIC(19,4) — không dùng FLOAT/DOUBLE/REAL
+□ Timestamp dùng TIMESTAMPTZ — không dùng TIMESTAMP
+□ Index cho mọi Foreign Key column
+□ Partial index với WHERE is_deleted = FALSE cho query thường gặp
+□ Unique index là partial (WHERE is_deleted = FALSE) để cho phép re-create
+□ EXPLAIN ANALYZE kiểm tra query phức tạp trước khi commit
+□ Flyway migration naming đúng V{N}__{description}.sql
+□ Mỗi migration file làm 1 việc duy nhất
+□ Comment cho table và column quan trọng
+□ HikariCP pool size phù hợp với resource limits
+□ Generated columns cho computed values thay vì tính trong code
+□ SELECT chỉ lấy columns cần thiết (không SELECT *)
+□ Không có DELETE statement trong application code
+```

@@ -1,0 +1,608 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Approval Engine Service API
+  description: |
+    Quản lý quy trình phê duyệt đa cấp, hộp thư approver, SLA, leo thang và cấu hình rules.  
+    Engine sử dụng Camunda BPMN 7 (embedded) để xử lý workflow.
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+
+tags:
+  - name: Inbox
+    description: Hộp thư phê duyệt của approver
+  - name: Tasks
+    description: Thực hiện hành động phê duyệt
+  - name: Processes
+    description: Theo dõi tiến trình phê duyệt
+  - name: Rules
+    description: Cấu hình approval rules (Admin)
+
+security:
+  - cookieAuth: []
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        isFirst: { type: boolean }
+        isLast: { type: boolean }
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  reason: { type: string }
+
+    SlaStatus:
+      type: object
+      properties:
+        deadlineAt:   { type: string, format: date-time }
+        remainingHours:
+          type: number
+          format: float
+          nullable: true
+          description: null nếu đã quá hạn
+        isOverdue:    { type: boolean }
+        isWarning:
+          type: boolean
+          description: true nếu còn < 4 giờ
+
+    ApprovalTaskSummary:
+      type: object
+      properties:
+        taskId:        { type: string, description: Camunda task ID }
+        processId:     { type: string, format: uuid }
+        entityType:    { type: string, example: PURCHASE_REQUEST }
+        entityId:      { type: string, format: uuid }
+        entityNumber:  { type: string, example: PR-2025-01-00001 }
+        entityTitle:   { type: string, example: Mua laptop Dell XPS 15 }
+        requester:
+          type: object
+          properties:
+            id:         { type: string, format: uuid }
+            fullName:   { type: string }
+            department: { type: string }
+        totalAmount:   { type: string, example: "70000000.0000" }
+        currency:      { type: string, example: VND }
+        priority:      { type: string, enum: [NORMAL, URGENT, EMERGENCY] }
+        stepIndex:     { type: integer }
+        stepType:      { type: string, enum: [SEQUENTIAL, PARALLEL] }
+        sla:           { $ref: '#/components/schemas/SlaStatus' }
+        isDelegated:   { type: boolean }
+        delegatedFrom:
+          type: object
+          nullable: true
+          properties:
+            id:       { type: string, format: uuid }
+            fullName: { type: string }
+        assignedAt:   { type: string, format: date-time }
+
+    ApprovalProcessDetail:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        entityType:       { type: string }
+        entityId:         { type: string, format: uuid }
+        entityNumber:     { type: string }
+        status:           { type: string, enum: [RUNNING, COMPLETED, CANCELLED] }
+        currentStepIndex: { type: integer }
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              stepIndex:    { type: integer }
+              approverRole: { type: string }
+              approver:
+                type: object
+                properties:
+                  id:       { type: string, format: uuid }
+                  fullName: { type: string }
+              delegateId:   { type: string, format: uuid, nullable: true }
+              status:       { type: string, enum: [PENDING, APPROVED, REJECTED, ESCALATED, SKIPPED, FORWARDED] }
+              action:       { type: string, enum: [APPROVE, REJECT, REQUEST_CHANGES, FORWARD], nullable: true }
+              comment:      { type: string, nullable: true }
+              slaDeadline:  { type: string, format: date-time }
+              assignedAt:   { type: string, format: date-time }
+              actedAt:      { type: string, format: date-time, nullable: true }
+              isEscalated:  { type: boolean }
+        startedAt:        { type: string, format: date-time }
+        completedAt:      { type: string, format: date-time, nullable: true }
+
+    ApprovalRuleStepTemplate:
+      type: object
+      properties:
+        stepIndex:    { type: integer }
+        approverRole: { type: string, example: MANAGER }
+        stepType:     { type: string, enum: [SEQUENTIAL, PARALLEL] }
+        slaHours:     { type: integer, description: Giờ làm việc (8h-17h30 T2-T6) }
+        isRequired:   { type: boolean }
+
+    ApprovalRuleDetail:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        ruleName:     { type: string }
+        priority:     { type: integer, description: Số cao hơn = ưu tiên cao hơn }
+        isActive:     { type: boolean }
+        ruleType:     { type: string, enum: [VALUE, CATEGORY, DEPARTMENT, DEFAULT] }
+        conditions:
+          type: object
+          properties:
+            minValue:    { type: string, nullable: true }
+            maxValue:    { type: string, nullable: true }
+            categories:  { type: array, items: { type: string }, nullable: true }
+            departmentIds: { type: array, items: { type: string, format: uuid }, nullable: true }
+            priorities:  { type: array, items: { type: string }, nullable: true }
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalRuleStepTemplate'
+        description:  { type: string, nullable: true }
+
+paths:
+  /approvals/inbox:
+    get:
+      tags: [Inbox]
+      summary: Danh sách task đang chờ tôi duyệt
+      operationId: getApprovalInbox
+      x-required-permission: PR_APPROVE_L1
+      description: Trả về tasks được gán cho approver hiện tại hoặc delegate của họ.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: sort
+          in: query
+          schema: { type: string, default: slaDeadline,asc }
+        - name: priority
+          in: query
+          schema: { type: string, enum: [NORMAL, URGENT, EMERGENCY] }
+        - name: entity_type
+          in: query
+          schema: { type: string, default: PURCHASE_REQUEST }
+        - name: min_amount
+          in: query
+          schema: { type: string }
+        - name: is_overdue
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Danh sách task chờ duyệt
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApprovalTaskSummary'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+  /approvals/inbox/count:
+    get:
+      tags: [Inbox]
+      summary: Đếm số task đang chờ (dùng cho badge notification)
+      operationId: countPendingTasks
+      responses:
+        '200':
+          description: Số task chờ
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          total:     { type: integer }
+                          overdue:   { type: integer }
+                          emergency: { type: integer }
+
+  /approvals/tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      summary: Chi tiết task phê duyệt (kèm thông tin entity)
+      operationId: getTaskDetail
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Chi tiết task
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          task:    { $ref: '#/components/schemas/ApprovalTaskSummary' }
+                          process: { $ref: '#/components/schemas/ApprovalProcessDetail' }
+                          entitySnapshot:
+                            type: object
+                            description: Snapshot của PR/Invoice tại thời điểm duyệt (JSON tùy entity)
+
+  /approvals/tasks/{taskId}/approve:
+    post:
+      tags: [Tasks]
+      summary: Phê duyệt task
+      operationId: approveTask
+      x-required-permission: PR_APPROVE_L1
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  maxLength: 1000
+                  example: "Đồng ý mua, phù hợp ngân sách và nhu cầu phòng ban"
+      responses:
+        '200':
+          description: Phê duyệt thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          nextStep:
+                            type: object
+                            nullable: true
+                            properties:
+                              approverRole: { type: string }
+                              approver:     { type: object }
+                              slaDeadline:  { type: string, format: date-time }
+                          isCompleted: { type: boolean }
+        '403':
+          description: Xung đột lợi ích (APR_001) hoặc không phải approver được chỉ định (APR_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Task đã được xử lý (APR_003)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /approvals/tasks/{taskId}/reject:
+    post:
+      tags: [Tasks]
+      summary: Từ chối task
+      operationId: rejectTask
+      x-required-permission: PR_APPROVE_L1
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment]
+              properties:
+                comment:
+                  type: string
+                  minLength: 20
+                  maxLength: 2000
+                  example: "Giá quá cao so với thị trường. Đề nghị tham khảo thêm ít nhất 2 báo giá trước khi trình lại."
+      responses:
+        '200':
+          description: Từ chối thành công — PR sẽ chuyển sang REJECTED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Comment quá ngắn (APR_005)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /approvals/tasks/{taskId}/request-changes:
+    post:
+      tags: [Tasks]
+      summary: Yêu cầu bổ sung thông tin
+      operationId: requestChanges
+      x-required-permission: PR_REQUEST_CHANGES
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment]
+              properties:
+                comment:
+                  type: string
+                  minLength: 20
+                  example: "Cần bổ sung thông số kỹ thuật chi tiết và lý do chọn nhà cung cấp cụ thể này"
+                requestedFields:
+                  type: array
+                  items: { type: string }
+                  example: [specifications, preferredVendorId]
+      responses:
+        '200':
+          description: PR chuyển sang CHANGES_REQUESTED — requester sẽ được thông báo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /approvals/tasks/{taskId}/forward:
+    post:
+      tags: [Tasks]
+      summary: Chuyển task cho người khác xem xét
+      operationId: forwardTask
+      x-required-permission: PR_FORWARD
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [forwardToUserId, reason]
+              properties:
+                forwardToUserId:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+                  minLength: 10
+                  example: "Tôi có quan hệ với nhà cung cấp này, chuyển để tránh xung đột lợi ích"
+      responses:
+        '200':
+          description: Forward thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /approvals/processes/{entityType}/{entityId}:
+    get:
+      tags: [Processes]
+      summary: Lấy tiến trình phê duyệt của một entity
+      operationId: getApprovalProcess
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema: { type: string, example: PURCHASE_REQUEST }
+        - name: entityId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Tiến trình phê duyệt
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ApprovalProcessDetail'
+
+  /approvals/rules:
+    get:
+      tags: [Rules]
+      summary: Danh sách approval rules
+      operationId: listApprovalRules
+      x-required-permission: ADMIN_APPROVAL_RULE
+      responses:
+        '200':
+          description: Danh sách rules sắp xếp theo priority
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApprovalRuleDetail'
+
+    post:
+      tags: [Rules]
+      summary: Tạo approval rule mới
+      operationId: createApprovalRule
+      x-required-permission: ADMIN_APPROVAL_RULE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ruleName, ruleType, steps]
+              properties:
+                ruleName:
+                  type: string
+                  example: VALUE_5M_20M
+                priority:
+                  type: integer
+                  default: 100
+                ruleType:
+                  type: string
+                  enum: [VALUE, CATEGORY, DEPARTMENT, DEFAULT]
+                conditions:
+                  type: object
+                  properties:
+                    minValue:      { type: string, nullable: true, example: "5000000" }
+                    maxValue:      { type: string, nullable: true, example: "20000000" }
+                    categories:    { type: array, items: { type: string }, nullable: true }
+                    departmentIds: { type: array, items: { type: string, format: uuid }, nullable: true }
+                    priorities:    { type: array, items: { type: string }, nullable: true }
+                steps:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/ApprovalRuleStepTemplate'
+                description: { type: string }
+      responses:
+        '201':
+          description: Tạo rule thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ApprovalRuleDetail'
+
+  /approvals/rules/{id}:
+    put:
+      tags: [Rules]
+      summary: Cập nhật approval rule
+      operationId: updateApprovalRule
+      x-required-permission: ADMIN_APPROVAL_RULE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRuleDetail'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ApprovalRuleDetail'
+
+  /approvals/rules/{id}/deactivate:
+    patch:
+      tags: [Rules]
+      summary: Vô hiệu hóa approval rule
+      operationId: deactivateApprovalRule
+      x-required-permission: ADMIN_APPROVAL_RULE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Đã vô hiệu hóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'

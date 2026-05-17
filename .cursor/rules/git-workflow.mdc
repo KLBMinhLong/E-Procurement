@@ -1,0 +1,459 @@
+---
+description: Quy tắc Git workflow, branching strategy, commit convention và code review cho toàn bộ dự án eProcure.
+globs:
+  - "**/.gitignore"
+  - "**/Jenkinsfile"
+  - "**/*.sh"
+alwaysApply: true
+---
+
+# GIT WORKFLOW RULES — eProcure Enterprise
+
+## 1. BRANCH STRATEGY (Git Flow)
+
+```
+main          ← Production-ready code. Tag = release version. KHÔNG commit trực tiếp.
+develop       ← Integration branch. Merge từ feature/hotfix. CI chạy auto.
+feature/*     ← Tính năng mới. Branch từ develop. Merge vào develop qua PR.
+bugfix/*      ← Fix bug ở develop. Branch từ develop.
+hotfix/*      ← Fix bug khẩn cấp ở production. Branch từ main. Merge vào main + develop.
+release/*     ← Chuẩn bị release. Branch từ develop. Merge vào main + develop.
+```
+
+```
+main ←──────────────────────── hotfix/fix-token-revoke
+  │                                       ↑ branch từ main
+  │                             merge → main + develop
+  │
+develop ←── feature/pr-approval-engine
+         ←── feature/budget-management
+         ←── bugfix/fix-sla-calculation
+         │
+         └── release/1.2.0 → (test) → merge main + tag v1.2.0
+```
+
+### Quy tắc đặt tên branch
+
+```bash
+# ✅ Đúng format
+feature/EP-123-pr-approval-workflow       # EP-123 = Jira/GitHub issue number
+feature/EP-456-budget-dashboard-cache
+bugfix/EP-789-fix-sla-timer-calculation
+hotfix/EP-999-fix-token-not-revoked
+release/1.2.0
+chore/EP-100-update-dependencies
+docs/EP-200-add-api-spec
+
+# ❌ Sai
+feature/approval                          # Quá ngắn, không có issue number
+feature/Fix_Token_Bug                     # Dùng underscore, không có issue number
+new-feature                              # Không có prefix
+HOTFIX-something                         # UPPERCASE
+```
+
+---
+
+## 2. COMMIT MESSAGE CONVENTION (Conventional Commits)
+
+```
+Format: <type>(<scope>): <subject>
+
+        <body> (optional, sau 1 dòng trống)
+
+        <footer> (optional: BREAKING CHANGE, Closes #issue)
+```
+
+### Types
+
+| Type | Khi nào dùng |
+|---|---|
+| `feat` | Tính năng mới |
+| `fix` | Sửa bug |
+| `refactor` | Refactor code (không thêm tính năng, không fix bug) |
+| `test` | Thêm/sửa test |
+| `docs` | Tài liệu |
+| `style` | Format code (không thay đổi logic) |
+| `chore` | Cập nhật dependencies, build scripts |
+| `perf` | Cải thiện performance |
+| `ci` | CI/CD config |
+| `revert` | Revert commit trước |
+
+### Scopes
+
+```
+iam, pr, approval, finance, inventory, vendor, analytics,
+notification, admin, gateway, frontend, infra, db, kafka, redis
+```
+
+### Ví dụ commit messages chuẩn
+
+```bash
+# ✅ Đúng
+feat(pr): add budget check before PR submission
+feat(approval): implement SLA escalation with Camunda timer
+fix(iam): resolve token not revoked on new login from other device
+refactor(pr): extract budget validation to BudgetCheckService
+test(approval): add unit tests for SLA calculation logic
+docs(api): update PR service OpenAPI spec with override endpoint
+chore(deps): upgrade Spring Boot to 3.2.1
+perf(finance): add Redis cache for budget dashboard data
+ci(jenkins): add integration test stage to pipeline
+
+# ✅ Với body và footer
+feat(pr): implement emergency PR abuse detection
+
+Track monthly emergency PR count per department.
+Throw EmergencyLimitExceededException when count >= 3.
+Publish EmergencyAbuseDetectedEvent to Kafka for audit.
+
+Closes #EP-456
+BREAKING CHANGE: EmergencyRequest now requires urgencyReason min 100 chars
+
+# ❌ Sai
+fix bug                           # Quá chung chung
+Fixed the issue with tokens       # Không có type/scope, past tense
+feat: Adding new PR feature       # Gerund form, không có scope
+WIP: budget stuff                 # WIP không commit lên branch chung
+update code                       # Vô nghĩa
+```
+
+### Commit message checklist
+
+```
+□ subject dùng imperative mood: "add", "fix", "update" (KHÔNG "added", "fixed")
+□ subject không quá 72 ký tự
+□ subject không có dấu chấm ở cuối
+□ type và scope viết thường
+□ body giải thích WHY (tại sao), không chỉ WHAT (làm gì)
+□ Mỗi commit là 1 đơn vị logic độc lập — không commit nhiều thứ không liên quan
+□ KHÔNG commit file .env, *.log, target/, node_modules/
+```
+
+---
+
+## 3. .gitignore BẮT BUỘC
+
+```gitignore
+# ── Sensitive files ──────────────────────────────────────────
+.env
+.env.*
+!.env.example          # Chỉ file example mới được commit
+*.key
+*.pem
+*.p12
+*.jks
+secrets/
+
+# ── Java / Spring Boot ───────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+!gradle-wrapper.jar
+.mvn/
+.gradle/
+
+# ── IDE ──────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+
+# ── Node / Angular ───────────────────────────────────────────
+node_modules/
+dist/
+.angular/
+.npm/
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs & Reports ───────────────────────────────────────────
+logs/
+*.log
+test-results/
+coverage/
+
+# ── Docker ───────────────────────────────────────────────────
+docker-compose.override.yml   # Local overrides — không commit
+
+# ── JMeter ───────────────────────────────────────────────────
+*.jtl
+jmeter-results/
+```
+
+---
+
+## 4. PULL REQUEST RULES
+
+### 4.1 Trước khi mở PR
+
+```bash
+# ✅ Luôn làm các bước này trước khi push
+# 1. Rebase lên develop mới nhất
+git fetch origin
+git rebase origin/develop
+
+# 2. Chạy test
+mvn test                          # Backend
+ng test --watch=false             # Frontend
+
+# 3. Check linting
+mvn checkstyle:check              # Java
+ng lint                           # Angular
+
+# 4. Không có TODO chưa xử lý
+grep -r "TODO\|FIXME\|HACK" src/ --include="*.java"
+
+# 5. Không có hardcode sensitive value
+grep -r "password\s*=\s*['\"]" src/ --include="*.java"
+grep -r "secret\s*=\s*['\"]" src/ --include="*.java"
+```
+
+### 4.2 PR Template
+
+```markdown
+## 📋 Mô tả thay đổi
+<!-- Tóm tắt những gì được thay đổi và tại sao -->
+
+## 🔗 Liên kết
+- Issue: EP-XXX
+- Related PR: #XXX (nếu có)
+
+## 🧪 Cách test
+<!-- Các bước để test thay đổi này -->
+1. ...
+2. ...
+
+## ✅ Checklist
+- [ ] Code tuân thủ CODING_RULES.mdc
+- [ ] KHÔNG có HTTP DELETE endpoint
+- [ ] @PreAuthorize dùng permission code, không hardcode role
+- [ ] Log không chứa sensitive data
+- [ ] Exception có error code theo ERROR_CODE_RULES.mdc
+- [ ] Unit test đã viết và pass
+- [ ] Không có file .env, *.key, *.log trong commit
+- [ ] Flyway migration script đúng naming convention
+- [ ] Docker resource limits đã cập nhật nếu thêm service
+- [ ] API spec (OpenAPI) đã cập nhật nếu thêm/sửa endpoint
+- [ ] README cập nhật nếu thay đổi setup
+
+## 📸 Screenshots (nếu có UI changes)
+<!-- Thêm ảnh trước/sau nếu thay đổi UI -->
+
+## ⚠️ Breaking Changes
+<!-- Liệt kê nếu có breaking change -->
+```
+
+### 4.3 Code Review Rules
+
+```
+Reviewer PHẢI kiểm tra:
+□ Logic nghiệp vụ đúng với business requirement
+□ Security: không có SQL injection, XSS, hardcode credentials
+□ Không có hardcode role trong @PreAuthorize
+□ Soft delete đúng pattern (is_deleted + deleted_at + deleted_by)
+□ Exception có error code, message rõ ràng
+□ Log không có sensitive data
+□ Test coverage cho logic quan trọng
+□ Không có code "chết" (dead code, commented-out code lớn)
+□ Không có TODO/FIXME quá 1 tuần tuổi
+
+Reviewer KHÔNG cần comment về:
+□ Code style đã được formatter xử lý (dùng google-java-format)
+□ Import order (đã có checkstyle)
+□ Whitespace, trailing newlines
+```
+
+### 4.4 Merge Rules
+
+```
+feature/* → develop:
+  ✅ Ít nhất 1 reviewer approve
+  ✅ Tất cả CI checks pass (build, test, lint)
+  ✅ Không có conflict
+  ✅ Squash merge (giữ history gọn)
+
+release/* → main:
+  ✅ Ít nhất 2 reviewer approve (bao gồm Tech Lead)
+  ✅ Full test suite pass (unit + integration + smoke test)
+  ✅ Merge commit (giữ history đầy đủ cho release)
+  ✅ Tag version sau khi merge: git tag v1.2.0 -m "Release v1.2.0"
+
+hotfix/* → main + develop:
+  ✅ Tech Lead approve
+  ✅ Critical fix pass
+  ✅ Merge commit + tag patch version v1.1.1
+```
+
+---
+
+## 5. TAGGING & VERSIONING (Semantic Versioning)
+
+```
+MAJOR.MINOR.PATCH  →  1.2.3
+
+MAJOR: Breaking change (API incompatible)
+MINOR: New feature (backward compatible)
+PATCH: Bug fix (backward compatible)
+
+Ví dụ:
+v1.0.0   ← Initial release
+v1.1.0   ← Thêm tính năng Budget Transfer
+v1.1.1   ← Fix bug token revocation
+v1.2.0   ← Thêm tính năng Google OAuth
+v2.0.0   ← Redesign API (breaking change)
+```
+
+```bash
+# ✅ Tạo tag chuẩn
+git tag -a v1.2.0 -m "Release v1.2.0: Add Google OAuth, Budget Transfer"
+git push origin v1.2.0
+
+# ✅ Xem tags
+git tag -l "v*" --sort=-v:refname | head -10
+```
+
+---
+
+## 6. JENKINS CI/CD PIPELINE
+
+```groovy
+// Jenkinsfile (mẫu chuẩn cho mỗi service)
+pipeline {
+    agent any
+    environment {
+        SERVICE_NAME = 'pr-service'
+        DOCKER_REGISTRY = 'registry.eprocure.internal'
+        DOCKER_IMAGE = "${DOCKER_REGISTRY}/${SERVICE_NAME}"
+    }
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile -DskipTests'
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/**/*.xml'
+                    jacoco(
+                        execPattern: 'target/jacoco.exec',
+                        classPattern: 'target/classes',
+                        sourcePattern: 'src/main/java',
+                        minimumInstructionCoverage: '70'    // Fail nếu < 70%
+                    )
+                }
+            }
+        }
+
+        stage('Code Quality') {
+            steps {
+                sh 'mvn checkstyle:check'
+                // sh 'mvn sonar:sonar' (nếu có SonarQube)
+            }
+        }
+
+        stage('Integration Test') {
+            when { branch 'develop' }
+            steps {
+                sh 'mvn verify -P integration-test'
+                // Chạy Postman collection
+                sh '''
+                    newman run tests/postman/${SERVICE_NAME}.postman_collection.json \
+                        --environment tests/postman/dev.postman_environment.json \
+                        --reporters cli,junit \
+                        --reporter-junit-export target/newman-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'target/newman-results.xml'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when { anyOf { branch 'develop'; branch 'main' } }
+            steps {
+                script {
+                    def imageTag = env.BRANCH_NAME == 'main'
+                        ? env.GIT_TAG_NAME ?: 'latest'
+                        : "dev-${env.GIT_COMMIT[0..7]}"
+                    sh "docker build -t ${DOCKER_IMAGE}:${imageTag} ."
+                    sh "docker push ${DOCKER_IMAGE}:${imageTag}"
+                }
+            }
+        }
+
+        stage('Deploy Dev') {
+            when { branch 'develop' }
+            steps {
+                sh '''
+                    docker-compose -f docker-compose.dev.yml pull ${SERVICE_NAME}
+                    docker-compose -f docker-compose.dev.yml up -d ${SERVICE_NAME}
+                '''
+            }
+        }
+
+        stage('Deploy Prod') {
+            when { branch 'main' }
+            steps {
+                input message: "Deploy ${SERVICE_NAME} lên Production?", ok: "Deploy"
+                sh '''
+                    docker-compose -f docker-compose.prod.yml pull ${SERVICE_NAME}
+                    docker-compose -f docker-compose.prod.yml up -d --no-deps ${SERVICE_NAME}
+                '''
+            }
+        }
+
+        stage('Smoke Test') {
+            when { branch 'main' }
+            steps {
+                sh '''
+                    sleep 30   # Chờ service khởi động
+                    curl -f http://${SERVICE_NAME}:8080/actuator/health || exit 1
+                '''
+            }
+        }
+    }
+    post {
+        failure {
+            // Gửi thông báo Slack/Email khi fail (nếu có)
+            echo "Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+        success {
+            echo "Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+    }
+}
+```
+
+---
+
+## 7. GIT CHECKLIST TRƯỚC KHI PUSH
+
+```
+□ Branch đúng naming convention (feature/EP-XXX-...)
+□ Commit message đúng conventional commits format
+□ Không có file .env, *.key, *.pem trong commit
+□ Không có node_modules/, target/, dist/ trong commit
+□ Rebase lên develop/main mới nhất trước khi push
+□ Unit test pass local trước khi push
+□ Không có System.out.println() hay e.printStackTrace()
+□ Không có TODO/FIXME mới chưa giải thích
+□ PR description đầy đủ theo template
+□ Assign đúng reviewer
+```

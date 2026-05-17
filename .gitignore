@@ -1,0 +1,28 @@
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Runtime data
+data/
+logs/
+tmp/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Java
+target/
+*.class
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Docker local overrides
+docker-compose.override.yml

@@ -1,0 +1,377 @@
+---
+description: Quy tắc viết code Java Spring Boot và Angular cho toàn bộ dự án eProcure. Áp dụng cho mọi file Java, YAML config và TypeScript Angular.
+globs:
+  - "**/*.java"
+  - "**/*.yaml"
+  - "**/*.yml"
+  - "**/*.ts"
+  - "**/*.html"
+  - "**/*.scss"
+alwaysApply: true
+---
+
+# CODING RULES — eProcure Enterprise
+
+## 1. CLEAN ARCHITECTURE — TUYỆT ĐỐI KHÔNG VI PHẠM
+
+```
+domain/      ← POJO thuần. ZERO Spring annotation. ZERO framework import.
+application/ ← UseCase, Command, Port interface. Không import Spring Bean trực tiếp.
+infrastructure/ ← Spring, MyBatis, Redis, Kafka. Implement domain interfaces.
+presentation/   ← Controller, Request/Response DTO, Mapper.
+```
+
+### ❌ Cấm tuyệt đối trong `domain/`
+```java
+// KHÔNG import bất kỳ thứ gì từ Spring / Jakarta / MyBatis
+import org.springframework.*;   // ❌
+import jakarta.persistence.*;   // ❌
+import org.mybatis.*;           // ❌
+
+// Domain Entity phải là POJO sạch
+public class PurchaseRequest {        // ✅ Không kế thừa, không annotation framework
+    private UUID id;
+    private String prNumber;
+    private PrStatus status;
+    // chỉ có domain logic thuần
+    public void submit() { ... }
+    public boolean canBeEditedBy(UUID userId) { ... }
+}
+```
+
+### ✅ Dependency flow hợp lệ
+```
+presentation → application → domain ← infrastructure
+(Controller)   (UseCase)    (Entity)   (RepositoryImpl)
+```
+
+---
+
+## 2. CONTROLLER RULES
+
+```java
+// ✅ Template chuẩn
+@RestController
+@RequestMapping("/api/v1/purchase-requests")
+@RequiredArgsConstructor
+public class PurchaseRequestController {
+
+    private static final Logger log = LogManager.getLogger(PurchaseRequestController.class);
+
+    // Constructor injection qua @RequiredArgsConstructor — KHÔNG @Autowired
+    private final CreatePurchaseRequestUseCase createUseCase;
+    private final PrPresentationMapper mapper;
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('PR_CREATE')")   // ← Permission code, KHÔNG phải role
+    public ResponseEntity<ApiResponse<PurchaseRequestResponse>> create(
+            @Valid @RequestBody CreatePrRequest request,
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestHeader("Idempotency-Key") String idempotencyKey) {
+
+        log.info("[CONTROLLER] POST /purchase-requests | userId={}", principal.getMaskedId());
+        // Delegate ngay cho UseCase — KHÔNG có business logic ở đây
+        var pr = createUseCase.execute(mapper.toCommand(request, principal.getId()), idempotencyKey);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("PR_CREATED", mapper.toResponse(pr)));
+    }
+}
+```
+
+### Controller checklist
+- [ ] Không có `if/else` nghiệp vụ trong controller
+- [ ] Luôn `@Valid` cho `@RequestBody`
+- [ ] Log `[CONTROLLER]` khi vào method
+- [ ] Dùng `@RequiredArgsConstructor`, KHÔNG `@Autowired`
+- [ ] `@PreAuthorize` dùng permission code, KHÔNG hardcode role
+
+---
+
+## 3. USE CASE RULES
+
+```java
+// ✅ Mỗi UseCase = 1 class = 1 method execute()
+@Component
+@RequiredArgsConstructor
+public class CreatePurchaseRequestUseCase {
+
+    @Transactional                       // ← @Transactional ở UseCase, KHÔNG ở Repository
+    public PurchaseRequest execute(CreatePrCommand command, String idempotencyKey) {
+        // 1. Idempotency check trước
+        var cached = idempotencyService.check(idempotencyKey, PurchaseRequest.class);
+        if (cached.isPresent()) return cached.get();
+
+        log.info("[ACTION] Start CreatePR | userId={}", LogMaskingUtil.maskId(command.getRequesterId()));
+
+        // 2. Validate nghiệp vụ
+        // 3. Build domain object
+        // 4. Save
+        // 5. Publish event (nếu cần)
+        // 6. Cache idempotency
+        log.info("[ACTION] Complete CreatePR | prNumber={}", pr.getPrNumber());
+        return pr;
+    }
+}
+```
+
+### UseCase checklist
+- [ ] Tên class: `[Verb][Noun]UseCase`
+- [ ] Không gọi UseCase từ UseCase khác
+- [ ] `@Transactional` đặt tại đây
+- [ ] Log `[ACTION] Start/Complete` với INFO
+- [ ] Idempotency check là bước ĐẦU TIÊN
+
+---
+
+## 4. REPOSITORY RULES
+
+```java
+// ✅ Interface trong Domain (không import Spring)
+public interface PurchaseRequestRepository {
+    void save(PurchaseRequest pr);
+    Optional<PurchaseRequest> findById(UUID id);     // KHÔNG return null
+    Page<PurchaseRequest> findByFilter(PrFilter f, PageRequest page);
+}
+
+// ✅ Implementation trong Infrastructure
+@Repository
+@RequiredArgsConstructor
+public class PurchaseRequestRepositoryImpl implements PurchaseRequestRepository {
+    private final PurchaseRequestMapper mapper;      // MyBatis mapper
+    private final ObjectMapper objectMapper;         // Jackson — dùng để convert
+
+    @Override
+    public void save(PurchaseRequest pr) {
+        log.debug("[REPO] insert | id={}", pr.getId());
+        // Dùng ObjectMapper convert, KHÔNG viết thủ công từng field
+        mapper.insert(objectMapper.convertValue(pr, PurchaseRequestEntity.class));
+    }
+}
+```
+
+### Repository checklist
+- [ ] Interface ở `domain/repository/`, không import Spring
+- [ ] Implementation ở `infrastructure/persistence/`
+- [ ] KHÔNG return `null` — dùng `Optional<T>`
+- [ ] Log `[REPO]` level `DEBUG`
+- [ ] Dùng `ObjectMapper.convertValue()` để map domain ↔ entity
+
+---
+
+## 5. MYBATIS RULES
+
+```java
+// ✅ Simple CRUD: annotation
+@Mapper
+public interface PurchaseRequestMapper {
+    @Insert("INSERT INTO pr.purchase_requests (id, pr_number, ...) VALUES (#{id}, #{prNumber}, ...)")
+    void insert(PurchaseRequestEntity entity);
+
+    @Select("SELECT * FROM pr.purchase_requests WHERE id = #{id} AND is_deleted = false")
+    @Results(id = "prResult", value = {
+        @Result(property = "prNumber", column = "pr_number"),
+        @Result(property = "requesterId", column = "requester_id")
+    })
+    Optional<PurchaseRequestEntity> findById(UUID id);
+}
+```
+
+```xml
+<!-- ✅ Complex query: XML mapper -->
+<select id="findByFilter" resultMap="prResult">
+  SELECT *, COUNT(*) OVER() AS total_count
+  FROM pr.purchase_requests
+  WHERE is_deleted = false
+  <if test="filter.status != null">AND status = #{filter.status}</if>
+  ORDER BY
+  <choose>
+    <when test="sort.field == 'createdAt'">created_at</when>
+    <when test="sort.field == 'totalAmount'">total_amount</when>
+    <otherwise>created_at</otherwise>  <!-- Whitelist — KHÔNG inject raw string -->
+  </choose>
+  <if test="sort.direction == 'asc'">ASC</if><if test="sort.direction != 'asc'">DESC</if>
+  LIMIT #{page.size} OFFSET #{page.offset}
+</select>
+```
+
+### MyBatis checklist
+- [ ] Simple CRUD → annotation. Complex / dynamic SQL → XML mapper
+- [ ] Luôn dùng `@Results` / `<resultMap>` — KHÔNG auto-mapping
+- [ ] ORDER BY PHẢI qua whitelist mapping — không inject raw string từ client
+- [ ] `WHERE is_deleted = false` cho mọi SELECT query chính
+- [ ] SQL không bao giờ viết trong UseCase hay Controller
+
+---
+
+## 6. NAMING CONVENTIONS
+
+```
+Java classes:   PascalCase      CreatePurchaseRequestUseCase ✅
+Methods/vars:   camelCase       getTotalAmount() ✅
+Constants:      UPPER_SNAKE     MAX_RETRY = 3 ✅
+Enum values:    UPPER_SNAKE     PrStatus.PENDING_APPROVAL ✅
+Packages:       lowercase       com.eprocure.pr ✅
+
+DB tables:      lowercase_snake  purchase_requests ✅
+DB columns:     lowercase_snake  pr_number, created_at ✅
+DB indexes:     idx_{table}_{cols}  idx_pr_dept_status ✅
+
+API endpoints:  lowercase-hyphen   /purchase-requests ✅
+Query params:   snake_case         ?department_id=uuid ✅
+JSON fields:    camelCase          { "prNumber": "..." } ✅
+
+Kafka topics:   {domain}.{entity}.{event}  procurement.pr.submitted ✅
+Redis keys:     {namespace}:{id}   session:{token}, role-perm:{code} ✅
+```
+
+---
+
+## 7. INJECTION & OBJECT MAPPING
+
+```java
+// ✅ Constructor injection (không @Autowired)
+@RequiredArgsConstructor
+public class MyService {
+    private final MyRepository repo;
+}
+
+// ✅ ObjectMapper cho convert DTO ↔ Entity ↔ Domain
+PurchaseRequestEntity entity = objectMapper.convertValue(domainObj, PurchaseRequestEntity.class);
+PurchaseRequest domain = objectMapper.convertValue(entity, PurchaseRequest.class);
+
+// ❌ KHÔNG viết thủ công từng field (error-prone, khó maintain)
+entity.setPrNumber(domain.getPrNumber());   // ❌
+entity.setStatus(domain.getStatus().name()); // ❌
+```
+
+---
+
+## 8. TRANSACTION MANAGEMENT
+
+```java
+// ✅ @Transactional ở UseCase layer
+@Transactional
+public PurchaseRequest execute(CreatePrCommand cmd) { ... }
+
+// ✅ readOnly cho query UseCase
+@Transactional(readOnly = true)
+public Page<PurchaseRequest> findAll(PrFilter f, PageRequest p) { ... }
+
+// ✅ REQUIRES_NEW cho audit log (independent transaction)
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void saveAuditLog(AuditLog log) { ... }
+
+// ❌ KHÔNG @Transactional ở Repository implementation
+// ❌ KHÔNG @Transactional ở Controller
+```
+
+---
+
+## 9. SOFT DELETE (KHÔNG CÓ HTTP DELETE)
+
+```java
+// ✅ Soft delete
+@PatchMapping("/{id}/cancel")
+public ResponseEntity<...> cancel(@PathVariable UUID id) { ... }
+
+// ❌ TUYỆT ĐỐI KHÔNG
+@DeleteMapping("/{id}")    // ❌
+
+// ✅ Repository soft delete
+void softDelete(UUID id, UUID deletedBy);
+// SQL: UPDATE ... SET is_deleted=true, deleted_at=NOW(), deleted_by=:deletedBy WHERE id=:id
+
+// ✅ Mọi SELECT query phải có filter
+WHERE is_deleted = false   -- ✅ Luôn luôn
+```
+
+---
+
+## 10. ANGULAR / FRONTEND RULES
+
+```typescript
+// ✅ Dùng translate pipe cho mọi text hiển thị
+<span>{{ 'pr.status.pending' | translate }}</span>    // ✅
+<span>Đang chờ duyệt</span>                           // ❌ hardcode
+
+// ✅ Dùng CSS variable, KHÔNG hardcode màu
+.status-badge { color: var(--color-warning); }         // ✅
+.status-badge { color: #f59e0b; }                      // ❌ hardcode
+
+// ✅ Prefix ep- cho mọi shared component
+<ep-button variant="primary">Tạo mới</ep-button>       // ✅
+<button class="btn-primary">Tạo mới</button>           // ❌
+
+// ✅ Lazy loading cho feature modules
+const routes: Routes = [
+  { path: 'procurement', loadChildren: () => import('./procurement/procurement.module') }
+];
+
+// ✅ OnPush change detection strategy
+@Component({ changeDetection: ChangeDetectionStrategy.OnPush })
+
+// ✅ Unsubscribe với takeUntilDestroyed
+this.service.data$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(...)
+```
+
+---
+
+## 11. MONEY & FINANCIAL DATA
+
+```java
+// ✅ BigDecimal cho tất cả tính toán tài chính
+BigDecimal total = quantity.multiply(unitPrice);   // ✅
+double total = qty * price;                         // ❌
+
+// ✅ Database: NUMERIC(19,4)
+// ✅ API JSON: string "70000000.0000"
+// ✅ Java: BigDecimal với scale 4
+BigDecimal amount = new BigDecimal("70000000.0000");
+```
+
+---
+
+## 12. PHÒNG NGỪA LỖI THƯỜNG GẶP
+
+```java
+// ❌ KHÔNG return null từ public method
+public PurchaseRequest findById(UUID id) { return null; }          // ❌
+public Optional<PurchaseRequest> findById(UUID id) { ... }         // ✅
+
+// ❌ KHÔNG catch Exception chung chung rồi bỏ qua
+try { ... } catch (Exception e) { }                                 // ❌
+try { ... } catch (Exception e) { log.error(..., e); throw e; }    // ✅
+
+// ❌ KHÔNG dùng == so sánh String
+if (status == "PENDING") { }            // ❌
+if ("PENDING".equals(status)) { }      // ✅
+if (status == PrStatus.PENDING) { }    // ✅ với enum
+
+// ❌ KHÔNG sử dụng raw type
+List list = new ArrayList();           // ❌
+List<PurchaseRequest> prs = new ArrayList<>();  // ✅
+
+// ❌ KHÔNG để @SuppressWarnings("unchecked") mà không có comment giải thích
+```
+
+---
+
+## 13. CODE REVIEW CHECKLIST (TỰ KIỂM TRƯỚC KHI COMMIT)
+
+```
+□ Domain layer không import Spring/Jakarta/MyBatis
+□ Không có HTTP DELETE endpoint
+□ Tất cả soft delete có is_deleted + deleted_at + deleted_by
+□ @Transactional đúng layer (UseCase)
+□ @PreAuthorize dùng permission code, không hardcode role
+□ ObjectMapper được dùng cho conversion
+□ Không có BigDecimal từ double (phải từ String)
+□ Không return null từ public method
+□ Optional<T> cho method có thể không có kết quả
+□ Log không chứa password, token, sensitive data
+□ Unit test cover happy path + main error paths
+□ Idempotency-Key được xử lý ở UseCase
+□ SQL ORDER BY qua whitelist mapping
+□ Angular text qua translate pipe
+□ Angular màu sắc qua CSS variable
+```

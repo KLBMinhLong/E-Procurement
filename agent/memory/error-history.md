@@ -1,0 +1,1 @@
+# Error History (Những lỗi đã xảy ra — agent phải tránh)

@@ -1,0 +1,550 @@
+---
+description: Quy tắc phát triển Angular frontend cho dự án eProcure. Áp dụng cho mọi file TypeScript, HTML template, SCSS và Angular module.
+globs:
+  - "**/*.component.ts"
+  - "**/*.component.html"
+  - "**/*.component.scss"
+  - "**/*.service.ts"
+  - "**/*.module.ts"
+  - "**/*.pipe.ts"
+  - "**/*.directive.ts"
+  - "**/styles/**/*.scss"
+alwaysApply: true
+---
+
+# ANGULAR FRONTEND RULES — eProcure Enterprise
+
+## 1. PROJECT STRUCTURE
+
+```
+frontend/src/
+├── app/
+│   ├── core/                        ← Singleton services, guards, interceptors
+│   │   ├── auth/
+│   │   │   ├── auth.service.ts
+│   │   │   ├── auth.guard.ts
+│   │   │   └── permission.guard.ts
+│   │   ├── interceptors/
+│   │   │   ├── encryption.interceptor.ts    ← RSA+AES tự động
+│   │   │   ├── auth-cookie.interceptor.ts   ← Attach cookie
+│   │   │   ├── error.interceptor.ts         ← Global error handling
+│   │   │   └── loading.interceptor.ts       ← Global loading state
+│   │   ├── services/
+│   │   │   ├── api.service.ts               ← Base HTTP service
+│   │   │   └── websocket.service.ts         ← STOMP WebSocket
+│   │   └── core.module.ts
+│   │
+│   ├── shared/                      ← Shared components (ep-* prefix)
+│   │   ├── components/
+│   │   │   ├── ep-button/
+│   │   │   ├── ep-badge/
+│   │   │   ├── ep-card/
+│   │   │   ├── ep-table/            ← Pagination built-in
+│   │   │   ├── ep-modal/
+│   │   │   ├── ep-form-field/
+│   │   │   ├── ep-avatar/
+│   │   │   ├── ep-sla-bar/          ← SLA countdown visualization
+│   │   │   ├── ep-stat-card/        ← KPI card
+│   │   │   ├── ep-amount/           ← Money display (font-mono, VND)
+│   │   │   ├── ep-approval-action/  ← Approve/Reject/Request Changes buttons
+│   │   │   ├── ep-filter-bar/       ← Filter + search bar
+│   │   │   ├── ep-breadcrumb/       ← Auto breadcrumb từ router
+│   │   │   ├── ep-lang-switcher/    ← VI/EN toggle
+│   │   │   ├── ep-empty-state/      ← Empty list placeholder
+│   │   │   ├── ep-skeleton/         ← Loading skeleton
+│   │   │   └── ep-icon/             ← Custom SVG icon system
+│   │   ├── pipes/
+│   │   │   ├── money.pipe.ts        ← Format tiền VND
+│   │   │   ├── pr-status.pipe.ts    ← Translate status sang label/class
+│   │   │   └── time-ago.pipe.ts
+│   │   ├── directives/
+│   │   │   └── permission.directive.ts  ← *epHasPermission="'PR_CREATE'"
+│   │   └── shared.module.ts
+│   │
+│   ├── features/                    ← Feature modules (lazy loaded)
+│   │   ├── procurement/             ← Purchase Requests
+│   │   ├── approvals/               ← Approval Inbox
+│   │   ├── finance/                 ← Budget, PO, Invoice
+│   │   ├── inventory/               ← Stock, GR
+│   │   ├── vendors/                 ← Vendor + RFQ
+│   │   ├── analytics/               ← Dashboard + Reports
+│   │   ├── notifications/           ← In-app notifications
+│   │   └── admin/                   ← Admin + System Config
+│   │
+│   ├── ui-showcase/                 ← Trang xem toàn bộ component library
+│   │   └── ui-showcase.component.ts
+│   │
+│   └── app-routing.module.ts        ← Lazy loading routes
+│
+├── assets/
+│   ├── i18n/
+│   │   ├── vi.json                  ← Tiếng Việt (default)
+│   │   └── en.json                  ← Tiếng Anh
+│   └── icons/                       ← SVG icons (nếu không inline)
+│
+└── styles/
+    ├── _variables.scss              ← CSS Custom Properties (design tokens)
+    ├── _typography.scss             ← IBM Plex font definitions
+    ├── _layout.scss                 ← Grid, spacing utilities
+    ├── _components.scss             ← Base component styles
+    └── styles.scss                  ← Main entry, import tất cả
+```
+
+---
+
+## 2. COMPONENT RULES
+
+```typescript
+// ✅ Template chuẩn cho feature component
+@Component({
+    selector: 'ep-pr-list',
+    templateUrl: './pr-list.component.html',
+    styleUrls: ['./pr-list.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,  // ✅ Luôn OnPush
+    standalone: false                                  // Dùng NgModule pattern
+})
+export class PrListComponent implements OnInit {
+
+    // ── Injections (inject() function, không constructor) ─────
+    private readonly prService = inject(PurchaseRequestService);
+    private readonly router = inject(Router);
+    private readonly destroyRef = inject(DestroyRef);
+
+    // ── State ─────────────────────────────────────────────────
+    purchaseRequests = signal<PurchaseRequestSummary[]>([]);
+    meta = signal<PageMeta | null>(null);
+    isLoading = signal<boolean>(false);
+    currentFilter = signal<PrFilter>({ page: 1, size: 20, sort: 'createdAt,desc' });
+
+    // ── Lifecycle ────────────────────────────────────────────
+    ngOnInit(): void {
+        this.loadData();
+    }
+
+    // ── Public Methods ───────────────────────────────────────
+    onPageChange(event: PageChangeEvent): void {
+        this.currentFilter.update(f => ({ ...f, page: event.page, size: event.size }));
+        this.loadData();
+    }
+
+    onFilterChange(filter: Partial<PrFilter>): void {
+        this.currentFilter.update(f => ({ ...f, ...filter, page: 1 }));
+        this.loadData();
+    }
+
+    navigateToDetail(prNumber: string): void {
+        this.router.navigate(['/procurement', prNumber]);
+    }
+
+    // ── Private Methods ──────────────────────────────────────
+    private loadData(): void {
+        this.isLoading.set(true);
+        this.prService.list(this.currentFilter())
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),   // ✅ Auto unsubscribe
+                finalize(() => this.isLoading.set(false))
+            )
+            .subscribe({
+                next: response => {
+                    this.purchaseRequests.set(response.data);
+                    this.meta.set(response.meta);
+                },
+                error: err => {
+                    // Error interceptor đã xử lý toast — không cần làm thêm
+                    console.error('Load PR list failed', err);
+                }
+            });
+    }
+}
+```
+
+### Component Rules
+```
+□ ChangeDetectionStrategy.OnPush LUÔN LUÔN
+□ inject() thay vì constructor injection
+□ takeUntilDestroyed(this.destroyRef) cho mọi subscription
+□ Signals cho state management
+□ KHÔNG có business logic trong component — delegate sang service
+□ Template KHÔNG có phép tính phức tạp — dùng computed signals
+□ Selector prefix ep- cho shared components
+```
+
+---
+
+## 3. TEMPLATE RULES
+
+```html
+<!-- ✅ Dùng translate pipe cho MỌI text hiển thị -->
+<h1>{{ 'page.pr.title' | translate }}</h1>                              <!-- ✅ -->
+<h1>Yêu cầu mua sắm</h1>                                               <!-- ❌ hardcode -->
+
+<!-- ✅ Dùng ep-* shared components -->
+<ep-button variant="primary" [loading]="isLoading()" (click)="submit()">
+    {{ 'action.create' | translate }}
+</ep-button>
+
+<!-- ✅ Permission directive -->
+<ep-button *epHasPermission="'PR_CREATE'" (click)="createPr()">
+    {{ 'action.create_pr' | translate }}
+</ep-button>
+
+<!-- ✅ ep-table tự xử lý pagination -->
+<ep-table
+    [data]="purchaseRequests()"
+    [meta]="meta()"
+    [columns]="columns"
+    [loading]="isLoading()"
+    (pageChange)="onPageChange($event)"
+    (sortChange)="onSortChange($event)"
+    (rowClick)="navigateToDetail($event.prNumber)">
+</ep-table>
+
+<!-- ✅ ep-amount cho tiền tệ (font-mono, format VND) -->
+<ep-amount [value]="pr.totalAmount" currency="VND"></ep-amount>
+
+<!-- ✅ ep-badge cho status -->
+<ep-badge [status]="pr.status"></ep-badge>
+
+<!-- ✅ ep-sla-bar cho SLA countdown -->
+<ep-sla-bar [deadline]="task.slaDeadline" [assignedAt]="task.assignedAt"></ep-sla-bar>
+
+<!-- ✅ ep-skeleton khi loading -->
+@if (isLoading()) {
+    <ep-skeleton type="table" [rows]="5"></ep-skeleton>
+} @else if (purchaseRequests().length === 0) {
+    <ep-empty-state
+        icon="inbox"
+        [title]="'pr.list.empty.title' | translate"
+        [message]="'pr.list.empty.message' | translate">
+    </ep-empty-state>
+} @else {
+    <!-- actual content -->
+}
+
+<!-- ❌ KHÔNG hardcode text -->
+<span>Chờ phê duyệt</span>             <!-- ❌ -->
+<span>{{ 'status.pending' | translate }}</span>  <!-- ✅ -->
+
+<!-- ❌ KHÔNG có logic phức tạp trong template -->
+<span>{{ item.quantity * item.unitPrice | number }}</span>   <!-- ❌ -->
+<!-- ✅ Dùng computed trong component -->
+<ep-amount [value]="item.totalPrice"></ep-amount>
+```
+
+---
+
+## 4. SCSS / STYLING RULES
+
+```scss
+// ✅ Dùng CSS Custom Properties (design tokens) — KHÔNG hardcode màu/size
+.pr-status-badge {
+    background-color: var(--color-warning-subtle);    // ✅
+    color:            var(--color-warning);            // ✅
+    border:           1px solid var(--color-warning-border); // ✅
+}
+
+// ❌ KHÔNG hardcode giá trị
+.pr-status-badge {
+    background-color: #fef3c7;    // ❌ hardcode color
+    color: #f59e0b;               // ❌
+    font-size: 12px;              // ❌ hardcode size
+}
+
+// ✅ Dùng design tokens cho spacing
+.card {
+    padding: var(--spacing-4);           // ✅
+    border-radius: var(--radius-card);   // ✅
+    gap: var(--spacing-3);               // ✅
+}
+
+// ✅ Font system
+.amount {
+    font-family: var(--font-mono);       // IBM Plex Mono cho số
+    font-variant-numeric: tabular-nums;  // Căn lề số
+}
+
+.ui-text {
+    font-family: var(--font-sans);       // IBM Plex Sans cho text thường
+}
+
+// ✅ Responsive — mobile first
+.pr-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 1280px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+```
+
+```scss
+// ✅ _variables.scss — Design Token Definitions
+:root {
+    // ── Colors — Deep Navy + Amber Accent ──────────────────
+    --color-bg-primary:      #0a0f1e;
+    --color-bg-secondary:    #111827;
+    --color-bg-elevated:     #1a2035;
+    --color-bg-card:         #1e2a42;
+
+    --color-text-primary:    #f1f5f9;
+    --color-text-secondary:  #94a3b8;
+    --color-text-muted:      #475569;
+
+    --color-accent:          #f59e0b;    // Amber
+    --color-accent-hover:    #d97706;
+    --color-accent-subtle:   rgba(245, 158, 11, 0.1);
+
+    --color-success:         #10b981;
+    --color-success-subtle:  rgba(16, 185, 129, 0.1);
+    --color-warning:         #f59e0b;
+    --color-warning-subtle:  rgba(245, 158, 11, 0.1);
+    --color-danger:          #ef4444;
+    --color-danger-subtle:   rgba(239, 68, 68, 0.1);
+    --color-info:            #3b82f6;
+    --color-info-subtle:     rgba(59, 130, 246, 0.1);
+
+    // ── Typography ──────────────────────────────────────────
+    --font-sans:  'IBM Plex Sans', -apple-system, sans-serif;
+    --font-mono:  'IBM Plex Mono', 'Fira Code', monospace;
+
+    // ── Spacing scale ───────────────────────────────────────
+    --spacing-1: 0.25rem;   // 4px
+    --spacing-2: 0.5rem;    // 8px
+    --spacing-3: 0.75rem;   // 12px
+    --spacing-4: 1rem;      // 16px
+    --spacing-5: 1.25rem;   // 20px
+    --spacing-6: 1.5rem;    // 24px
+    --spacing-8: 2rem;      // 32px
+
+    // ── Border radius ────────────────────────────────────────
+    --radius-sm:   4px;
+    --radius-md:   8px;
+    --radius-card: 12px;
+    --radius-lg:   16px;
+
+    // ── Shadows ──────────────────────────────────────────────
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-elevated: 0 4px 6px rgba(0,0,0,0.4);
+
+    // ── Borders ──────────────────────────────────────────────
+    --border-default: 1px solid rgba(148, 163, 184, 0.1);
+    --border-focus:   1px solid var(--color-accent);
+}
+```
+
+---
+
+## 5. I18N RULES
+
+```typescript
+// ✅ Translation key structure: {module}.{context}.{element}
+// vi.json
+{
+  "common": {
+    "action": {
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "confirm": "Xác nhận",
+      "back": "Quay lại"
+    },
+    "status": {
+      "loading": "Đang tải...",
+      "empty": "Không có dữ liệu"
+    }
+  },
+  "pr": {
+    "title": "Yêu cầu mua sắm",
+    "status": {
+      "DRAFT": "Nháp",
+      "SUBMITTED": "Đã gửi",
+      "PENDING_APPROVAL": "Chờ phê duyệt",
+      "CHANGES_REQUESTED": "Cần bổ sung",
+      "APPROVED": "Đã phê duyệt",
+      "REJECTED": "Bị từ chối",
+      "CANCELLED": "Đã hủy"
+    },
+    "list": {
+      "title": "Danh sách yêu cầu",
+      "empty.title": "Chưa có yêu cầu nào",
+      "empty.message": "Tạo yêu cầu mua sắm đầu tiên của bạn"
+    },
+    "create": {
+      "title": "Tạo yêu cầu mua sắm",
+      "field.name": "Tiêu đề",
+      "field.justification": "Lý do mua hàng",
+      "field.priority": "Mức độ ưu tiên",
+      "success": "Yêu cầu mua sắm đã được tạo thành công"
+    }
+  }
+}
+
+// ✅ Dùng trong component
+this.translateService.instant('pr.create.success')
+// ✅ Dùng trong template
+{{ 'pr.status.' + pr.status | translate }}
+// ✅ Với params
+{{ 'pr.count' | translate:{ count: total } }}
+// vi.json: "pr.count": "Có {{count}} yêu cầu"
+```
+
+---
+
+## 6. API SERVICE & INTERCEPTORS
+
+```typescript
+// ✅ Base API service với typed response
+@Injectable({ providedIn: 'root' })
+export class ApiService {
+    private readonly http = inject(HttpClient);
+    private readonly baseUrl = inject(API_BASE_URL);  // InjectionToken
+
+    get<T>(path: string, params?: Record<string, string>): Observable<ApiResponse<T>> {
+        return this.http.get<ApiResponse<T>>(`${this.baseUrl}${path}`, {
+            params,
+            withCredentials: true    // ✅ Gửi HttpOnly cookie
+        });
+    }
+
+    post<T>(path: string, body: unknown, idempotencyKey?: string): Observable<ApiResponse<T>> {
+        const key = idempotencyKey ?? crypto.randomUUID();
+        return this.http.post<ApiResponse<T>>(`${this.baseUrl}${path}`, body, {
+            withCredentials: true,
+            headers: { 'Idempotency-Key': key }
+        });
+    }
+}
+
+// ✅ Error interceptor — xử lý tập trung
+@Injectable()
+export class ErrorInterceptor implements HttpInterceptor {
+    private readonly toast = inject(ToastService);
+    private readonly router = inject(Router);
+    private readonly authService = inject(AuthService);
+
+    intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+        return next.handle(req).pipe(
+            catchError((error: HttpErrorResponse) => {
+                const body = error.error as ApiResponse<never>;
+                const code = body?.code;
+
+                switch (code) {
+                    case 'IAM_003':
+                    case 'IAM_005':
+                        // Token hết hạn → logout và redirect login
+                        this.authService.clearSession();
+                        this.router.navigate(['/login']);
+                        break;
+                    case 'IAM_004':
+                        // Không có quyền
+                        this.router.navigate(['/forbidden']);
+                        break;
+                    case 'GW_001':
+                        // Rate limit
+                        this.toast.warning('Vui lòng thử lại sau 30 giây');
+                        break;
+                    case 'SYS_001':
+                    case 'SYS_002':
+                        // System error
+                        this.toast.error('Lỗi hệ thống, vui lòng thử lại sau');
+                        break;
+                    default:
+                        // Business error — hiển thị message từ server
+                        if (body?.message) {
+                            this.toast.error(body.message);
+                        }
+                }
+                return throwError(() => error);
+            })
+        );
+    }
+}
+```
+
+---
+
+## 7. ROUTING & LAZY LOADING
+
+```typescript
+// ✅ app-routing.module.ts
+const routes: Routes = [
+    { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+    { path: 'login', component: LoginComponent },
+    {
+        path: '',
+        component: ShellComponent,
+        canActivate: [AuthGuard],
+        children: [
+            {
+                path: 'dashboard',
+                loadChildren: () => import('./features/analytics/analytics.module')
+                    .then(m => m.AnalyticsModule)
+            },
+            {
+                path: 'procurement',
+                loadChildren: () => import('./features/procurement/procurement.module')
+                    .then(m => m.ProcurementModule),
+                canActivate: [PermissionGuard],
+                data: { requiredPermission: 'PR_VIEW_OWN' }
+            },
+            {
+                path: 'approvals',
+                loadChildren: () => import('./features/approvals/approvals.module')
+                    .then(m => m.ApprovalsModule),
+                canActivate: [PermissionGuard],
+                data: { requiredPermission: 'PR_APPROVE_L1' }
+            },
+            {
+                path: 'admin',
+                loadChildren: () => import('./features/admin/admin.module')
+                    .then(m => m.AdminModule),
+                canActivate: [PermissionGuard],
+                data: { requiredPermission: 'ADMIN_USER_VIEW' }
+            },
+            {
+                path: 'system-config',
+                loadChildren: () => import('./features/system-config/system-config.module')
+                    .then(m => m.SystemConfigModule),
+                canActivate: [PermissionGuard],
+                data: { requiredPermission: 'SYSTEM_CONFIG' }
+            },
+            {
+                path: 'ui-showcase',
+                loadChildren: () => import('./ui-showcase/ui-showcase.module')
+                    .then(m => m.UiShowcaseModule)
+            }
+        ]
+    },
+    { path: 'forbidden', component: ForbiddenComponent },
+    { path: '**', component: NotFoundComponent }
+];
+```
+
+---
+
+## 8. ANGULAR CHECKLIST
+
+```
+□ ChangeDetectionStrategy.OnPush trên mọi component
+□ inject() thay vì constructor injection
+□ takeUntilDestroyed(this.destroyRef) cho mọi subscription
+□ Mọi text trong template dùng | translate pipe
+□ Mọi màu sắc dùng CSS Custom Properties (var(--...))
+□ Mọi shared component có prefix ep-
+□ Lazy loading cho mọi feature module
+□ withCredentials: true trong mọi HTTP request
+□ Idempotency-Key header trong mọi POST/PUT/PATCH
+□ Error interceptor xử lý tập trung — không try/catch trong component
+□ Signals cho local component state
+□ Permission guard bảo vệ routes cần quyền
+□ *epHasPermission directive ẩn/hiện UI element
+□ ep-skeleton khi loading, ep-empty-state khi không có data
+□ ep-amount cho mọi giá trị tiền tệ
+□ ep-breadcrumb trên mọi trang (tự động từ router)
+□ i18n key format: {module}.{context}.{element}
+□ Trang /ui-showcase phải luôn hoạt động và show đủ components
+```

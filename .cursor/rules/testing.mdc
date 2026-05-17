@@ -1,0 +1,493 @@
+---
+description: Quy tắc viết test (Unit, Integration, Performance) cho dự án eProcure. Áp dụng cho mọi file test Java và Postman collection.
+globs:
+  - "**/*Test.java"
+  - "**/*Tests.java"
+  - "**/*Spec.java"
+  - "**/test/**/*.java"
+  - "**/*.postman_collection.json"
+  - "**/jmeter/**/*.jmx"
+alwaysApply: true
+---
+
+# TESTING RULES — eProcure Enterprise
+
+## 1. TESTING PYRAMID
+
+```
+         /‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\
+        /   Performance &   \    JMeter (P95 < 500ms @ 500 users)
+       /   Security Tests    \
+      /────────────────────────\
+     /   Integration Tests      \  Postman Newman (happy path + error)
+    /      (API Contract)        \
+   /──────────────────────────────\
+  /        Unit Tests              \  JUnit 5 + Mockito (coverage ≥ 70%)
+ /  (Domain + Application layer)   \
+/──────────────────────────────────────\
+
+Target coverage:
+  domain/     → 80%+  (business logic quan trọng nhất)
+  application/ → 70%+ (use cases)
+  presentation/ → 50%+ (controllers — integration test cover)
+  infrastructure/ → không cần unit test (integration test cover)
+```
+
+---
+
+## 2. UNIT TEST (JUnit 5 + Mockito)
+
+### 2.1 Cấu trúc test class
+
+```java
+// ✅ Template chuẩn
+@ExtendWith(MockitoExtension.class)
+class CreatePurchaseRequestUseCaseTest {
+
+    // ── Mocks ──────────────────────────────────────────────────
+    @Mock private PurchaseRequestRepository purchaseRequestRepository;
+    @Mock private IdempotencyService idempotencyService;
+    @Mock private PrNumberGenerator prNumberGenerator;
+    @Mock private KafkaEventPublisher eventPublisher;
+
+    // ── Subject under test ────────────────────────────────────
+    @InjectMocks private CreatePurchaseRequestUseCase useCase;
+
+    // ── Test data ─────────────────────────────────────────────
+    private static final UUID REQUESTER_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+    private static final UUID DEPT_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
+    private static final String IDEMPOTENCY_KEY = "test-idempotency-key-123";
+
+    // ── Setup ────────────────────────────────────────────────
+    @BeforeEach
+    void setUp() {
+        // Setup common stubs
+        given(idempotencyService.check(any(), any())).willReturn(Optional.empty());
+        given(prNumberGenerator.next()).willReturn("PR-2025-01-00001");
+    }
+
+    // ── Happy Path ───────────────────────────────────────────
+    @Test
+    @DisplayName("Tạo PR thành công với dữ liệu hợp lệ")
+    void should_create_pr_when_valid_command() {
+        // Given
+        CreatePrCommand command = buildValidCommand();
+
+        // When
+        PurchaseRequest result = useCase.execute(command, IDEMPOTENCY_KEY);
+
+        // Then
+        assertThat(result.getPrNumber()).isEqualTo("PR-2025-01-00001");
+        assertThat(result.getStatus()).isEqualTo(PrStatus.DRAFT);
+        assertThat(result.getRequesterId()).isEqualTo(REQUESTER_ID);
+        assertThat(result.getTotalAmount().getAmount())
+            .isEqualByComparingTo(new BigDecimal("70000000.0000"));
+
+        // Verify interactions
+        verify(purchaseRequestRepository).save(any(PurchaseRequest.class));
+        verify(idempotencyService).save(eq(IDEMPOTENCY_KEY), any(PurchaseRequest.class));
+        verify(eventPublisher, never()).publish(any()); // Draft không publish event
+    }
+
+    // ── Error Cases ───────────────────────────────────────────
+    @Test
+    @DisplayName("Ném ValidationException khi không có line items")
+    void should_throw_validation_exception_when_no_line_items() {
+        // Given
+        CreatePrCommand command = buildCommandWithNoLineItems();
+
+        // When/Then
+        assertThatThrownBy(() -> useCase.execute(command, IDEMPOTENCY_KEY))
+            .isInstanceOf(ValidationException.class)
+            .satisfies(ex -> {
+                ValidationException ve = (ValidationException) ex;
+                assertThat(ve.getErrorCode()).isEqualTo("PR_020");
+                assertThat(ve.getMessage()).contains("ít nhất 1 mục");
+            });
+
+        verify(purchaseRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Trả về cached result khi idempotency key đã tồn tại")
+    void should_return_cached_result_when_idempotency_key_exists() {
+        // Given
+        PurchaseRequest cachedPr = buildExistingPr();
+        given(idempotencyService.check(IDEMPOTENCY_KEY, PurchaseRequest.class))
+            .willReturn(Optional.of(cachedPr));
+
+        // When
+        PurchaseRequest result = useCase.execute(buildValidCommand(), IDEMPOTENCY_KEY);
+
+        // Then — phải trả về cache, không tạo mới
+        assertThat(result.getId()).isEqualTo(cachedPr.getId());
+        verify(purchaseRequestRepository, never()).save(any());
+    }
+
+    // ── Parameterized Tests ───────────────────────────────────
+    @ParameterizedTest(name = "Priority={0} | urgencyReason required={1}")
+    @CsvSource({
+        "NORMAL,  false",
+        "URGENT,  true",
+        "EMERGENCY, true"
+    })
+    @DisplayName("Kiểm tra urgencyReason bắt buộc theo priority")
+    void should_require_urgency_reason_for_urgent_and_emergency(
+            String priority, boolean requiresReason) {
+        // Given
+        CreatePrCommand command = buildCommandWithPriority(
+            PrPriority.valueOf(priority), requiresReason ? null : "Lý do khẩn cấp đầy đủ...");
+
+        if (requiresReason) {
+            // When/Then — phải throw nếu không có urgencyReason
+            assertThatThrownBy(() -> useCase.execute(command, IDEMPOTENCY_KEY))
+                .isInstanceOf(ValidationException.class)
+                .satisfies(ex -> assertThat(((ValidationException) ex).getErrorCode())
+                    .isEqualTo("PR_006"));
+        } else {
+            // When/Then — không throw
+            assertThatCode(() -> useCase.execute(command, IDEMPOTENCY_KEY))
+                .doesNotThrowAnyException();
+        }
+    }
+
+    // ── Builder Helpers ───────────────────────────────────────
+    private CreatePrCommand buildValidCommand() {
+        return CreatePrCommand.builder()
+            .requesterId(REQUESTER_ID)
+            .departmentId(DEPT_ID)
+            .title("Mua laptop Dell XPS 15")
+            .justification("Lý do mua hàng chi tiết và đầy đủ hơn 50 ký tự cho test case này")
+            .priority(PrPriority.NORMAL)
+            .lineItems(List.of(buildLineItem()))
+            .build();
+    }
+
+    private PrLineItemCommand buildLineItem() {
+        return PrLineItemCommand.builder()
+            .itemName("Laptop Dell XPS 15")
+            .categoryCode("IT_HARDWARE")
+            .quantity(new BigDecimal("2"))
+            .unit("cái")
+            .unitPrice(new BigDecimal("35000000"))
+            .currency("VND")
+            .glAccountCode("6002")
+            .build();
+    }
+}
+```
+
+### 2.2 Naming & Structure Rules
+
+```java
+// ✅ Method name: should_{expected_behavior}_when_{condition}
+void should_create_pr_when_valid_command()
+void should_throw_when_budget_insufficient()
+void should_return_cached_result_when_idempotency_hit()
+
+// ✅ @DisplayName tiếng Việt rõ ràng
+@DisplayName("Tạo PR thành công với dữ liệu hợp lệ")
+@DisplayName("Ném lỗi khi ngân sách không đủ")
+@DisplayName("Không tạo lại khi idempotency key đã dùng")
+
+// ✅ Cấu trúc Given / When / Then (luôn có comment phân tách)
+// Given — setup dữ liệu và stubs
+// When  — gọi method cần test
+// Then  — assert kết quả + verify interactions
+
+// ✅ Một test = một scenario — không test nhiều thứ trong 1 method
+// ❌ Tên test không rõ ràng
+void testCreatePR() { }          // ❌
+void test1() { }                  // ❌
+void shouldWork() { }             // ❌
+```
+
+### 2.3 Test Coverage Rules
+
+```
+Coverage target (JaCoCo):
+  domain/**          → 80%+ instruction coverage
+  application/**     → 70%+ instruction coverage
+  presentation/**    → 50%+ (integration test hỗ trợ)
+  infrastructure/**  → Không yêu cầu (integration test)
+
+Phải test các case:
+  ✅ Happy path (thành công)
+  ✅ Main error paths (exception chính)
+  ✅ Edge cases: null, empty list, boundary values
+  ✅ Idempotency behavior
+  ✅ State transition (PR từ DRAFT → SUBMITTED → PENDING_APPROVAL)
+
+Không cần test:
+  ❌ Getter/Setter thuần túy
+  ❌ Repository implementation (integration test)
+  ❌ Spring config classes
+  ❌ Private methods trực tiếp
+```
+
+---
+
+## 3. INTEGRATION TEST (Postman + Newman)
+
+### 3.1 Collection Structure
+
+```
+eprocure-{service}.postman_collection.json
+├── Auth Setup          ← Pre-request: login, lấy cookie
+├── Happy Path
+│   ├── [POST] Tạo PR                      → 201 + assert prNumber
+│   ├── [GET]  Xem PR vừa tạo              → 200 + assert fields
+│   ├── [POST] Submit PR                   → 200 + status = PENDING_APPROVAL
+│   ├── [GET]  Approval Inbox (manager)    → 200 + task tồn tại
+│   ├── [POST] Approve task               → 200 + PR approved
+│   └── [GET]  PR status = APPROVED       → 200
+├── Error Cases
+│   ├── [POST] Tạo PR không có line items  → 400 + code=PR_020
+│   ├── [POST] Submit PR ngân sách thiếu   → 422 + code=PR_002
+│   ├── [POST] Approve không có quyền      → 403 + code=IAM_004
+│   └── [POST] Submit PR đã submit         → 409 + code=PR_010
+├── Idempotency
+│   ├── [POST] Tạo PR lần 1               → 201
+│   └── [POST] Tạo PR cùng key lần 2      → 200 + same prNumber
+└── Cleanup             ← Cancel các PR test vừa tạo
+```
+
+### 3.2 Postman Test Script Template
+
+```javascript
+// ✅ Pre-request: Login và lấy cookie
+pm.sendRequest({
+    url: pm.environment.get('base_url') + '/auth/login',
+    method: 'POST',
+    header: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': pm.variables.replaceIn('{{$randomUUID}}')
+    },
+    body: {
+        mode: 'raw',
+        raw: JSON.stringify({
+            username: pm.environment.get('test_username'),
+            password: pm.environment.get('test_password')
+        })
+    }
+}, function (err, response) {
+    const cookie = response.headers.get('Set-Cookie');
+    pm.environment.set('session_cookie', cookie);
+});
+
+// ✅ Test script
+pm.test("Status code là 201", () => {
+    pm.response.to.have.status(201);
+});
+
+pm.test("Response có đúng structure", () => {
+    const body = pm.response.json();
+    pm.expect(body.success).to.be.true;
+    pm.expect(body.code).to.equal('PR_CREATED');
+    pm.expect(body.data).to.have.property('prNumber');
+    pm.expect(body.data.prNumber).to.match(/^PR-\d{4}-\d{2}-\d{5}$/);
+    pm.expect(body.data.status).to.equal('DRAFT');
+    pm.expect(body.timestamp).to.not.be.null;
+    pm.expect(body.requestId).to.not.be.null;
+});
+
+pm.test("prNumber lưu vào env cho test tiếp theo", () => {
+    const body = pm.response.json();
+    pm.environment.set('created_pr_id', body.data.id);
+    pm.environment.set('created_pr_number', body.data.prNumber);
+});
+
+// ✅ Error case test
+pm.test("Status code là 400 khi không có line items", () => {
+    pm.response.to.have.status(400);
+});
+
+pm.test("Error code chính xác", () => {
+    const body = pm.response.json();
+    pm.expect(body.success).to.be.false;
+    pm.expect(body.code).to.equal('PR_020');
+    pm.expect(body.message).to.not.be.null;
+});
+```
+
+### 3.3 Newman CI Run
+
+```bash
+# ✅ Chạy trong Jenkins / local
+newman run tests/postman/pr-service.postman_collection.json \
+    --environment tests/postman/dev.environment.json \
+    --reporters cli,junit,htmlextra \
+    --reporter-junit-export target/newman-results.xml \
+    --reporter-htmlextra-export target/newman-report.html \
+    --delay-request 200 \        # 200ms giữa requests
+    --timeout 30000 \            # 30s timeout mỗi request
+    --bail                       # Dừng khi có test fail
+```
+
+---
+
+## 4. PERFORMANCE TEST (JMeter)
+
+### 4.1 Test Scenarios
+
+```
+Scenario 1: Normal Load
+  - 100 concurrent users
+  - Ramp up: 30 giây
+  - Duration: 5 phút
+  - Actions: Login → Xem danh sách PR → Xem chi tiết PR
+  - Target: P95 < 500ms, Error rate < 1%
+
+Scenario 2: Approval Load
+  - 50 concurrent approvers
+  - Ramp up: 20 giây
+  - Duration: 3 phút
+  - Actions: Xem inbox → Approve task
+  - Target: P95 < 800ms, Error rate < 1%
+
+Scenario 3: Peak Load
+  - 500 concurrent users
+  - Ramp up: 60 giây
+  - Duration: 10 phút
+  - Mix: 60% Read, 30% Submit PR, 10% Approve
+  - Target: P95 < 1000ms, Error rate < 2%
+
+Scenario 4: Endurance (Soak Test)
+  - 200 concurrent users
+  - Duration: 1 giờ
+  - Target: Memory leak < 5%, Error rate < 0.5%
+```
+
+### 4.2 JMeter Test Plan Structure
+
+```
+eprocure-performance.jmx
+├── Test Plan
+│   ├── User Defined Variables
+│   │   ├── BASE_URL = ${__P(base_url,http://localhost:8080)}
+│   │   ├── USERS    = ${__P(users,100)}
+│   │   └── DURATION = ${__P(duration,300)}
+│   │
+│   ├── Thread Group: Normal Load
+│   │   ├── HTTP Cookie Manager       ← Manage session cookie
+│   │   ├── HTTP Header Manager       ← Common headers
+│   │   ├── Login (Once per user)
+│   │   │   └── POST /auth/login → Extract cookie
+│   │   ├── List PRs (70% weight)
+│   │   │   └── GET /purchase-requests?page=1&size=20
+│   │   ├── View PR Detail (20% weight)
+│   │   │   └── GET /purchase-requests/${pr_number}
+│   │   └── Create PR (10% weight)
+│   │       └── POST /purchase-requests
+│   │
+│   └── Listeners
+│       ├── Aggregate Report          ← P50, P90, P95, P99
+│       ├── Response Time Graph
+│       └── Backend Listener → InfluxDB/Grafana (nếu có)
+```
+
+### 4.3 Performance Thresholds
+
+```
+P50 (median):   < 200ms   ← Mục tiêu lý tưởng
+P90:            < 400ms   ← Acceptable
+P95:            < 500ms   ← SLA cam kết
+P99:            < 1000ms  ← Hard limit
+Error rate:     < 1%      ← Production SLA
+Throughput:     > 100 RPS ← Đủ cho 500 concurrent users
+
+Nếu FAIL → KHÔNG deploy production
+```
+
+---
+
+## 5. DOMAIN MODEL TEST
+
+```java
+// ✅ Test domain logic thuần (không cần mock)
+class PurchaseRequestTest {
+
+    @Test
+    @DisplayName("PR có thể submit khi ở trạng thái DRAFT")
+    void should_transition_to_submitted_when_submitted_from_draft() {
+        // Given
+        PurchaseRequest pr = PurchaseRequest.create(validCommand(), "PR-2025-01-00001");
+        assertThat(pr.getStatus()).isEqualTo(PrStatus.DRAFT);
+
+        // When
+        pr.submit();
+
+        // Then
+        assertThat(pr.getStatus()).isEqualTo(PrStatus.SUBMITTED);
+        assertThat(pr.getSubmittedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("PR không thể submit khi đang PENDING_APPROVAL")
+    void should_throw_when_submitting_from_pending_approval() {
+        // Given
+        PurchaseRequest pr = buildPrInStatus(PrStatus.PENDING_APPROVAL);
+
+        // When/Then
+        assertThatThrownBy(pr::submit)
+            .isInstanceOf(InvalidStateTransitionException.class)
+            .satisfies(ex -> assertThat(((InvalidStateTransitionException) ex).getErrorCode())
+                .isEqualTo("PR_010"));
+    }
+
+    @Test
+    @DisplayName("calculateTotalAmount tính đúng tổng từ line items")
+    void should_calculate_total_correctly_from_line_items() {
+        // Given
+        PurchaseRequest pr = PurchaseRequest.create(validCommand(), "PR-2025-01-00001");
+        // Line items: 2 × 35M + 1 × 5M = 75M
+        assertThat(pr.getTotalAmount().getAmount())
+            .isEqualByComparingTo(new BigDecimal("75000000.0000"));
+    }
+
+    @Test
+    @DisplayName("Money arithmetic không có floating point error")
+    void should_calculate_money_without_floating_point_error() {
+        Money a = new Money(new BigDecimal("35000000.0000"), "VND");
+        Money b = new Money(new BigDecimal("35000000.0000"), "VND");
+        Money result = a.add(b);
+
+        // Phải chính xác tuyệt đối — không có 69999999.9999...
+        assertThat(result.getAmount())
+            .isEqualByComparingTo(new BigDecimal("70000000.0000"));
+    }
+}
+```
+
+---
+
+## 6. TESTING CHECKLIST
+
+```
+Unit Tests:
+□ Coverage ≥ 70% cho package domain/ và application/
+□ Method name: should_{expected}_when_{condition}
+□ @DisplayName tiếng Việt rõ ràng
+□ Cấu trúc Given/When/Then có comment
+□ Test happy path + main error paths + edge cases
+□ Không dùng @SpringBootTest cho unit test (dùng Mockito)
+□ @InjectMocks + @Mock, không @Autowired trong test
+□ Parameterized test cho multiple scenarios cùng loại
+□ Verify interactions (verify repository.save() được gọi đúng số lần)
+
+Integration Tests (Postman):
+□ Collection cover tất cả happy path flows
+□ Test error cases với đúng error code
+□ Pre-request script login và lấy cookie
+□ Test idempotency behavior
+□ Environment variables cho base_url, credentials
+□ Cleanup step để không để lại test data
+
+Performance Tests (JMeter):
+□ P95 < 500ms với 500 concurrent users
+□ Error rate < 1%
+□ Soak test 1 giờ không memory leak
+□ Test cả read và write operations
+□ Kết quả export ra file .jtl để lưu lịch sử
+□ Alert nếu vượt threshold
+```

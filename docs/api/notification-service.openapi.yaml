@@ -1,0 +1,372 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Notification Service API
+  description: |
+    Quản lý thông báo in-app, email (Brevo SMTP) và realtime WebSocket.
+    
+    **WebSocket endpoint:** `wss://{host}/ws/notifications`  
+    **STOMP topic:** `/user/{userId}/notifications` (cần authenticate bằng Cookie trước)
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+tags:
+  - name: Notifications
+  - name: Templates
+  - name: WebSocket
+security:
+  - cookieAuth: []
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        isFirst: { type: boolean }
+        isLast: { type: boolean }
+    NotificationItem:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        eventType:    { type: string, example: PR_SUBMITTED }
+        channel:      { type: string, enum: [IN_APP, EMAIL, PUSH] }
+        subject:      { type: string, nullable: true }
+        body:         { type: string }
+        isRead:       { type: boolean }
+        readAt:       { type: string, format: date-time, nullable: true }
+        referenceType:{ type: string, nullable: true, example: PURCHASE_REQUEST }
+        referenceId:  { type: string, format: uuid, nullable: true }
+        referenceNumber: { type: string, nullable: true, example: PR-2025-01-00001 }
+        actionUrl:    { type: string, nullable: true, description: Deep-link FE navigate đến }
+        createdAt:    { type: string, format: date-time }
+    NotificationTemplate:
+      type: object
+      properties:
+        code:            { type: string }
+        eventType:       { type: string }
+        channel:         { type: string, enum: [EMAIL, IN_APP, PUSH] }
+        language:        { type: string, example: vi }
+        subjectTemplate: { type: string, nullable: true }
+        bodyTemplate:
+          type: string
+          description: |
+            Thymeleaf/Handlebars template. Available variables phụ thuộc eventType.
+            Ví dụ PR_SUBMITTED: {{requesterName}}, {{prNumber}}, {{totalAmount}}, {{approverName}}
+        isActive:        { type: boolean }
+        updatedAt:       { type: string, format: date-time }
+
+paths:
+  # ── Notifications ─────────────────────────────────────────────
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Danh sách thông báo của tôi (in-app)
+      operationId: listMyNotifications
+      description: Hỗ trợ cursor-based pagination cho feed realtime.
+      parameters:
+        - name: is_read
+          in: query
+          schema: { type: boolean }
+          description: null = tất cả, false = chưa đọc
+        - name: event_type
+          in: query
+          schema: { type: string }
+        - name: cursor
+          in: query
+          schema: { type: string }
+          description: base64 cursor cho infinite scroll (thay thế page)
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách thông báo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/NotificationItem'
+                      meta:
+                        oneOf:
+                          - $ref: '#/components/schemas/PageMeta'
+                          - type: object
+                            description: Cursor meta khi dùng cursor param
+                            properties:
+                              size:       { type: integer }
+                              hasMore:    { type: boolean }
+                              nextCursor: { type: string, nullable: true }
+
+  /notifications/count:
+    get:
+      tags: [Notifications]
+      summary: Đếm thông báo chưa đọc (dùng cho badge header)
+      operationId: countUnreadNotifications
+      responses:
+        '200':
+          description: Số thông báo chưa đọc
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          unread: { type: integer }
+
+  /notifications/{id}/read:
+    patch:
+      tags: [Notifications]
+      summary: Đánh dấu 1 thông báo đã đọc
+      operationId: markNotificationRead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Đã đánh dấu đọc
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /notifications/read-all:
+    patch:
+      tags: [Notifications]
+      summary: Đánh dấu tất cả thông báo đã đọc
+      operationId: markAllNotificationsRead
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Tất cả đã được đánh dấu đọc
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          markedCount: { type: integer }
+
+  # ── Templates ─────────────────────────────────────────────────
+  /notification-templates:
+    get:
+      tags: [Templates]
+      summary: Danh sách templates thông báo
+      operationId: listNotificationTemplates
+      x-required-permission: SYSTEM_CONFIG
+      parameters:
+        - name: channel
+          in: query
+          schema: { type: string, enum: [EMAIL, IN_APP, PUSH] }
+        - name: event_type
+          in: query
+          schema: { type: string }
+        - name: language
+          in: query
+          schema: { type: string, enum: [vi, en] }
+      responses:
+        '200':
+          description: Danh sách templates
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/NotificationTemplate'
+
+  /notification-templates/{code}:
+    put:
+      tags: [Templates]
+      summary: Cập nhật nội dung template
+      operationId: updateNotificationTemplate
+      x-required-permission: SYSTEM_CONFIG
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subjectTemplate: { type: string, nullable: true }
+                bodyTemplate:    { type: string }
+                isActive:        { type: boolean }
+      responses:
+        '200':
+          description: Template đã cập nhật
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/NotificationTemplate'
+
+  /notification-templates/{code}/preview:
+    post:
+      tags: [Templates]
+      summary: Xem preview template với dữ liệu mẫu
+      operationId: previewNotificationTemplate
+      x-required-permission: SYSTEM_CONFIG
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Dữ liệu mẫu để render template
+              example:
+                requesterName: "Nguyễn Văn A"
+                prNumber: "PR-2025-01-00001"
+                totalAmount: "70,000,000 VND"
+                approverName: "Lê Văn C"
+                slaDeadline: "17/01/2025 17:30"
+      responses:
+        '200':
+          description: HTML preview của template
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          subject: { type: string, nullable: true }
+                          htmlBody: { type: string }
+
+  # ── WebSocket (Documentation only) ───────────────────────────
+  /ws/info:
+    get:
+      tags: [WebSocket]
+      summary: Thông tin WebSocket endpoint (tham khảo)
+      operationId: getWebSocketInfo
+      description: |
+        ## WebSocket / STOMP Connection
+
+        **URL:** `wss://{host}/ws/notifications`  
+        **Protocol:** STOMP over WebSocket  
+        **Auth:** Cookie `ep_session` được gửi trong WebSocket handshake (browser tự gửi)
+
+        ### Angular Setup
+        ```typescript
+        import { Client } from '@stomp/stompjs';
+
+        const client = new Client({
+          brokerURL: 'wss://api.eprocure.internal/ws/notifications',
+          onConnect: () => {
+            // Subscribe cá nhân
+            client.subscribe(`/user/me/notifications`, (msg) => {
+              const notification = JSON.parse(msg.body);
+              this.handleNotification(notification);
+            });
+          }
+        });
+        client.activate();
+        ```
+
+        ### Notification Payload (STOMP message body)
+        ```json
+        {
+          "id": "uuid",
+          "eventType": "APPROVAL_TASK_ASSIGNED",
+          "body": "Bạn có task cần phê duyệt: PR-2025-01-00001",
+          "referenceType": "PURCHASE_REQUEST",
+          "referenceId": "uuid",
+          "referenceNumber": "PR-2025-01-00001",
+          "actionUrl": "/approvals/inbox",
+          "priority": "NORMAL",
+          "createdAt": "2025-01-15T08:30:00.000Z"
+        }
+        ```
+
+        ### Event Types pushed qua WebSocket
+        | eventType | Trigger |
+        |---|---|
+        | `APPROVAL_TASK_ASSIGNED` | Task phê duyệt được gán cho approver |
+        | `PR_APPROVED` | PR của requester được duyệt hoàn toàn |
+        | `PR_REJECTED` | PR của requester bị từ chối |
+        | `PR_CHANGES_REQUESTED` | Approver yêu cầu bổ sung |
+        | `SLA_WARNING` | Task sắp quá hạn SLA (còn 4h) |
+        | `SLA_BREACHED` | Task đã quá hạn SLA |
+        | `BUDGET_WARNING` | Ngân sách phòng dưới 20% |
+        | `GR_READY_FOR_RECEIPT` | PO đến hạn nhận hàng |
+        | `INVOICE_MATCHED` | Hóa đơn match thành công |
+        | `EMERGENCY_ABUSE_ALERT` | Cảnh báo lạm dụng Emergency PR |
+      responses:
+        '200':
+          description: Thông tin WebSocket
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  endpoint: { type: string }
+                  protocol: { type: string }
+                  userTopic: { type: string }

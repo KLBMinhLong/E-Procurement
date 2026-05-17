@@ -1,0 +1,422 @@
+---
+description: Quy tắc định nghĩa và sử dụng mã lỗi (error code) trong toàn bộ hệ thống eProcure. Áp dụng cho Exception classes, GlobalExceptionHandler và API response.
+globs:
+  - "**/*Exception*.java"
+  - "**/*ErrorCode*.java"
+  - "**/*ExceptionHandler*.java"
+  - "**/*Response*.java"
+alwaysApply: true
+---
+
+# ERROR CODE RULES — eProcure Enterprise
+
+## 1. NAMING CONVENTION
+
+```
+Format:  {SERVICE_PREFIX}_{3-digit-number}
+Example: PR_001, IAM_002, FIN_010
+
+Prefix mapping:
+  IAM_   → IAM Service         (001–099)
+  PR_    → Purchase Request    (001–099)
+  APR_   → Approval Engine     (001–099)
+  FIN_   → Finance Service     (001–099)
+  INV_   → Inventory Service   (001–099)
+  VND_   → Vendor Service      (001–099)
+  NTF_   → Notification        (001–099)
+  GW_    → API Gateway         (001–099)
+  SYS_   → System-wide         (001–099)
+  VAL_   → Validation          (001–099)
+```
+
+---
+
+## 2. ENUM ĐỊNH NGHĨA MÃ LỖI (MỖI SERVICE)
+
+```java
+// ✅ Mỗi service có 1 enum ErrorCode riêng trong common/constant/
+// Ví dụ: pr-service/common/constant/PrErrorCode.java
+
+public enum PrErrorCode {
+
+    // ── Tìm kiếm / Not Found ──────────────────────────────────
+    PR_NOT_FOUND("PR_001", HttpStatus.NOT_FOUND,
+        "Yêu cầu mua sắm không tồn tại"),
+
+    // ── Ngân sách ─────────────────────────────────────────────
+    INSUFFICIENT_BUDGET("PR_002", HttpStatus.UNPROCESSABLE_ENTITY,
+        "Ngân sách phòng ban không đủ"),
+    BUDGET_NOT_ACTIVE("PR_003", HttpStatus.UNPROCESSABLE_ENTITY,
+        "Ngân sách chưa được phê duyệt"),
+
+    // ── Trạng thái / State ────────────────────────────────────
+    INVALID_STATE_TRANSITION("PR_010", HttpStatus.CONFLICT,
+        "Không thể thực hiện thao tác ở trạng thái hiện tại"),
+
+    // ── Business Rules ────────────────────────────────────────
+    SELF_APPROVAL_NOT_ALLOWED("PR_011", HttpStatus.FORBIDDEN,
+        "Người tạo PR không được tự phê duyệt PR của mình"),
+    EMERGENCY_LIMIT_EXCEEDED("PR_012", HttpStatus.UNPROCESSABLE_ENTITY,
+        "Phòng ban đã vượt giới hạn 3 lần Emergency trong tháng"),
+    URGENCY_REASON_TOO_SHORT("PR_013", HttpStatus.BAD_REQUEST,
+        "Lý do khẩn cấp phải ít nhất 100 ký tự"),
+
+    // ── Validation ────────────────────────────────────────────
+    NO_LINE_ITEMS("PR_020", HttpStatus.BAD_REQUEST,
+        "PR phải có ít nhất 1 mục hàng hoá"),
+    INVALID_QUANTITY("PR_021", HttpStatus.BAD_REQUEST,
+        "Số lượng phải lớn hơn 0"),
+    INVALID_UNIT_PRICE("PR_022", HttpStatus.BAD_REQUEST,
+        "Đơn giá không hợp lệ"),
+    PAST_NEED_BY_DATE("PR_023", HttpStatus.BAD_REQUEST,
+        "Ngày cần nhận hàng không được trong quá khứ"),
+
+    // ── File ─────────────────────────────────────────────────
+    ATTACHMENT_NOT_FOUND("PR_030", HttpStatus.NOT_FOUND,
+        "File đính kèm không tồn tại hoặc đã hết hạn"),
+    FILE_TOO_LARGE("PR_031", HttpStatus.UNPROCESSABLE_ENTITY,
+        "File vượt quá kích thước tối đa 10MB"),
+    INVALID_FILE_TYPE("PR_032", HttpStatus.UNPROCESSABLE_ENTITY,
+        "Loại file không được phép. Chỉ chấp nhận: pdf, xlsx, docx, jpg, png");
+
+    private final String code;
+    private final HttpStatus httpStatus;
+    private final String defaultMessage;
+
+    PrErrorCode(String code, HttpStatus httpStatus, String defaultMessage) {
+        this.code = code;
+        this.httpStatus = httpStatus;
+        this.defaultMessage = defaultMessage;
+    }
+
+    public String getCode() { return code; }
+    public HttpStatus getHttpStatus() { return httpStatus; }
+    public String getDefaultMessage() { return defaultMessage; }
+}
+```
+
+---
+
+## 3. EXCEPTION HIERARCHY
+
+```java
+// ✅ Base exception — abstract, không throw trực tiếp
+public abstract class BusinessException extends RuntimeException {
+    private final String errorCode;
+    private final HttpStatus httpStatus;
+
+    protected BusinessException(String errorCode, String message, HttpStatus httpStatus) {
+        super(message);
+        this.errorCode = errorCode;
+        this.httpStatus = httpStatus;
+    }
+
+    protected BusinessException(PrErrorCode errorCode) {
+        this(errorCode.getCode(), errorCode.getDefaultMessage(), errorCode.getHttpStatus());
+    }
+
+    // Getter only — immutable
+    public String getErrorCode() { return errorCode; }
+    public HttpStatus getHttpStatus() { return httpStatus; }
+}
+
+// ✅ Domain exceptions — 1 class = 1 loại lỗi nghiệp vụ rõ ràng
+public class PrNotFoundException extends BusinessException {
+    public PrNotFoundException(String prNumber) {
+        super(PrErrorCode.PR_NOT_FOUND.getCode(),
+              "Yêu cầu mua sắm không tồn tại: " + prNumber,
+              HttpStatus.NOT_FOUND);
+    }
+}
+
+public class InsufficientBudgetException extends BusinessException {
+    public InsufficientBudgetException(BigDecimal available, BigDecimal required) {
+        super(PrErrorCode.INSUFFICIENT_BUDGET.getCode(),
+              String.format("Ngân sách không đủ. Còn lại: %s VND, cần: %s VND",
+                  NumberFormat.format(available), NumberFormat.format(required)),
+              HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+}
+
+public class InvalidStateTransitionException extends BusinessException {
+    public InvalidStateTransitionException(PrStatus current, String action) {
+        super(PrErrorCode.INVALID_STATE_TRANSITION.getCode(),
+              String.format("Không thể '%s' khi PR đang ở trạng thái %s", action, current),
+              HttpStatus.CONFLICT);
+    }
+}
+
+// ✅ Technical exceptions — để tách biệt với domain
+public class ExternalServiceException extends BusinessException {
+    public ExternalServiceException(String serviceName, String detail) {
+        super("SYS_002",
+              "Dịch vụ " + serviceName + " không khả dụng",
+              HttpStatus.SERVICE_UNAVAILABLE);
+    }
+}
+```
+
+---
+
+## 4. GLOBAL EXCEPTION HANDLER
+
+```java
+// ✅ Một GlobalExceptionHandler dùng chung cho mọi service (copy hoặc shared lib)
+@RestControllerAdvice
+@RequiredArgsConstructor
+public class GlobalExceptionHandler {
+
+    private static final Logger log = LogManager.getLogger(GlobalExceptionHandler.class);
+
+    // Business exception — WARN level
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusiness(
+            BusinessException ex, HttpServletRequest request) {
+        log.warn("[EXCEPTION][{}] {} | path={}",
+            ex.getErrorCode(), ex.getMessage(), request.getRequestURI());
+        return ResponseEntity
+            .status(ex.getHttpStatus())
+            .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    // Spring Validation — WARN level
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidation(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+        List<FieldErrorDetail> details = ex.getBindingResult().getFieldErrors()
+            .stream()
+            .map(e -> new FieldErrorDetail(e.getField(), e.getDefaultMessage(), e.getRejectedValue()))
+            .toList();
+        log.warn("[EXCEPTION][VAL_001] Validation failed | fields={} | path={}",
+            details.size(), request.getRequestURI());
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.validationError("VAL_001", "Dữ liệu không hợp lệ", details));
+    }
+
+    // Constraint Violation (javax.validation)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
+            ConstraintViolationException ex, HttpServletRequest request) {
+        List<FieldErrorDetail> details = ex.getConstraintViolations()
+            .stream()
+            .map(v -> new FieldErrorDetail(v.getPropertyPath().toString(), v.getMessage(), v.getInvalidValue()))
+            .toList();
+        log.warn("[EXCEPTION][VAL_001] Constraint violation | count={}", details.size());
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.validationError("VAL_001", "Dữ liệu không hợp lệ", details));
+    }
+
+    // Access Denied (Spring Security)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("[EXCEPTION][IAM_004] Access denied | path={}", request.getRequestURI());
+        // ❌ KHÔNG expose chi tiết tại sao bị từ chối
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(ApiResponse.error("IAM_004", "Bạn không có quyền thực hiện thao tác này"));
+    }
+
+    // HTTP Method Not Allowed
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowed(
+            HttpRequestMethodNotSupportedException ex) {
+        log.warn("[EXCEPTION][GW_004] Method not allowed: {}", ex.getMethod());
+        return ResponseEntity
+            .status(HttpStatus.METHOD_NOT_ALLOWED)
+            .body(ApiResponse.error("GW_004", "Phương thức HTTP không được hỗ trợ"));
+    }
+
+    // Mọi exception khác — ERROR level + full stack trace
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnexpected(
+            Exception ex, HttpServletRequest request) {
+        log.error("[EXCEPTION][SYS_001] Unexpected error | path={}",
+            request.getRequestURI(), ex);   // ← Truyền ex làm arg cuối → stack trace
+        // ❌ KHÔNG expose stack trace hay message kỹ thuật cho client
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ApiResponse.error("SYS_001", "Lỗi hệ thống, vui lòng thử lại sau"));
+    }
+}
+```
+
+---
+
+## 5. API RESPONSE ENVELOPE
+
+```java
+// ✅ Generic response wrapper
+@Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ApiResponse<T> {
+
+    private final boolean success;
+    private final String code;
+    private final String message;
+    private final T data;
+    private final List<FieldErrorDetail> details;     // Chỉ có khi validation error
+    private final PageMeta meta;                       // Chỉ có khi phân trang
+    private final String timestamp;
+    private final String requestId;
+
+    private ApiResponse(boolean success, String code, String message,
+                        T data, List<FieldErrorDetail> details, PageMeta meta) {
+        this.success = success;
+        this.code = code;
+        this.message = message;
+        this.data = data;
+        this.details = details;
+        this.meta = meta;
+        this.timestamp = Instant.now().toString();
+        this.requestId = MDC.get("traceId");    // OpenTelemetry trace ID
+    }
+
+    // ✅ Factory methods
+    public static <T> ApiResponse<T> success(String code, T data) {
+        return new ApiResponse<>(true, code, null, data, null, null);
+    }
+
+    public static <T> ApiResponse<T> success(String code, T data, PageMeta meta) {
+        return new ApiResponse<>(true, code, null, data, null, meta);
+    }
+
+    public static <T> ApiResponse<T> ok(String code, String message) {
+        return new ApiResponse<>(true, code, message, null, null, null);
+    }
+
+    public static <T> ApiResponse<T> error(String code, String message) {
+        return new ApiResponse<>(false, code, message, null, null, null);
+    }
+
+    public static <T> ApiResponse<T> validationError(
+            String code, String message, List<FieldErrorDetail> details) {
+        return new ApiResponse<>(false, code, message, null, details, null);
+    }
+}
+
+// ✅ Field error detail
+public record FieldErrorDetail(String field, String reason, Object rejectedValue) {}
+```
+
+---
+
+## 6. MÃ LỖI MASTER TABLE
+
+```
+── IAM Service ──────────────────────────────────────────────
+IAM_001  401  Thông tin đăng nhập không đúng
+IAM_002  423  Tài khoản bị khóa (5 lần sai liên tiếp)
+IAM_003  401  Token không hợp lệ hoặc đã bị thu hồi
+IAM_004  403  Không có quyền thực hiện thao tác này
+IAM_005  401  Phiên đăng nhập đã bị invalidate (đăng nhập thiết bị khác)
+IAM_006  401  Mã 2FA không đúng hoặc hết hạn
+IAM_007  422  Token reset password không hợp lệ hoặc hết hạn
+IAM_008  422  Password mới không đủ mạnh
+IAM_009  409  Username hoặc email đã tồn tại
+IAM_010  422  Email chưa được xác thực
+IAM_020  422  Người được ủy quyền phải cùng/cao hơn cấp người ủy quyền
+IAM_021  422  Không thể ủy quyền vượt quá quyền của bản thân
+IAM_022  409  Đã có ủy quyền đang hoạt động trong khoảng thời gian này
+IAM_030  404  Người dùng không tồn tại
+IAM_031  404  Phòng ban không tồn tại
+IAM_032  404  Role không tồn tại
+
+── PR Service ───────────────────────────────────────────────
+PR_001  404  Yêu cầu mua sắm không tồn tại
+PR_002  422  Ngân sách phòng ban không đủ
+PR_003  422  Ngân sách chưa được phê duyệt
+PR_010  409  Không thể thực hiện thao tác ở trạng thái hiện tại
+PR_011  403  Người tạo PR không được tự phê duyệt PR của mình
+PR_012  422  Phòng ban đã vượt giới hạn 3 lần Emergency trong tháng
+PR_013  400  Lý do khẩn cấp phải ít nhất 100 ký tự
+PR_020  400  PR phải có ít nhất 1 mục hàng hoá
+PR_021  400  Số lượng phải lớn hơn 0
+PR_022  400  Đơn giá không hợp lệ
+PR_023  400  Ngày cần nhận hàng không được trong quá khứ
+PR_030  404  File đính kèm không tồn tại hoặc đã hết hạn
+PR_031  422  File vượt quá kích thước tối đa 10MB
+PR_032  422  Loại file không được phép
+
+── Approval Engine ──────────────────────────────────────────
+APR_001  403  Xung đột lợi ích: approver không thể duyệt request này
+APR_002  403  Không phải approver được chỉ định cho task này
+APR_003  409  Task đã được xử lý trước đó (idempotency)
+APR_004  404  Approval task không tồn tại
+APR_005  422  Comment bắt buộc khi Từ chối (tối thiểu 20 ký tự)
+APR_006  422  Không thể forward cho người có cấp thấp hơn
+APR_007  422  Approval rule không hợp lệ hoặc không còn hoạt động
+APR_008  409  Approval process đã hoàn thành
+
+── Finance Service ──────────────────────────────────────────
+FIN_001  404  Ngân sách không tồn tại
+FIN_002  422  3-Way Match thất bại: số lượng không khớp
+FIN_003  422  3-Way Match thất bại: đơn giá không khớp
+FIN_004  403  Vượt ngân sách > 30%, cần CEO phê duyệt
+FIN_005  422  Ngân sách chưa được phê duyệt (status != ACTIVE)
+FIN_006  404  Purchase Order không tồn tại
+FIN_007  404  Hóa đơn không tồn tại
+FIN_008  409  Hóa đơn đã được xử lý (idempotency)
+FIN_009  422  Phòng ban nguồn không đủ ngân sách để chuyển
+FIN_010  422  Số tiền hóa đơn vượt quá số tiền PO cho phép
+
+── Inventory Service ────────────────────────────────────────
+INV_001  404  Item (catalog) không tồn tại
+INV_002  404  Kho hàng không tồn tại
+INV_003  422  Tồn kho không đủ để cấp phát
+INV_004  404  Phiếu nhận hàng (GR) không tồn tại
+INV_005  409  GR đã được hoàn tất, không thể chỉnh sửa
+INV_006  422  Số lượng nhận vượt số lượng đặt hàng > 10%
+INV_007  409  Item code đã tồn tại
+
+── Vendor Service ───────────────────────────────────────────
+VND_001  404  Nhà cung cấp không tồn tại
+VND_002  409  Mã số thuế đã tồn tại
+VND_003  422  Nhà cung cấp đang trong danh sách đen
+VND_004  404  RFQ không tồn tại
+VND_005  409  RFQ đã đóng hoặc đã có kết quả
+VND_006  422  Chưa có báo giá nào để chọn
+VND_007  422  Thời hạn nộp báo giá đã hết
+
+── Gateway ──────────────────────────────────────────────────
+GW_001  429  Vượt giới hạn request (rate limit)
+GW_002  401  x-api-key không hợp lệ (inter-service)
+GW_003  503  Service không khả dụng (circuit breaker open)
+GW_004  405  HTTP method không được hỗ trợ
+GW_005  408  Request timeout
+
+── System ───────────────────────────────────────────────────
+SYS_001  500  Lỗi hệ thống không xác định
+SYS_002  503  Dịch vụ phụ thuộc không khả dụng
+SYS_003  500  Lỗi mã hóa/giải mã payload
+SYS_004  400  Payload đã mã hóa không hợp lệ hoặc bị giả mạo
+SYS_005  400  Idempotency-Key header bắt buộc nhưng không có
+
+── Validation ───────────────────────────────────────────────
+VAL_001  400  Dữ liệu không hợp lệ (xem details)
+VAL_002  400  JSON không đúng format
+VAL_003  400  Query parameter không hợp lệ
+
+── Notification ─────────────────────────────────────────────
+NTF_001  404  Thông báo không tồn tại
+NTF_002  422  Template thông báo không tồn tại
+```
+
+---
+
+## 7. ERROR CODE CHECKLIST
+
+```
+□ Mỗi service có 1 enum ErrorCode riêng trong common/constant/
+□ Exception class đặt tên rõ ràng: PrNotFoundException, InsufficientBudgetException
+□ KHÔNG dùng RuntimeException trực tiếp — phải kế thừa BusinessException
+□ Mã lỗi đúng prefix theo service
+□ HTTP status code phù hợp ngữ nghĩa (404 Not Found, 409 Conflict, 422 Unprocessable)
+□ Message tiếng Việt, rõ ràng cho end user
+□ Business exception → WARN log, System exception → ERROR log
+□ GlobalExceptionHandler KHÔNG expose stack trace hay internal message cho client
+□ Response envelope đúng format {success, code, message, data, details, meta}
+□ requestId (traceId) có trong mọi response — dùng để debug
+```

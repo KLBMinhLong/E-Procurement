@@ -1,0 +1,746 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Inventory Service API
+  description: |
+    Quản lý tồn kho, danh mục catalog, nhận hàng (GR) và cấp phát.
+    Stock movement là immutable log — không có soft delete.
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+tags:
+  - name: Catalog Items
+  - name: Warehouses
+  - name: Stock
+  - name: Goods Receipt
+security:
+  - cookieAuth: []
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        isFirst: { type: boolean }
+        isLast: { type: boolean }
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  reason: { type: string }
+    CatalogItemDetail:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        itemCode:        { type: string, example: IT-LAPTOP-001 }
+        name:            { type: string }
+        description:     { type: string, nullable: true }
+        categoryCode:    { type: string }
+        unit:            { type: string, example: cái }
+        unitPrice:
+          type: object
+          properties:
+            amount:   { type: string }
+            currency: { type: string }
+        preferredVendorId: { type: string, format: uuid, nullable: true }
+        reorderPoint:    { type: string, nullable: true }
+        isActive:        { type: boolean }
+        stockSummary:
+          type: array
+          items:
+            type: object
+            properties:
+              warehouseId:   { type: string, format: uuid }
+              warehouseName: { type: string }
+              quantityOnHand:{ type: string }
+              unit:          { type: string }
+    StockEntry:
+      type: object
+      properties:
+        itemCode:        { type: string }
+        itemName:        { type: string }
+        warehouseId:     { type: string, format: uuid }
+        warehouseName:   { type: string }
+        quantityOnHand:  { type: string }
+        unit:            { type: string }
+        reorderPoint:    { type: string, nullable: true }
+        isBelowReorder:  { type: boolean }
+        lastUpdated:     { type: string, format: date-time }
+    StockMovement:
+      type: object
+      properties:
+        id:            { type: string, format: uuid }
+        itemCode:      { type: string }
+        itemName:      { type: string }
+        warehouseId:   { type: string, format: uuid }
+        movementType:
+          type: string
+          enum: [RECEIPT_IN, ISSUE_OUT, ADJUSTMENT, TRANSFER]
+        quantity:      { type: string }
+        unit:          { type: string }
+        balanceAfter:  { type: string }
+        sourceRefType: { type: string, nullable: true }
+        sourceRefId:   { type: string, format: uuid, nullable: true }
+        performedBy:
+          type: object
+          properties:
+            id:       { type: string, format: uuid }
+            fullName: { type: string }
+        performedAt:   { type: string, format: date-time }
+        notes:         { type: string, nullable: true }
+    GrLineItem:
+      type: object
+      properties:
+        id:                { type: string, format: uuid }
+        poLineItemId:      { type: string, format: uuid }
+        itemCode:          { type: string }
+        itemName:          { type: string }
+        orderedQuantity:   { type: string }
+        receivedQuantity:  { type: string }
+        rejectedQuantity:  { type: string, default: "0" }
+        rejectionReason:   { type: string, nullable: true }
+        lotNumber:         { type: string, nullable: true }
+        unit:              { type: string }
+    GoodsReceiptDetail:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        grNumber:         { type: string, example: GR-2025-01-00001 }
+        po:
+          type: object
+          properties:
+            id:       { type: string, format: uuid }
+            poNumber: { type: string }
+        warehouse:
+          type: object
+          properties:
+            id:   { type: string, format: uuid }
+            name: { type: string }
+        warehouseKeeper:
+          type: object
+          properties:
+            id:       { type: string, format: uuid }
+            fullName: { type: string }
+        receivedAt: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [DRAFT, PARTIAL, COMPLETE, DISCREPANCY]
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrLineItem'
+        notes:    { type: string, nullable: true }
+        createdAt:{ type: string, format: date-time }
+
+paths:
+  # ── Catalog Items ─────────────────────────────────────────────
+  /items:
+    get:
+      tags: [Catalog Items]
+      summary: Tìm kiếm mặt hàng trong catalog
+      operationId: searchItems
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Tìm kiếm full-text theo tên
+        - name: category_code
+          in: query
+          schema: { type: string }
+        - name: is_active
+          in: query
+          schema: { type: boolean, default: true }
+        - name: below_reorder
+          in: query
+          description: Lọc mặt hàng dưới ngưỡng reorder
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách mặt hàng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CatalogItemDetail'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [Catalog Items]
+      summary: Thêm mặt hàng vào catalog
+      operationId: createCatalogItem
+      x-required-permission: ADMIN_CATALOG_MANAGE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemCode, name, categoryCode, unit, unitPrice]
+              properties:
+                itemCode:          { type: string, maxLength: 20, example: IT-LAPTOP-001 }
+                name:              { type: string, maxLength: 300 }
+                description:       { type: string, nullable: true }
+                categoryCode:      { type: string }
+                unit:              { type: string, example: cái }
+                unitPrice:
+                  type: object
+                  properties:
+                    amount:   { type: string }
+                    currency: { type: string, default: VND }
+                preferredVendorId: { type: string, format: uuid, nullable: true }
+                reorderPoint:      { type: string, nullable: true }
+      responses:
+        '201':
+          description: Tạo catalog item thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CatalogItemDetail'
+        '409':
+          description: itemCode đã tồn tại (INV_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /items/{itemCode}:
+    get:
+      tags: [Catalog Items]
+      summary: Chi tiết mặt hàng kèm tồn kho
+      operationId: getItemByCode
+      parameters:
+        - name: itemCode
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Chi tiết catalog item
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CatalogItemDetail'
+        '404':
+          description: Item không tìm thấy (INV_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Catalog Items]
+      summary: Cập nhật thông tin mặt hàng
+      operationId: updateCatalogItem
+      x-required-permission: ADMIN_CATALOG_MANAGE
+      parameters:
+        - name: itemCode
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:              { type: string }
+                description:       { type: string, nullable: true }
+                unitPrice:
+                  type: object
+                  properties:
+                    amount:   { type: string }
+                    currency: { type: string }
+                preferredVendorId: { type: string, format: uuid, nullable: true }
+                reorderPoint:      { type: string, nullable: true }
+                isActive:          { type: boolean }
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CatalogItemDetail'
+
+  /items/{itemCode}/stock:
+    get:
+      tags: [Stock]
+      summary: Kiểm tra tồn kho theo mã hàng
+      operationId: getItemStock
+      description: Dùng khi FE cần check tồn kho trước khi tạo PR (inventory check).
+      parameters:
+        - name: itemCode
+          in: path
+          required: true
+          schema: { type: string }
+        - name: warehouse_id
+          in: query
+          schema: { type: string, format: uuid }
+          description: null = tất cả kho
+      responses:
+        '200':
+          description: Thông tin tồn kho
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StockEntry'
+
+  # ── Warehouses ────────────────────────────────────────────────
+  /warehouses:
+    get:
+      tags: [Warehouses]
+      summary: Danh sách kho hàng
+      operationId: listWarehouses
+      responses:
+        '200':
+          description: Danh sách kho
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:       { type: string, format: uuid }
+                            code:     { type: string }
+                            name:     { type: string }
+                            address:  { type: string, nullable: true }
+                            isActive: { type: boolean }
+
+  /warehouses/{id}/stock:
+    get:
+      tags: [Warehouses]
+      summary: Tồn kho tổng hợp của một kho
+      operationId: getWarehouseStock
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: below_reorder
+          in: query
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Tồn kho trong kho này
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StockEntry'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+  # ── Stock Movements ───────────────────────────────────────────
+  /stock/movements:
+    get:
+      tags: [Stock]
+      summary: Lịch sử di chuyển tồn kho
+      operationId: listStockMovements
+      parameters:
+        - name: item_code
+          in: query
+          schema: { type: string }
+        - name: warehouse_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: movement_type
+          in: query
+          schema: { type: string, enum: [RECEIPT_IN, ISSUE_OUT, ADJUSTMENT, TRANSFER] }
+        - name: from_date
+          in: query
+          schema: { type: string, format: date }
+        - name: to_date
+          in: query
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Lịch sử di chuyển
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StockMovement'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+  /stock/issue-out:
+    post:
+      tags: [Stock]
+      summary: Cấp phát hàng từ kho cho nhân viên
+      operationId: issueOutStock
+      x-required-permission: GR_ISSUE_OUT
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [warehouseId, recipientId, items]
+              properties:
+                warehouseId:  { type: string, format: uuid }
+                prId:         { type: string, format: uuid, nullable: true }
+                recipientId:  { type: string, format: uuid }
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [itemCode, quantity, unit]
+                    properties:
+                      itemCode: { type: string }
+                      quantity: { type: string }
+                      unit:     { type: string }
+                notes:        { type: string, nullable: true }
+      responses:
+        '200':
+          description: Cấp phát thành công — stock movement được tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          movements:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/StockMovement'
+        '422':
+          description: Tồn kho không đủ (INV_003)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /stock/adjustment:
+    post:
+      tags: [Stock]
+      summary: Điều chỉnh tồn kho (kiểm kê)
+      operationId: adjustStock
+      x-required-permission: ADMIN_CATALOG_MANAGE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [warehouseId, itemCode, newQuantity, reason]
+              properties:
+                warehouseId:  { type: string, format: uuid }
+                itemCode:     { type: string }
+                newQuantity:  { type: string }
+                unit:         { type: string }
+                reason:       { type: string, minLength: 10 }
+      responses:
+        '200':
+          description: Điều chỉnh thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/StockMovement'
+
+  # ── Goods Receipt ─────────────────────────────────────────────
+  /goods-receipts:
+    get:
+      tags: [Goods Receipt]
+      summary: Danh sách phiếu nhận hàng
+      operationId: listGoodsReceipts
+      x-required-permission: GR_VIEW
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [DRAFT, PARTIAL, COMPLETE, DISCREPANCY] }
+        - name: po_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: warehouse_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: from_date
+          in: query
+          schema: { type: string, format: date }
+        - name: to_date
+          in: query
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách GR
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GoodsReceiptDetail'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [Goods Receipt]
+      summary: Tạo phiếu nhận hàng mới
+      operationId: createGoodsReceipt
+      x-required-permission: GR_CREATE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [poId, warehouseId, lineItems]
+              properties:
+                poId:        { type: string, format: uuid }
+                warehouseId: { type: string, format: uuid }
+                receivedAt:  { type: string, format: date-time, nullable: true }
+                lineItems:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [poLineItemId, receivedQuantity]
+                    properties:
+                      poLineItemId:     { type: string, format: uuid }
+                      receivedQuantity: { type: string }
+                      rejectedQuantity: { type: string, default: "0" }
+                      rejectionReason:  { type: string, nullable: true }
+                      lotNumber:        { type: string, nullable: true }
+                notes: { type: string, nullable: true }
+      responses:
+        '201':
+          description: GR đã tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GoodsReceiptDetail'
+
+  /goods-receipts/{id}:
+    get:
+      tags: [Goods Receipt]
+      summary: Chi tiết phiếu nhận hàng
+      operationId: getGoodsReceiptById
+      x-required-permission: GR_VIEW
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Chi tiết GR
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GoodsReceiptDetail'
+
+    put:
+      tags: [Goods Receipt]
+      summary: Cập nhật GR (chỉ khi status = DRAFT)
+      operationId: updateGoodsReceipt
+      x-required-permission: GR_CREATE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lineItems:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      poLineItemId:     { type: string, format: uuid }
+                      receivedQuantity: { type: string }
+                      rejectedQuantity: { type: string }
+                      rejectionReason:  { type: string, nullable: true }
+                      lotNumber:        { type: string, nullable: true }
+                notes: { type: string, nullable: true }
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GoodsReceiptDetail'
+
+  /goods-receipts/{id}/complete:
+    post:
+      tags: [Goods Receipt]
+      summary: Hoàn tất nhận hàng — cập nhật tồn kho và kích hoạt 3-way match
+      operationId: completeGoodsReceipt
+      x-required-permission: GR_CREATE
+      description: |
+        Sau khi complete:
+        1. Tạo stock movement RECEIPT_IN cho mỗi line item
+        2. Cập nhật stock_entries (quantity_on_hand)
+        3. Publish GrCreatedEvent lên Kafka → Finance Service trigger 3-way match
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Hoàn tất nhận hàng thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          grStatus:      { type: string, example: COMPLETE }
+                          movementsCreated: { type: integer }
+                          updatedStocks:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                itemCode:        { type: string }
+                                newQuantityOnHand: { type: string }
+        '409':
+          description: GR đã được hoàn tất (INV_005)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

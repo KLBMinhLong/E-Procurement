@@ -1,0 +1,737 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Admin & System Config Service API
+  description: |
+    Hai portal riêng biệt với quyền đặc biệt:
+
+    **1. Admin Portal** (`ADMIN_*` permissions): Quản lý người dùng, roles, catalog, approval rules.  
+    **2. System Config Portal** (`SYSTEM_CONFIG` permission): Biến môi trường, cấu hình service, audit log.  
+    
+    ⚠️ SYSTEM_CONFIG là quyền cực kỳ nhạy cảm — chỉ Super Admin mới có.  
+    ⚠️ Hai portal này tách biệt hoàn toàn với hệ thống nghiệp vụ chính.
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+tags:
+  - name: System Config
+    description: Biến môi trường và cấu hình hệ thống (SYSTEM_CONFIG)
+  - name: Audit Log
+    description: Audit trail bất biến (SYSTEM_AUDIT_VIEW)
+  - name: Catalog Admin
+    description: Quản lý danh mục (ADMIN_CATALOG_MANAGE)
+  - name: Department Admin
+    description: Quản lý phòng ban (ADMIN_DEPARTMENT_MANAGE)
+  - name: System Health
+    description: Theo dõi trạng thái service
+security:
+  - cookieAuth: []
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        isFirst: { type: boolean }
+        isLast: { type: boolean }
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details: { type: array, nullable: true, items: { type: object } }
+    EnvVariable:
+      type: object
+      properties:
+        key:
+          type: string
+          example: REDIS_HOST
+        value:
+          type: string
+          description: Giá trị thực — sensitive values bị mask bằng ***
+          example: "redis-cluster.internal"
+        isSensitive:
+          type: boolean
+          description: true = value bị mask trong GET response
+        description:
+          type: string
+          nullable: true
+        lastUpdatedAt:
+          type: string
+          format: date-time
+        lastUpdatedBy:
+          type: string
+    ServiceConfig:
+      type: object
+      properties:
+        serviceName:    { type: string, example: pr-service }
+        displayName:    { type: string, example: Purchase Request Service }
+        status:         { type: string, enum: [UP, DOWN, DEGRADED, UNKNOWN] }
+        version:        { type: string, nullable: true }
+        variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvVariable'
+        lastHealthCheck: { type: string, format: date-time, nullable: true }
+    AuditLogEntry:
+      type: object
+      properties:
+        id:            { type: integer, format: int64 }
+        actor:
+          type: object
+          properties:
+            id:       { type: string, format: uuid }
+            name:     { type: string }
+            roles:    { type: array, items: { type: string } }
+            ip:       { type: string }
+        action:        { type: string, example: PR.SUBMITTED }
+        entityType:    { type: string, example: PURCHASE_REQUEST }
+        entityId:      { type: string, format: uuid, nullable: true }
+        entityNumber:  { type: string, nullable: true, example: PR-2025-01-00001 }
+        occurredAt:    { type: string, format: date-time }
+        httpMethod:    { type: string, nullable: true }
+        endpoint:      { type: string, nullable: true }
+        requestId:     { type: string, nullable: true }
+        isSuccess:     { type: boolean }
+        errorCode:     { type: string, nullable: true }
+        oldValue:      { type: object, nullable: true }
+        newValue:      { type: object, nullable: true }
+        description:   { type: string, nullable: true }
+        serviceName:   { type: string }
+    CatalogCategoryRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:                 { type: string, pattern: '^[A-Z][A-Z0-9_]+$' }
+        name:                 { type: string }
+        parentCode:           { type: string, nullable: true }
+        requiresSpecialApproval: { type: boolean, default: false }
+        specialApproverRole:  { type: string, nullable: true }
+        requiresRfqAbove:     { type: string, nullable: true, description: Ngưỡng tiền bắt buộc RFQ }
+        isCapex:              { type: boolean, default: false }
+    DepartmentRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:           { type: string, maxLength: 20 }
+        name:           { type: string, maxLength: 200 }
+        parentId:       { type: string, format: uuid, nullable: true }
+        headUserId:     { type: string, format: uuid, nullable: true }
+        glAccountPrefix:{ type: string, nullable: true }
+
+paths:
+  # ── System Config Portal ──────────────────────────────────────
+  /admin/config/services:
+    get:
+      tags: [System Config]
+      summary: Danh sách tất cả services và biến môi trường
+      operationId: listServiceConfigs
+      x-required-permission: SYSTEM_CONFIG
+      description: |
+        Sensitive values (password, secret, key) được mask bằng `***`.  
+        Để xem giá trị thực, cần gọi endpoint riêng với xác nhận 2FA.
+      responses:
+        '200':
+          description: Danh sách service configs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ServiceConfig'
+                      summary:
+                        type: object
+                        properties:
+                          totalServices: { type: integer }
+                          upCount:       { type: integer }
+                          downCount:     { type: integer }
+                          degradedCount: { type: integer }
+
+  /admin/config/services/{serviceName}:
+    get:
+      tags: [System Config]
+      summary: Chi tiết config của một service
+      operationId: getServiceConfig
+      x-required-permission: SYSTEM_CONFIG
+      parameters:
+        - name: serviceName
+          in: path
+          required: true
+          schema: { type: string }
+          example: pr-service
+      responses:
+        '200':
+          description: Config của service
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ServiceConfig'
+
+    put:
+      tags: [System Config]
+      summary: Cập nhật biến môi trường của service
+      operationId: updateServiceConfig
+      x-required-permission: SYSTEM_CONFIG
+      description: |
+        ⚠️ Thay đổi config có thể yêu cầu restart service.  
+        ⚠️ Mọi thay đổi đều được ghi vào audit log với actor info đầy đủ.
+      parameters:
+        - name: serviceName
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variables, confirmationCode]
+              properties:
+                variables:
+                  type: array
+                  items:
+                    type: object
+                    required: [key, value]
+                    properties:
+                      key:         { type: string }
+                      value:       { type: string }
+                      isSensitive: { type: boolean, default: false }
+                      description: { type: string, nullable: true }
+                confirmationCode:
+                  type: string
+                  description: TOTP 2FA code — bắt buộc cho SYSTEM_CONFIG changes
+                requiresRestart:
+                  type: boolean
+                  default: false
+                changeReason:
+                  type: string
+                  minLength: 10
+      responses:
+        '200':
+          description: Config đã được cập nhật
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          updatedCount:    { type: integer }
+                          requiresRestart: { type: boolean }
+                          affectedService: { type: string }
+
+  /admin/config/services/{serviceName}/restart:
+    post:
+      tags: [System Config]
+      summary: Restart service (graceful)
+      operationId: restartService
+      x-required-permission: SYSTEM_CONFIG
+      parameters:
+        - name: serviceName
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmationCode, reason]
+              properties:
+                confirmationCode: { type: string }
+                reason:           { type: string, minLength: 10 }
+      responses:
+        '202':
+          description: Restart đã được kích hoạt (async)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          estimatedDowntimeSeconds: { type: integer }
+                          triggeredAt: { type: string, format: date-time }
+
+  /admin/config/encryption/rotate-key:
+    post:
+      tags: [System Config]
+      summary: Xoay vòng RSA key pair (encryption key rotation)
+      operationId: rotateEncryptionKey
+      x-required-permission: SYSTEM_CONFIG
+      description: |
+        Tạo RSA key pair mới. Key cũ vẫn được giữ để giải mã request đang trong flight.  
+        FE sẽ tự động lấy public key mới qua `/auth/public-key` trong request tiếp theo.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmationCode]
+              properties:
+                confirmationCode: { type: string }
+                keySize:          { type: integer, enum: [2048, 4096], default: 2048 }
+      responses:
+        '200':
+          description: Key mới đã được tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          newKeyVersion:  { type: string, example: v2025-06 }
+                          rotatedAt:      { type: string, format: date-time }
+                          oldKeyRetiredAt:{ type: string, format: date-time }
+
+  # ── Audit Log ─────────────────────────────────────────────────
+  /admin/audit-log:
+    get:
+      tags: [Audit Log]
+      summary: Truy vấn audit log bất biến
+      operationId: queryAuditLog
+      x-required-permission: SYSTEM_AUDIT_VIEW
+      parameters:
+        - name: actor_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: entity_type
+          in: query
+          schema: { type: string, example: PURCHASE_REQUEST }
+        - name: entity_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: action
+          in: query
+          schema: { type: string, example: PR.SUBMITTED }
+        - name: service_name
+          in: query
+          schema: { type: string }
+        - name: is_success
+          in: query
+          schema: { type: boolean }
+        - name: from_time
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: to_time
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AuditLogEntry'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+  /admin/audit-log/export:
+    post:
+      tags: [Audit Log]
+      summary: Xuất audit log ra Excel (cho kiểm toán)
+      operationId: exportAuditLog
+      x-required-permission: SYSTEM_AUDIT_VIEW
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromTime, toTime]
+              properties:
+                fromTime:   { type: string, format: date-time }
+                toTime:     { type: string, format: date-time }
+                actorId:    { type: string, format: uuid, nullable: true }
+                entityType: { type: string, nullable: true }
+                action:     { type: string, nullable: true }
+      responses:
+        '202':
+          description: Job xuất đã được tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          jobId:     { type: string, format: uuid }
+                          status:    { type: string, example: QUEUED }
+
+  # ── Catalog Admin ─────────────────────────────────────────────
+  /admin/catalog/categories:
+    get:
+      tags: [Catalog Admin]
+      summary: Danh sách danh mục hàng hóa (admin view)
+      operationId: adminListCategories
+      x-required-permission: ADMIN_CATALOG_MANAGE
+      parameters:
+        - name: include_inactive
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Danh sách categories
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:                    { type: string }
+                            name:                    { type: string }
+                            parentCode:              { type: string, nullable: true }
+                            requiresSpecialApproval: { type: boolean }
+                            specialApproverRole:     { type: string, nullable: true }
+                            requiresRfqAbove:        { type: string, nullable: true }
+                            isCapex:                 { type: boolean }
+                            itemCount:               { type: integer }
+                            isDeleted:               { type: boolean }
+
+    post:
+      tags: [Catalog Admin]
+      summary: Tạo danh mục mới
+      operationId: createCategory
+      x-required-permission: ADMIN_CATALOG_MANAGE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogCategoryRequest'
+      responses:
+        '201':
+          description: Danh mục đã tạo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/catalog/categories/{code}:
+    put:
+      tags: [Catalog Admin]
+      summary: Cập nhật danh mục
+      operationId: updateCategory
+      x-required-permission: ADMIN_CATALOG_MANAGE
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogCategoryRequest'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/catalog/categories/{code}/deactivate:
+    patch:
+      tags: [Catalog Admin]
+      summary: Vô hiệu hóa danh mục (soft delete)
+      operationId: deactivateCategory
+      x-required-permission: ADMIN_CATALOG_MANAGE
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Đã vô hiệu hóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # ── Department Admin ──────────────────────────────────────────
+  /admin/departments:
+    post:
+      tags: [Department Admin]
+      summary: Tạo phòng ban mới
+      operationId: createDepartment
+      x-required-permission: ADMIN_DEPARTMENT_MANAGE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentRequest'
+      responses:
+        '201':
+          description: Phòng ban đã tạo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/departments/{id}:
+    put:
+      tags: [Department Admin]
+      summary: Cập nhật phòng ban
+      operationId: updateDepartment
+      x-required-permission: ADMIN_DEPARTMENT_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentRequest'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/departments/{id}/deactivate:
+    patch:
+      tags: [Department Admin]
+      summary: Vô hiệu hóa phòng ban (kiểm tra không còn nhân viên active)
+      operationId: deactivateDepartment
+      x-required-permission: ADMIN_DEPARTMENT_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Đã vô hiệu hóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Phòng ban còn nhân viên active — không thể vô hiệu hóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── System Health ─────────────────────────────────────────────
+  /admin/health:
+    get:
+      tags: [System Health]
+      summary: Trạng thái tất cả services và infrastructure
+      operationId: getSystemHealth
+      x-required-permission: SYSTEM_CONFIG
+      responses:
+        '200':
+          description: Tổng quan sức khỏe hệ thống
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          overallStatus: { type: string, enum: [UP, DEGRADED, DOWN] }
+                          services:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:         { type: string }
+                                status:       { type: string, enum: [UP, DOWN, DEGRADED, UNKNOWN] }
+                                responseTime: { type: integer, description: ms }
+                                uptime:       { type: string, nullable: true }
+                                lastCheck:    { type: string, format: date-time }
+                          infrastructure:
+                            type: object
+                            properties:
+                              postgresql:
+                                type: object
+                                properties:
+                                  status:       { type: string }
+                                  connections:  { type: integer }
+                                  maxConnections: { type: integer }
+                              redis:
+                                type: object
+                                properties:
+                                  status:       { type: string }
+                                  usedMemory:   { type: string }
+                                  maxMemory:    { type: string }
+                                  keyCount:     { type: integer }
+                              kafka:
+                                type: object
+                                properties:
+                                  status:       { type: string }
+                                  topicCount:   { type: integer }
+                                  lagByGroup:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        group:  { type: string }
+                                        lag:    { type: integer }
+                          checkedAt: { type: string, format: date-time }
+
+  /admin/sessions:
+    get:
+      tags: [System Config]
+      summary: Danh sách phiên đăng nhập đang active
+      operationId: listActiveSessions
+      x-required-permission: SYSTEM_CONFIG
+      parameters:
+        - name: user_id
+          in: query
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách sessions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            sessionId:    { type: string }
+                            userId:       { type: string, format: uuid }
+                            userName:     { type: string }
+                            ipAddress:    { type: string }
+                            userAgent:    { type: string }
+                            lastActivity: { type: string, format: date-time }
+                            createdAt:    { type: string, format: date-time }
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+  /admin/sessions/{sessionId}/invalidate:
+    patch:
+      tags: [System Config]
+      summary: Buộc đăng xuất một phiên cụ thể
+      operationId: invalidateSession
+      x-required-permission: SYSTEM_CONFIG
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, example: "Phát hiện đăng nhập đáng ngờ từ IP lạ" }
+      responses:
+        '200':
+          description: Session đã bị invalidate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'

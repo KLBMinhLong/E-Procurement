@@ -1,0 +1,784 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Purchase Request Service API
+  description: |
+    Quản lý vòng đời Yêu cầu Mua sắm (PR): tạo, sửa, submit, hủy, kiểm tra ngân sách và tồn kho.
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+
+tags:
+  - name: Purchase Requests
+  - name: Catalog
+  - name: Attachments
+
+security:
+  - cookieAuth: []
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    SortParam:
+      name: sort
+      in: query
+      schema: { type: string }
+      example: createdAt,desc
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        isFirst: { type: boolean }
+        isLast: { type: boolean }
+        sort: { type: string }
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  reason: { type: string }
+                  rejectedValue: { nullable: true }
+
+    Money:
+      type: object
+      properties:
+        amount:
+          type: string
+          description: Số tiền dạng string, 4 decimal places
+          example: "70000000.0000"
+        currency:
+          type: string
+          default: VND
+          example: VND
+
+    Quantity:
+      type: object
+      properties:
+        amount:
+          type: string
+          example: "2.0000"
+        unit:
+          type: string
+          example: cái
+
+    PrPriority:
+      type: string
+      enum: [NORMAL, URGENT, EMERGENCY]
+
+    PrStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - PENDING_APPROVAL
+        - CHANGES_REQUESTED
+        - APPROVED
+        - REJECTED
+        - CONVERTED_TO_PO
+        - CANCELLED
+        - CLOSED
+
+    BudgetCheckResult:
+      type: object
+      properties:
+        allocated: { type: string, example: "500000000.0000" }
+        committed: { type: string, example: "120000000.0000" }
+        spent:     { type: string, example: "80000000.0000" }
+        available: { type: string, example: "300000000.0000" }
+        status:
+          type: string
+          enum: [PASS, WARNING, FAIL]
+        warningMessage:
+          type: string
+          nullable: true
+          example: "Còn lại 60% ngân sách"
+
+    InventoryCheckResult:
+      type: object
+      properties:
+        itemsWithStock:
+          type: array
+          items:
+            type: object
+            properties:
+              itemCode: { type: string }
+              itemName: { type: string }
+              quantityOnHand: { type: string }
+              unit: { type: string }
+        suggestion:
+          type: string
+          nullable: true
+          example: "Mặt hàng này đang có 3 cái trong kho. Bạn có muốn cấp phát từ kho?"
+
+    AttachmentInfo:
+      type: object
+      properties:
+        id:        { type: string, format: uuid }
+        fileName:  { type: string, example: "bao-gia-dell.pdf" }
+        fileSize:  { type: integer, example: 204800 }
+        mimeType:  { type: string, example: "application/pdf" }
+        uploadedAt:{ type: string, format: date-time }
+
+    PrLineItemRequest:
+      type: object
+      required: [itemName, categoryCode, quantity, unitPrice, glAccountCode]
+      properties:
+        itemCode:
+          type: string
+          nullable: true
+          description: null nếu không từ catalog
+        itemName:
+          type: string
+          maxLength: 300
+          example: Laptop Dell XPS 15
+        description:
+          type: string
+          nullable: true
+        categoryCode:
+          type: string
+          example: IT_HARDWARE
+        quantity:
+          $ref: '#/components/schemas/Quantity'
+        unitPrice:
+          $ref: '#/components/schemas/Money'
+        preferredVendorId:
+          type: string
+          format: uuid
+          nullable: true
+        specifications:
+          type: string
+          nullable: true
+          example: "Core i7-13th, 16GB RAM, 512GB SSD"
+        glAccountCode:
+          type: string
+          example: "6002"
+        isFromCatalog:
+          type: boolean
+          default: false
+
+    PrLineItemResponse:
+      allOf:
+        - $ref: '#/components/schemas/PrLineItemRequest'
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            lineNumber: { type: integer, example: 1 }
+            totalPrice: { $ref: '#/components/schemas/Money' }
+
+    ApprovalStepSummary:
+      type: object
+      properties:
+        stepIndex:     { type: integer }
+        approverRole:  { type: string, example: MANAGER }
+        approver:
+          type: object
+          properties:
+            id:       { type: string, format: uuid }
+            fullName: { type: string }
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, ESCALATED, SKIPPED, FORWARDED]
+        comment:      { type: string, nullable: true }
+        slaDeadline:  { type: string, format: date-time }
+        slaRemainingHours:
+          type: number
+          format: float
+          nullable: true
+        actedAt:      { type: string, format: date-time, nullable: true }
+
+    PurchaseRequestSummary:
+      type: object
+      properties:
+        id:          { type: string, format: uuid }
+        prNumber:    { type: string, example: PR-2025-01-00001 }
+        title:       { type: string }
+        priority:    { $ref: '#/components/schemas/PrPriority' }
+        status:      { $ref: '#/components/schemas/PrStatus' }
+        totalAmount: { $ref: '#/components/schemas/Money' }
+        requester:
+          type: object
+          properties:
+            id:         { type: string, format: uuid }
+            fullName:   { type: string }
+            department: { type: string }
+        needByDate:  { type: string, format: date, nullable: true }
+        currentApprover:
+          type: object
+          nullable: true
+          properties:
+            id:       { type: string, format: uuid }
+            fullName: { type: string }
+            role:     { type: string }
+            slaDeadline: { type: string, format: date-time }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time }
+
+    PurchaseRequestDetail:
+      allOf:
+        - $ref: '#/components/schemas/PurchaseRequestSummary'
+        - type: object
+          properties:
+            justification:    { type: string }
+            urgencyReason:    { type: string, nullable: true }
+            fiscalYear:       { type: integer }
+            departmentId:     { type: string, format: uuid }
+            lineItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/PrLineItemResponse'
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttachmentInfo'
+            budgetCheck:      { $ref: '#/components/schemas/BudgetCheckResult' }
+            inventoryCheck:   { $ref: '#/components/schemas/InventoryCheckResult' }
+            approvalProcess:
+              type: object
+              nullable: true
+              properties:
+                status:       { type: string }
+                currentStep:  { type: integer }
+                steps:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ApprovalStepSummary'
+
+    CreatePrRequest:
+      type: object
+      required: [title, justification, lineItems]
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          example: Mua laptop Dell XPS 15 cho team phát triển
+        justification:
+          type: string
+          minLength: 50
+          example: Máy cũ hỏng ổ cứng, không sửa được. Cần laptop mới để đảm bảo tiến độ dự án Q1 2025.
+        priority:
+          $ref: '#/components/schemas/PrPriority'
+          default: NORMAL
+        urgencyReason:
+          type: string
+          nullable: true
+          description: Bắt buộc khi priority = URGENT hoặc EMERGENCY (min 100 ký tự)
+        needByDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-02-15"
+        lineItems:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/PrLineItemRequest'
+        attachmentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs từ upload attachment trước
+
+    UpdatePrRequest:
+      type: object
+      description: Chỉ có thể sửa khi status = DRAFT hoặc CHANGES_REQUESTED
+      properties:
+        title:          { type: string, maxLength: 500 }
+        justification:  { type: string, minLength: 50 }
+        priority:       { $ref: '#/components/schemas/PrPriority' }
+        urgencyReason:  { type: string, nullable: true }
+        needByDate:     { type: string, format: date, nullable: true }
+        lineItems:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/PrLineItemRequest'
+        attachmentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    CatalogCategory:
+      type: object
+      properties:
+        code:           { type: string, example: IT_HARDWARE }
+        name:           { type: string, example: Thiết bị Công nghệ }
+        parentCode:     { type: string, nullable: true }
+        requiresRfqAbove: { type: string, nullable: true, example: "50000000.0000" }
+        isCapex:        { type: boolean }
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogCategory'
+
+    CatalogItem:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        itemCode:       { type: string, example: IT-LAPTOP-001 }
+        name:           { type: string, example: Laptop Dell XPS 15 }
+        description:    { type: string, nullable: true }
+        categoryCode:   { type: string }
+        unit:           { type: string, example: cái }
+        unitPrice:      { $ref: '#/components/schemas/Money' }
+        quantityOnHand: { type: string, nullable: true }
+        isActive:       { type: boolean }
+
+paths:
+  # ── Purchase Requests ─────────────────────────────────────────
+  /purchase-requests:
+    get:
+      tags: [Purchase Requests]
+      summary: Danh sách yêu cầu mua sắm
+      operationId: listPurchaseRequests
+      x-required-permission: PR_VIEW_OWN
+      description: |
+        Mặc định chỉ trả về PR của người dùng hiện tại (PR_VIEW_OWN).  
+        Với quyền PR_VIEW_ALL hoặc PR_VIEW_DEPARTMENT sẽ thấy nhiều hơn.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/PrStatus' }
+        - name: priority
+          in: query
+          schema: { $ref: '#/components/schemas/PrPriority' }
+        - name: department_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: requester_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: from_date
+          in: query
+          schema: { type: string, format: date }
+        - name: to_date
+          in: query
+          schema: { type: string, format: date }
+        - name: min_amount
+          in: query
+          schema: { type: string }
+        - name: max_amount
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          description: Tìm kiếm theo tiêu đề, số PR
+          schema: { type: string }
+      responses:
+        '200':
+          description: Danh sách PR
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PurchaseRequestSummary'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [Purchase Requests]
+      summary: Tạo yêu cầu mua sắm mới
+      operationId: createPurchaseRequest
+      x-required-permission: PR_CREATE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePrRequest'
+            example:
+              title: "Mua laptop Dell XPS 15 cho team phát triển"
+              justification: "Máy tính hiện tại đã hỏng ổ cứng không sửa được. Cần thiết bị mới để đảm bảo tiến độ dự án Q1 2025 đang gấp."
+              priority: NORMAL
+              needByDate: "2025-02-15"
+              lineItems:
+                - itemName: "Laptop Dell XPS 15"
+                  categoryCode: IT_HARDWARE
+                  quantity: { amount: "2", unit: "cái" }
+                  unitPrice: { amount: "35000000", currency: VND }
+                  specifications: "Core i7-13th Gen, 16GB RAM, 512GB SSD NVMe, 15.6 OLED"
+                  glAccountCode: "6002"
+                  isFromCatalog: false
+              attachmentIds: ["550e8400-e29b-41d4-a716-446655440000"]
+      responses:
+        '201':
+          description: PR đã tạo ở trạng thái DRAFT
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:       { type: string, format: uuid }
+                          prNumber: { type: string, example: PR-2025-01-00001 }
+                          status:   { type: string, example: DRAFT }
+        '400':
+          description: Dữ liệu không hợp lệ (VAL_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /purchase-requests/{id}:
+    get:
+      tags: [Purchase Requests]
+      summary: Chi tiết yêu cầu mua sắm
+      operationId: getPurchaseRequestById
+      x-required-permission: PR_VIEW_OWN
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Chi tiết PR
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PurchaseRequestDetail'
+        '404':
+          description: Không tìm thấy (PR_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Purchase Requests]
+      summary: Cập nhật PR (chỉ khi DRAFT hoặc CHANGES_REQUESTED)
+      operationId: updatePurchaseRequest
+      x-required-permission: PR_EDIT_OWN_DRAFT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePrRequest'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PurchaseRequestDetail'
+        '409':
+          description: PR không ở trạng thái có thể sửa (PR_003)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /purchase-requests/{id}/submit:
+    post:
+      tags: [Purchase Requests]
+      summary: Submit PR để bắt đầu quy trình phê duyệt
+      operationId: submitPurchaseRequest
+      x-required-permission: PR_CREATE
+      description: |
+        Hệ thống sẽ tự động:
+        1. Kiểm tra ngân sách phòng ban
+        2. Kiểm tra tồn kho (nếu item có trong catalog)
+        3. Xác định approval chain theo approval rules
+        4. Kích hoạt Camunda BPMN process
+        
+        Nếu vượt ngân sách → trả về WARNING, cần gọi `/submit-with-override` để xác nhận.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Submit thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: PENDING_APPROVAL
+                          approvalProcessId:
+                            type: string
+                            format: uuid
+                          firstApprover:
+                            type: object
+                            properties:
+                              fullName: { type: string }
+                              role:     { type: string }
+                              slaDeadline: { type: string, format: date-time }
+        '422':
+          description: Ngân sách không đủ — cần override (PR_002)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          requiresOverrideApproval: { type: boolean, example: true }
+                          budgetCheck:
+                            $ref: '#/components/schemas/BudgetCheckResult'
+        '409':
+          description: PR không ở trạng thái DRAFT (PR_003)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /purchase-requests/{id}/submit-with-override:
+    post:
+      tags: [Purchase Requests]
+      summary: Submit PR dù vượt ngân sách (requester xác nhận)
+      operationId: submitWithBudgetOverride
+      x-required-permission: PR_CREATE
+      description: Gọi sau khi nhận WARNING từ /submit. Override approval sẽ được thêm vào chain.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [overrideJustification]
+              properties:
+                overrideJustification:
+                  type: string
+                  minLength: 50
+                  example: "Chi phí này cần thiết để đảm bảo tiến độ dự án khách hàng quan trọng. Đề xuất điều chuyển ngân sách từ quý sau."
+      responses:
+        '200':
+          description: Submit với override thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          status: { type: string, example: PENDING_APPROVAL }
+
+  /purchase-requests/{id}/cancel:
+    patch:
+      tags: [Purchase Requests]
+      summary: Hủy yêu cầu mua sắm
+      operationId: cancelPurchaseRequest
+      x-required-permission: PR_CANCEL_OWN
+      description: Chỉ được hủy khi status = DRAFT, SUBMITTED, CHANGES_REQUESTED. Requester chỉ hủy PR của mình.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                  example: "Không còn nhu cầu mua thiết bị này"
+      responses:
+        '200':
+          description: Hủy thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '409':
+          description: Không thể hủy ở trạng thái này (PR_003)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Attachments ───────────────────────────────────────────────
+  /purchase-requests/attachments/upload:
+    post:
+      tags: [Attachments]
+      summary: Upload file đính kèm (trước khi tạo PR)
+      operationId: uploadAttachment
+      x-required-permission: PR_CREATE
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Max 10MB. Allowed:pdf,xlsx,docx,jpg,png
+                description:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Upload thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AttachmentInfo'
+        '422':
+          description: File quá lớn (PR_008) hoặc sai loại (PR_009)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Catalog ───────────────────────────────────────────────────
+  /catalog/categories:
+    get:
+      tags: [Catalog]
+      summary: Cây danh mục hàng hóa
+      operationId: getCatalogCategories
+      responses:
+        '200':
+          description: Cây danh mục
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CatalogCategory'
+
+  /catalog/items:
+    get:
+      tags: [Catalog]
+      summary: Tìm kiếm mặt hàng trong catalog
+      operationId: searchCatalogItems
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          example: laptop
+        - name: category_code
+          in: query
+          schema: { type: string }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Kết quả tìm kiếm catalog
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CatalogItem'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'

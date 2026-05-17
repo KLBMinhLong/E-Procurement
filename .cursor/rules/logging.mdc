@@ -1,0 +1,385 @@
+---
+description: Quy tắc logging toàn hệ thống eProcure. Áp dụng cho mọi class Java có Logger. Bắt buộc tuân thủ format, masking và layer conventions.
+globs:
+  - "**/*.java"
+  - "**/log4j2*.xml"
+  - "**/log4j2*.yaml"
+alwaysApply: true
+---
+
+# LOG RULES — eProcure Enterprise
+
+## 1. FRAMEWORK — LOG4J2 DUY NHẤT
+
+```java
+// ✅ Luôn dùng Log4j2 — KHÔNG dùng SLF4J, Logback, System.out
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class PurchaseRequestController {
+    private static final Logger log = LogManager.getLogger(PurchaseRequestController.class);
+}
+
+// ❌ CẤM TUYỆT ĐỐI
+import org.slf4j.LoggerFactory;          // ❌
+import org.slf4j.Logger;                 // ❌
+System.out.println("debug info");        // ❌
+System.err.println("error");             // ❌
+e.printStackTrace();                     // ❌
+```
+
+### pom.xml — Exclude Logback khỏi MỌI dependency
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+    <exclusions>
+        <exclusion>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>  <!-- Loại bỏ Logback -->
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-log4j2</artifactId>           <!-- Thêm Log4j2 -->
+</dependency>
+```
+
+---
+
+## 2. LOG LEVEL THEO LAYER
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Layer       │ Level   │ Format prefix    │ Nội dung                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│  FILTER      │ INFO    │ [REQUEST]        │ method url ip | status ms   │
+│              │         │ [RESPONSE]       │                             │
+│  CONTROLLER  │ INFO    │ [CONTROLLER]     │ method endpoint | userId    │
+│  USE CASE    │ INFO    │ [ACTION]         │ Start/Step/Complete         │
+│  REPOSITORY  │ DEBUG   │ [REPO]           │ operation | id              │
+│  CACHE       │ DEBUG   │ [CACHE]          │ hit/miss/put/evict | key    │
+│  SECURITY    │ WARN    │ [TOKEN]          │ Invalid/Revoked failures    │
+│              │ WARN    │ [APIKEY]         │ Missing/Invalid API key     │
+│              │ WARN    │ [SECURITY]       │ Unauthorized attempts       │
+│  AUDIT       │ INFO    │ [AUDIT]          │ actor | action | entity     │
+│  EXCEPTION   │ WARN    │ [EXCEPTION][CODE]│ Business errors (4xx)       │
+│              │ ERROR   │ [EXCEPTION][CODE]│ System errors (5xx)         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. LOG FORMAT CHUẨN THEO LAYER
+
+### 3.1 FILTER / HTTP layer
+```java
+// Request log
+log.info("[REQUEST] {} {} | ip={} | agent={}",
+    request.getMethod(), request.getRequestURI(),
+    request.getRemoteAddr(), request.getHeader("User-Agent"));
+
+// Response log (sau khi xử lý)
+log.info("[RESPONSE] {} {} | status={} | duration={}ms",
+    request.getMethod(), request.getRequestURI(),
+    response.getStatus(), elapsedMs);
+```
+
+### 3.2 CONTROLLER layer
+```java
+// Log khi vào method — không log parameter nhạy cảm
+log.info("[CONTROLLER] POST /purchase-requests | userId={}", principal.getMaskedId());
+log.info("[CONTROLLER] GET /purchase-requests/{} | userId={}", prNumber, principal.getMaskedId());
+```
+
+### 3.3 USE CASE / APPLICATION layer
+```java
+// ✅ Start - Step - Complete pattern
+log.info("[ACTION] Start CreatePR | userId={}", LogMaskingUtil.maskId(userId));
+log.info("[ACTION] Step budget-check | prId={} | available={}", prId, availableAmount);
+log.info("[ACTION] Step inventory-check | prId={} | itemCount={}", prId, itemCount);
+log.info("[ACTION] Complete CreatePR | prNumber={} | totalAmount={}", prNumber, totalAmount);
+
+// ✅ Sự kiện quan trọng
+log.info("[ACTION] PR submitted to approval | prNumber={} | approver={}",
+    prNumber, LogMaskingUtil.maskId(approverId));
+log.info("[ACTION] PR approved | prNumber={} | by={}", prNumber, LogMaskingUtil.maskId(actorId));
+```
+
+### 3.4 REPOSITORY layer
+```java
+log.debug("[REPO] insert purchase_request | id={}", id);
+log.debug("[REPO] findById | id={} | found={}", id, entity.isPresent());
+log.debug("[REPO] findByFilter | filter={} | resultCount={}", filterSummary, count);
+log.debug("[REPO] softDelete | id={} | deletedBy={}", id, LogMaskingUtil.maskId(deletedBy));
+```
+
+### 3.5 CACHE layer
+```java
+log.debug("[CACHE] hit | key=session:{}", tokenPrefix);
+log.debug("[CACHE] miss | key=role-perm:{}", roleCode);
+log.debug("[CACHE] put | key=budget:{}:{} | ttl={}min", deptId, year, ttlMinutes);
+log.debug("[CACHE] evict | key=user-perm:{}", LogMaskingUtil.maskId(userId));
+```
+
+### 3.6 SECURITY layer
+```java
+// Token issues
+log.warn("[TOKEN] Invalid token attempt | ip={} | path={}", ip, path);
+log.warn("[TOKEN] Revoked token used | userId={} | ip={}", LogMaskingUtil.maskId(userId), ip);
+log.warn("[TOKEN] Expired session detected | userId={}", LogMaskingUtil.maskId(userId));
+
+// API Key issues
+log.warn("[APIKEY] Missing X-Api-Key | service={} | ip={}", serviceName, ip);
+log.warn("[APIKEY] Invalid X-Api-Key | ip={} | path={}", ip, path);
+
+// Authorization failures
+log.warn("[SECURITY] Unauthorized access | userId={} | permission={} | path={}",
+    LogMaskingUtil.maskId(userId), requiredPermission, path);
+log.warn("[SECURITY] Login failed | email={} | ip={} | attempt={}",
+    LogMaskingUtil.maskEmail(email), ip, attemptCount);
+log.warn("[SECURITY] Account locked | userId={} | ip={}", LogMaskingUtil.maskId(userId), ip);
+```
+
+### 3.7 AUDIT layer (file riêng, append-only)
+```java
+// Luôn dùng auditLog logger (route đến file audit.log riêng)
+private static final Logger auditLog = LogManager.getLogger("com.eprocure.audit");
+
+auditLog.info("[AUDIT] {} | actor={} | role={} | entity={}/{} | result={} | ip={}",
+    action,                      // PR.SUBMITTED, APPROVAL.APPROVED, LOGIN.SUCCESS
+    LogMaskingUtil.maskId(actorId),
+    actorRoles,
+    entityType, entityId,
+    isSuccess ? "SUCCESS" : "FAILED",
+    ip);
+```
+
+### 3.8 EXCEPTION layer
+```java
+// Business exception (WARN) — lỗi client, đã xử lý
+log.warn("[EXCEPTION][{}] {} | userId={}", errorCode, message, LogMaskingUtil.maskId(userId));
+
+// System exception (ERROR) — lỗi hệ thống, cần điều tra
+log.error("[EXCEPTION][{}] Unexpected error | path={} | userId={}",
+    errorCode, path, LogMaskingUtil.maskId(userId), exception);
+// ↑ Truyền exception là argument cuối → Log4j2 tự in stack trace
+```
+
+---
+
+## 4. SENSITIVE DATA MASKING — BẮT BUỘC
+
+### 4.1 Danh sách TUYỆT ĐỐI không log
+```
+password, newPassword, confirmPassword, oldPassword
+token, accessToken, refreshToken, ep_session
+totpSecret, backupCodes
+rsaPrivateKey, aesKey, encryptedPayload, encryptedAesKey
+apiKey, x-api-key, clientSecret
+creditCard, bankAccount, cvv
+```
+
+### 4.2 LogMaskingUtil
+```java
+public final class LogMaskingUtil {
+
+    private LogMaskingUtil() {}
+
+    // nguyen.van.a@company.com → n***@c***.com
+    public static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "***";
+        String[] parts = email.split("@");
+        String local = parts[0].length() > 1
+            ? parts[0].charAt(0) + "***"
+            : "***";
+        String domain = parts[1].length() > 3
+            ? parts[1].charAt(0) + "***." + getTopLevelDomain(parts[1])
+            : "***";
+        return local + "@" + domain;
+    }
+
+    // 0912345678 → 09*****678
+    public static String maskPhone(String phone) {
+        if (phone == null || phone.length() < 6) return "***";
+        return phone.substring(0, 2)
+            + "*".repeat(phone.length() - 5)
+            + phone.substring(phone.length() - 3);
+    }
+
+    // UUID → chỉ show 8 ký tự đầu
+    public static String maskId(UUID id) {
+        if (id == null) return "null";
+        return id.toString().substring(0, 8) + "...";
+    }
+
+    // Token → chỉ show 8 ký tự đầu
+    public static String maskToken(String token) {
+        if (token == null || token.length() < 8) return "***";
+        return token.substring(0, 8) + "...";
+    }
+
+    // Tên người dùng → Nguyễn V. A.
+    public static String maskName(String fullName) {
+        if (fullName == null) return "***";
+        String[] parts = fullName.split(" ");
+        if (parts.length == 1) return parts[0].charAt(0) + "***";
+        StringBuilder sb = new StringBuilder(parts[0]);
+        for (int i = 1; i < parts.length; i++) {
+            sb.append(" ").append(parts[i].charAt(0)).append(".");
+        }
+        return sb.toString();
+    }
+}
+```
+
+### 4.3 Pattern phát hiện lỗi masking
+```java
+// ❌ Những pattern này trong log là BUG — phải fix ngay
+"password="         // ❌
+"token="            // ❌
+"secret="           // ❌
+"key="              // ❌ (trừ Redis key prefix)
+"Authorization: Bearer"  // ❌
+
+// ✅ Đúng
+"email=n***@c***.com"
+"userId=550e8400..."
+"phone=09*****678"
+```
+
+---
+
+## 5. LOG4J2 CONFIGURATION
+
+```xml
+<!-- resources/log4j2.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <!-- Dev: màu ANSI cho terminal -->
+        <Property name="DEV_PATTERN">
+            %highlight{%d{HH:mm:ss.SSS}}{FATAL=red bold, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=cyan, TRACE=white}
+            %style{[%-15t]}{bright,black}
+            %-5level
+            %style{[%logger{1}]}{cyan}
+            %style{traceId=%X{traceId}}{bright,blue}
+            - %msg%n%xThrowable{short}
+        </Property>
+
+        <!-- Prod: JSON cho Loki ingest -->
+        <Property name="JSON_PATTERN">
+            {"ts":"%d{ISO8601}","level":"%level","svc":"${env:SERVICE_NAME:-unknown}",
+            "traceId":"%X{traceId}","spanId":"%X{spanId}","thread":"%t",
+            "logger":"%logger{1}","msg":"%enc{%msg}{JSON}"%xThrowable{JSON}}%n
+        </Property>
+    </Properties>
+
+    <Appenders>
+        <!-- Console: dev màu sắc, prod JSON -->
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="${env:SPRING_PROFILES_ACTIVE:-dev}" />
+            <!-- Sẽ resolve từ Spring profile, xem config bên dưới -->
+        </Console>
+
+        <!-- App log: rolling daily -->
+        <RollingFile name="APP" fileName="logs/application.log"
+                     filePattern="logs/application-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${JSON_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- Audit log: APPEND ONLY — không rotate, không xóa -->
+        <File name="AUDIT" fileName="logs/audit.log" append="true">
+            <PatternLayout pattern="${JSON_PATTERN}"/>
+        </File>
+
+        <!-- Error log riêng để alert dễ hơn -->
+        <RollingFile name="ERROR" fileName="logs/error.log"
+                     filePattern="logs/error-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="${JSON_PATTERN}"/>
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies><TimeBasedTriggeringPolicy /></Policies>
+            <DefaultRolloverStrategy max="90"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- App code: DEBUG trong dev, INFO trong prod -->
+        <Logger name="com.eprocure" level="${env:LOG_LEVEL_APP:-INFO}" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="APP"/>
+            <AppenderRef ref="ERROR"/>
+        </Logger>
+
+        <!-- Audit log riêng biệt -->
+        <Logger name="com.eprocure.audit" level="INFO" additivity="false">
+            <AppenderRef ref="AUDIT"/>
+        </Logger>
+
+        <!-- Tắt verbose logs của framework -->
+        <Logger name="org.springframework"          level="WARN"/>
+        <Logger name="org.mybatis"                  level="WARN"/>
+        <Logger name="com.zaxxer.hikari"            level="WARN"/>
+        <Logger name="org.apache.kafka"             level="WARN"/>
+        <Logger name="io.lettuce"                   level="WARN"/>
+        <Logger name="org.camunda"                  level="WARN"/>
+
+        <Root level="${env:LOG_LEVEL_ROOT:-INFO}">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="APP"/>
+            <AppenderRef ref="ERROR"/>
+        </Root>
+    </Loggers>
+</Configuration>
+```
+
+---
+
+## 6. TRACE ID PROPAGATION (OpenTelemetry)
+
+```java
+// ✅ OpenTelemetry Java Agent tự động inject traceId vào MDC
+// Chỉ cần reference %X{traceId} trong log pattern
+
+// ✅ Propagate qua HTTP headers (tự động với OTel agent)
+// Nhưng nếu tạo thread thủ công:
+Context otelContext = Context.current();
+
+ExecutorService executor = Executors.newFixedThreadPool(4);
+executor.submit(otelContext.wrap(() -> {
+    // traceId vẫn available trong thread này
+    log.info("[ACTION] Async task | traceId={}", Span.current().getSpanContext().getTraceId());
+}));
+
+// ✅ Log requestId trong mọi response (FE dùng để báo lỗi với support)
+String requestId = MDC.get("traceId");
+return ApiResponse.success(code, data, requestId);
+```
+
+---
+
+## 7. LOG CHECKLIST
+
+```
+□ Logger là Log4j2, KHÔNG phải SLF4J hay Logback
+□ Logback đã được exclude khỏi pom.xml
+□ Mọi log method đều có prefix đúng layer ([REQUEST], [CONTROLLER], v.v.)
+□ Email bị mask: n***@c***.com
+□ Phone bị mask: 09*****678
+□ userId chỉ show 8 ký tự đầu
+□ password/token/secret KHÔNG xuất hiện trong bất kỳ log line nào
+□ Business exception log ở WARN — system exception log ở ERROR
+□ Exception object truyền làm argument cuối để có stack trace (chỉ ở ERROR)
+□ Audit log ghi vào logger "com.eprocure.audit" riêng biệt
+□ traceId được inject tự động bởi OTel agent
+□ KHÔNG có System.out.println hay e.printStackTrace() trong code
+```

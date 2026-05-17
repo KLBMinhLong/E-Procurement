@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Analytics & Report Service API
+  description: |
+    Dashboard, KPI metrics và xuất báo cáo JasperReport (PDF/Excel).
+    Dữ liệu dashboard được cache Redis TTL 5 phút.
+    Report export chạy async khi data lớn — trả về jobId để poll kết quả.
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+tags:
+  - name: Dashboards
+  - name: Reports
+  - name: KPIs
+security:
+  - cookieAuth: []
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details: { type: array, nullable: true, items: { type: object } }
+    KpiCard:
+      type: object
+      properties:
+        label:     { type: string }
+        value:     { type: string }
+        unit:      { type: string, nullable: true }
+        trend:
+          type: object
+          nullable: true
+          properties:
+            direction: { type: string, enum: [UP, DOWN, FLAT] }
+            percent:   { type: number, format: float }
+            vsLabel:   { type: string, example: "so với tháng trước" }
+        status:    { type: string, enum: [GOOD, WARNING, CRITICAL], nullable: true }
+    ChartDataPoint:
+      type: object
+      properties:
+        label:  { type: string }
+        value:  { type: number, format: float }
+        value2: { type: number, format: float, nullable: true }
+    ReportJob:
+      type: object
+      properties:
+        jobId:      { type: string, format: uuid }
+        reportType: { type: string }
+        status:
+          type: string
+          enum: [QUEUED, PROCESSING, COMPLETED, FAILED]
+        format:     { type: string, enum: [PDF, EXCEL] }
+        downloadUrl:{ type: string, nullable: true }
+        createdAt:  { type: string, format: date-time }
+        completedAt:{ type: string, format: date-time, nullable: true }
+        expiresAt:  { type: string, format: date-time, nullable: true }
+
+paths:
+  # ── Dashboards ────────────────────────────────────────────────
+  /dashboard/executive:
+    get:
+      tags: [Dashboards]
+      summary: Dashboard cấp C-Level / BOD
+      operationId: getExecutiveDashboard
+      x-required-permission: REPORT_VIEW
+      description: Cached Redis 5 phút. Hiển thị spend toàn công ty, top categories, budget health.
+      parameters:
+        - name: fiscal_year
+          in: query
+          schema: { type: integer, example: 2025 }
+        - name: quarter
+          in: query
+          schema: { type: integer, enum: [1,2,3,4] }
+      responses:
+        '200':
+          description: Dữ liệu executive dashboard
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          kpis:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/KpiCard'
+                            example:
+                              - label: "Tổng chi tiêu YTD"
+                                value: "8,250,000,000"
+                                unit: VND
+                                trend: { direction: UP, percent: 12.5, vsLabel: "so với cùng kỳ" }
+                              - label: "Số PR đã phê duyệt"
+                                value: "347"
+                                trend: { direction: UP, percent: 8.2, vsLabel: "so với tháng trước" }
+                              - label: "Tiết kiệm từ RFQ"
+                                value: "420,000,000"
+                                unit: VND
+                                status: GOOD
+                          spendByDepartment:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                departmentCode: { type: string }
+                                departmentName: { type: string }
+                                spent:          { type: string }
+                                budget:         { type: string }
+                                utilization:    { type: number, format: float }
+                                status:         { type: string, enum: [GOOD, WARNING, CRITICAL] }
+                          spendByCategory:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ChartDataPoint'
+                          monthlyTrend:
+                            type: array
+                            description: Spend theo tháng (12 tháng gần nhất)
+                            items:
+                              type: object
+                              properties:
+                                month:    { type: string, example: "2025-01" }
+                                spent:    { type: number, format: float }
+                                budget:   { type: number, format: float }
+                                prCount:  { type: integer }
+                          approvalSla:
+                            type: object
+                            properties:
+                              onTimePercent:   { type: number, format: float }
+                              avgCycleHours:   { type: number, format: float }
+                              overdueCount:    { type: integer }
+                          topVendors:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                vendorName:  { type: string }
+                                totalSpent:  { type: string }
+                                orderCount:  { type: integer }
+                                avgScore:    { type: number, format: float }
+                          cachedAt: { type: string, format: date-time }
+
+  /dashboard/manager:
+    get:
+      tags: [Dashboards]
+      summary: Dashboard Trưởng phòng
+      operationId: getManagerDashboard
+      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      description: Hiển thị ngân sách phòng, PR đang chờ, SLA warnings. Cached 5 phút.
+      responses:
+        '200':
+          description: Dữ liệu manager dashboard
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          kpis:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/KpiCard'
+                          budgetStatus:
+                            type: object
+                            properties:
+                              allocated:       { type: string }
+                              committed:       { type: string }
+                              spent:           { type: string }
+                              available:       { type: string }
+                              availablePct:    { type: number, format: float }
+                              forecastRunOutDate: { type: string, format: date, nullable: true }
+                          pendingApprovals:
+                            type: object
+                            properties:
+                              count:        { type: integer }
+                              overdueCount: { type: integer }
+                              urgentCount:  { type: integer }
+                          recentPrs:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                prNumber:    { type: string }
+                                title:       { type: string }
+                                status:      { type: string }
+                                totalAmount: { type: string }
+                                requester:   { type: string }
+                                createdAt:   { type: string, format: date-time }
+                          slaWarnings:
+                            type: array
+                            description: Các task đang gần hoặc đã quá SLA
+                            items:
+                              type: object
+                              properties:
+                                taskId:      { type: string }
+                                prNumber:    { type: string }
+                                slaDeadline: { type: string, format: date-time }
+                                isOverdue:   { type: boolean }
+
+  /dashboard/purchasing:
+    get:
+      tags: [Dashboards]
+      summary: Dashboard Cán bộ Thu mua
+      operationId: getPurchasingDashboard
+      x-required-permission: PO_VIEW_ALL
+      description: Hiển thị PO pipeline, GR pending, RFQ đang mở, vendor performance.
+      responses:
+        '200':
+          description: Dữ liệu purchasing dashboard
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          kpis:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/KpiCard'
+                          poPipeline:
+                            type: object
+                            properties:
+                              draft:             { type: integer }
+                              pendingApproval:   { type: integer }
+                              sentToVendor:      { type: integer }
+                              partiallyReceived: { type: integer }
+                          openRfqs:             { type: integer }
+                          grPending:            { type: integer }
+                          invoicesPendingMatch: { type: integer }
+                          vendorPerformance:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                vendorName:        { type: string }
+                                onTimeDelivery:    { type: number, format: float }
+                                qualityScore:      { type: integer }
+                                pendingOrders:     { type: integer }
+
+  /dashboard/requester:
+    get:
+      tags: [Dashboards]
+      summary: Dashboard Nhân viên (My Requests)
+      operationId: getRequesterDashboard
+      description: PR của tôi theo trạng thái, ngân sách phòng còn lại.
+      responses:
+        '200':
+          description: Dữ liệu requester dashboard
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          myPrStats:
+                            type: object
+                            properties:
+                              draft:              { type: integer }
+                              pendingApproval:    { type: integer }
+                              changesRequested:   { type: integer }
+                              approved:           { type: integer }
+                              rejected:           { type: integer }
+                          departmentBudget:
+                            type: object
+                            properties:
+                              available:          { type: string }
+                              availablePct:       { type: number, format: float }
+                          recentPrs:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                prNumber:         { type: string }
+                                title:            { type: string }
+                                status:           { type: string }
+                                currentApprover:  { type: string, nullable: true }
+                                totalAmount:      { type: string }
+
+  # ── KPIs ─────────────────────────────────────────────────────
+  /kpi/cycle-time:
+    get:
+      tags: [KPIs]
+      summary: Thời gian xử lý PR trung bình (PR → PO)
+      operationId: getCycleTimeKpi
+      x-required-permission: REPORT_VIEW
+      parameters:
+        - name: from_date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to_date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: department_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: KPI cycle time
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          avgCycleHours:     { type: number, format: float }
+                          medianCycleHours:  { type: number, format: float }
+                          p95CycleHours:     { type: number, format: float }
+                          target:            { type: number, format: float, example: 48.0 }
+                          byPriority:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                priority:  { type: string }
+                                avgHours:  { type: number, format: float }
+                          trend:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                week:     { type: string }
+                                avgHours: { type: number, format: float }
+
+  /kpi/sla-compliance:
+    get:
+      tags: [KPIs]
+      summary: Tỷ lệ tuân thủ SLA phê duyệt
+      operationId: getSlaComplianceKpi
+      x-required-permission: REPORT_VIEW
+      parameters:
+        - name: from_date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to_date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: KPI SLA compliance
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          overallCompliancePct: { type: number, format: float }
+                          byApproverRole:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                role:            { type: string }
+                                compliancePct:   { type: number, format: float }
+                                avgActionHours:  { type: number, format: float }
+                                overdueCount:    { type: integer }
+                          worstApprovers:
+                            type: array
+                            description: Top 5 approver vi phạm SLA nhiều nhất
+                            items:
+                              type: object
+                              properties:
+                                approverName:  { type: string }
+                                overdueCount:  { type: integer }
+                                compliancePct: { type: number, format: float }
+
+  # ── Reports ───────────────────────────────────────────────────
+  /reports/export:
+    post:
+      tags: [Reports]
+      summary: Tạo job xuất báo cáo (async)
+      operationId: exportReport
+      x-required-permission: REPORT_EXPORT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reportType, format]
+              properties:
+                reportType:
+                  type: string
+                  enum:
+                    - SPENDING_BY_DEPARTMENT
+                    - BUDGET_VS_PLAN
+                    - VENDOR_SCORECARD
+                    - CYCLE_TIME_ANALYSIS
+                    - SLA_COMPLIANCE
+                    - THREE_WAY_MATCH
+                    - INVENTORY_PENDING
+                    - RFQ_SAVINGS
+                    - MAVERICK_SPENDING
+                    - AUDIT_TRAIL
+                    - PR_SUMMARY
+                    - PO_SUMMARY
+                format:
+                  type: string
+                  enum: [PDF, EXCEL]
+                filters:
+                  type: object
+                  properties:
+                    fromDate:     { type: string, format: date }
+                    toDate:       { type: string, format: date }
+                    departmentId: { type: string, format: uuid }
+                    fiscalYear:   { type: integer }
+                    vendorId:     { type: string, format: uuid }
+                    status:       { type: string }
+                    categoryCode: { type: string }
+      responses:
+        '202':
+          description: Job đã được tạo, đang xử lý
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReportJob'
+
+  /reports/jobs/{jobId}:
+    get:
+      tags: [Reports]
+      summary: Kiểm tra trạng thái job xuất báo cáo
+      operationId: getReportJob
+      x-required-permission: REPORT_EXPORT
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Trạng thái job
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReportJob'
+
+  /reports/jobs/{jobId}/download:
+    get:
+      tags: [Reports]
+      summary: Tải file báo cáo đã xuất
+      operationId: downloadReport
+      x-required-permission: REPORT_EXPORT
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: File báo cáo
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+        '404':
+          description: Job không tồn tại hoặc file đã hết hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

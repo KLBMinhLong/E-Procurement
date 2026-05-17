@@ -1,0 +1,1240 @@
+openapi: 3.0.3
+info:
+  title: eProcure — IAM Service API
+  description: |
+    Quản lý danh tính, xác thực, phân quyền RBAC, tổ chức và ủy quyền.
+    
+    **Auth:** HttpOnly Cookie `ep_session` (opaque token)  
+    **Encryption:** RSA+AES khi `ENCRYPTION_ENABLED=true`
+  version: 1.0.0
+  contact:
+    name: eProcure Engineering
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+
+tags:
+  - name: Auth
+    description: Đăng nhập, đăng xuất, đặt lại mật khẩu
+  - name: Users
+    description: Quản lý người dùng
+  - name: Roles & Permissions
+    description: Quản lý vai trò và quyền hạn
+  - name: Delegation
+    description: Ủy quyền phê duyệt
+  - name: Organization
+    description: Sơ đồ tổ chức, phòng ban
+
+security:
+  - cookieAuth: []
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+      example: createdAt,desc
+
+  schemas:
+    # ── Common ────────────────────────────────────────────────────
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        code:
+          type: string
+        message:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+          format: uuid
+
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        isFirst:
+          type: boolean
+        isLast:
+          type: boolean
+        sort:
+          type: string
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  reason:
+                    type: string
+                  rejectedValue:
+                    nullable: true
+
+    # ── IAM Schemas ───────────────────────────────────────────────
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeCode:
+          type: string
+          example: EMP-2025-00123
+        username:
+          type: string
+          example: nguyenvana
+        fullName:
+          type: string
+          example: Nguyễn Văn A
+        email:
+          type: string
+          format: email
+        avatarUrl:
+          type: string
+          nullable: true
+        department:
+          $ref: '#/components/schemas/DepartmentSummary'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+
+    UserDetail:
+      allOf:
+        - $ref: '#/components/schemas/UserSummary'
+        - type: object
+          properties:
+            phone:
+              type: string
+              nullable: true
+            orgNodeId:
+              type: string
+              format: uuid
+              nullable: true
+            roles:
+              type: array
+              items:
+                type: string
+              example: [REQUESTER, MANAGER]
+            permissions:
+              type: array
+              items:
+                type: string
+              example: [PR_CREATE, PR_APPROVE_L1]
+            twoFactorEnabled:
+              type: boolean
+            lastLoginAt:
+              type: string
+              format: date-time
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+
+    UserStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, LOCKED, PENDING_VERIFY]
+
+    CreateUserRequest:
+      type: object
+      required: [employeeCode, username, email, fullName, departmentId]
+      properties:
+        employeeCode:
+          type: string
+          maxLength: 20
+          example: EMP-2025-00124
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-z0-9._-]+$'
+          example: tranthib
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+          maxLength: 200
+        phone:
+          type: string
+          nullable: true
+        departmentId:
+          type: string
+          format: uuid
+        orgNodeId:
+          type: string
+          format: uuid
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+          default: [REQUESTER]
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          maxLength: 200
+        phone:
+          type: string
+          nullable: true
+        departmentId:
+          type: string
+          format: uuid
+        orgNodeId:
+          type: string
+          format: uuid
+          nullable: true
+
+    RoleDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          example: MANAGER
+        name:
+          type: string
+          example: Trưởng phòng
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            type: string
+        isSystemRole:
+          type: boolean
+
+    Permission:
+      type: object
+      properties:
+        code:
+          type: string
+          example: PR_APPROVE_L1
+        name:
+          type: string
+          example: Duyệt yêu cầu mua sắm cấp 1
+        description:
+          type: string
+          nullable: true
+        service:
+          type: string
+          example: PR_SERVICE
+
+    DepartmentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: IT
+        name:
+          type: string
+          example: Phòng Công nghệ Thông tin
+
+    DepartmentDetail:
+      allOf:
+        - $ref: '#/components/schemas/DepartmentSummary'
+        - type: object
+          properties:
+            parentId:
+              type: string
+              format: uuid
+              nullable: true
+            headUser:
+              $ref: '#/components/schemas/UserSummary'
+              nullable: true
+            memberCount:
+              type: integer
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/DepartmentSummary'
+
+    DelegationRequest:
+      type: object
+      required: [delegateId, startAt, endAt]
+      properties:
+        delegateId:
+          type: string
+          format: uuid
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        maxValue:
+          type: string
+          description: Số tiền tối đa (string để tránh float error)
+          example: "50000000.0000"
+        currency:
+          type: string
+          default: VND
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: null = tất cả danh mục
+        scope:
+          type: string
+          enum: [ALL, OWN_TEAM]
+          default: ALL
+
+    DelegationDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        delegator:
+          $ref: '#/components/schemas/UserSummary'
+        delegate:
+          $ref: '#/components/schemas/UserSummary'
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        maxValue:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+        scope:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, EXPIRED, REVOKED]
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  # ── Auth ──────────────────────────────────────────────────────
+  /auth/public-key:
+    get:
+      tags: [Auth]
+      summary: Lấy RSA Public Key để mã hóa request
+      security: []
+      operationId: getPublicKey
+      responses:
+        '200':
+          description: Public key thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          publicKey:
+                            type: string
+                            example: "-----BEGIN PUBLIC KEY-----\nMIIBIjAN...\n-----END PUBLIC KEY-----"
+                          keyVersion:
+                            type: string
+                            example: v2025-01
+                          algorithm:
+                            type: string
+                            example: RSA/ECB/OAEPWithSHA-256AndMGF1Padding
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập (credentials mã hóa RSA+AES)
+      security: []
+      operationId: login
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - description: "Production (ENCRYPTION_ENABLED=true)"
+                  type: object
+                  required: [encryptedPayload, encryptedAesKey, iv, keyVersion]
+                  properties:
+                    encryptedPayload:
+                      type: string
+                      format: byte
+                    encryptedAesKey:
+                      type: string
+                      format: byte
+                    iv:
+                      type: string
+                      format: byte
+                    keyVersion:
+                      type: string
+                - description: "Dev (ENCRYPTION_ENABLED=false)"
+                  type: object
+                  required: [username, password]
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          headers:
+            Set-Cookie:
+              description: ep_session HttpOnly cookie
+              schema:
+                type: string
+                example: "ep_session=abc123; HttpOnly; Secure; SameSite=Strict; Path=/"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          userId:
+                            type: string
+                            format: uuid
+                          fullName:
+                            type: string
+                          avatarUrl:
+                            type: string
+                            nullable: true
+                          requiresTwoFactor:
+                            type: boolean
+        '401':
+          description: Sai thông tin đăng nhập (IAM_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '423':
+          description: Tài khoản bị khóa (IAM_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/two-factor/verify:
+    post:
+      tags: [Auth]
+      summary: Xác minh mã 2FA sau khi đăng nhập
+      security: []
+      operationId: verifyTwoFactor
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  pattern: '^\d{6}$'
+                  example: "123456"
+      responses:
+        '200':
+          description: 2FA xác minh thành công
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Mã 2FA sai (IAM_006)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Đăng xuất — thu hồi token hiện tại
+      operationId: logout
+      responses:
+        '200':
+          description: Đăng xuất thành công
+          headers:
+            Set-Cookie:
+              description: Clear cookie
+              schema:
+                type: string
+                example: "ep_session=; HttpOnly; Secure; Max-Age=0; Path=/"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Yêu cầu đặt lại mật khẩu qua email
+      security: []
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Luôn trả 200 (tránh user enumeration)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Đặt lại mật khẩu bằng token từ email
+      security: []
+      operationId: resetPassword
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resetToken, newPassword, confirmPassword]
+              properties:
+                resetToken:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+                confirmPassword:
+                  type: string
+      responses:
+        '200':
+          description: Đặt lại mật khẩu thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Token không hợp lệ hoặc hết hạn (IAM_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/oauth/google:
+    get:
+      tags: [Auth]
+      summary: Bắt đầu luồng đăng nhập Google OAuth
+      security: []
+      operationId: googleOAuthInit
+      responses:
+        '302':
+          description: Redirect đến Google consent screen
+
+  # ── Users ─────────────────────────────────────────────────────
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Lấy thông tin người dùng hiện tại
+      operationId: getMe
+      responses:
+        '200':
+          description: Thông tin user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserDetail'
+
+  /users/me/password:
+    put:
+      tags: [Users]
+      summary: Đổi mật khẩu của mình
+      operationId: changeMyPassword
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword, confirmPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+                confirmPassword:
+                  type: string
+      responses:
+        '200':
+          description: Đổi mật khẩu thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/me/two-factor/enable:
+    put:
+      tags: [Users]
+      summary: Bật 2FA — trả về TOTP secret và QR code
+      operationId: enableTwoFactor
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Thông tin 2FA setup
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          secret:
+                            type: string
+                          qrCodeUrl:
+                            type: string
+                          manualEntryKey:
+                            type: string
+
+  /users/me/two-factor/confirm:
+    put:
+      tags: [Users]
+      summary: Xác nhận bật 2FA sau khi scan QR
+      operationId: confirmTwoFactor
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  pattern: '^\d{6}$'
+      responses:
+        '200':
+          description: 2FA đã bật — trả về backup codes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          backupCodes:
+                            type: array
+                            items:
+                              type: string
+                            description: 8 backup codes một lần dùng
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Danh sách người dùng
+      operationId: listUsers
+      x-required-permission: ADMIN_USER_VIEW
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/UserStatus'
+        - name: department_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Tìm kiếm theo tên, username, email
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Danh sách người dùng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserSummary'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [Users]
+      summary: Tạo người dùng mới
+      operationId: createUser
+      x-required-permission: ADMIN_USER_MANAGE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserDetail'
+        '409':
+          description: Username hoặc email đã tồn tại (IAM_009)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Chi tiết người dùng
+      operationId: getUserById
+      x-required-permission: ADMIN_USER_VIEW
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Chi tiết người dùng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserDetail'
+        '404':
+          description: Không tìm thấy (IAM_030)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Users]
+      summary: Cập nhật thông tin người dùng
+      operationId: updateUser
+      x-required-permission: ADMIN_USER_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserDetail'
+
+  /users/{id}/status:
+    patch:
+      tags: [Users]
+      summary: Khóa / Mở khóa / Kích hoạt tài khoản
+      operationId: changeUserStatus
+      x-required-permission: ADMIN_USER_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/UserStatus'
+                reason:
+                  type: string
+                  description: Bắt buộc khi status = LOCKED
+      responses:
+        '200':
+          description: Đổi trạng thái thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/{id}/roles:
+    post:
+      tags: [Users]
+      summary: Gán roles cho người dùng (thay thế toàn bộ)
+      operationId: assignRoles
+      x-required-permission: ADMIN_ROLE_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [roles]
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+                  example: [MANAGER, REQUESTER]
+      responses:
+        '200':
+          description: Gán roles thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # ── Roles & Permissions ───────────────────────────────────────
+  /roles:
+    get:
+      tags: [Roles & Permissions]
+      summary: Danh sách tất cả roles
+      operationId: listRoles
+      x-required-permission: ADMIN_ROLE_MANAGE
+      responses:
+        '200':
+          description: Danh sách roles
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RoleDetail'
+    post:
+      tags: [Roles & Permissions]
+      summary: Tạo role mới
+      operationId: createRole
+      x-required-permission: ADMIN_ROLE_MANAGE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                code:
+                  type: string
+                  pattern: '^[A-Z][A-Z0-9_]+$'
+                  example: CISO
+                name:
+                  type: string
+                description:
+                  type: string
+                permissions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Tạo role thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RoleDetail'
+
+  /roles/{code}/permissions:
+    put:
+      tags: [Roles & Permissions]
+      summary: Cập nhật permissions của role
+      operationId: updateRolePermissions
+      x-required-permission: ADMIN_ROLE_MANAGE
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permissions]
+              properties:
+                permissions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /permissions:
+    get:
+      tags: [Roles & Permissions]
+      summary: Danh sách tất cả permission codes
+      operationId: listPermissions
+      x-required-permission: ADMIN_ROLE_MANAGE
+      responses:
+        '200':
+          description: Danh sách permissions nhóm theo service
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        additionalProperties:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Permission'
+                        example:
+                          PR_SERVICE:
+                            - code: PR_CREATE
+                              name: Tạo yêu cầu mua sắm
+                          FINANCE:
+                            - code: BUDGET_VIEW_ALL
+                              name: Xem tất cả ngân sách
+
+  # ── Delegation ───────────────────────────────────────────────
+  /delegations:
+    get:
+      tags: [Delegation]
+      summary: Danh sách ủy quyền của tôi (delegator = me)
+      operationId: listMyDelegations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, EXPIRED, REVOKED]
+      responses:
+        '200':
+          description: Danh sách ủy quyền
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DelegationDetail'
+
+    post:
+      tags: [Delegation]
+      summary: Tạo ủy quyền mới
+      operationId: createDelegation
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DelegationRequest'
+      responses:
+        '201':
+          description: Tạo ủy quyền thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DelegationDetail'
+        '422':
+          description: Vi phạm quy tắc ủy quyền (IAM_020, IAM_021, IAM_022)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /delegations/{id}/revoke:
+    patch:
+      tags: [Delegation]
+      summary: Thu hồi ủy quyền
+      operationId: revokeDelegation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Thu hồi thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # ── Organization ──────────────────────────────────────────────
+  /org/departments:
+    get:
+      tags: [Organization]
+      summary: Cây phòng ban
+      operationId: getDepartmentTree
+      responses:
+        '200':
+          description: Cây phòng ban
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DepartmentDetail'
+
+  /org/departments/{id}/members:
+    get:
+      tags: [Organization]
+      summary: Danh sách thành viên phòng ban
+      operationId: getDepartmentMembers
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách thành viên
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserSummary'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+  /org/approvers:
+    get:
+      tags: [Organization]
+      summary: Lấy approver theo role và phòng ban (dùng khi resolve approval chain)
+      operationId: getApprovers
+      parameters:
+        - name: role
+          in: query
+          required: true
+          schema:
+            type: string
+          example: MANAGER
+        - name: department_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Danh sách approver phù hợp
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserSummary'

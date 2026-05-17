@@ -1,0 +1,667 @@
+openapi: 3.0.3
+info:
+  title: eProcure — Vendor Service API
+  description: Quản lý nhà cung cấp, Approved Vendor List (AVL), RFQ và đánh giá vendor.
+  version: 1.0.0
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: api.eprocure.internal
+tags:
+  - name: Vendors
+  - name: RFQ
+  - name: Quotes
+security:
+  - cookieAuth: []
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ep_session
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        code: { type: string }
+        message: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        requestId: { type: string, format: uuid }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        isFirst: { type: boolean }
+        isLast: { type: boolean }
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            details:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  reason: { type: string }
+    VendorContact:
+      type: object
+      properties:
+        id:         { type: string, format: uuid }
+        name:       { type: string }
+        role:       { type: string, nullable: true, example: "Giám đốc kinh doanh" }
+        email:      { type: string, format: email }
+        phone:      { type: string }
+        isPrimary:  { type: boolean }
+    VendorScorecard:
+      type: object
+      properties:
+        qualityScore:    { type: integer, minimum: 0, maximum: 100 }
+        deliveryScore:   { type: integer, minimum: 0, maximum: 100 }
+        priceScore:      { type: integer, minimum: 0, maximum: 100 }
+        responsivenessScore: { type: integer, minimum: 0, maximum: 100 }
+        overallScore:    { type: integer, minimum: 0, maximum: 100 }
+        lastEvaluatedAt: { type: string, format: date-time, nullable: true }
+        totalOrders:     { type: integer }
+        onTimeDeliveryRate: { type: number, format: float }
+    VendorSummary:
+      type: object
+      properties:
+        id:         { type: string, format: uuid }
+        vendorCode: { type: string, example: VND-001 }
+        name:       { type: string }
+        taxCode:    { type: string }
+        email:      { type: string, format: email }
+        phone:      { type: string }
+        status:
+          type: string
+          enum: [PENDING, APPROVED, BLACKLISTED, INACTIVE]
+        isOnApprovedVendorList: { type: boolean }
+        categories:
+          type: array
+          items: { type: string }
+        overallScore: { type: integer, nullable: true }
+    VendorDetail:
+      allOf:
+        - $ref: '#/components/schemas/VendorSummary'
+        - type: object
+          properties:
+            address:
+              type: object
+              properties:
+                street:   { type: string }
+                district: { type: string }
+                city:     { type: string }
+                country:  { type: string, default: Vietnam }
+            contacts:
+              type: array
+              items:
+                $ref: '#/components/schemas/VendorContact'
+            scorecard: { $ref: '#/components/schemas/VendorScorecard' }
+            contractIds:
+              type: array
+              items: { type: string, format: uuid }
+            notes:     { type: string, nullable: true }
+            createdAt: { type: string, format: date-time }
+    RfqInvitation:
+      type: object
+      properties:
+        id:         { type: string, format: uuid }
+        vendor:
+          type: object
+          properties:
+            id:   { type: string, format: uuid }
+            name: { type: string }
+        invitedAt:     { type: string, format: date-time }
+        hasSubmitted:  { type: boolean }
+        submittedAt:   { type: string, format: date-time, nullable: true }
+    VendorQuote:
+      type: object
+      properties:
+        id:            { type: string, format: uuid }
+        rfqId:         { type: string, format: uuid }
+        vendorId:      { type: string, format: uuid }
+        vendorName:    { type: string }
+        lineItems:
+          type: array
+          items:
+            type: object
+            properties:
+              rfqLineItemId: { type: string, format: uuid }
+              itemName:      { type: string }
+              unitPrice:     { type: string }
+              currency:      { type: string }
+              quantity:      { type: string }
+              totalPrice:    { type: string }
+              deliveryDays:  { type: integer }
+              warranty:      { type: string, nullable: true }
+        totalAmount:   { type: string }
+        currency:      { type: string }
+        validUntil:    { type: string, format: date }
+        paymentTerms:  { type: string, nullable: true }
+        notes:         { type: string, nullable: true }
+        submittedAt:   { type: string, format: date-time }
+        evaluationScore: { type: number, format: float, nullable: true }
+        evaluationNote:  { type: string, nullable: true }
+    RfqDetail:
+      type: object
+      properties:
+        id:                  { type: string, format: uuid }
+        rfqNumber:           { type: string, example: RFQ-2025-01-00001 }
+        prId:                { type: string, format: uuid }
+        prNumber:            { type: string }
+        title:               { type: string }
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, CLOSED, AWARDED, CANCELLED]
+        submissionDeadline:  { type: string, format: date-time }
+        lineItems:
+          type: array
+          items:
+            type: object
+            properties:
+              id:           { type: string, format: uuid }
+              itemName:     { type: string }
+              categoryCode: { type: string }
+              quantity:     { type: string }
+              unit:         { type: string }
+              specifications: { type: string, nullable: true }
+        invitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RfqInvitation'
+        quotes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorQuote'
+        awardedVendorId:     { type: string, format: uuid, nullable: true }
+        awardedQuoteId:      { type: string, format: uuid, nullable: true }
+        awardReason:         { type: string, nullable: true }
+        createdAt:           { type: string, format: date-time }
+
+paths:
+  # ── Vendors ───────────────────────────────────────────────────
+  /vendors:
+    get:
+      tags: [Vendors]
+      summary: Danh sách nhà cung cấp
+      operationId: listVendors
+      x-required-permission: VENDOR_VIEW
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [PENDING, APPROVED, BLACKLISTED, INACTIVE] }
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: on_avl_only
+          in: query
+          description: Chỉ lấy vendor trong Approved Vendor List
+          schema: { type: boolean }
+        - name: q
+          in: query
+          description: Tìm theo tên, mã số thuế, vendor code
+          schema: { type: string }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách vendor
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/VendorSummary'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [Vendors]
+      summary: Thêm nhà cung cấp mới
+      operationId: createVendor
+      x-required-permission: VENDOR_CREATE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, taxCode, email, phone, categories]
+              properties:
+                name:       { type: string, maxLength: 300 }
+                taxCode:    { type: string, description: "Mã số thuế" }
+                email:      { type: string, format: email }
+                phone:      { type: string }
+                address:
+                  type: object
+                  properties:
+                    street:   { type: string }
+                    district: { type: string }
+                    city:     { type: string }
+                    country:  { type: string, default: Vietnam }
+                categories:
+                  type: array
+                  minItems: 1
+                  items: { type: string }
+                contacts:
+                  type: array
+                  items:
+                    type: object
+                    required: [name, email, phone]
+                    properties:
+                      name:      { type: string }
+                      role:      { type: string, nullable: true }
+                      email:     { type: string, format: email }
+                      phone:     { type: string }
+                      isPrimary: { type: boolean, default: false }
+                notes: { type: string, nullable: true }
+      responses:
+        '201':
+          description: Tạo vendor thành công (status = PENDING)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VendorDetail'
+        '409':
+          description: Mã số thuế đã tồn tại (VND_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /vendors/{id}:
+    get:
+      tags: [Vendors]
+      summary: Chi tiết nhà cung cấp
+      operationId: getVendorById
+      x-required-permission: VENDOR_VIEW
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Chi tiết vendor
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VendorDetail'
+
+    put:
+      tags: [Vendors]
+      summary: Cập nhật thông tin nhà cung cấp
+      operationId: updateVendor
+      x-required-permission: VENDOR_EDIT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:       { type: string }
+                email:      { type: string, format: email }
+                phone:      { type: string }
+                address:
+                  type: object
+                  properties:
+                    street:   { type: string }
+                    district: { type: string }
+                    city:     { type: string }
+                categories:  { type: array, items: { type: string } }
+                notes:       { type: string, nullable: true }
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VendorDetail'
+
+  /vendors/{id}/approve:
+    patch:
+      tags: [Vendors]
+      summary: Phê duyệt và thêm vào AVL
+      operationId: approveVendor
+      x-required-permission: VENDOR_APPROVE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes: { type: string, nullable: true }
+      responses:
+        '200':
+          description: Vendor đã được phê duyệt và thêm vào AVL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /vendors/{id}/blacklist:
+    patch:
+      tags: [Vendors]
+      summary: Đưa vào danh sách đen
+      operationId: blacklistVendor
+      x-required-permission: VENDOR_APPROVE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 20 }
+      responses:
+        '200':
+          description: Vendor đã bị blacklist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /vendors/{id}/evaluate:
+    post:
+      tags: [Vendors]
+      summary: Đánh giá nhà cung cấp sau khi nhận hàng/hợp tác
+      operationId: evaluateVendor
+      x-required-permission: VENDOR_EDIT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [qualityScore, deliveryScore, priceScore, responsivenessScore]
+              properties:
+                qualityScore:         { type: integer, minimum: 0, maximum: 100 }
+                deliveryScore:        { type: integer, minimum: 0, maximum: 100 }
+                priceScore:           { type: integer, minimum: 0, maximum: 100 }
+                responsivenessScore:  { type: integer, minimum: 0, maximum: 100 }
+                poId:                 { type: string, format: uuid, nullable: true }
+                comment:              { type: string, nullable: true }
+      responses:
+        '200':
+          description: Đánh giá đã được lưu
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VendorScorecard'
+
+  # ── RFQ ──────────────────────────────────────────────────────
+  /rfq:
+    get:
+      tags: [RFQ]
+      summary: Danh sách RFQ
+      operationId: listRfqs
+      x-required-permission: RFQ_VIEW
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [DRAFT, PUBLISHED, CLOSED, AWARDED, CANCELLED] }
+        - name: pr_id
+          in: query
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách RFQ
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RfqDetail'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+
+    post:
+      tags: [RFQ]
+      summary: Tạo RFQ mới từ PR đã approved
+      operationId: createRfq
+      x-required-permission: RFQ_CREATE
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prId, title, submissionDeadline, invitedVendorIds]
+              properties:
+                prId:               { type: string, format: uuid }
+                title:              { type: string }
+                submissionDeadline: { type: string, format: date-time }
+                invitedVendorIds:
+                  type: array
+                  minItems: 2
+                  description: Tối thiểu 2 vendor để có tính cạnh tranh
+                  items: { type: string, format: uuid }
+                requirements:       { type: string, nullable: true }
+                attachmentIds:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '201':
+          description: RFQ đã tạo và email đã gửi cho vendors
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RfqDetail'
+
+  /rfq/{id}:
+    get:
+      tags: [RFQ]
+      summary: Chi tiết RFQ kèm các báo giá nhận được
+      operationId: getRfqById
+      x-required-permission: RFQ_VIEW
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Chi tiết RFQ
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RfqDetail'
+
+  /rfq/{id}/close:
+    patch:
+      tags: [RFQ]
+      summary: Đóng RFQ (không nhận thêm báo giá)
+      operationId: closeRfq
+      x-required-permission: RFQ_EVALUATE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: RFQ đã đóng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /rfq/{id}/quotes/{quoteId}/evaluate:
+    post:
+      tags: [Quotes]
+      summary: Đánh giá điểm cho báo giá
+      operationId: evaluateQuote
+      x-required-permission: RFQ_EVALUATE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: quoteId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [evaluationScore]
+              properties:
+                evaluationScore: { type: number, format: float, minimum: 0, maximum: 100 }
+                evaluationNote:  { type: string, nullable: true }
+      responses:
+        '200':
+          description: Đánh giá đã lưu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /rfq/{id}/award:
+    post:
+      tags: [Quotes]
+      summary: Chốt nhà cung cấp thắng thầu
+      operationId: awardRfq
+      x-required-permission: RFQ_AWARD
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [awardedQuoteId, awardReason]
+              properties:
+                awardedQuoteId: { type: string, format: uuid }
+                awardReason:
+                  type: string
+                  minLength: 20
+                  example: "Giá tốt nhất, năng lực phù hợp, đã có hợp tác trước"
+      responses:
+        '200':
+          description: Kết quả đã được chốt — vendor thắng và thua đều được thông báo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          awardedVendor:
+                            type: object
+                            properties:
+                              id:   { type: string, format: uuid }
+                              name: { type: string }
+                          awardedQuote: { $ref: '#/components/schemas/VendorQuote' }
+        '422':
+          description: Chưa có báo giá (VND_006) hoặc RFQ đã đóng (VND_005)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
