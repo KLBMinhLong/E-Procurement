@@ -91,6 +91,8 @@
 | RSA+AES encryption interceptor | 🔄 |
 | HttpOnly Cookie management | ✅ |
 | Single session enforcement | ✅ |
+| Forgot/reset password token + Keycloak reset | ✅ |
+| Password reset email delivery adapter | 🔄 |
 | RBAC permission loading | ✅ |
 | Admin user CRUD API | ✅ |
 | Admin role/permission API | ✅ |

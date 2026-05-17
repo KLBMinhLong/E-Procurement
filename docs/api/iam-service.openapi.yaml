@@ -553,6 +553,8 @@ paths:
       summary: Yêu cầu đặt lại mật khẩu qua email
       security: []
       operationId: forgotPassword
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -604,6 +606,12 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
         '401':
           description: Token không hợp lệ hoặc hết hạn (IAM_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Password mới không đủ mạnh (IAM_008)
           content:
             application/json:
               schema:

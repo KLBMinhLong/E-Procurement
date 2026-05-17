@@ -47,6 +47,12 @@ On new login:
 - Callback validates state/code and existing IAM user by googleOauthId or email
 - On success, issue opaque session token, or ep_2fa if local 2FA is enabled
 
+## Forgot/reset password
+- POST /api/v1/auth/forgot-password requires Idempotency-Key and always returns 200 to avoid user enumeration
+- Reset token is opaque 64 chars; only SHA-256 token_hash is stored in iam.password_reset_tokens
+- POST /api/v1/auth/reset-password validates token, password policy, updates Keycloak credential, stores BCrypt(password + userId) backup hash, records password history, and revokes active sessions
+- Email delivery is behind PasswordResetDeliveryPort; notification-service/Brevo integration is the production adapter target
+
 ## Logout
 POST /api/v1/auth/logout
 - Invalidate session in DB

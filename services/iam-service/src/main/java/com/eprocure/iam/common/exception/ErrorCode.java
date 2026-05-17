@@ -9,6 +9,8 @@ public enum ErrorCode {
     IAM_004("IAM_004", "Permission denied", HttpStatus.FORBIDDEN),
     IAM_005("IAM_005", "Validation failed", HttpStatus.BAD_REQUEST),
     IAM_006("IAM_006", "Two-factor code is invalid or expired", HttpStatus.UNAUTHORIZED),
+    IAM_007("IAM_007", "Password reset token is invalid or expired", HttpStatus.UNAUTHORIZED),
+    IAM_008("IAM_008", "New password does not meet policy", HttpStatus.UNPROCESSABLE_ENTITY),
     IAM_009("IAM_009", "IAM resource already exists", HttpStatus.CONFLICT),
     IAM_010("IAM_010", "Email is not verified", HttpStatus.UNPROCESSABLE_ENTITY),
     IAM_012("IAM_012", "Google OAuth verification failed", HttpStatus.UNAUTHORIZED),
@@ -22,6 +24,7 @@ public enum ErrorCode {
     IAM_034("IAM_034", "Approver not found", HttpStatus.UNPROCESSABLE_ENTITY),
     IAM_035("IAM_035", "Delegation not found", HttpStatus.NOT_FOUND),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
+    SYS_002("SYS_002", "Dependency service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST);
 
     private final String code;

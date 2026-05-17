@@ -159,13 +159,17 @@ Lấy RSA Public Key của backend để bắt đầu mã hoá.
 *Token không hết hạn theo thời gian, nhưng sliding window refresh để duy trì session active.*
 
 #### POST /api/v1/auth/forgot-password
+Header: `Idempotency-Key`
+
 ```jsonc
 { "email": "user@company.com" }
 ```
 
 #### POST /api/v1/auth/reset-password
+Header: `Idempotency-Key`
+
 ```jsonc
-{ "token": "reset-token-from-email", "newPassword": "...", "confirmPassword": "..." }
+{ "resetToken": "reset-token-from-email", "newPassword": "...", "confirmPassword": "..." }
 ```
 
 #### GET /api/v1/auth/oauth/google

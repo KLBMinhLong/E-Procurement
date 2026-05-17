@@ -52,6 +52,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<String> findPasswordHashById(UUID userId) {
+        return Optional.ofNullable(userMapper.findPasswordHashById(userId)).filter(value -> !value.isBlank());
+    }
+
+    @Override
     public Page<User> findPage(UserSearchCriteria criteria, UserSort sort, SortDirection direction, int offset, int limit) {
         List<UserPageDbEntity> rows = userMapper.findPage(
                 criteria.status(),
@@ -100,6 +105,11 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public void updateLastLoginAt(UUID userId, Instant lastLoginAt) {
         userMapper.updateLastLoginAt(userId, lastLoginAt);
+    }
+
+    @Override
+    public void updatePasswordHash(UUID userId, String passwordHash, UUID actorId) {
+        userMapper.updatePasswordHash(userId, passwordHash, actorId);
     }
 
     @Override

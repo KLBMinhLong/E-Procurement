@@ -41,7 +41,7 @@
 | IAM_004 | 403 | Khong co quyen thuc hien thao tac |
 | IAM_005 | 401 | Phien dang nhap het han hoac bi invalidate |
 | IAM_006 | 401 | Ma 2FA khong dung hoac het han |
-| IAM_007 | 422 | Token reset password khong hop le hoac het han |
+| IAM_007 | 401 | Token reset password khong hop le hoac het han |
 | IAM_008 | 422 | Password moi khong du manh |
 | IAM_009 | 409 | Username hoac email da ton tai |
 | IAM_010 | 422 | Email chua duoc xac thuc |

@@ -328,7 +328,7 @@ kafka-consumed:{messageId}        → "1" (TTL 48h, Kafka dedup)
 budget:{deptId}:{year}:{quarter}  → BudgetDashboard JSON (TTL 5min)
 dashboard:manager:{userId}        → ManagerDashboard JSON (TTL 5min)
 dashboard:executive:{userId}      → ExecDashboard JSON (TTL 5min)
-reset-token:{token}               → userId string (TTL 15min)
+reset-token:{tokenHash}           → optional cache; iam.password_reset_tokens is source of truth (TTL 15min)
 login-attempts:{email}            → Integer count (TTL 30min)
 ```
 

@@ -1,8 +1,10 @@
 package com.eprocure.iam.presentation.auth;
 
 import com.eprocure.iam.application.port.in.ClientContext;
+import com.eprocure.iam.application.port.in.ForgotPasswordCommand;
 import com.eprocure.iam.application.port.in.GoogleOAuthCallbackCommand;
 import com.eprocure.iam.application.port.in.LoginCommand;
+import com.eprocure.iam.application.port.in.ResetPasswordCommand;
 import com.eprocure.iam.application.port.in.VerifyTwoFactorCommand;
 import com.eprocure.iam.application.port.out.PublicKeyInfo;
 import com.eprocure.iam.application.service.GoogleOAuthRedirect;
@@ -10,9 +12,11 @@ import com.eprocure.iam.application.service.LoginResult;
 import com.eprocure.iam.application.service.TwoFactorVerificationResult;
 import com.eprocure.iam.application.service.UserSummaryView;
 import com.eprocure.iam.application.usecase.GetPublicKeyUseCase;
+import com.eprocure.iam.application.usecase.ForgotPasswordUseCase;
 import com.eprocure.iam.application.usecase.HandleGoogleOAuthCallbackUseCase;
 import com.eprocure.iam.application.usecase.LoginUseCase;
 import com.eprocure.iam.application.usecase.LogoutUseCase;
+import com.eprocure.iam.application.usecase.ResetPasswordUseCase;
 import com.eprocure.iam.application.usecase.StartGoogleOAuthUseCase;
 import com.eprocure.iam.application.usecase.VerifyTwoFactorUseCase;
 import com.eprocure.iam.common.api.ApiResponse;
@@ -28,8 +32,8 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -47,10 +51,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
-    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+    private static final Logger log = LogManager.getLogger(AuthController.class);
     private final GetPublicKeyUseCase getPublicKeyUseCase;
     private final LoginUseCase loginUseCase;
     private final LogoutUseCase logoutUseCase;
+    private final ForgotPasswordUseCase forgotPasswordUseCase;
+    private final ResetPasswordUseCase resetPasswordUseCase;
     private final VerifyTwoFactorUseCase verifyTwoFactorUseCase;
     private final StartGoogleOAuthUseCase startGoogleOAuthUseCase;
     private final HandleGoogleOAuthCallbackUseCase handleGoogleOAuthCallbackUseCase;
@@ -68,6 +74,8 @@ public class AuthController {
             GetPublicKeyUseCase getPublicKeyUseCase,
             LoginUseCase loginUseCase,
             LogoutUseCase logoutUseCase,
+            ForgotPasswordUseCase forgotPasswordUseCase,
+            ResetPasswordUseCase resetPasswordUseCase,
             VerifyTwoFactorUseCase verifyTwoFactorUseCase,
             StartGoogleOAuthUseCase startGoogleOAuthUseCase,
             HandleGoogleOAuthCallbackUseCase handleGoogleOAuthCallbackUseCase,
@@ -83,6 +91,8 @@ public class AuthController {
         this.getPublicKeyUseCase = getPublicKeyUseCase;
         this.loginUseCase = loginUseCase;
         this.logoutUseCase = logoutUseCase;
+        this.forgotPasswordUseCase = forgotPasswordUseCase;
+        this.resetPasswordUseCase = resetPasswordUseCase;
         this.verifyTwoFactorUseCase = verifyTwoFactorUseCase;
         this.startGoogleOAuthUseCase = startGoogleOAuthUseCase;
         this.handleGoogleOAuthCallbackUseCase = handleGoogleOAuthCallbackUseCase;
@@ -128,6 +138,35 @@ public class AuthController {
                 result.avatarUrl(),
                 result.requiresTwoFactor());
         return ResponseEntity.ok(ApiResponse.success(data, RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody ForgotPasswordRequest body,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/auth/forgot-password | email={}", LogMaskingUtil.maskEmail(body.email()));
+        forgotPasswordUseCase.execute(new ForgotPasswordCommand(body.email(), idempotencyKey));
+        return ResponseEntity.ok(ApiResponse.successMessage(
+                "If the email exists, reset instructions will be sent",
+                RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody ResetPasswordRequest body,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        log.info("[CONTROLLER] POST /api/v1/auth/reset-password | userId=anonymous");
+        resetPasswordUseCase.execute(new ResetPasswordCommand(
+                body.resetToken(),
+                body.newPassword(),
+                body.confirmPassword(),
+                idempotencyKey));
+        response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(cookieName).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(twoFactorCookieName).toString());
+        return ResponseEntity.ok(ApiResponse.successMessage("Password has been reset", RequestIdUtil.resolve(request)));
     }
 
     @GetMapping("/oauth/google")

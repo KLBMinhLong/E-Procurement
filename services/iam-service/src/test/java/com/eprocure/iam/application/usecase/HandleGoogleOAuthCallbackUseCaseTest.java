@@ -189,6 +189,11 @@ class HandleGoogleOAuthCallbackUseCaseTest {
         }
 
         @Override
+        public Optional<String> findPasswordHashById(UUID userId) {
+            return Optional.empty();
+        }
+
+        @Override
         public Page<User> findPage(UserSearchCriteria criteria, UserSort sort, SortDirection direction, int offset, int limit) {
             return new Page<>(List.of(user), 1);
         }
@@ -222,6 +227,10 @@ class HandleGoogleOAuthCallbackUseCaseTest {
         @Override
         public void updateLastLoginAt(UUID userId, Instant lastLoginAt) {
             this.lastLoginAt = lastLoginAt;
+        }
+
+        @Override
+        public void updatePasswordHash(UUID userId, String passwordHash, UUID actorId) {
         }
 
         @Override
@@ -262,6 +271,11 @@ class HandleGoogleOAuthCallbackUseCaseTest {
         @Override
         public Optional<SessionRecord> findActiveByTokenHash(String tokenHash, Instant now) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<String> findActiveTokenHashesByUserId(UUID userId, Instant now) {
+            return List.of();
         }
     }
 

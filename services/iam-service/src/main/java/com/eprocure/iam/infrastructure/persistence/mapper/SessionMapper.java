@@ -2,6 +2,7 @@ package com.eprocure.iam.infrastructure.persistence.mapper;
 
 import com.eprocure.iam.infrastructure.persistence.entity.SessionDbEntity;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -65,4 +66,15 @@ public interface SessionMapper {
             LIMIT 1
             """)
     SessionDbEntity findActiveByTokenHash(@Param("tokenHash") String tokenHash, @Param("now") Instant now);
+
+    @Select("""
+            SELECT token_hash
+            FROM iam.sessions
+            WHERE user_id = #{userId}
+              AND is_revoked = FALSE
+              AND expires_at > #{now}
+              AND is_deleted = FALSE
+            ORDER BY issued_at DESC
+            """)
+    List<String> findActiveTokenHashesByUserId(@Param("userId") UUID userId, @Param("now") Instant now);
 }

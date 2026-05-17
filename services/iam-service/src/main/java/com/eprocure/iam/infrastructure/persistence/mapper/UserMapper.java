@@ -69,6 +69,14 @@ public interface UserMapper {
             """)
     UserDbEntity findByGoogleOauthId(@Param("googleOauthId") String googleOauthId);
 
+    @Select("""
+            SELECT password_hash
+            FROM iam.users
+            WHERE id = #{userId}
+              AND is_deleted = FALSE
+            """)
+    String findPasswordHashById(@Param("userId") UUID userId);
+
     List<UserPageDbEntity> findPage(
             @Param("status") UserStatus status,
             @Param("departmentId") UUID departmentId,
@@ -167,6 +175,18 @@ public interface UserMapper {
               AND is_deleted = FALSE
             """)
     void updateLastLoginAt(@Param("userId") UUID userId, @Param("lastLoginAt") Instant lastLoginAt);
+
+    @Update("""
+            UPDATE iam.users
+            SET password_hash = #{passwordHash},
+                updated_by = #{actorId}
+            WHERE id = #{userId}
+              AND is_deleted = FALSE
+            """)
+    void updatePasswordHash(
+            @Param("userId") UUID userId,
+            @Param("passwordHash") String passwordHash,
+            @Param("actorId") UUID actorId);
 
     @Update("""
             UPDATE iam.users
