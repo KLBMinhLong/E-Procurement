@@ -28,7 +28,7 @@ Cung cấp môi trường local/dev chạy được nền tảng eProcure với 
 | E01-US-002 | Là Backend Service, tôi muốn PostgreSQL có nhiều database/schema đúng ownership để service không dùng chung schema `public`. | MVP |
 | E01-US-003 | Là IAM/PR/Approval Service, tôi muốn Redis sẵn sàng cho session, permission cache và idempotency. | MVP |
 | E01-US-004 | Là service event-driven, tôi muốn Kafka có topic chuẩn để publish/consume event nghiệp vụ. | MVP |
-| E01-US-005 | Là IAM Service, tôi muốn Keycloak realm được seed để verify credential mà không lưu user business data trong Keycloak. | MVP |
+| E01-US-005 | Là IAM Service, tôi muốn Keycloak realm có custom provider để verify credential từ IAM mà không lưu user business data trong Keycloak. | MVP |
 | E01-US-006 | Là Frontend App, tôi muốn NGINX/API gateway route `/api/v1/*` và WSS đến service đúng port. | MVP |
 | E01-US-007 | Là DevOps Engineer, tôi muốn monitoring stack bật bằng profile riêng để không làm quá tải máy 8GB. | P1 |
 | E01-US-008 | Là Developer, tôi muốn env files rõ ràng, không commit secret, profile `local/dev/prod` nhất quán. | MVP |
@@ -129,8 +129,9 @@ Cung cấp môi trường local/dev chạy được nền tảng eProcure với 
 ```
 1. Import realm eprocure.
 2. Seed client nội bộ cho IAM.
-3. Seed test users tối thiểu: requester, manager, director, finance, admin.
-4. Keycloak chỉ phục vụ credential verification.
+3. Đăng ký `eprocure-iam-user-storage` User Storage SPI provider.
+4. Provider gọi IAM internal API để lookup user và verify password.
+5. Keycloak chỉ phục vụ credential verification.
 ```
 
 **Acceptance criteria:**
@@ -138,6 +139,7 @@ Cung cấp môi trường local/dev chạy được nền tảng eProcure với 
 ```
 [ ] IAM có thể verify credential với Keycloak.
 [ ] User business data vẫn thuộc IAM database.
+[ ] Dev users/credential nằm trong IAM database, không seed user/password cục bộ trong Keycloak.
 [ ] Secret không commit hardcoded trong repo.
 ```
 

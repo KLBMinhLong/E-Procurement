@@ -39,6 +39,7 @@ public class EncryptionRequestFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return !METHODS_WITH_BODY.contains(request.getMethod())
                 || path.startsWith("/actuator/")
+                || path.startsWith("/internal/keycloak/")
                 || path.equals("/api/v1/auth/public-key")
                 || !isJson(request);
     }

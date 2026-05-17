@@ -25,9 +25,13 @@ docker compose --profile monitoring up -d prometheus grafana loki tempo
 | Grafana | http://localhost:3000 |
 | Prometheus | http://localhost:9090 |
 
-## Keycloak dev users
+## Keycloak IAM provider
 
-All users use the local-only password `Password@123`.
+The Keycloak image is built from `infra/keycloak/Dockerfile`, which installs the `eprocure-iam-user-storage` User Storage SPI provider. Keycloak does not store local eProcure users or passwords; it federates lookups and password checks to IAM internal endpoints with `X-Internal-Api-Key`.
+
+## Dev users
+
+Dev users are seeded in the IAM database. All users use the local-only password `Password@123`.
 
 ```
 requester
@@ -37,4 +41,6 @@ finance
 admin
 ```
 
-IAM still owns user business data, roles, permissions and sessions. Keycloak is only for credential verification.
+IAM still owns user business data, roles, permissions, password hashes and sessions. Keycloak is only for credential verification through the custom provider.
+
+If your local Keycloak/PostgreSQL volume was created before this provider existed, recreate the local data before validating realm import; old volumes can still contain the previous local Keycloak users.

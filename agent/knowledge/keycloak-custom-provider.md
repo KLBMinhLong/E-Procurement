@@ -40,11 +40,30 @@ public class CustomAuthenticatorFactory implements AuthenticatorFactory {
 }
 ```
 
+## eProcure implementation
+
+- Provider module: `infra/keycloak/eprocure-keycloak-provider`
+- Provider id: `eprocure-iam-user-storage`
+- Docker image: `infra/keycloak/Dockerfile` builds the provider jar and installs it into `/opt/keycloak/providers/`
+- Realm config: `infra/keycloak/realm-eprocure.json` registers the provider under `org.keycloak.storage.UserStorageProvider`
+- IAM provider base URL in compose: `http://iam-service:8081`
+- Internal auth header: `X-Internal-Api-Key`, value from `IAM_INTERNAL_API_KEY`
+
+## IAM internal endpoints used by the provider
+
+```http
+GET /internal/keycloak/users/{userId}
+GET /internal/keycloak/users?login={usernameOrEmail}
+POST /internal/keycloak/credentials/verify
+```
+
+The credential verify endpoint checks IAM `password_hash` with `BCrypt(password + userId)`. Keycloak stores no local eProcure user passwords.
+
 ## Recommendations
 - Do not store user data in Keycloak DB.
 - Implement UserStorageProvider + CredentialInputValidator.
 - Call IAM Service to verify credentials (no direct DB access).
-- Avoid blocking I/O inside auth flow.
+- Use short HTTP timeouts and fail closed when IAM is unavailable.
 - Map errors to Keycloak error codes for correct UI messages.
 - Do not log secrets or raw tokens.
-- Use Keycloak config properties for external endpoints.
+- Use Keycloak config properties or environment variables for external endpoints.

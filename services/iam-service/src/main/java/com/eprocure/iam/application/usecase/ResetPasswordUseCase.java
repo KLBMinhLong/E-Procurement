@@ -1,7 +1,6 @@
 package com.eprocure.iam.application.usecase;
 
 import com.eprocure.iam.application.port.in.ResetPasswordCommand;
-import com.eprocure.iam.application.port.out.CredentialResetPort;
 import com.eprocure.iam.application.service.IdempotencyGuard;
 import com.eprocure.iam.application.service.OpaqueTokenService;
 import com.eprocure.iam.application.service.PasswordHashService;
@@ -29,7 +28,6 @@ public class ResetPasswordUseCase {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordHistoryRepository passwordHistoryRepository;
     private final UserRepository userRepository;
-    private final CredentialResetPort credentialResetPort;
     private final SessionService sessionService;
     private final OpaqueTokenService opaqueTokenService;
     private final PasswordHashService passwordHashService;
@@ -40,7 +38,6 @@ public class ResetPasswordUseCase {
             PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordHistoryRepository passwordHistoryRepository,
             UserRepository userRepository,
-            CredentialResetPort credentialResetPort,
             SessionService sessionService,
             OpaqueTokenService opaqueTokenService,
             PasswordHashService passwordHashService,
@@ -49,7 +46,6 @@ public class ResetPasswordUseCase {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordHistoryRepository = passwordHistoryRepository;
         this.userRepository = userRepository;
-        this.credentialResetPort = credentialResetPort;
         this.sessionService = sessionService;
         this.opaqueTokenService = opaqueTokenService;
         this.passwordHashService = passwordHashService;
@@ -72,7 +68,6 @@ public class ResetPasswordUseCase {
         userRepository.findPasswordHashById(user.getId()).ifPresent(recentHashes::add);
         passwordPolicyService.validate(user, command.newPassword(), command.confirmPassword(), recentHashes);
 
-        credentialResetPort.resetPassword(user.getKeycloakUsername(), command.newPassword());
         String newPasswordHash = passwordHashService.hash(command.newPassword(), user.getId());
         userRepository.updatePasswordHash(user.getId(), newPasswordHash, user.getId());
         passwordHistoryRepository.save(user.getId(), newPasswordHash, user.getId(), now);

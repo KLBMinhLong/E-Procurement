@@ -36,6 +36,7 @@ develop ←── feature/pr-approval-engine
 
 ```bash
 # ✅ Đúng format
+feature/e01-keycloak-custom-provider      # Epic slice khi chưa có issue tracker
 feature/EP-123-pr-approval-workflow       # EP-123 = Jira/GitHub issue number
 feature/EP-456-budget-dashboard-cache
 bugfix/EP-789-fix-sla-timer-calculation
@@ -45,8 +46,8 @@ chore/EP-100-update-dependencies
 docs/EP-200-add-api-spec
 
 # ❌ Sai
-feature/approval                          # Quá ngắn, không có issue number
-feature/Fix_Token_Bug                     # Dùng underscore, không có issue number
+feature/approval                          # Quá ngắn, không có issue/epic scope
+feature/Fix_Token_Bug                     # Dùng underscore, không có issue/epic scope
 new-feature                              # Không có prefix
 HOTFIX-something                         # UPPERCASE
 ```

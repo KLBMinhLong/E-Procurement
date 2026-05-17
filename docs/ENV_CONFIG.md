@@ -98,8 +98,10 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `KEYCLOAK_REALM` | `eprocure` | `eprocure` | Realm name |
 | `KEYCLOAK_CLIENT_ID` | `eprocure-iam` | `eprocure-iam` | Client ID |
 | `KEYCLOAK_CLIENT_SECRET` | `dev-secret` | `***SENSITIVE***` | Client secret |
-| `KEYCLOAK_ADMIN_USER` | `admin` | `***SENSITIVE***` | Admin username (cho custom provider) |
+| `KEYCLOAK_ADMIN_USER` | `admin` | `***SENSITIVE***` | Admin username |
 | `KEYCLOAK_ADMIN_PASS` | `admin` | `***SENSITIVE***` | Admin password |
+| `IAM_PROVIDER_BASE_URL` | `http://iam-service:8081` | `http://iam-service:8081` | Base URL Keycloak provider dùng để gọi IAM internal API |
+| `IAM_INTERNAL_API_KEY` | `dev-internal-api-key` | `***SENSITIVE***` | Shared key giữa Keycloak provider và IAM internal endpoints |
 
 ### 4.4 Encryption (RSA)
 | Biến | Dev | Prod | Mô tả |
@@ -464,6 +466,8 @@ KEYCLOAK_CLIENT_ID=eprocure-iam
 KEYCLOAK_CLIENT_SECRET=change-me-keycloak-secret
 KEYCLOAK_ADMIN_USER=admin
 KEYCLOAK_ADMIN_PASS=admin
+IAM_PROVIDER_BASE_URL=http://iam-service:8081
+IAM_INTERNAL_API_KEY=change-me-internal-api-key
 
 # ── IAM 2FA ─────────────────────────────────────────────────
 TWO_FACTOR_ISSUER=eProcure Dev

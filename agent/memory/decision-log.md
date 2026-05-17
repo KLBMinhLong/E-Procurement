@@ -5,7 +5,7 @@
 - Decision: Tạo Docker Compose nền ở chế độ infra-only gồm PostgreSQL, Redis, Zookeeper/Kafka, Kafka topic init, Keycloak realm import, NGINX gateway skeleton và monitoring profile Prometheus/Grafana/Loki/Tempo.
 - Reason: Các Spring/Angular service image chưa tồn tại; đưa app containers vào compose lúc này sẽ làm stack fail. App service containers sẽ được thêm khi skeleton từng service được tạo.
 - Impact: Developer có thể chạy hạ tầng trước bằng `docker compose up -d postgres redis zookeeper kafka kafka-init keycloak nginx-gateway`; monitoring bật riêng bằng `--profile monitoring`.
-- Constraint: Keycloak custom provider chưa được implement trong E01; chỉ có realm/dev users để phục vụ IAM credential verification ở E02.
+- Constraint: Keycloak custom provider được hoàn thiện ở lát cắt E01/E02 sau; dev users nằm trong IAM DB, không seed credential cục bộ trong Keycloak.
 
 ## [2026-05-17] E02 IAM auth/session foundation
 
@@ -58,10 +58,17 @@
 
 ## [2026-05-17] E02 IAM forgot/reset password
 
-- Decision: Implement forgot/reset password with persisted SHA-256 reset-token hashes, password-history checks, Keycloak admin credential reset, BCrypt(password + userId) backup hashes, and active session revocation including Redis cache eviction.
-- Reason: Reset password must not expose whether an email exists, must not persist raw reset tokens, and must keep Keycloak as the primary credential authority.
+- Decision: Implement forgot/reset password with persisted SHA-256 reset-token hashes, password-history checks, IAM BCrypt(password + userId) credential reset, password-history records, and active session revocation including Redis cache eviction.
+- Reason: Reset password must not expose whether an email exists, must not persist raw reset tokens, and must keep IAM as the credential source federated through the Keycloak User Storage SPI.
 - Impact: `/auth/forgot-password` and `/auth/reset-password` are public endpoints with required `Idempotency-Key`; reset tokens live for `RESET_TOKEN_TTL_MINUTES` and all active user sessions are invalidated after a successful reset.
 - Constraint: The production email sender remains behind `PasswordResetDeliveryPort`; the current IAM slice includes a non-sensitive stub until E11 notification-service/Brevo adapter is available.
+
+## [2026-05-17] E01 Keycloak IAM User Storage SPI
+
+- Decision: Add `eprocure-keycloak-provider` as a Keycloak User Storage SPI module and configure the realm to federate users from IAM through `/internal/keycloak/**`.
+- Reason: Keycloak must verify credentials without owning user business data or local seeded credentials; IAM remains the source for users, password hashes, status, roles and sessions.
+- Impact: Keycloak image is now built from `infra/keycloak/Dockerfile`, installs the provider JAR, and calls IAM with `X-Internal-Api-Key`; IAM exposes internal lookup and credential verification endpoints excluded from request encryption.
+- Constraint: Existing local Keycloak volumes may still contain old seeded users; recreate the local Keycloak/PostgreSQL data when validating the new realm import path.
 
 ## [2026-05-17] E02 IAM logging rule alignment
 

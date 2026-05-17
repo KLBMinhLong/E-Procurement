@@ -68,14 +68,14 @@ Cung cấp xác thực, opaque session token, RBAC permission cache, user/role m
 ```
 - User tồn tại và không bị LOCKED/INACTIVE.
 - Payload được decrypt nếu ENCRYPTION_ENABLED=true.
-- Keycloak realm đã có credential tương ứng.
+- Keycloak realm đã có IAM User Storage SPI provider và IAM có credential hash tương ứng.
 ```
 
 **Main flow:**
 
 ```
 1. Validate request.
-2. Verify credential với Keycloak.
+2. Verify credential với Keycloak; Keycloak provider gọi IAM internal credential API.
 3. Invalidate old active session của user trong Redis và DB.
 4. Generate opaque token 64 chars.
 5. Save session:{token} vào Redis và sessions table.
@@ -252,7 +252,7 @@ Flyway migrations: users, roles, permissions, user_roles, sessions, delegations,
 Domain: User, Role, Department, OrgNode, Delegation, Email, PhoneNumber
 UseCases: Login, Logout, GetMe, ManageUser, ManageRolePermission, ResolveApprover, ManageDelegation
 Redis adapters: SessionStore, PermissionCache, IdempotencyStore
-Keycloak adapter: CredentialVerificationPort
+Keycloak adapter: CredentialVerificationPort + IAM internal provider endpoints
 Controllers matching iam-service.openapi.yaml
 Unit tests for domain/application
 ```

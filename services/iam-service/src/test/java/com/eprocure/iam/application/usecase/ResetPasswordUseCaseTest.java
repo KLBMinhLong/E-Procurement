@@ -47,14 +47,12 @@ class ResetPasswordUseCaseTest {
         FakePasswordResetTokenRepository tokenRepository = new FakePasswordResetTokenRepository(validToken(opaqueTokenService));
         FakePasswordHistoryRepository passwordHistoryRepository = new FakePasswordHistoryRepository();
         FakeUserRepository userRepository = new FakeUserRepository(activeUser());
-        FakeCredentialResetPort credentialResetPort = new FakeCredentialResetPort();
         FakeSessionRepository sessionRepository = new FakeSessionRepository(List.of("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
         FakeSessionCachePort sessionCachePort = new FakeSessionCachePort();
         ResetPasswordUseCase useCase = new ResetPasswordUseCase(
                 tokenRepository,
                 passwordHistoryRepository,
                 userRepository,
-                credentialResetPort,
                 new SessionService(sessionRepository, userRepository, sessionCachePort, opaqueTokenService, 8),
                 opaqueTokenService,
                 passwordHashService,
@@ -67,8 +65,6 @@ class ResetPasswordUseCaseTest {
                 "BetterPass123!",
                 UUID.randomUUID().toString()));
 
-        assertThat(credentialResetPort.keycloakUsername).isEqualTo("requester");
-        assertThat(credentialResetPort.newPassword).isEqualTo("BetterPass123!");
         assertThat(userRepository.updatedPasswordHash).startsWith("$2a$12$");
         assertThat(passwordHistoryRepository.savedPasswordHash).isEqualTo(userRepository.updatedPasswordHash);
         assertThat(tokenRepository.usedTokenId).isEqualTo(TOKEN_ID);
@@ -114,7 +110,6 @@ class ResetPasswordUseCaseTest {
                 new FakePasswordResetTokenRepository(token.orElse(null)),
                 new FakePasswordHistoryRepository(),
                 userRepository,
-                new FakeCredentialResetPort(),
                 new SessionService(new FakeSessionRepository(List.of()), userRepository, new FakeSessionCachePort(), opaqueTokenService, 8),
                 opaqueTokenService,
                 passwordHashService,
@@ -183,17 +178,6 @@ class ResetPasswordUseCaseTest {
         @Override
         public void save(UUID userId, String passwordHash, UUID actorId, Instant changedAt) {
             this.savedPasswordHash = passwordHash;
-        }
-    }
-
-    private static final class FakeCredentialResetPort implements com.eprocure.iam.application.port.out.CredentialResetPort {
-        private String keycloakUsername;
-        private String newPassword;
-
-        @Override
-        public void resetPassword(String keycloakUsername, String newPassword) {
-            this.keycloakUsername = keycloakUsername;
-            this.newPassword = newPassword;
         }
     }
 
