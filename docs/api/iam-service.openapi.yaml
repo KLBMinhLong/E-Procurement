@@ -1161,6 +1161,7 @@ paths:
       tags: [Organization]
       summary: Cây phòng ban
       operationId: getDepartmentTree
+      x-required-permission: ORG_VIEW
       responses:
         '200':
           description: Cây phòng ban
@@ -1181,6 +1182,7 @@ paths:
       tags: [Organization]
       summary: Danh sách thành viên phòng ban
       operationId: getDepartmentMembers
+      x-required-permission: ORG_VIEW
       parameters:
         - name: id
           in: path
@@ -1212,6 +1214,7 @@ paths:
       tags: [Organization]
       summary: Lấy approver theo role và phòng ban (dùng khi resolve approval chain)
       operationId: getApprovers
+      x-required-permission: ORG_APPROVER_RESOLVE
       parameters:
         - name: role
           in: query
@@ -1221,6 +1224,12 @@ paths:
           example: MANAGER
         - name: department_id
           in: query
+          schema:
+            type: string
+            format: uuid
+        - name: requester_id
+          in: query
+          description: Optional requester to exclude from approver candidates for separation of duties.
           schema:
             type: string
             format: uuid

@@ -98,7 +98,7 @@
 | Google OAuth | ⬜ |
 | Forgot password flow | ⬜ |
 | Delegation API | ⬜ |
-| Org chart API | ⬜ |
+| Org chart API | ✅ |
 | Unit tests | 🔄 |
 
 ### E03: UI Shell & Design System (Angular)

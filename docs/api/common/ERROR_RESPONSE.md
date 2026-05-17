@@ -61,8 +61,10 @@
 | `IAM_021` | 422 | Không thể ủy quyền vượt quá quyền của bản thân |
 | `IAM_022` | 409 | Đã có ủy quyền đang hoạt động trong khoảng thời gian này |
 | `IAM_030` | 404 | Người dùng không tồn tại |
-| `IAM_031` | 404 | Phòng ban không tồn tại |
-| `IAM_032` | 404 | Role không tồn tại |
+| `IAM_031` | 404 | Role không tồn tại |
+| `IAM_032` | 404 | Permission không tồn tại |
+| `IAM_033` | 404 | Phòng ban không tồn tại |
+| `IAM_034` | 422 | Không tìm thấy approver phù hợp |
 
 ### 2.3 Purchase Request — PR_
 
@@ -152,7 +154,7 @@
 | `SYS_002` | 503 | Dịch vụ phụ thuộc không khả dụng (DB, Redis, Kafka) |
 | `SYS_003` | 500 | Lỗi mã hóa/giải mã payload |
 | `SYS_004` | 400 | Payload đã mã hóa không hợp lệ hoặc bị giả mạo |
-| `SYS_005` | 422 | Idempotency-Key header bắt buộc nhưng không có |
+| `SYS_005` | 400 | Idempotency-Key header bắt buộc nhưng thiếu hoặc sai định dạng |
 
 ### 2.10 Validation — VAL_
 
