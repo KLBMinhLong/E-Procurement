@@ -6,14 +6,14 @@ import com.eprocure.iam.domain.repository.PermissionRepository;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ListPermissionsUseCase {
-    private static final Logger log = LoggerFactory.getLogger(ListPermissionsUseCase.class);
+    private static final Logger log = LogManager.getLogger(ListPermissionsUseCase.class);
     private final PermissionRepository permissionRepository;
 
     public ListPermissionsUseCase(PermissionRepository permissionRepository) {

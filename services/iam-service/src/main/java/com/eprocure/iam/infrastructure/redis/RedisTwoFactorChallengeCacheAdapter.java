@@ -6,14 +6,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RedisTwoFactorChallengeCacheAdapter implements TwoFactorChallengeCachePort {
-    private static final Logger log = LoggerFactory.getLogger(RedisTwoFactorChallengeCacheAdapter.class);
+    private static final Logger log = LogManager.getLogger(RedisTwoFactorChallengeCacheAdapter.class);
     private static final String KEY_PREFIX = "iam:2fa:challenge:";
 
     private final StringRedisTemplate redisTemplate;

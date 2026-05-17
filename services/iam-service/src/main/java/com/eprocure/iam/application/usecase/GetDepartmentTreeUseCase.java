@@ -13,14 +13,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GetDepartmentTreeUseCase {
-    private static final Logger log = LoggerFactory.getLogger(GetDepartmentTreeUseCase.class);
+    private static final Logger log = LogManager.getLogger(GetDepartmentTreeUseCase.class);
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
     private final UserViewAssembler userViewAssembler;

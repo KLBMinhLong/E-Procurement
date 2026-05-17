@@ -5,8 +5,8 @@ import com.eprocure.iam.application.port.out.GoogleOAuthProfile;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Locale;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 public class GoogleOAuthAdapter implements GoogleOAuthPort {
-    private static final Logger log = LoggerFactory.getLogger(GoogleOAuthAdapter.class);
+    private static final Logger log = LogManager.getLogger(GoogleOAuthAdapter.class);
     private final RestClient restClient;
     private final String authorizationUrl;
     private final String tokenUrl;

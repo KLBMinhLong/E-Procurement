@@ -15,8 +15,8 @@ import com.eprocure.iam.common.util.LogMaskingUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/org")
 public class OrganizationController {
-    private static final Logger log = LoggerFactory.getLogger(OrganizationController.class);
+    private static final Logger log = LogManager.getLogger(OrganizationController.class);
     private final GetDepartmentTreeUseCase getDepartmentTreeUseCase;
     private final GetDepartmentMembersUseCase getDepartmentMembersUseCase;
     private final ResolveApproversUseCase resolveApproversUseCase;

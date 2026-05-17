@@ -98,7 +98,7 @@
 | Admin role/permission API | ✅ |
 | 2FA (TOTP) | ✅ |
 | Google OAuth | ✅ |
-| Forgot password flow | ⬜ |
+| Forgot password flow | ✅ |
 | Delegation API | ✅ |
 | Org chart API | ✅ |
 | Unit tests | 🔄 |

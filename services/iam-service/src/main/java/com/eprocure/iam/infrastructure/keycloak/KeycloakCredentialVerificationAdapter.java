@@ -1,8 +1,8 @@
 package com.eprocure.iam.infrastructure.keycloak;
 
 import com.eprocure.iam.application.port.out.CredentialVerificationPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 @Component
 public class KeycloakCredentialVerificationAdapter implements CredentialVerificationPort {
-    private static final Logger log = LoggerFactory.getLogger(KeycloakCredentialVerificationAdapter.class);
+    private static final Logger log = LogManager.getLogger(KeycloakCredentialVerificationAdapter.class);
     private final RestClient keycloakRestClient;
     private final String realm;
     private final String clientId;

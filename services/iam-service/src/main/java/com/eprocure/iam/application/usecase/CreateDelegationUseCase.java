@@ -15,14 +15,14 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.util.Set;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CreateDelegationUseCase {
-    private static final Logger log = LoggerFactory.getLogger(CreateDelegationUseCase.class);
+    private static final Logger log = LogManager.getLogger(CreateDelegationUseCase.class);
     private final DelegationRepository delegationRepository;
     private final UserRepository userRepository;
     private final DelegationViewAssembler delegationViewAssembler;

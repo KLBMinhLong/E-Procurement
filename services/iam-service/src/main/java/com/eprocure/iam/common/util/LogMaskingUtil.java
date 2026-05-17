@@ -10,12 +10,7 @@ public final class LogMaskingUtil {
     public static String maskEmail(String email) {
         return Optional.ofNullable(email)
                 .filter(value -> value.contains("@"))
-                .map(value -> {
-                    String[] parts = value.split("@", 2);
-                    String local = parts[0].isEmpty() ? "*" : parts[0].charAt(0) + "***";
-                    String domain = parts[1].isEmpty() ? "*" : parts[1].charAt(0) + "***";
-                    return local + "@" + domain;
-                })
+                .map(LogMaskingUtil::maskEmailParts)
                 .orElse("***");
     }
 
@@ -26,10 +21,59 @@ public final class LogMaskingUtil {
                 .orElse("***");
     }
 
+    public static String maskPhone(String phone) {
+        return Optional.ofNullable(phone)
+                .filter(value -> value.length() >= 6)
+                .map(value -> value.substring(0, 2)
+                        + "*".repeat(Math.max(0, value.length() - 5))
+                        + value.substring(value.length() - 3))
+                .orElse("***");
+    }
+
+    public static String maskToken(String token) {
+        return Optional.ofNullable(token)
+                .filter(value -> value.length() >= 8)
+                .map(value -> value.substring(0, 8) + "...")
+                .orElse("***");
+    }
+
+    public static String maskName(String fullName) {
+        return Optional.ofNullable(fullName)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .map(LogMaskingUtil::maskNameParts)
+                .orElse("***");
+    }
+
     public static String maskClientIp(String ipAddress) {
         return Optional.ofNullable(ipAddress)
                 .filter(value -> !value.isBlank())
                 .map(value -> value.replaceAll("\\d+$", "***"))
                 .orElse("***");
+    }
+
+    private static String maskNameParts(String fullName) {
+        String[] parts = fullName.split("\\s+");
+        if (parts.length == 1) {
+            return parts[0].charAt(0) + "***";
+        }
+        StringBuilder masked = new StringBuilder(parts[0]);
+        for (int index = 1; index < parts.length; index++) {
+            masked.append(' ').append(parts[index].charAt(0)).append('.');
+        }
+        return masked.toString();
+    }
+
+    private static String maskEmailParts(String email) {
+        String[] parts = email.split("@", 2);
+        String local = parts[0].isEmpty() ? "***" : parts[0].charAt(0) + "***";
+        if (parts[1].isEmpty()) {
+            return local + "@***";
+        }
+        int tldSeparator = parts[1].lastIndexOf('.');
+        if (tldSeparator <= 0 || tldSeparator == parts[1].length() - 1) {
+            return local + "@" + parts[1].charAt(0) + "***";
+        }
+        return local + "@" + parts[1].charAt(0) + "***" + parts[1].substring(tldSeparator);
     }
 }
