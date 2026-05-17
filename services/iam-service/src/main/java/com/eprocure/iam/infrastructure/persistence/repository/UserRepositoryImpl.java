@@ -41,6 +41,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByGoogleOauthId(String googleOauthId) {
+        return Optional.ofNullable(userMapper.findByGoogleOauthId(googleOauthId)).map(this::toDomain);
+    }
+
+    @Override
     public Optional<User> findByEmployeeCodeOrUsernameOrEmail(String employeeCode, String username, String email) {
         return Optional.ofNullable(userMapper.findByEmployeeCodeOrUsernameOrEmail(employeeCode, username, email))
                 .map(this::toDomain);
@@ -95,6 +100,11 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public void updateLastLoginAt(UUID userId, Instant lastLoginAt) {
         userMapper.updateLastLoginAt(userId, lastLoginAt);
+    }
+
+    @Override
+    public void linkGoogleOauthId(UUID userId, String googleOauthId, UUID actorId) {
+        userMapper.linkGoogleOauthId(userId, googleOauthId, actorId);
     }
 
     @Override

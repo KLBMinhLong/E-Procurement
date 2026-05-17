@@ -16,6 +16,7 @@ public class User {
     private UUID departmentId;
     private UUID orgNodeId;
     private String keycloakUsername;
+    private String googleOauthId;
     private UserStatus status;
     private boolean twoFactorEnabled;
     private String twoFactorSecretEncrypted;
@@ -137,6 +138,10 @@ public class User {
 
     public String getKeycloakUsername() {
         return keycloakUsername == null || keycloakUsername.isBlank() ? username : keycloakUsername;
+    }
+
+    public Optional<String> getGoogleOauthId() {
+        return Optional.ofNullable(googleOauthId).filter(value -> !value.isBlank());
     }
 
     public UserStatus getStatus() {

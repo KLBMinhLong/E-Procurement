@@ -40,6 +40,10 @@
 | KEYCLOAK_REALM | eprocure |
 | KEYCLOAK_CLIENT_ID | eprocure-backend |
 | KEYCLOAK_CLIENT_SECRET | secret |
+| GOOGLE_CLIENT_ID | Google OAuth client ID |
+| GOOGLE_CLIENT_SECRET | Google OAuth client secret |
+| GOOGLE_REDIRECT_URI | http://localhost:8081/api/v1/auth/oauth/google/callback |
+| GOOGLE_OAUTH_STATE_TTL_MINUTES | State TTL for Google OAuth callback validation |
 
 ## Security
 | Variable | Notes |

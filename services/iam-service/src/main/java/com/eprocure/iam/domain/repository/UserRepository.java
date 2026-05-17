@@ -16,6 +16,8 @@ public interface UserRepository {
 
     Optional<User> findByUsernameOrEmail(String usernameOrEmail);
 
+    Optional<User> findByGoogleOauthId(String googleOauthId);
+
     Optional<User> findByEmployeeCodeOrUsernameOrEmail(String employeeCode, String username, String email);
 
     Page<User> findPage(UserSearchCriteria criteria, UserSort sort, SortDirection direction, int offset, int limit);
@@ -33,6 +35,8 @@ public interface UserRepository {
     void replaceRoles(UUID userId, Set<String> roleCodes, UUID actorId);
 
     void updateLastLoginAt(UUID userId, Instant lastLoginAt);
+
+    void linkGoogleOauthId(UUID userId, String googleOauthId, UUID actorId);
 
     void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId);
 

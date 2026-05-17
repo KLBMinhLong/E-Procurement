@@ -166,6 +166,11 @@ class ResolveApproversUseCaseTest {
         }
 
         @Override
+        public Optional<User> findByGoogleOauthId(String googleOauthId) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<User> findByEmployeeCodeOrUsernameOrEmail(String employeeCode, String username, String email) {
             return Optional.empty();
         }
@@ -203,6 +208,10 @@ class ResolveApproversUseCaseTest {
 
         @Override
         public void updateLastLoginAt(UUID userId, Instant lastLoginAt) {
+        }
+
+        @Override
+        public void linkGoogleOauthId(UUID userId, String googleOauthId, UUID actorId) {
         }
 
         @Override

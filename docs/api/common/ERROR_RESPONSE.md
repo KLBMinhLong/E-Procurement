@@ -57,6 +57,7 @@
 | `IAM_009` | 409 | Username hoặc email đã tồn tại |
 | `IAM_010` | 422 | Email chưa được xác thực |
 | `IAM_011` | 400 | Dữ liệu đăng ký không hợp lệ |
+| `IAM_012` | 401 | Google OAuth state/code không hợp lệ |
 | `IAM_020` | 422 | Người được ủy quyền phải cùng cấp hoặc cao hơn |
 | `IAM_021` | 422 | Không thể ủy quyền vượt quá quyền của bản thân |
 | `IAM_022` | 409 | Đã có ủy quyền đang hoạt động trong khoảng thời gian này |

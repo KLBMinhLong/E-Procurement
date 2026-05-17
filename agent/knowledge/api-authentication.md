@@ -39,11 +39,13 @@ On new login:
 
 ## Two-factor auth
 - If requiresTwoFactor: true -> POST /api/v1/auth/two-factor/verify
-- Uses temporary cookie ep_session_pending
+- Uses temporary cookie ep_2fa
 
 ## Google OAuth
 - GET /api/v1/auth/oauth/google -> redirect flow
-- On success, issue opaque session token
+- Sets ep_oauth_state HttpOnly cookie and redirects to Google consent
+- Callback validates state/code and existing IAM user by googleOauthId or email
+- On success, issue opaque session token, or ep_2fa if local 2FA is enabled
 
 ## Logout
 POST /api/v1/auth/logout

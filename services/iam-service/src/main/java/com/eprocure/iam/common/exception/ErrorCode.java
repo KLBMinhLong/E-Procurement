@@ -10,6 +10,8 @@ public enum ErrorCode {
     IAM_005("IAM_005", "Validation failed", HttpStatus.BAD_REQUEST),
     IAM_006("IAM_006", "Two-factor code is invalid or expired", HttpStatus.UNAUTHORIZED),
     IAM_009("IAM_009", "IAM resource already exists", HttpStatus.CONFLICT),
+    IAM_010("IAM_010", "Email is not verified", HttpStatus.UNPROCESSABLE_ENTITY),
+    IAM_012("IAM_012", "Google OAuth verification failed", HttpStatus.UNAUTHORIZED),
     IAM_020("IAM_020", "Delegate must be at the same or higher organization level", HttpStatus.UNPROCESSABLE_ENTITY),
     IAM_021("IAM_021", "Delegation exceeds delegator authority", HttpStatus.UNPROCESSABLE_ENTITY),
     IAM_022("IAM_022", "Overlapping active delegation already exists", HttpStatus.CONFLICT),
