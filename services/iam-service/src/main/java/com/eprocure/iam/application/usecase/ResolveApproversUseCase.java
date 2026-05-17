@@ -10,14 +10,14 @@ import com.eprocure.iam.domain.repository.OrganizationRepository;
 import com.eprocure.iam.domain.repository.RoleRepository;
 import java.util.List;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ResolveApproversUseCase {
-    private static final Logger log = LoggerFactory.getLogger(ResolveApproversUseCase.class);
+    private static final Logger log = LogManager.getLogger(ResolveApproversUseCase.class);
     private static final int DEFAULT_LIMIT = 50;
     private final OrganizationRepository organizationRepository;
     private final RoleRepository roleRepository;

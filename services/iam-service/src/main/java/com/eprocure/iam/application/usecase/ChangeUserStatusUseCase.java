@@ -8,14 +8,14 @@ import com.eprocure.iam.common.util.LogMaskingUtil;
 import com.eprocure.iam.domain.model.User;
 import com.eprocure.iam.domain.model.UserStatus;
 import com.eprocure.iam.domain.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ChangeUserStatusUseCase {
-    private static final Logger log = LoggerFactory.getLogger(ChangeUserStatusUseCase.class);
+    private static final Logger log = LogManager.getLogger(ChangeUserStatusUseCase.class);
     private final UserRepository userRepository;
     private final IdempotencyGuard idempotencyGuard;
 

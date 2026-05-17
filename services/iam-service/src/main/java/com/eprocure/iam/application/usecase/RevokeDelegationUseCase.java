@@ -8,14 +8,14 @@ import com.eprocure.iam.common.util.LogMaskingUtil;
 import com.eprocure.iam.domain.model.Delegation;
 import com.eprocure.iam.domain.model.DelegationStatus;
 import com.eprocure.iam.domain.repository.DelegationRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RevokeDelegationUseCase {
-    private static final Logger log = LoggerFactory.getLogger(RevokeDelegationUseCase.class);
+    private static final Logger log = LogManager.getLogger(RevokeDelegationUseCase.class);
     private final DelegationRepository delegationRepository;
     private final IdempotencyGuard idempotencyGuard;
 

@@ -13,14 +13,14 @@ import com.eprocure.iam.common.util.LogMaskingUtil;
 import com.eprocure.iam.domain.model.User;
 import com.eprocure.iam.domain.repository.UserRepository;
 import java.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class LoginUseCase {
-    private static final Logger log = LoggerFactory.getLogger(LoginUseCase.class);
+    private static final Logger log = LogManager.getLogger(LoginUseCase.class);
     private final UserRepository userRepository;
     private final CredentialVerificationPort credentialVerificationPort;
     private final SessionService sessionService;

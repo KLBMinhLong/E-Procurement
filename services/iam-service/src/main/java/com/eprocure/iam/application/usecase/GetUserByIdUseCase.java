@@ -7,14 +7,14 @@ import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.common.util.LogMaskingUtil;
 import com.eprocure.iam.domain.repository.UserRepository;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GetUserByIdUseCase {
-    private static final Logger log = LoggerFactory.getLogger(GetUserByIdUseCase.class);
+    private static final Logger log = LogManager.getLogger(GetUserByIdUseCase.class);
     private final UserRepository userRepository;
     private final UserViewAssembler userViewAssembler;
 

@@ -62,3 +62,10 @@
 - Reason: Reset password must not expose whether an email exists, must not persist raw reset tokens, and must keep Keycloak as the primary credential authority.
 - Impact: `/auth/forgot-password` and `/auth/reset-password` are public endpoints with required `Idempotency-Key`; reset tokens live for `RESET_TOKEN_TTL_MINUTES` and all active user sessions are invalidated after a successful reset.
 - Constraint: The production email sender remains behind `PasswordResetDeliveryPort`; the current IAM slice includes a non-sensitive stub until E11 notification-service/Brevo adapter is available.
+
+## [2026-05-17] E02 IAM logging rule alignment
+
+- Decision: Standardize IAM Java loggers on Log4j2 imports and add the masking helpers referenced by `.cursor/rules/logging.mdc`.
+- Reason: The runtime already uses `spring-boot-starter-log4j2`, but older slices still imported SLF4J, which conflicts with the always-applied logging rule and creates noisy review churn for future features.
+- Impact: Existing log messages keep their layer prefixes while logger creation now uses `LogManager.getLogger(...)`; `LogMaskingUtil` now supports phone, token, and name masking.
+- Constraint: This is a mechanical rule-alignment change only; log message content and levels are intentionally unchanged except for helper availability.

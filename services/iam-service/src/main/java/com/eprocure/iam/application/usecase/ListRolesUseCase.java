@@ -4,14 +4,14 @@ import com.eprocure.iam.application.service.RoleDetailView;
 import com.eprocure.iam.domain.model.Role;
 import com.eprocure.iam.domain.repository.RoleRepository;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ListRolesUseCase {
-    private static final Logger log = LoggerFactory.getLogger(ListRolesUseCase.class);
+    private static final Logger log = LogManager.getLogger(ListRolesUseCase.class);
     private final RoleRepository roleRepository;
 
     public ListRolesUseCase(RoleRepository roleRepository) {

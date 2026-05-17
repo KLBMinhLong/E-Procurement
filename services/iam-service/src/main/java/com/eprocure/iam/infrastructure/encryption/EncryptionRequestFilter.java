@@ -11,8 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -24,7 +24,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 @ConditionalOnProperty(name = "eprocure.encryption.enabled", havingValue = "true")
 public class EncryptionRequestFilter extends OncePerRequestFilter {
-    private static final Logger log = LoggerFactory.getLogger(EncryptionRequestFilter.class);
+    private static final Logger log = LogManager.getLogger(EncryptionRequestFilter.class);
     private static final Set<String> METHODS_WITH_BODY = Set.of("POST", "PUT", "PATCH");
     private final ObjectMapper objectMapper;
     private final HybridEncryptionService hybridEncryptionService;
