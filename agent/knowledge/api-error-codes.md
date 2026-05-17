@@ -54,6 +54,7 @@
 | IAM_032 | 404 | Permission khong ton tai |
 | IAM_033 | 404 | Phong ban khong ton tai |
 | IAM_034 | 422 | Khong tim thay approver phu hop |
+| IAM_035 | 404 | Uy quyen khong ton tai |
 
 ### Purchase Request (PR_)
 | Code | HTTP | Description |

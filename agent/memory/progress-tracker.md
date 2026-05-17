@@ -97,7 +97,7 @@
 | 2FA (TOTP) | ⬜ |
 | Google OAuth | ⬜ |
 | Forgot password flow | ⬜ |
-| Delegation API | ⬜ |
+| Delegation API | ✅ |
 | Org chart API | ✅ |
 | Unit tests | 🔄 |
 

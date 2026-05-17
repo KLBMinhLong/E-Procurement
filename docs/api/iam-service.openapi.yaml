@@ -1073,6 +1073,7 @@ paths:
       tags: [Delegation]
       summary: Danh sách ủy quyền của tôi (delegator = me)
       operationId: listMyDelegations
+      x-required-permission: DELEGATION_MANAGE
       parameters:
         - name: status
           in: query
@@ -1098,6 +1099,7 @@ paths:
       tags: [Delegation]
       summary: Tạo ủy quyền mới
       operationId: createDelegation
+      x-required-permission: DELEGATION_MANAGE
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -1130,6 +1132,7 @@ paths:
       tags: [Delegation]
       summary: Thu hồi ủy quyền
       operationId: revokeDelegation
+      x-required-permission: DELEGATION_MANAGE
       parameters:
         - name: id
           in: path

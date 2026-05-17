@@ -65,6 +65,7 @@
 | `IAM_032` | 404 | Permission không tồn tại |
 | `IAM_033` | 404 | Phòng ban không tồn tại |
 | `IAM_034` | 422 | Không tìm thấy approver phù hợp |
+| `IAM_035` | 404 | Ủy quyền không tồn tại |
 
 ### 2.3 Purchase Request — PR_
 
