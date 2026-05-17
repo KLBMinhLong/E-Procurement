@@ -311,16 +311,20 @@ Set-Cookie: ep_session=; HttpOnly; Secure; Max-Age=0; Path=/
 ```http
 ### Bước 1: Gửi email reset
 POST /api/v1/auth/forgot-password
+Idempotency-Key: 7f5f5f73-bcb5-4d56-9ef1-7f9aa3564df1
+
 { "email": "van.a@company.com" }
 
 → HTTP 200 (luôn trả 200 dù email có tồn tại hay không — tránh user enumeration)
 { "success": true, "code": "RESET_EMAIL_SENT",
   "message": "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn trong vài phút" }
 
-### Backend tạo reset token (UUID, TTL 15 phút) → gửi email qua Brevo SMTP
+### Backend tạo reset token opaque 64 ký tự (TTL 15 phút) → gửi email qua Notification Service/Brevo SMTP
 
 ### Bước 2: Đặt lại mật khẩu
 POST /api/v1/auth/reset-password
+Idempotency-Key: 5df28ba8-6b6c-4cc5-b9c5-5f91437b98e2
+
 {
   "resetToken": "token-from-email",
   "newPassword": "StrongPass123!",

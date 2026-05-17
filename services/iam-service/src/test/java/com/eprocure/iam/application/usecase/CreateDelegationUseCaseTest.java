@@ -181,6 +181,11 @@ class CreateDelegationUseCaseTest {
         }
 
         @Override
+        public Optional<String> findPasswordHashById(UUID userId) {
+            return Optional.empty();
+        }
+
+        @Override
         public Page<User> findPage(UserSearchCriteria criteria, UserSort sort, SortDirection direction, int offset, int limit) {
             return new Page<>(List.of(), 0);
         }
@@ -213,6 +218,10 @@ class CreateDelegationUseCaseTest {
 
         @Override
         public void updateLastLoginAt(UUID userId, Instant lastLoginAt) {
+        }
+
+        @Override
+        public void updatePasswordHash(UUID userId, String passwordHash, UUID actorId) {
         }
 
         @Override

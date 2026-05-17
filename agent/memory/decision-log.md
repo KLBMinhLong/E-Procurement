@@ -55,3 +55,10 @@
 - Reason: OAuth callback must validate anti-CSRF state before exchanging the authorization code or issuing an internal opaque session.
 - Impact: `/auth/oauth/google` redirects to Google, `/auth/oauth/google/callback` validates state/code, fetches Google userinfo, links `google_oauth_id` to an existing IAM user by email, and then issues `ep_session` or `ep_2fa` if local 2FA is enabled.
 - Constraint: Google OAuth does not auto-create IAM users; accounts must already exist in IAM to preserve admin-controlled RBAC and org assignment.
+
+## [2026-05-17] E02 IAM forgot/reset password
+
+- Decision: Implement forgot/reset password with persisted SHA-256 reset-token hashes, password-history checks, Keycloak admin credential reset, BCrypt(password + userId) backup hashes, and active session revocation including Redis cache eviction.
+- Reason: Reset password must not expose whether an email exists, must not persist raw reset tokens, and must keep Keycloak as the primary credential authority.
+- Impact: `/auth/forgot-password` and `/auth/reset-password` are public endpoints with required `Idempotency-Key`; reset tokens live for `RESET_TOKEN_TTL_MINUTES` and all active user sessions are invalidated after a successful reset.
+- Constraint: The production email sender remains behind `PasswordResetDeliveryPort`; the current IAM slice includes a non-sensitive stub until E11 notification-service/Brevo adapter is available.

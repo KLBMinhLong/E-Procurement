@@ -52,7 +52,7 @@
 | `IAM_004` | 403 | Không có quyền thực hiện thao tác này |
 | `IAM_005` | 401 | Phiên đăng nhập đã hết hạn hoặc bị invalidate |
 | `IAM_006` | 401 | Mã 2FA không đúng hoặc hết hạn |
-| `IAM_007` | 422 | Token reset password không hợp lệ hoặc hết hạn |
+| `IAM_007` | 401 | Token reset password không hợp lệ hoặc hết hạn |
 | `IAM_008` | 422 | Password mới không đủ mạnh (chính sách mật khẩu) |
 | `IAM_009` | 409 | Username hoặc email đã tồn tại |
 | `IAM_010` | 422 | Email chưa được xác thực |

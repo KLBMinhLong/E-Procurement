@@ -42,7 +42,7 @@ public class SessionService {
         String tokenHash = opaqueTokenService.hash(rawToken);
         Instant expiresAt = now.plus(sessionTtl);
 
-        sessionRepository.revokeActiveByUserId(user.getId(), user.getId(), now);
+        revokeActiveForUser(user.getId(), user.getId(), now);
         SessionRecord sessionRecord = SessionRecord.issue(
                 UUID.randomUUID(),
                 user.getId(),
@@ -90,6 +90,11 @@ public class SessionService {
         String tokenHash = opaqueTokenService.hash(rawToken);
         sessionRepository.revokeByTokenHash(tokenHash, revokedBy, Instant.now());
         sessionCachePort.evict(tokenHash);
+    }
+
+    public void revokeActiveForUser(UUID userId, UUID revokedBy, Instant revokedAt) {
+        sessionRepository.findActiveTokenHashesByUserId(userId, revokedAt).forEach(sessionCachePort::evict);
+        sessionRepository.revokeActiveByUserId(userId, revokedBy, revokedAt);
     }
 
     private Optional<UserPrincipal> toPrincipal(SessionData sessionData, String tokenHash) {

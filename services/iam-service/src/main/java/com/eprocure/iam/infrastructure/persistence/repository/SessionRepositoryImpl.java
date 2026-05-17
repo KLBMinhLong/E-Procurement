@@ -6,6 +6,7 @@ import com.eprocure.iam.infrastructure.persistence.entity.SessionDbEntity;
 import com.eprocure.iam.infrastructure.persistence.mapper.SessionMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -39,6 +40,12 @@ public class SessionRepositoryImpl implements SessionRepository {
     @Override
     public Optional<SessionRecord> findActiveByTokenHash(String tokenHash, Instant now) {
         return Optional.ofNullable(sessionMapper.findActiveByTokenHash(tokenHash, now)).map(this::toDomain);
+    }
+
+    @Override
+    public List<String> findActiveTokenHashesByUserId(UUID userId, Instant now) {
+        return List.copyOf(Optional.ofNullable(sessionMapper.findActiveTokenHashesByUserId(userId, now))
+                .orElseGet(List::of));
     }
 
     private SessionRecord toDomain(SessionDbEntity entity) {

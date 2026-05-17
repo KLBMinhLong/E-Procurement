@@ -2,6 +2,7 @@ package com.eprocure.iam.domain.repository;
 
 import com.eprocure.iam.domain.model.SessionRecord;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,4 +14,6 @@ public interface SessionRepository {
     void revokeByTokenHash(String tokenHash, UUID revokedBy, Instant revokedAt);
 
     Optional<SessionRecord> findActiveByTokenHash(String tokenHash, Instant now);
+
+    List<String> findActiveTokenHashesByUserId(UUID userId, Instant now);
 }

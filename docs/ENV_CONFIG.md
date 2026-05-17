@@ -124,6 +124,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `LOCK_DURATION_MINUTES` | `30` | `30` | Thời gian lock tài khoản |
 | `PASSWORD_MIN_LENGTH` | `8` | `8` | Độ dài mật khẩu tối thiểu |
 | `RESET_TOKEN_TTL_MINUTES` | `15` | `15` | TTL của forgot-password token |
+| `PASSWORD_RESET_FRONTEND_URL` | `http://localhost:4200/reset-password` | FE domain | URL FE nhận reset token từ email |
 | `TWO_FACTOR_ISSUER` | `eProcure Dev` | `eProcure` | Tên hiển thị trong Authenticator app |
 | `TOTP_SECRET_ENCRYPTION_KEY` | `MDEy...` | `***SENSITIVE***` | Base64 AES key dùng để mã hóa TOTP secret trong DB |
 | `TWO_FACTOR_CHALLENGE_TTL_MINUTES` | `5` | `5` | TTL cookie challenge trước khi xác minh 2FA |
