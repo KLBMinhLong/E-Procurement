@@ -17,6 +17,9 @@ public class UserDbEntity {
     public String keycloakUsername;
     public UserStatus status;
     public boolean twoFactorEnabled;
+    public String twoFactorSecretEncrypted;
+    public String twoFactorPendingSecretEncrypted;
+    public Instant twoFactorConfirmedAt;
     public Instant lastLoginAt;
     public Instant createdAt;
 }

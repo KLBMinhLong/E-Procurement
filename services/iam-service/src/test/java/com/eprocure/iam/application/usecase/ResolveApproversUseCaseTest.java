@@ -204,5 +204,18 @@ class ResolveApproversUseCaseTest {
         @Override
         public void updateLastLoginAt(UUID userId, Instant lastLoginAt) {
         }
+
+        @Override
+        public void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId) {
+        }
+
+        @Override
+        public void confirmTwoFactor(
+                UUID userId,
+                String encryptedSecret,
+                List<String> backupCodeHashes,
+                Instant confirmedAt,
+                UUID actorId) {
+        }
     }
 }

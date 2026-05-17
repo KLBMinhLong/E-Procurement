@@ -58,6 +58,11 @@ eprocure:
   session:
     ttl-hours: ${SESSION_TTL_HOURS:8}
     permission-cache-ttl-minutes: ${PERM_CACHE_TTL_MINUTES:15}
+  two-factor:
+    issuer: ${TWO_FACTOR_ISSUER:eProcure Dev}
+    challenge-cookie-name: ${TWO_FACTOR_CHALLENGE_COOKIE_NAME:ep_2fa}
+    challenge-ttl-minutes: ${TWO_FACTOR_CHALLENGE_TTL_MINUTES:5}
+    secret-encryption-key: ${TOTP_SECRET_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
   encryption:
     enabled: ${ENCRYPTION_ENABLED:false}
     key-version: ${RSA_KEY_VERSION:v2025-01}
