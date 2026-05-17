@@ -226,6 +226,64 @@ services:
       start_period: 60s
     logging: *default-logging
 
+  iam-service:
+    build:
+      context: .
+      dockerfile: services/iam-service/Dockerfile
+    container_name: eprocure-iam-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: iam-service
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      IAM_DB_HOST: postgres
+      IAM_DB_PORT: 5432
+      IAM_DB_NAME: db_iam
+      IAM_DB_SCHEMA: iam
+      IAM_DB_USER: ${IAM_DB_USER:-iam_user}
+      IAM_DB_PASS: ${IAM_DB_PASS:-iam_pass_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASS: ${REDIS_PASS:-}
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-eprocure}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-eprocure-iam}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-dev-secret}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-8}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAMESITE: ${COOKIE_SAMESITE:-Strict}
+      RSA_KEY_VERSION: ${RSA_KEY_VERSION:-v2025-01}
+      RSA_PUBLIC_KEY: ${RSA_PUBLIC_KEY:-}
+    ports:
+      - "${IAM_SERVICE_PORT:-8081}:8081"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    cpus: 0.25
+    mem_limit: 512m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 75s
+    logging: *default-logging
+
   nginx-gateway:
     image: nginx:1.25-alpine
     container_name: eprocure-nginx-gateway

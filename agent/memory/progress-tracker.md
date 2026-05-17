@@ -83,21 +83,21 @@
 ### E02: IAM Service
 | Task | Status |
 |---|---|
-| Spring Boot project setup | ⬜ |
-| Flyway migrations (users, roles, permissions, sessions) | ⬜ |
-| MyBatis mappers | ⬜ |
-| Login + Keycloak integration | ⬜ |
-| Opaque token generation + Redis session | ⬜ |
+| Spring Boot project setup | ✅ |
+| Flyway migrations (users, roles, permissions, sessions) | ✅ |
+| MyBatis mappers | ✅ |
+| Login + Keycloak integration | ✅ |
+| Opaque token generation + Redis session | ✅ |
 | RSA+AES encryption interceptor | ⬜ |
-| HttpOnly Cookie management | ⬜ |
-| Single session enforcement | ⬜ |
-| RBAC permission loading | ⬜ |
+| HttpOnly Cookie management | ✅ |
+| Single session enforcement | ✅ |
+| RBAC permission loading | ✅ |
 | 2FA (TOTP) | ⬜ |
 | Google OAuth | ⬜ |
 | Forgot password flow | ⬜ |
 | Delegation API | ⬜ |
 | Org chart API | ⬜ |
-| Unit tests | ⬜ |
+| Unit tests | 🔄 |
 
 ### E03: UI Shell & Design System (Angular)
 | Task | Status |

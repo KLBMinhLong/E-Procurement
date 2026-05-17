@@ -1,0 +1,68 @@
+package com.eprocure.iam.infrastructure.persistence.mapper;
+
+import com.eprocure.iam.infrastructure.persistence.entity.SessionDbEntity;
+import java.time.Instant;
+import java.util.UUID;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+@Mapper
+public interface SessionMapper {
+    @Insert("""
+            INSERT INTO iam.sessions (
+                id, user_id, token_hash, ip_address, user_agent,
+                issued_at, expires_at, is_revoked, created_by, updated_at
+            )
+            VALUES (
+                #{session.id}, #{session.userId}, #{session.tokenHash}, #{session.ipAddress}, #{session.userAgent},
+                #{session.issuedAt}, #{session.expiresAt}, #{session.revoked}, #{session.userId}, NOW()
+            )
+            """)
+    void save(@Param("session") SessionDbEntity session);
+
+    @Update("""
+            UPDATE iam.sessions
+            SET is_revoked = TRUE,
+                revoked_at = #{revokedAt},
+                revoked_by = #{revokedBy},
+                updated_at = NOW()
+            WHERE user_id = #{userId}
+              AND is_revoked = FALSE
+              AND expires_at > #{revokedAt}
+              AND is_deleted = FALSE
+            """)
+    void revokeActiveByUserId(
+            @Param("userId") UUID userId,
+            @Param("revokedBy") UUID revokedBy,
+            @Param("revokedAt") Instant revokedAt);
+
+    @Update("""
+            UPDATE iam.sessions
+            SET is_revoked = TRUE,
+                revoked_at = #{revokedAt},
+                revoked_by = #{revokedBy},
+                updated_at = NOW()
+            WHERE token_hash = #{tokenHash}
+              AND is_revoked = FALSE
+              AND is_deleted = FALSE
+            """)
+    void revokeByTokenHash(
+            @Param("tokenHash") String tokenHash,
+            @Param("revokedBy") UUID revokedBy,
+            @Param("revokedAt") Instant revokedAt);
+
+    @Select("""
+            SELECT id, user_id, token_hash, ip_address, user_agent,
+                   issued_at, expires_at, is_revoked AS revoked, revoked_at, revoked_by
+            FROM iam.sessions
+            WHERE token_hash = #{tokenHash}
+              AND is_revoked = FALSE
+              AND expires_at > #{now}
+              AND is_deleted = FALSE
+            LIMIT 1
+            """)
+    SessionDbEntity findActiveByTokenHash(@Param("tokenHash") String tokenHash, @Param("now") Instant now);
+}

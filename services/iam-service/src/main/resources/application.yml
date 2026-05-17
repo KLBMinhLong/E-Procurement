@@ -1,0 +1,69 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: ${SERVICE_NAME:iam-service}
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: jdbc:postgresql://${IAM_DB_HOST:${DB_HOST:localhost}}:${IAM_DB_PORT:${DB_PORT:5432}}/${IAM_DB_NAME:${DB_NAME:db_iam}}
+    username: ${IAM_DB_USER:${DB_USER:iam_user}}
+    password: ${IAM_DB_PASS:${DB_PASS:iam_pass_dev}}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: ${IAM_DB_POOL_MIN:${DB_POOL_MIN:2}}
+      maximum-pool-size: ${IAM_DB_POOL_MAX:${DB_POOL_MAX:5}}
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      connection-init-sql: SET search_path TO ${IAM_DB_SCHEMA:${DB_SCHEMA:iam}}
+      pool-name: ${SERVICE_NAME:iam-service}-HikariPool
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: ${IAM_DB_SCHEMA:${DB_SCHEMA:iam}}
+    baseline-on-migrate: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+  jackson:
+    time-zone: UTC
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+
+eprocure:
+  security:
+    cookie-name: ${COOKIE_NAME:ep_session}
+    cookie-secure: ${COOKIE_SECURE:false}
+    cookie-same-site: ${COOKIE_SAMESITE:Strict}
+    cookie-domain: ${COOKIE_DOMAIN:}
+  session:
+    ttl-hours: ${SESSION_TTL_HOURS:8}
+    permission-cache-ttl-minutes: ${PERM_CACHE_TTL_MINUTES:15}
+  encryption:
+    key-version: ${RSA_KEY_VERSION:v2025-01}
+    algorithm: RSA/ECB/OAEPWithSHA-256AndMGF1Padding
+    public-key: ${RSA_PUBLIC_KEY:}
+  keycloak:
+    url: ${KEYCLOAK_URL:http://localhost:18080}
+    realm: ${KEYCLOAK_REALM:eprocure}
+    client-id: ${KEYCLOAK_CLIENT_ID:eprocure-iam}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:dev-secret}
