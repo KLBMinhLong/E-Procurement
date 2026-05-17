@@ -18,6 +18,10 @@ public record ApiResponse<T>(
         return new ApiResponse<>(true, "SUCCESS", null, data, null, null, Instant.now(), requestId);
     }
 
+    public static <T> ApiResponse<T> success(T data, Object meta, String requestId) {
+        return new ApiResponse<>(true, "SUCCESS", null, data, meta, null, Instant.now(), requestId);
+    }
+
     public static ApiResponse<Void> successMessage(String message, String requestId) {
         return new ApiResponse<>(true, "SUCCESS", message, null, null, null, Instant.now(), requestId);
     }

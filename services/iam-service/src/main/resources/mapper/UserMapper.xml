@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.eprocure.iam.infrastructure.persistence.mapper.UserMapper">
+    <select id="findPage" resultType="com.eprocure.iam.infrastructure.persistence.entity.UserPageDbEntity">
+        SELECT u.id,
+               u.employee_code,
+               u.username,
+               u.email,
+               u.full_name,
+               u.phone,
+               u.avatar_url,
+               u.department_id,
+               u.org_node_id,
+               u.keycloak_username,
+               u.status,
+               u.two_factor_enabled,
+               u.last_login_at,
+               u.created_at,
+               COUNT(*) OVER() AS total_elements
+        FROM iam.users u
+        <if test="roleCode != null">
+            JOIN iam.user_roles ur ON ur.user_id = u.id AND ur.is_deleted = FALSE
+            JOIN iam.roles r ON r.id = ur.role_id AND r.is_deleted = FALSE
+        </if>
+        WHERE u.is_deleted = FALSE
+        <if test="status != null">
+            AND u.status = #{status}
+        </if>
+        <if test="departmentId != null">
+            AND u.department_id = #{departmentId}
+        </if>
+        <if test="roleCode != null">
+            AND UPPER(r.code) = UPPER(#{roleCode})
+        </if>
+        <if test="query != null">
+            AND (
+                   LOWER(u.full_name) LIKE CONCAT('%', LOWER(#{query}), '%')
+                OR LOWER(u.username) LIKE CONCAT('%', LOWER(#{query}), '%')
+                OR LOWER(u.email) LIKE CONCAT('%', LOWER(#{query}), '%')
+            )
+        </if>
+        ORDER BY
+        <choose>
+            <when test="sortColumn == 'FULL_NAME' and sortDirection == 'ASC'">u.full_name ASC</when>
+            <when test="sortColumn == 'FULL_NAME' and sortDirection == 'DESC'">u.full_name DESC</when>
+            <when test="sortColumn == 'USERNAME' and sortDirection == 'ASC'">u.username ASC</when>
+            <when test="sortColumn == 'USERNAME' and sortDirection == 'DESC'">u.username DESC</when>
+            <when test="sortColumn == 'STATUS' and sortDirection == 'ASC'">u.status ASC</when>
+            <when test="sortColumn == 'STATUS' and sortDirection == 'DESC'">u.status DESC</when>
+            <when test="sortColumn == 'CREATED_AT' and sortDirection == 'ASC'">u.created_at ASC</when>
+            <otherwise>u.created_at DESC</otherwise>
+        </choose>
+        , u.id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <update id="softDeleteUserRolesNotIn">
+        UPDATE iam.user_roles ur
+        SET is_deleted = TRUE,
+            deleted_at = NOW(),
+            deleted_by = #{actorId},
+            updated_by = #{actorId}
+        WHERE ur.user_id = #{userId}
+          AND ur.is_deleted = FALSE
+        <if test="roleCodes != null and roleCodes.size() > 0">
+          AND NOT EXISTS (
+              SELECT 1
+              FROM iam.roles r
+              WHERE r.id = ur.role_id
+                AND r.is_deleted = FALSE
+                AND UPPER(r.code) IN
+                <foreach item="roleCode" collection="roleCodes" open="(" separator="," close=")">
+                    UPPER(#{roleCode})
+                </foreach>
+          )
+        </if>
+    </update>
+</mapper>

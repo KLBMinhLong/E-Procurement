@@ -14,13 +14,18 @@ import com.eprocure.iam.application.service.SessionService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.domain.model.SessionRecord;
+import com.eprocure.iam.domain.model.SortDirection;
 import com.eprocure.iam.domain.model.User;
+import com.eprocure.iam.domain.model.UserSearchCriteria;
+import com.eprocure.iam.domain.model.UserSort;
 import com.eprocure.iam.domain.model.UserStatus;
+import com.eprocure.iam.domain.repository.Page;
 import com.eprocure.iam.domain.repository.SessionRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -113,6 +118,16 @@ class LoginUseCaseTest {
         }
 
         @Override
+        public Optional<User> findByEmployeeCodeOrUsernameOrEmail(String employeeCode, String username, String email) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Page<User> findPage(UserSearchCriteria criteria, UserSort sort, SortDirection direction, int offset, int limit) {
+            return new Page<>(List.of(user), 1);
+        }
+
+        @Override
         public Set<String> findRoleCodesByUserId(UUID userId) {
             return Set.of("REQUESTER");
         }
@@ -120,6 +135,22 @@ class LoginUseCaseTest {
         @Override
         public Set<String> findPermissionCodesByUserId(UUID userId) {
             return Set.of("IAM_PROFILE_READ", "IAM_SESSION_REVOKE");
+        }
+
+        @Override
+        public void save(User user, UUID actorId) {
+        }
+
+        @Override
+        public void update(User user, UUID actorId) {
+        }
+
+        @Override
+        public void updateStatus(UUID userId, UserStatus status, UUID actorId) {
+        }
+
+        @Override
+        public void replaceRoles(UUID userId, Set<String> roleCodes, UUID actorId) {
         }
 
         @Override

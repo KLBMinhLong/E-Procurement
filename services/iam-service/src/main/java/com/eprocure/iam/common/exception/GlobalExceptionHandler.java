@@ -13,6 +13,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,6 +35,17 @@ public class GlobalExceptionHandler {
         log.warn("[EXCEPTION][{}] Validation failed | path={}", ErrorCode.IAM_005.code(), request.getRequestURI());
         return ResponseEntity.status(ErrorCode.IAM_005.status())
                 .body(ApiResponse.failure(ErrorCode.IAM_005.code(), ErrorCode.IAM_005.message(), details, RequestIdUtil.resolve(request)));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
+        log.warn("[EXCEPTION][{}] Type mismatch | path={}", ErrorCode.IAM_005.code(), request.getRequestURI());
+        return ResponseEntity.status(ErrorCode.IAM_005.status())
+                .body(ApiResponse.failure(
+                        ErrorCode.IAM_005.code(),
+                        ErrorCode.IAM_005.message(),
+                        List.of(new ValidationError(exception.getName(), "Invalid value", exception.getValue())),
+                        RequestIdUtil.resolve(request)));
     }
 
     @ExceptionHandler({AccessDeniedException.class, AuthenticationException.class})

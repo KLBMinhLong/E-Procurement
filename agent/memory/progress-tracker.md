@@ -92,6 +92,8 @@
 | HttpOnly Cookie management | ✅ |
 | Single session enforcement | ✅ |
 | RBAC permission loading | ✅ |
+| Admin user CRUD API | ✅ |
+| Admin role/permission API | ✅ |
 | 2FA (TOTP) | ⬜ |
 | Google OAuth | ⬜ |
 | Forgot password flow | ⬜ |
