@@ -88,7 +88,7 @@
 | MyBatis mappers | ✅ |
 | Login + Keycloak integration | ✅ |
 | Opaque token generation + Redis session | ✅ |
-| RSA+AES encryption interceptor | ⬜ |
+| RSA+AES encryption interceptor | 🔄 |
 | HttpOnly Cookie management | ✅ |
 | Single session enforcement | ✅ |
 | RBAC permission loading | ✅ |
