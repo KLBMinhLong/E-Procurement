@@ -50,8 +50,10 @@
 | IAM_021 | 422 | Khong the uy quyen vuot qua quyen cua ban than |
 | IAM_022 | 409 | Da co uy quyen dang hoat dong trong khoang thoi gian nay |
 | IAM_030 | 404 | Nguoi dung khong ton tai |
-| IAM_031 | 404 | Phong ban khong ton tai |
-| IAM_032 | 404 | Role khong ton tai |
+| IAM_031 | 404 | Role khong ton tai |
+| IAM_032 | 404 | Permission khong ton tai |
+| IAM_033 | 404 | Phong ban khong ton tai |
+| IAM_034 | 422 | Khong tim thay approver phu hop |
 
 ### Purchase Request (PR_)
 | Code | HTTP | Description |
@@ -134,7 +136,7 @@
 | SYS_002 | 503 | Dich vu phu thuoc khong kha dung |
 | SYS_003 | 500 | Loi ma hoa/giai ma payload |
 | SYS_004 | 400 | Payload ma hoa khong hop le hoac bi gia mao |
-| SYS_005 | 422 | Thieu Idempotency-Key bat buoc |
+| SYS_005 | 400 | Thieu hoac sai dinh dang Idempotency-Key bat buoc |
 
 ### Validation (VAL_)
 | Code | HTTP | Description |

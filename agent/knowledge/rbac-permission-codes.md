@@ -86,5 +86,7 @@
 - ADMIN_CATALOG_MANAGE - Quan ly danh muc hang hoa
 - ADMIN_DELEGATION_MANAGE - Quan ly uy quyen
 - ADMIN_DEPARTMENT_MANAGE - Quan ly phong ban va org chart
+- ORG_VIEW - Xem cay phong ban va thanh vien phong ban
+- ORG_APPROVER_RESOLVE - Resolve approver theo role va phong ban
 - SYSTEM_CONFIG - Truy cap trang cau hinh he thong
 - SYSTEM_AUDIT_VIEW - Xem audit log
