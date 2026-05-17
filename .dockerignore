@@ -1,0 +1,14 @@
+.git
+.idea
+.vscode
+target
+**/target
+node_modules
+dist
+.angular
+logs
+tmp
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
