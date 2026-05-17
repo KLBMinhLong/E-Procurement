@@ -2,16 +2,22 @@ package com.eprocure.iam.presentation.user;
 
 import com.eprocure.iam.application.port.in.AssignUserRolesCommand;
 import com.eprocure.iam.application.port.in.ChangeUserStatusCommand;
+import com.eprocure.iam.application.port.in.ConfirmTwoFactorCommand;
 import com.eprocure.iam.application.port.in.CreateUserCommand;
+import com.eprocure.iam.application.port.in.EnableTwoFactorCommand;
 import com.eprocure.iam.application.port.in.ListUsersQuery;
 import com.eprocure.iam.application.port.in.UpdateUserCommand;
 import com.eprocure.iam.application.service.CurrentUserView;
 import com.eprocure.iam.application.service.PageResult;
+import com.eprocure.iam.application.service.TwoFactorConfirmView;
+import com.eprocure.iam.application.service.TwoFactorSetupView;
 import com.eprocure.iam.application.service.UserDetailView;
 import com.eprocure.iam.application.service.UserSummaryView;
 import com.eprocure.iam.application.usecase.AssignUserRolesUseCase;
 import com.eprocure.iam.application.usecase.ChangeUserStatusUseCase;
+import com.eprocure.iam.application.usecase.ConfirmTwoFactorUseCase;
 import com.eprocure.iam.application.usecase.CreateUserUseCase;
+import com.eprocure.iam.application.usecase.EnableTwoFactorUseCase;
 import com.eprocure.iam.application.usecase.GetCurrentUserUseCase;
 import com.eprocure.iam.application.usecase.GetUserByIdUseCase;
 import com.eprocure.iam.application.usecase.ListUsersUseCase;
@@ -53,6 +59,8 @@ public class UserController {
     private final UpdateUserUseCase updateUserUseCase;
     private final ChangeUserStatusUseCase changeUserStatusUseCase;
     private final AssignUserRolesUseCase assignUserRolesUseCase;
+    private final EnableTwoFactorUseCase enableTwoFactorUseCase;
+    private final ConfirmTwoFactorUseCase confirmTwoFactorUseCase;
 
     public UserController(
             GetCurrentUserUseCase getCurrentUserUseCase,
@@ -61,7 +69,9 @@ public class UserController {
             GetUserByIdUseCase getUserByIdUseCase,
             UpdateUserUseCase updateUserUseCase,
             ChangeUserStatusUseCase changeUserStatusUseCase,
-            AssignUserRolesUseCase assignUserRolesUseCase) {
+            AssignUserRolesUseCase assignUserRolesUseCase,
+            EnableTwoFactorUseCase enableTwoFactorUseCase,
+            ConfirmTwoFactorUseCase confirmTwoFactorUseCase) {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.listUsersUseCase = listUsersUseCase;
         this.createUserUseCase = createUserUseCase;
@@ -69,6 +79,8 @@ public class UserController {
         this.updateUserUseCase = updateUserUseCase;
         this.changeUserStatusUseCase = changeUserStatusUseCase;
         this.assignUserRolesUseCase = assignUserRolesUseCase;
+        this.enableTwoFactorUseCase = enableTwoFactorUseCase;
+        this.confirmTwoFactorUseCase = confirmTwoFactorUseCase;
     }
 
     @GetMapping("/me")
@@ -80,6 +92,35 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(
                 getCurrentUserUseCase.execute(principal.getId()),
                 RequestIdUtil.resolve(request)));
+    }
+
+    @PutMapping("/me/two-factor/enable")
+    @PreAuthorize("hasAuthority('IAM_PROFILE_READ')")
+    public ResponseEntity<ApiResponse<TwoFactorSetupView>> enableTwoFactor(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] PUT /api/v1/users/me/two-factor/enable | userId={}",
+                LogMaskingUtil.maskId(principal.getId()));
+        TwoFactorSetupView view = enableTwoFactorUseCase.execute(
+                new EnableTwoFactorCommand(principal.getId()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
+    }
+
+    @PutMapping("/me/two-factor/confirm")
+    @PreAuthorize("hasAuthority('IAM_PROFILE_READ')")
+    public ResponseEntity<ApiResponse<TwoFactorConfirmView>> confirmTwoFactor(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody TwoFactorConfirmRequest body,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] PUT /api/v1/users/me/two-factor/confirm | userId={}",
+                LogMaskingUtil.maskId(principal.getId()));
+        TwoFactorConfirmView view = confirmTwoFactorUseCase.execute(
+                new ConfirmTwoFactorCommand(principal.getId(), body.code()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
     }
 
     @GetMapping

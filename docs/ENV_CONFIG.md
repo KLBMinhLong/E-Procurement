@@ -124,6 +124,8 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `PASSWORD_MIN_LENGTH` | `8` | `8` | Độ dài mật khẩu tối thiểu |
 | `RESET_TOKEN_TTL_MINUTES` | `15` | `15` | TTL của forgot-password token |
 | `TWO_FACTOR_ISSUER` | `eProcure Dev` | `eProcure` | Tên hiển thị trong Authenticator app |
+| `TOTP_SECRET_ENCRYPTION_KEY` | `MDEy...` | `***SENSITIVE***` | Base64 AES key dùng để mã hóa TOTP secret trong DB |
+| `TWO_FACTOR_CHALLENGE_TTL_MINUTES` | `5` | `5` | TTL cookie challenge trước khi xác minh 2FA |
 | `COOKIE_DOMAIN` | `localhost` | `eprocure.vn` | Domain của HttpOnly cookie |
 | `COOKIE_SECURE` | `false` | `true` | Require HTTPS cho cookie |
 | `COOKIE_SAMESITE` | `Lax` | `Strict` | SameSite policy |
@@ -460,6 +462,11 @@ KEYCLOAK_CLIENT_ID=eprocure-iam
 KEYCLOAK_CLIENT_SECRET=change-me-keycloak-secret
 KEYCLOAK_ADMIN_USER=admin
 KEYCLOAK_ADMIN_PASS=admin
+
+# ── IAM 2FA ─────────────────────────────────────────────────
+TWO_FACTOR_ISSUER=eProcure Dev
+TOTP_SECRET_ENCRYPTION_KEY=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+TWO_FACTOR_CHALLENGE_TTL_MINUTES=5
 
 # ── Google OAuth ─────────────────────────────────────────────
 GOOGLE_CLIENT_ID=

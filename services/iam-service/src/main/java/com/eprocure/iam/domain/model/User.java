@@ -18,6 +18,9 @@ public class User {
     private String keycloakUsername;
     private UserStatus status;
     private boolean twoFactorEnabled;
+    private String twoFactorSecretEncrypted;
+    private String twoFactorPendingSecretEncrypted;
+    private Instant twoFactorConfirmedAt;
     private Instant lastLoginAt;
     private Instant createdAt;
 
@@ -142,6 +145,18 @@ public class User {
 
     public boolean isTwoFactorEnabled() {
         return twoFactorEnabled;
+    }
+
+    public Optional<String> getTwoFactorSecretEncrypted() {
+        return Optional.ofNullable(twoFactorSecretEncrypted).filter(value -> !value.isBlank());
+    }
+
+    public Optional<String> getTwoFactorPendingSecretEncrypted() {
+        return Optional.ofNullable(twoFactorPendingSecretEncrypted).filter(value -> !value.isBlank());
+    }
+
+    public Optional<Instant> getTwoFactorConfirmedAt() {
+        return Optional.ofNullable(twoFactorConfirmedAt);
     }
 
     public Optional<Instant> getLastLoginAt() {

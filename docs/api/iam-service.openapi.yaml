@@ -446,7 +446,7 @@ paths:
           description: Đăng nhập thành công
           headers:
             Set-Cookie:
-              description: ep_session HttpOnly cookie
+              description: ep_session HttpOnly cookie; if requiresTwoFactor=true this is ep_2fa pending challenge cookie
               schema:
                 type: string
                 example: "ep_session=abc123; HttpOnly; Secure; SameSite=Strict; Path=/"

@@ -47,6 +47,8 @@
 | ENCRYPTION_RSA_PRIVATE_KEY | base64 RSA private key (BE) |
 | ENCRYPTION_RSA_PUBLIC_KEY | base64 RSA public key (BE) |
 | TOTP_SECRET_ENCRYPTION_KEY | AES key for TOTP secret |
+| TWO_FACTOR_ISSUER | Display name in authenticator apps |
+| TWO_FACTOR_CHALLENGE_TTL_MINUTES | TTL for pending 2FA challenge cookie |
 
 ## Observability
 | Variable | Notes |

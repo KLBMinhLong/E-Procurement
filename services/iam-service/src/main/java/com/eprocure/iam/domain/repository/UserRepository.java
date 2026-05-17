@@ -6,6 +6,7 @@ import com.eprocure.iam.domain.model.UserSearchCriteria;
 import com.eprocure.iam.domain.model.UserSort;
 import com.eprocure.iam.domain.model.UserStatus;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -32,4 +33,13 @@ public interface UserRepository {
     void replaceRoles(UUID userId, Set<String> roleCodes, UUID actorId);
 
     void updateLastLoginAt(UUID userId, Instant lastLoginAt);
+
+    void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId);
+
+    void confirmTwoFactor(
+            UUID userId,
+            String encryptedSecret,
+            List<String> backupCodeHashes,
+            Instant confirmedAt,
+            UUID actorId);
 }

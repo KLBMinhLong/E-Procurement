@@ -3,8 +3,10 @@ package com.eprocure.iam.application.usecase;
 import com.eprocure.iam.application.port.in.LoginCommand;
 import com.eprocure.iam.application.port.out.CredentialVerificationPort;
 import com.eprocure.iam.application.service.CreatedSession;
+import com.eprocure.iam.application.service.CreatedTwoFactorChallenge;
 import com.eprocure.iam.application.service.LoginResult;
 import com.eprocure.iam.application.service.SessionService;
+import com.eprocure.iam.application.service.TwoFactorChallengeService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.common.util.LogMaskingUtil;
@@ -22,14 +24,17 @@ public class LoginUseCase {
     private final UserRepository userRepository;
     private final CredentialVerificationPort credentialVerificationPort;
     private final SessionService sessionService;
+    private final TwoFactorChallengeService twoFactorChallengeService;
 
     public LoginUseCase(
             UserRepository userRepository,
             CredentialVerificationPort credentialVerificationPort,
-            SessionService sessionService) {
+            SessionService sessionService,
+            TwoFactorChallengeService twoFactorChallengeService) {
         this.userRepository = userRepository;
         this.credentialVerificationPort = credentialVerificationPort;
         this.sessionService = sessionService;
+        this.twoFactorChallengeService = twoFactorChallengeService;
     }
 
     @Transactional
@@ -42,6 +47,18 @@ public class LoginUseCase {
         }
         if (!credentialVerificationPort.verify(command.username(), command.password())) {
             throw new BusinessException(ErrorCode.IAM_001);
+        }
+
+        if (user.isTwoFactorEnabled()) {
+            user.getTwoFactorSecretEncrypted().orElseThrow(() -> new BusinessException(ErrorCode.IAM_006));
+            CreatedTwoFactorChallenge challenge = twoFactorChallengeService.createFor(user, command.clientContext());
+            log.info("[ACTION] Complete LoginTwoFactorRequired | userId={}", LogMaskingUtil.maskId(user.getId()));
+            return new LoginResult(
+                    user.getId(),
+                    user.getFullName(),
+                    user.getAvatarUrl().orElse(null),
+                    true,
+                    challenge.rawToken());
         }
 
         CreatedSession createdSession = sessionService.issueFor(user, command.clientContext());

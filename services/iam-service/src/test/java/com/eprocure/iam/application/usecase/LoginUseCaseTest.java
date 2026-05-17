@@ -7,10 +7,13 @@ import com.eprocure.iam.application.port.in.ClientContext;
 import com.eprocure.iam.application.port.in.LoginCommand;
 import com.eprocure.iam.application.port.out.CredentialVerificationPort;
 import com.eprocure.iam.application.port.out.SessionCachePort;
+import com.eprocure.iam.application.port.out.TwoFactorChallengeCachePort;
 import com.eprocure.iam.application.service.LoginResult;
 import com.eprocure.iam.application.service.OpaqueTokenService;
 import com.eprocure.iam.application.service.SessionData;
 import com.eprocure.iam.application.service.SessionService;
+import com.eprocure.iam.application.service.TwoFactorChallengeData;
+import com.eprocure.iam.application.service.TwoFactorChallengeService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.domain.model.SessionRecord;
@@ -22,6 +25,7 @@ import com.eprocure.iam.domain.model.UserStatus;
 import com.eprocure.iam.domain.repository.Page;
 import com.eprocure.iam.domain.repository.SessionRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -47,7 +51,12 @@ class LoginUseCaseTest {
                 sessionCachePort,
                 new OpaqueTokenService(),
                 8);
-        LoginUseCase useCase = new LoginUseCase(userRepository, (username, password) -> true, sessionService);
+        OpaqueTokenService opaqueTokenService = new OpaqueTokenService();
+        LoginUseCase useCase = new LoginUseCase(
+                userRepository,
+                (username, password) -> true,
+                sessionService,
+                new TwoFactorChallengeService(new FakeTwoFactorChallengeCachePort(), opaqueTokenService, 5));
 
         LoginResult result = useCase.execute(new LoginCommand(
                 "requester",
@@ -66,6 +75,41 @@ class LoginUseCaseTest {
     }
 
     @Test
+    void should_create_two_factor_challenge_without_session_when_2fa_is_enabled() {
+        FakeUserRepository userRepository = new FakeUserRepository(twoFactorUser());
+        FakeSessionRepository sessionRepository = new FakeSessionRepository();
+        FakeSessionCachePort sessionCachePort = new FakeSessionCachePort();
+        SessionService sessionService = new SessionService(
+                sessionRepository,
+                userRepository,
+                sessionCachePort,
+                new OpaqueTokenService(),
+                8);
+        FakeTwoFactorChallengeCachePort challengeCachePort = new FakeTwoFactorChallengeCachePort();
+        LoginUseCase useCase = new LoginUseCase(
+                userRepository,
+                (username, password) -> true,
+                sessionService,
+                new TwoFactorChallengeService(challengeCachePort, new OpaqueTokenService(), 5));
+
+        LoginResult result = useCase.execute(new LoginCommand(
+                "requester",
+                "Password@123",
+                UUID.randomUUID(),
+                ClientContext.of("127.0.0.1", "JUnit")));
+
+        assertThat(result.requiresTwoFactor()).isTrue();
+        assertThat(result.rawToken())
+                .hasSize(64)
+                .matches("^[a-f0-9]{64}$");
+        assertThat(challengeCachePort.storedChallenge).isNotNull();
+        assertThat(sessionRepository.revokeActiveByUserIdCalled).isFalse();
+        assertThat(sessionRepository.savedSession).isNull();
+        assertThat(sessionCachePort.storedSession).isNull();
+        assertThat(userRepository.lastLoginAt).isNull();
+    }
+
+    @Test
     void should_throw_iam_001_when_credentials_are_invalid() {
         FakeUserRepository userRepository = new FakeUserRepository(activeUser());
         SessionService sessionService = new SessionService(
@@ -75,7 +119,12 @@ class LoginUseCaseTest {
                 new OpaqueTokenService(),
                 8);
         CredentialVerificationPort credentialVerificationPort = (username, password) -> false;
-        LoginUseCase useCase = new LoginUseCase(userRepository, credentialVerificationPort, sessionService);
+        OpaqueTokenService opaqueTokenService = new OpaqueTokenService();
+        LoginUseCase useCase = new LoginUseCase(
+                userRepository,
+                credentialVerificationPort,
+                sessionService,
+                new TwoFactorChallengeService(new FakeTwoFactorChallengeCachePort(), opaqueTokenService, 5));
 
         assertThatThrownBy(() -> useCase.execute(new LoginCommand(
                 "requester",
@@ -97,6 +146,23 @@ class LoginUseCaseTest {
                 DEPARTMENT_ID,
                 UserStatus.ACTIVE,
                 Instant.parse("2026-05-17T00:00:00Z"));
+    }
+
+    private static User twoFactorUser() {
+        User user = activeUser();
+        setField(user, "twoFactorEnabled", true);
+        setField(user, "twoFactorSecretEncrypted", "v1:encrypted");
+        return user;
+    }
+
+    private static void setField(User user, String fieldName, Object value) {
+        try {
+            Field field = User.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(user, value);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 
     private static final class FakeUserRepository implements UserRepository {
@@ -157,6 +223,19 @@ class LoginUseCaseTest {
         public void updateLastLoginAt(UUID userId, Instant lastLoginAt) {
             this.lastLoginAt = lastLoginAt;
         }
+
+        @Override
+        public void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId) {
+        }
+
+        @Override
+        public void confirmTwoFactor(
+                UUID userId,
+                String encryptedSecret,
+                List<String> backupCodeHashes,
+                Instant confirmedAt,
+                UUID actorId) {
+        }
     }
 
     private static final class FakeSessionRepository implements SessionRepository {
@@ -201,6 +280,27 @@ class LoginUseCaseTest {
         @Override
         public void evict(String tokenHash) {
             sessions.remove(tokenHash);
+        }
+    }
+
+    private static final class FakeTwoFactorChallengeCachePort implements TwoFactorChallengeCachePort {
+        private final Map<String, TwoFactorChallengeData> challenges = new HashMap<>();
+        private TwoFactorChallengeData storedChallenge;
+
+        @Override
+        public void store(TwoFactorChallengeData challengeData, Duration ttl) {
+            this.storedChallenge = challengeData;
+            challenges.put(challengeData.tokenHash(), challengeData);
+        }
+
+        @Override
+        public Optional<TwoFactorChallengeData> findByTokenHash(String tokenHash) {
+            return Optional.ofNullable(challenges.get(tokenHash));
+        }
+
+        @Override
+        public void evict(String tokenHash) {
+            challenges.remove(tokenHash);
         }
     }
 }

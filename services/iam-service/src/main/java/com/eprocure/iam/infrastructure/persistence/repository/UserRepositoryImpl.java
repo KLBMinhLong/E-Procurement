@@ -10,6 +10,7 @@ import com.eprocure.iam.domain.repository.UserRepository;
 import com.eprocure.iam.infrastructure.persistence.entity.UserDbEntity;
 import com.eprocure.iam.infrastructure.persistence.entity.UserPageDbEntity;
 import com.eprocure.iam.infrastructure.persistence.mapper.UserMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
@@ -96,11 +97,34 @@ public class UserRepositoryImpl implements UserRepository {
         userMapper.updateLastLoginAt(userId, lastLoginAt);
     }
 
+    @Override
+    public void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId) {
+        userMapper.stageTwoFactorSecret(userId, encryptedSecret, actorId);
+    }
+
+    @Override
+    public void confirmTwoFactor(
+            UUID userId,
+            String encryptedSecret,
+            List<String> backupCodeHashes,
+            Instant confirmedAt,
+            UUID actorId) {
+        userMapper.confirmTwoFactor(userId, encryptedSecret, toJson(backupCodeHashes), confirmedAt, actorId);
+    }
+
     private User toDomain(UserDbEntity entity) {
         return objectMapper.convertValue(entity, User.class);
     }
 
     private UserDbEntity toEntity(User user) {
         return objectMapper.convertValue(user, UserDbEntity.class);
+    }
+
+    private String toJson(List<String> values) {
+        try {
+            return objectMapper.writeValueAsString(values);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Unable to serialize two-factor backup code hashes", exception);
+        }
     }
 }

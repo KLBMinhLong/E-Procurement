@@ -17,7 +17,9 @@ import org.apache.ibatis.annotations.Update;
 public interface UserMapper {
     @Select("""
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
-                   department_id, org_node_id, keycloak_username, status, two_factor_enabled, last_login_at, created_at
+                   department_id, org_node_id, keycloak_username, status, two_factor_enabled,
+                   two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
+                   last_login_at, created_at
             FROM iam.users
             WHERE is_deleted = FALSE
               AND id = #{id}
@@ -26,7 +28,9 @@ public interface UserMapper {
 
     @Select("""
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
-                   department_id, org_node_id, keycloak_username, status, two_factor_enabled, last_login_at, created_at
+                   department_id, org_node_id, keycloak_username, status, two_factor_enabled,
+                   two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
+                   last_login_at, created_at
             FROM iam.users
             WHERE is_deleted = FALSE
               AND (LOWER(username) = LOWER(#{login}) OR LOWER(email) = LOWER(#{login}))
@@ -36,7 +40,9 @@ public interface UserMapper {
 
     @Select("""
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
-                   department_id, org_node_id, keycloak_username, status, two_factor_enabled, last_login_at, created_at
+                   department_id, org_node_id, keycloak_username, status, two_factor_enabled,
+                   two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
+                   last_login_at, created_at
             FROM iam.users
             WHERE is_deleted = FALSE
               AND (
@@ -149,4 +155,34 @@ public interface UserMapper {
               AND is_deleted = FALSE
             """)
     void updateLastLoginAt(@Param("userId") UUID userId, @Param("lastLoginAt") Instant lastLoginAt);
+
+    @Update("""
+            UPDATE iam.users
+            SET two_factor_pending_secret_encrypted = #{encryptedSecret},
+                updated_by = #{actorId}
+            WHERE id = #{userId}
+              AND is_deleted = FALSE
+            """)
+    void stageTwoFactorSecret(
+            @Param("userId") UUID userId,
+            @Param("encryptedSecret") String encryptedSecret,
+            @Param("actorId") UUID actorId);
+
+    @Update("""
+            UPDATE iam.users
+            SET two_factor_secret_encrypted = #{encryptedSecret},
+                two_factor_pending_secret_encrypted = NULL,
+                two_factor_enabled = TRUE,
+                two_factor_confirmed_at = #{confirmedAt},
+                two_factor_backup_codes_hash = CAST(#{backupCodesHashJson} AS JSONB),
+                updated_by = #{actorId}
+            WHERE id = #{userId}
+              AND is_deleted = FALSE
+            """)
+    void confirmTwoFactor(
+            @Param("userId") UUID userId,
+            @Param("encryptedSecret") String encryptedSecret,
+            @Param("backupCodesHashJson") String backupCodesHashJson,
+            @Param("confirmedAt") Instant confirmedAt,
+            @Param("actorId") UUID actorId);
 }

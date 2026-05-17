@@ -8,6 +8,7 @@ public enum ErrorCode {
     IAM_003("IAM_003", "Session is invalid or expired", HttpStatus.UNAUTHORIZED),
     IAM_004("IAM_004", "Permission denied", HttpStatus.FORBIDDEN),
     IAM_005("IAM_005", "Validation failed", HttpStatus.BAD_REQUEST),
+    IAM_006("IAM_006", "Two-factor code is invalid or expired", HttpStatus.UNAUTHORIZED),
     IAM_009("IAM_009", "IAM resource already exists", HttpStatus.CONFLICT),
     IAM_020("IAM_020", "Delegate must be at the same or higher organization level", HttpStatus.UNPROCESSABLE_ENTITY),
     IAM_021("IAM_021", "Delegation exceeds delegator authority", HttpStatus.UNPROCESSABLE_ENTITY),
