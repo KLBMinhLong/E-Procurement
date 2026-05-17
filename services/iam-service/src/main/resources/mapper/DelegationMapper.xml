@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.eprocure.iam.infrastructure.persistence.mapper.DelegationMapper">
+    <resultMap id="delegationResult" type="com.eprocure.iam.infrastructure.persistence.entity.DelegationDbEntity">
+        <id property="id" column="id"/>
+        <result property="delegatorId" column="delegator_id"/>
+        <result property="delegateId" column="delegate_id"/>
+        <result property="startAt" column="start_at"/>
+        <result property="endAt" column="end_at"/>
+        <result property="maxValue" column="max_value"/>
+        <result property="currency" column="currency"/>
+        <result property="allowedCategoriesJson" column="allowed_categories_json"/>
+        <result property="scope" column="scope"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findById" resultMap="delegationResult">
+        SELECT id,
+               delegator_id,
+               delegate_id,
+               start_at,
+               end_at,
+               max_value,
+               currency,
+               allowed_categories::text AS allowed_categories_json,
+               scope,
+               status,
+               created_at
+        FROM iam.delegations
+        WHERE is_deleted = FALSE
+          AND id = #{id}
+    </select>
+
+    <select id="findByDelegatorId" resultMap="delegationResult">
+        SELECT id,
+               delegator_id,
+               delegate_id,
+               start_at,
+               end_at,
+               max_value,
+               currency,
+               allowed_categories::text AS allowed_categories_json,
+               scope,
+               status,
+               created_at
+        FROM iam.delegations
+        WHERE is_deleted = FALSE
+          AND delegator_id = #{delegatorId}
+        ORDER BY start_at DESC, created_at DESC
+    </select>
+
+    <select id="hasActiveOverlap" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM iam.delegations
+            WHERE is_deleted = FALSE
+              AND delegator_id = #{delegatorId}
+              AND status = 'ACTIVE'
+              AND end_at > NOW()
+              AND start_at &lt; #{endAt}
+              AND end_at > #{startAt}
+        )
+    </select>
+
+    <select id="findOrgPathByUserId" resultType="string">
+        SELECT n.path
+        FROM iam.users u
+        JOIN iam.org_nodes n ON n.id = u.org_node_id AND n.is_deleted = FALSE
+        WHERE u.is_deleted = FALSE
+          AND u.id = #{userId}
+        LIMIT 1
+    </select>
+
+    <insert id="insert">
+        INSERT INTO iam.delegations (
+            id,
+            delegator_id,
+            delegate_id,
+            start_at,
+            end_at,
+            max_value,
+            currency,
+            allowed_categories,
+            scope,
+            status,
+            created_by
+        ) VALUES (
+            #{entity.id},
+            #{entity.delegatorId},
+            #{entity.delegateId},
+            #{entity.startAt},
+            #{entity.endAt},
+            #{entity.maxValue},
+            #{entity.currency},
+            CAST(#{entity.allowedCategoriesJson,jdbcType=VARCHAR} AS jsonb),
+            #{entity.scope},
+            #{entity.status},
+            #{actorId}
+        )
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE iam.delegations
+        SET status = #{status},
+            updated_by = #{actorId}
+        WHERE id = #{delegationId}
+          AND is_deleted = FALSE
+    </update>
+</mapper>
