@@ -23,6 +23,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/public-key").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/google").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/google/callback").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/two-factor/verify").permitAll()
                         .anyRequest().authenticated())

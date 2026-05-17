@@ -17,7 +17,7 @@ import org.apache.ibatis.annotations.Update;
 public interface UserMapper {
     @Select("""
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
-                   department_id, org_node_id, keycloak_username, status, two_factor_enabled,
+                   department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
                    two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
                    last_login_at, created_at
             FROM iam.users
@@ -28,7 +28,7 @@ public interface UserMapper {
 
     @Select("""
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
-                   department_id, org_node_id, keycloak_username, status, two_factor_enabled,
+                   department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
                    two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
                    last_login_at, created_at
             FROM iam.users
@@ -40,7 +40,7 @@ public interface UserMapper {
 
     @Select("""
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
-                   department_id, org_node_id, keycloak_username, status, two_factor_enabled,
+                   department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
                    two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
                    last_login_at, created_at
             FROM iam.users
@@ -56,6 +56,18 @@ public interface UserMapper {
             @Param("employeeCode") String employeeCode,
             @Param("username") String username,
             @Param("email") String email);
+
+    @Select("""
+            SELECT id, employee_code, username, email, full_name, phone, avatar_url,
+                   department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
+                   two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
+                   last_login_at, created_at
+            FROM iam.users
+            WHERE is_deleted = FALSE
+              AND google_oauth_id = #{googleOauthId}
+            LIMIT 1
+            """)
+    UserDbEntity findByGoogleOauthId(@Param("googleOauthId") String googleOauthId);
 
     List<UserPageDbEntity> findPage(
             @Param("status") UserStatus status,
@@ -155,6 +167,18 @@ public interface UserMapper {
               AND is_deleted = FALSE
             """)
     void updateLastLoginAt(@Param("userId") UUID userId, @Param("lastLoginAt") Instant lastLoginAt);
+
+    @Update("""
+            UPDATE iam.users
+            SET google_oauth_id = #{googleOauthId},
+                updated_by = #{actorId}
+            WHERE id = #{userId}
+              AND is_deleted = FALSE
+            """)
+    void linkGoogleOauthId(
+            @Param("userId") UUID userId,
+            @Param("googleOauthId") String googleOauthId,
+            @Param("actorId") UUID actorId);
 
     @Update("""
             UPDATE iam.users

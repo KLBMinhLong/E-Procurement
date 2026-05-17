@@ -46,6 +46,7 @@
 | IAM_009 | 409 | Username hoac email da ton tai |
 | IAM_010 | 422 | Email chua duoc xac thuc |
 | IAM_011 | 400 | Du lieu dang ky khong hop le |
+| IAM_012 | 401 | Google OAuth state/code khong hop le |
 | IAM_020 | 422 | Nguoi duoc uy quyen phai cung cap hoac cao hon |
 | IAM_021 | 422 | Khong the uy quyen vuot qua quyen cua ban than |
 | IAM_022 | 409 | Da co uy quyen dang hoat dong trong khoang thoi gian nay |

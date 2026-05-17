@@ -4,11 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.iam.application.port.in.ClientContext;
-import com.eprocure.iam.application.port.in.LoginCommand;
-import com.eprocure.iam.application.port.out.CredentialVerificationPort;
+import com.eprocure.iam.application.port.in.GoogleOAuthCallbackCommand;
+import com.eprocure.iam.application.port.out.GoogleOAuthPort;
+import com.eprocure.iam.application.port.out.GoogleOAuthProfile;
+import com.eprocure.iam.application.port.out.OAuthStateCachePort;
 import com.eprocure.iam.application.port.out.SessionCachePort;
 import com.eprocure.iam.application.port.out.TwoFactorChallengeCachePort;
 import com.eprocure.iam.application.service.LoginResult;
+import com.eprocure.iam.application.service.OAuthStateService;
 import com.eprocure.iam.application.service.OpaqueTokenService;
 import com.eprocure.iam.application.service.SessionData;
 import com.eprocure.iam.application.service.SessionService;
@@ -25,7 +28,6 @@ import com.eprocure.iam.domain.model.UserStatus;
 import com.eprocure.iam.domain.repository.Page;
 import com.eprocure.iam.domain.repository.SessionRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
-import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -36,104 +38,82 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-class LoginUseCaseTest {
+class HandleGoogleOAuthCallbackUseCaseTest {
     private static final UUID USER_ID = UUID.fromString("30000000-0000-0000-0000-000000000001");
     private static final UUID DEPARTMENT_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+    private static final String STATE = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     @Test
-    void should_create_session_when_credentials_are_valid() {
+    void should_link_google_subject_and_issue_session_when_profile_email_matches() {
+        OpaqueTokenService opaqueTokenService = new OpaqueTokenService();
+        FakeOAuthStateCachePort stateCachePort = new FakeOAuthStateCachePort();
+        stateCachePort.store(opaqueTokenService.hash(STATE), Duration.ofMinutes(5));
         FakeUserRepository userRepository = new FakeUserRepository(activeUser());
         FakeSessionRepository sessionRepository = new FakeSessionRepository();
         FakeSessionCachePort sessionCachePort = new FakeSessionCachePort();
-        SessionService sessionService = new SessionService(
+        HandleGoogleOAuthCallbackUseCase useCase = newUseCase(
+                new FakeGoogleOAuthPort(new GoogleOAuthProfile(
+                        "google-sub-1",
+                        "requester@eprocure.local",
+                        true,
+                        "Request User",
+                        null)),
+                new OAuthStateService(stateCachePort, opaqueTokenService, 5),
+                userRepository,
                 sessionRepository,
-                userRepository,
-                sessionCachePort,
-                new OpaqueTokenService(),
-                8);
-        OpaqueTokenService opaqueTokenService = new OpaqueTokenService();
-        LoginUseCase useCase = new LoginUseCase(
-                userRepository,
-                (username, password) -> true,
-                sessionService,
-                new TwoFactorChallengeService(new FakeTwoFactorChallengeCachePort(), opaqueTokenService, 5));
+                sessionCachePort);
 
-        LoginResult result = useCase.execute(new LoginCommand(
-                "requester",
-                "Password@123",
-                UUID.randomUUID(),
+        LoginResult result = useCase.execute(new GoogleOAuthCallbackCommand(
+                "google-auth-code",
+                STATE,
+                STATE,
                 ClientContext.of("127.0.0.1", "JUnit")));
 
         assertThat(result.userId()).isEqualTo(USER_ID);
-        assertThat(result.rawToken())
-                .hasSize(64)
-                .matches("^[a-f0-9]{64}$");
-        assertThat(sessionRepository.revokeActiveByUserIdCalled).isTrue();
+        assertThat(result.requiresTwoFactor()).isFalse();
+        assertThat(result.rawToken()).hasSize(64).matches("^[a-f0-9]{64}$");
+        assertThat(userRepository.linkedGoogleOauthId).isEqualTo("google-sub-1");
         assertThat(sessionRepository.savedSession).isNotNull();
         assertThat(sessionCachePort.storedSession).isNotNull();
         assertThat(userRepository.lastLoginAt).isNotNull();
     }
 
     @Test
-    void should_create_two_factor_challenge_without_session_when_2fa_is_enabled() {
-        FakeUserRepository userRepository = new FakeUserRepository(twoFactorUser());
-        FakeSessionRepository sessionRepository = new FakeSessionRepository();
-        FakeSessionCachePort sessionCachePort = new FakeSessionCachePort();
-        SessionService sessionService = new SessionService(
-                sessionRepository,
-                userRepository,
-                sessionCachePort,
-                new OpaqueTokenService(),
-                8);
-        FakeTwoFactorChallengeCachePort challengeCachePort = new FakeTwoFactorChallengeCachePort();
-        LoginUseCase useCase = new LoginUseCase(
-                userRepository,
-                (username, password) -> true,
-                sessionService,
-                new TwoFactorChallengeService(challengeCachePort, new OpaqueTokenService(), 5));
-
-        LoginResult result = useCase.execute(new LoginCommand(
-                "requester",
-                "Password@123",
-                UUID.randomUUID(),
-                ClientContext.of("127.0.0.1", "JUnit")));
-
-        assertThat(result.requiresTwoFactor()).isTrue();
-        assertThat(result.rawToken())
-                .hasSize(64)
-                .matches("^[a-f0-9]{64}$");
-        assertThat(challengeCachePort.storedChallenge).isNotNull();
-        assertThat(sessionRepository.revokeActiveByUserIdCalled).isFalse();
-        assertThat(sessionRepository.savedSession).isNull();
-        assertThat(sessionCachePort.storedSession).isNull();
-        assertThat(userRepository.lastLoginAt).isNull();
-    }
-
-    @Test
-    void should_throw_iam_001_when_credentials_are_invalid() {
-        FakeUserRepository userRepository = new FakeUserRepository(activeUser());
-        SessionService sessionService = new SessionService(
+    void should_throw_iam_012_when_state_is_invalid() {
+        HandleGoogleOAuthCallbackUseCase useCase = newUseCase(
+                new FakeGoogleOAuthPort(new GoogleOAuthProfile(
+                        "google-sub-1",
+                        "requester@eprocure.local",
+                        true,
+                        "Request User",
+                        null)),
+                new OAuthStateService(new FakeOAuthStateCachePort(), new OpaqueTokenService(), 5),
+                new FakeUserRepository(activeUser()),
                 new FakeSessionRepository(),
-                userRepository,
-                new FakeSessionCachePort(),
-                new OpaqueTokenService(),
-                8);
-        CredentialVerificationPort credentialVerificationPort = (username, password) -> false;
-        OpaqueTokenService opaqueTokenService = new OpaqueTokenService();
-        LoginUseCase useCase = new LoginUseCase(
-                userRepository,
-                credentialVerificationPort,
-                sessionService,
-                new TwoFactorChallengeService(new FakeTwoFactorChallengeCachePort(), opaqueTokenService, 5));
+                new FakeSessionCachePort());
 
-        assertThatThrownBy(() -> useCase.execute(new LoginCommand(
-                "requester",
-                "wrong",
-                UUID.randomUUID(),
+        assertThatThrownBy(() -> useCase.execute(new GoogleOAuthCallbackCommand(
+                "google-auth-code",
+                STATE,
+                STATE,
                 ClientContext.of("127.0.0.1", "JUnit"))))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.IAM_001);
+                .isEqualTo(ErrorCode.IAM_012);
+    }
+
+    private static HandleGoogleOAuthCallbackUseCase newUseCase(
+            GoogleOAuthPort googleOAuthPort,
+            OAuthStateService oauthStateService,
+            FakeUserRepository userRepository,
+            FakeSessionRepository sessionRepository,
+            FakeSessionCachePort sessionCachePort) {
+        return new HandleGoogleOAuthCallbackUseCase(
+                googleOAuthPort,
+                oauthStateService,
+                userRepository,
+                new SessionService(sessionRepository, userRepository, sessionCachePort, new OpaqueTokenService(), 8),
+                new TwoFactorChallengeService(new FakeTwoFactorChallengeCachePort(), new OpaqueTokenService(), 5));
     }
 
     private static User activeUser() {
@@ -148,25 +128,40 @@ class LoginUseCaseTest {
                 Instant.parse("2026-05-17T00:00:00Z"));
     }
 
-    private static User twoFactorUser() {
-        User user = activeUser();
-        setField(user, "twoFactorEnabled", true);
-        setField(user, "twoFactorSecretEncrypted", "v1:encrypted");
-        return user;
+    private record FakeGoogleOAuthPort(GoogleOAuthProfile profile) implements GoogleOAuthPort {
+        @Override
+        public String authorizationUrl(String state) {
+            return "https://accounts.google.com/o/oauth2/v2/auth?state=" + state;
+        }
+
+        @Override
+        public Optional<GoogleOAuthProfile> fetchProfile(String authorizationCode) {
+            return Optional.of(profile);
+        }
     }
 
-    private static void setField(User user, String fieldName, Object value) {
-        try {
-            Field field = User.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(user, value);
-        } catch (ReflectiveOperationException exception) {
-            throw new IllegalStateException(exception);
+    private static final class FakeOAuthStateCachePort implements OAuthStateCachePort {
+        private final Set<String> states = new java.util.HashSet<>();
+
+        @Override
+        public void store(String stateHash, Duration ttl) {
+            states.add(stateHash);
+        }
+
+        @Override
+        public boolean exists(String stateHash) {
+            return states.contains(stateHash);
+        }
+
+        @Override
+        public void evict(String stateHash) {
+            states.remove(stateHash);
         }
     }
 
     private static final class FakeUserRepository implements UserRepository {
         private final User user;
+        private String linkedGoogleOauthId;
         private Instant lastLoginAt;
 
         private FakeUserRepository(User user) {
@@ -180,12 +175,12 @@ class LoginUseCaseTest {
 
         @Override
         public Optional<User> findByUsernameOrEmail(String usernameOrEmail) {
-            return "requester".equals(usernameOrEmail) ? Optional.of(user) : Optional.empty();
+            return "requester@eprocure.local".equals(usernameOrEmail) ? Optional.of(user) : Optional.empty();
         }
 
         @Override
         public Optional<User> findByGoogleOauthId(String googleOauthId) {
-            return Optional.empty();
+            return googleOauthId.equals(linkedGoogleOauthId) ? Optional.of(user) : Optional.empty();
         }
 
         @Override
@@ -231,6 +226,7 @@ class LoginUseCaseTest {
 
         @Override
         public void linkGoogleOauthId(UUID userId, String googleOauthId, UUID actorId) {
+            this.linkedGoogleOauthId = googleOauthId;
         }
 
         @Override
@@ -248,7 +244,6 @@ class LoginUseCaseTest {
     }
 
     private static final class FakeSessionRepository implements SessionRepository {
-        private boolean revokeActiveByUserIdCalled;
         private SessionRecord savedSession;
 
         @Override
@@ -258,7 +253,6 @@ class LoginUseCaseTest {
 
         @Override
         public void revokeActiveByUserId(UUID userId, UUID revokedBy, Instant revokedAt) {
-            this.revokeActiveByUserIdCalled = true;
         }
 
         @Override
@@ -293,23 +287,17 @@ class LoginUseCaseTest {
     }
 
     private static final class FakeTwoFactorChallengeCachePort implements TwoFactorChallengeCachePort {
-        private final Map<String, TwoFactorChallengeData> challenges = new HashMap<>();
-        private TwoFactorChallengeData storedChallenge;
-
         @Override
         public void store(TwoFactorChallengeData challengeData, Duration ttl) {
-            this.storedChallenge = challengeData;
-            challenges.put(challengeData.tokenHash(), challengeData);
         }
 
         @Override
         public Optional<TwoFactorChallengeData> findByTokenHash(String tokenHash) {
-            return Optional.ofNullable(challenges.get(tokenHash));
+            return Optional.empty();
         }
 
         @Override
         public void evict(String tokenHash) {
-            challenges.remove(tokenHash);
         }
     }
 }

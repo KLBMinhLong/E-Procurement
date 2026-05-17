@@ -618,6 +618,63 @@ paths:
       responses:
         '302':
           description: Redirect đến Google consent screen
+          headers:
+            Set-Cookie:
+              description: ep_oauth_state HttpOnly cookie dùng để chống CSRF callback
+              schema:
+                type: string
+
+  /auth/oauth/google/callback:
+    get:
+      tags: [Auth]
+      summary: Callback Google OAuth — xác minh state/code và issue cookie đăng nhập
+      security: []
+      operationId: googleOAuthCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OAuth thành công
+          headers:
+            Set-Cookie:
+              description: ep_session hoặc ep_2fa HttpOnly cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          userId:
+                            type: string
+                            format: uuid
+                          fullName:
+                            type: string
+                          avatarUrl:
+                            type: string
+                            nullable: true
+                          requiresTwoFactor:
+                            type: boolean
+        '401':
+          description: Google OAuth state/code không hợp lệ (IAM_012)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Users ─────────────────────────────────────────────────────
   /users/me:

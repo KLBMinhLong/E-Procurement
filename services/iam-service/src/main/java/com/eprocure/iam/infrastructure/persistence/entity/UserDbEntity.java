@@ -15,6 +15,7 @@ public class UserDbEntity {
     public UUID departmentId;
     public UUID orgNodeId;
     public String keycloakUsername;
+    public String googleOauthId;
     public UserStatus status;
     public boolean twoFactorEnabled;
     public String twoFactorSecretEncrypted;

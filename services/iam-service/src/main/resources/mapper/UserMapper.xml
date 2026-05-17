@@ -14,6 +14,7 @@
                u.department_id,
                u.org_node_id,
                u.keycloak_username,
+               u.google_oauth_id,
                u.status,
                u.two_factor_enabled,
                u.last_login_at,

@@ -74,3 +74,13 @@ eprocure:
     realm: ${KEYCLOAK_REALM:eprocure}
     client-id: ${KEYCLOAK_CLIENT_ID:eprocure-iam}
     client-secret: ${KEYCLOAK_CLIENT_SECRET:dev-secret}
+  google-oauth:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8081/api/v1/auth/oauth/google/callback}
+    authorization-url: ${GOOGLE_AUTHORIZATION_URL:https://accounts.google.com/o/oauth2/v2/auth}
+    token-url: ${GOOGLE_TOKEN_URL:https://oauth2.googleapis.com/token}
+    user-info-url: ${GOOGLE_USER_INFO_URL:https://www.googleapis.com/oauth2/v3/userinfo}
+    scope: ${GOOGLE_OAUTH_SCOPE:openid email profile}
+    state-cookie-name: ${GOOGLE_OAUTH_STATE_COOKIE_NAME:ep_oauth_state}
+    state-ttl-minutes: ${GOOGLE_OAUTH_STATE_TTL_MINUTES:5}

@@ -95,7 +95,7 @@
 | Admin user CRUD API | ✅ |
 | Admin role/permission API | ✅ |
 | 2FA (TOTP) | ✅ |
-| Google OAuth | ⬜ |
+| Google OAuth | ✅ |
 | Forgot password flow | ⬜ |
 | Delegation API | ✅ |
 | Org chart API | ✅ |

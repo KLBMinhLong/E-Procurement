@@ -115,6 +115,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `GOOGLE_CLIENT_ID` | `xxx.apps.googleusercontent.com` | `***SENSITIVE***` | Google OAuth Client ID |
 | `GOOGLE_CLIENT_SECRET` | `***SENSITIVE***` | `***SENSITIVE***` | Google OAuth Secret |
 | `GOOGLE_REDIRECT_URI` | `http://localhost:8081/api/v1/auth/oauth/google/callback` | `https://api.eprocure.vn/api/v1/auth/oauth/google/callback` | OAuth callback URL |
+| `GOOGLE_OAUTH_STATE_TTL_MINUTES` | `5` | `5` | TTL state chống CSRF cho OAuth callback |
 
 ### 4.6 Session & Security
 | Biến | Dev | Prod | Mô tả |
@@ -471,6 +472,8 @@ TWO_FACTOR_CHALLENGE_TTL_MINUTES=5
 # ── Google OAuth ─────────────────────────────────────────────
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=http://localhost:8081/api/v1/auth/oauth/google/callback
+GOOGLE_OAUTH_STATE_TTL_MINUTES=5
 
 # ── Brevo SMTP ───────────────────────────────────────────────
 EMAIL_ENABLED=false
