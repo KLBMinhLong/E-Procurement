@@ -15,6 +15,7 @@ public class User {
     private String avatarUrl;
     private UUID departmentId;
     private UUID orgNodeId;
+    private String keycloakUsername;
     private UserStatus status;
     private boolean twoFactorEnabled;
     private Instant lastLoginAt;
@@ -29,16 +30,23 @@ public class User {
             String username,
             String email,
             String fullName,
+            String phone,
             UUID departmentId,
+            UUID orgNodeId,
             UserStatus status,
+            boolean twoFactorEnabled,
             Instant createdAt) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.employeeCode = requireText(employeeCode, "employeeCode");
         this.username = requireText(username, "username");
         this.email = requireText(email, "email").toLowerCase();
         this.fullName = requireText(fullName, "fullName");
+        this.phone = normalize(phone);
         this.departmentId = Objects.requireNonNull(departmentId, "departmentId must not be null");
+        this.orgNodeId = orgNodeId;
+        this.keycloakUsername = this.username;
         this.status = Objects.requireNonNull(status, "status must not be null");
+        this.twoFactorEnabled = twoFactorEnabled;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
@@ -51,7 +59,22 @@ public class User {
             UUID departmentId,
             UserStatus status,
             Instant createdAt) {
-        return new User(id, employeeCode, username, email, fullName, departmentId, status, createdAt);
+        return new User(id, employeeCode, username, email, fullName, null, departmentId, null, status, false, createdAt);
+    }
+
+    public static User create(
+            UUID id,
+            String employeeCode,
+            String username,
+            String email,
+            String fullName,
+            String phone,
+            UUID departmentId,
+            UUID orgNodeId,
+            UserStatus status,
+            boolean twoFactorEnabled,
+            Instant createdAt) {
+        return new User(id, employeeCode, username, email, fullName, phone, departmentId, orgNodeId, status, twoFactorEnabled, createdAt);
     }
 
     public boolean canLogin() {
@@ -60,6 +83,17 @@ public class User {
 
     public boolean isLocked() {
         return status == UserStatus.LOCKED;
+    }
+
+    public void updateProfile(String fullName, String phone, UUID departmentId, UUID orgNodeId) {
+        this.fullName = requireText(fullName, "fullName");
+        this.phone = normalize(phone);
+        this.departmentId = Objects.requireNonNull(departmentId, "departmentId must not be null");
+        this.orgNodeId = orgNodeId;
+    }
+
+    public void changeStatus(UserStatus status) {
+        this.status = Objects.requireNonNull(status, "status must not be null");
     }
 
     public UUID getId() {
@@ -98,6 +132,10 @@ public class User {
         return Optional.ofNullable(orgNodeId);
     }
 
+    public String getKeycloakUsername() {
+        return keycloakUsername == null || keycloakUsername.isBlank() ? username : keycloakUsername;
+    }
+
     public UserStatus getStatus() {
         return status;
     }
@@ -119,5 +157,9 @@ public class User {
             throw new IllegalArgumentException(fieldName + " must not be blank");
         }
         return value.trim();
+    }
+
+    private static String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

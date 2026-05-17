@@ -14,6 +14,7 @@ public class UserDbEntity {
     public String avatarUrl;
     public UUID departmentId;
     public UUID orgNodeId;
+    public String keycloakUsername;
     public UserStatus status;
     public boolean twoFactorEnabled;
     public Instant lastLoginAt;

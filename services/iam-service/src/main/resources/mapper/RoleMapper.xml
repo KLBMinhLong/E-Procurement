@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.eprocure.iam.infrastructure.persistence.mapper.RoleMapper">
+    <select id="findExistingCodes" resultType="string">
+        <choose>
+            <when test="codes != null and codes.size() > 0">
+                SELECT code
+                FROM iam.roles
+                WHERE is_deleted = FALSE
+                  AND UPPER(code) IN
+                  <foreach item="code" collection="codes" open="(" separator="," close=")">
+                      UPPER(#{code})
+                  </foreach>
+                ORDER BY code
+            </when>
+            <otherwise>
+                SELECT code
+                FROM iam.roles
+                WHERE 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+
+    <update id="softDeleteRolePermissionsNotIn">
+        UPDATE iam.role_permissions rp
+        SET is_deleted = TRUE,
+            deleted_at = NOW(),
+            deleted_by = #{actorId},
+            updated_by = #{actorId}
+        FROM iam.roles r
+        WHERE rp.role_id = r.id
+          AND r.is_deleted = FALSE
+          AND UPPER(r.code) = UPPER(#{roleCode})
+          AND rp.is_deleted = FALSE
+        <if test="permissionCodes != null and permissionCodes.size() > 0">
+          AND NOT EXISTS (
+              SELECT 1
+              FROM iam.permissions p
+              WHERE p.id = rp.permission_id
+                AND p.is_deleted = FALSE
+                AND UPPER(p.code) IN
+                <foreach item="permissionCode" collection="permissionCodes" open="(" separator="," close=")">
+                    UPPER(#{permissionCode})
+                </foreach>
+          )
+        </if>
+    </update>
+</mapper>

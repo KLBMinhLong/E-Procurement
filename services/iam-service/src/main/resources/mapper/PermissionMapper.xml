@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.eprocure.iam.infrastructure.persistence.mapper.PermissionMapper">
+    <select id="findExistingCodes" resultType="string">
+        <choose>
+            <when test="codes != null and codes.size() > 0">
+                SELECT code
+                FROM iam.permissions
+                WHERE is_deleted = FALSE
+                  AND UPPER(code) IN
+                  <foreach item="code" collection="codes" open="(" separator="," close=")">
+                      UPPER(#{code})
+                  </foreach>
+                ORDER BY code
+            </when>
+            <otherwise>
+                SELECT code
+                FROM iam.permissions
+                WHERE 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+</mapper>
