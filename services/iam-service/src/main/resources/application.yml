@@ -59,9 +59,11 @@ eprocure:
     ttl-hours: ${SESSION_TTL_HOURS:8}
     permission-cache-ttl-minutes: ${PERM_CACHE_TTL_MINUTES:15}
   encryption:
+    enabled: ${ENCRYPTION_ENABLED:false}
     key-version: ${RSA_KEY_VERSION:v2025-01}
     algorithm: RSA/ECB/OAEPWithSHA-256AndMGF1Padding
     public-key: ${RSA_PUBLIC_KEY:}
+    private-key: ${RSA_PRIVATE_KEY:}
   keycloak:
     url: ${KEYCLOAK_URL:http://localhost:18080}
     realm: ${KEYCLOAK_REALM:eprocure}
