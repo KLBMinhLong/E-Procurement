@@ -1,0 +1,7 @@
+<label class="ep-form-field">
+  <span>{{ label() }}</span>
+  <ng-content></ng-content>
+  @if (error()) {
+    <small>{{ error() }}</small>
+  }
+</label>

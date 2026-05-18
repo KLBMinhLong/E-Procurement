@@ -1,0 +1,53 @@
+<section class="dashboard">
+  <header class="dashboard__header">
+    <div>
+      <p>{{ 'dashboard.eyebrow' | translate }}</p>
+      <h1>{{ 'dashboard.title' | translate }}</h1>
+    </div>
+    <ep-filter-bar [value]="query()" (valueChange)="query.set($event)"></ep-filter-bar>
+  </header>
+
+  <div class="dashboard__stats">
+    <ep-stat-card icon="clipboard-list" [title]="'dashboard.stat.pending.title' | translate" value="18" [hint]="'dashboard.stat.pending.hint' | translate"></ep-stat-card>
+    <ep-stat-card icon="clock" [title]="'dashboard.stat.sla.title' | translate" value="4" [hint]="'dashboard.stat.sla.hint' | translate"></ep-stat-card>
+    <ep-stat-card icon="package-check" [title]="'dashboard.stat.completed.title' | translate" value="91%" [hint]="'dashboard.stat.completed.hint' | translate"></ep-stat-card>
+    <ep-stat-card icon="chart-no-axes-combined" [title]="'dashboard.stat.spend.title' | translate" value="2.8B" [hint]="'dashboard.stat.spend.hint' | translate"></ep-stat-card>
+  </div>
+
+  <div class="dashboard__grid">
+    <ep-card tone="raised">
+      <div class="dashboard__panel">
+        <div class="dashboard__panel-header">
+          <h2>{{ 'dashboard.panel.pipeline' | translate }}</h2>
+          <ep-badge tone="info" labelKey="dashboard.badge.live"></ep-badge>
+        </div>
+        <ep-table [columns]="columns" [data]="rows()"></ep-table>
+      </div>
+    </ep-card>
+
+    <ep-card tone="raised">
+      <div class="dashboard__panel">
+        <div class="dashboard__panel-header">
+          <h2>{{ 'dashboard.panel.sla' | translate }}</h2>
+          <ep-badge tone="warning" labelKey="status.PENDING_APPROVAL"></ep-badge>
+        </div>
+
+        <div class="dashboard__sla-list">
+          <div>
+            <span>{{ 'dashboard.sla.finance' | translate }}</span>
+            <ep-sla-bar assignedAt="2026-05-17T08:00:00+07:00" deadline="2026-05-19T17:00:00+07:00"></ep-sla-bar>
+          </div>
+          <div>
+            <span>{{ 'dashboard.sla.procurement' | translate }}</span>
+            <ep-sla-bar assignedAt="2026-05-18T08:00:00+07:00" deadline="2026-05-18T18:00:00+07:00"></ep-sla-bar>
+          </div>
+        </div>
+
+        <div class="dashboard__amount">
+          <span>{{ 'dashboard.panel.monthSpend' | translate }}</span>
+          <ep-amount value="2800000000.0000"></ep-amount>
+        </div>
+      </div>
+    </ep-card>
+  </div>
+</section>

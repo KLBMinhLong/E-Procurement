@@ -1,0 +1,55 @@
+<div class="ep-table">
+  @if (loading()) {
+    <ep-skeleton [rows]="5"></ep-skeleton>
+  } @else {
+    <div class="ep-table__scroll">
+      <table>
+        <thead>
+          <tr>
+            @for (column of columns(); track column.key) {
+              <th [class.ep-table__cell--right]="column.align === 'right'" [class.ep-table__cell--center]="column.align === 'center'">
+                @if (column.sortable) {
+                  <button type="button" class="ep-table__sort" (click)="onSort(column)">
+                    <span>{{ column.labelKey | translate }}</span>
+                    <ep-icon name="chevron-right" [size]="14"></ep-icon>
+                  </button>
+                } @else {
+                  {{ column.labelKey | translate }}
+                }
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of data(); track $index) {
+            <tr tabindex="0" (click)="rowClick.emit(row)" (keydown.enter)="rowClick.emit(row)">
+              @for (column of columns(); track column.key) {
+                <td [class.ep-table__cell--right]="column.align === 'right'" [class.ep-table__cell--center]="column.align === 'center'">
+                  @if (column.translationPrefix) {
+                    {{ resolveTranslationKey(row, column) | translate }}
+                  } @else {
+                    {{ resolveCell(row, column.key) }}
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta()) {
+      <footer class="ep-table__footer">
+        <span>{{ 'shared.table.pageSummary' | translate:{ page: meta()!.page, total: meta()!.totalPages } }}</span>
+        <div class="ep-table__pager">
+          <ep-button variant="ghost" size="sm" [disabled]="meta()!.isFirst" (click)="onPreviousPage()">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button variant="ghost" size="sm" [disabled]="meta()!.isLast" (click)="onNextPage()">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </footer>
+    }
+  }
+</div>

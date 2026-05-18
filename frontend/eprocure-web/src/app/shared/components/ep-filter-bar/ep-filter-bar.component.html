@@ -1,0 +1,15 @@
+<div class="ep-filter-bar">
+  <label class="ep-filter-bar__search">
+    <ep-icon name="search" [size]="18"></ep-icon>
+    <input
+      type="search"
+      [ngModel]="value()"
+      (ngModelChange)="valueChange.emit($event)"
+      [placeholder]="placeholderKey() | translate"
+      autocomplete="off"
+      spellcheck="false" />
+  </label>
+  <ep-button variant="secondary" icon="filter" (click)="refresh.emit()">
+    {{ 'shared.filter.apply' | translate }}
+  </ep-button>
+</div>

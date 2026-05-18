@@ -1,0 +1,29 @@
+.ep-skeleton {
+  display: grid;
+  gap: var(--spacing-3);
+}
+
+.ep-skeleton__row {
+  animation: ep-skeleton-pulse var(--motion-slow) ease-in-out infinite;
+  background: linear-gradient(90deg, var(--color-surface), var(--color-surface-hover), var(--color-surface));
+  border-radius: var(--radius-2);
+  display: block;
+  height: var(--skeleton-row-height);
+}
+
+@keyframes ep-skeleton-pulse {
+  0%,
+  100% {
+    opacity: var(--opacity-muted);
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ep-skeleton__row {
+    animation: none;
+  }
+}

@@ -1,0 +1,5 @@
+import { InjectionToken } from '@angular/core';
+
+export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
+export const WS_BASE_URL = new InjectionToken<string>('WS_BASE_URL');
+export const ENCRYPTION_ENABLED = new InjectionToken<boolean>('ENCRYPTION_ENABLED');

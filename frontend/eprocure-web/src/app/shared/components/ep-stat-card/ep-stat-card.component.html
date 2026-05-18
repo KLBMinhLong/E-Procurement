@@ -1,0 +1,12 @@
+<article class="ep-stat-card">
+  <span class="ep-stat-card__icon">
+    <ep-icon [name]="icon()" [size]="20"></ep-icon>
+  </span>
+  <div>
+    <p>{{ title() }}</p>
+    <strong>{{ value() }}</strong>
+    @if (hint()) {
+      <span>{{ hint() }}</span>
+    }
+  </div>
+</article>

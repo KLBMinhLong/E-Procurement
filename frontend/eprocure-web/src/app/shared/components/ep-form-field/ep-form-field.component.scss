@@ -1,0 +1,33 @@
+.ep-form-field {
+  color: var(--color-text-secondary);
+  display: grid;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  gap: var(--spacing-2);
+}
+
+.ep-form-field ::ng-deep input,
+.ep-form-field ::ng-deep select,
+.ep-form-field ::ng-deep textarea {
+  background: var(--color-surface-raised);
+  border: var(--border-subtle);
+  border-radius: var(--radius-2);
+  color: var(--color-text-primary);
+  font: inherit;
+  min-height: var(--control-height-md);
+  padding: 0 var(--spacing-3);
+  width: 100%;
+}
+
+.ep-form-field ::ng-deep input:focus-visible,
+.ep-form-field ::ng-deep select:focus-visible,
+.ep-form-field ::ng-deep textarea:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.ep-form-field small {
+  color: var(--color-danger);
+  font-weight: 600;
+}

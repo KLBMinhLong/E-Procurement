@@ -1,0 +1,8 @@
+<span
+  class="ep-badge"
+  [class.ep-badge--success]="tone() === 'success'"
+  [class.ep-badge--warning]="tone() === 'warning'"
+  [class.ep-badge--danger]="tone() === 'danger'"
+  [class.ep-badge--info]="tone() === 'info'">
+  {{ resolvedLabelKey() | translate }}
+</span>

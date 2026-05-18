@@ -106,22 +106,22 @@
 ### E03: UI Shell & Design System (Angular)
 | Task | Status |
 |---|---|
-| Angular project setup | ⬜ |
-| Design tokens (SCSS variables) | ⬜ |
-| ep-button, ep-badge, ep-card | ⬜ |
-| ep-table (với pagination) | ⬜ |
-| ep-modal, ep-form-field | ⬜ |
-| ep-amount, ep-sla-bar, ep-stat-card | ⬜ |
-| ep-avatar, ep-icon (custom SVG) | ⬜ |
-| ep-approval-action, ep-filter-bar | ⬜ |
-| ep-breadcrumb, ep-lang-switcher | ⬜ |
-| ep-empty-state, ep-skeleton | ⬜ |
-| /ui-showcase page | ⬜ |
-| i18n setup (vi/en) | ⬜ |
-| Auth interceptors | ⬜ |
-| Error interceptor | ⬜ |
-| WebSocket service | ⬜ |
-| Permission guard + directive | ⬜ |
+| Angular project setup | ✅ |
+| Design tokens (SCSS variables) | ✅ |
+| ep-button, ep-badge, ep-card | ✅ |
+| ep-table (với pagination) | ✅ |
+| ep-modal, ep-form-field | ✅ |
+| ep-amount, ep-sla-bar, ep-stat-card | ✅ |
+| ep-avatar, ep-icon (custom SVG) | ✅ |
+| ep-approval-action, ep-filter-bar | ✅ |
+| ep-breadcrumb, ep-lang-switcher | ✅ |
+| ep-empty-state, ep-skeleton | ✅ |
+| /ui-showcase page | ✅ |
+| i18n setup (vi/en) | ✅ |
+| Auth interceptors | 🔄 |
+| Error interceptor | ✅ |
+| WebSocket service | ✅ |
+| Permission guard + directive | ✅ |
 
 ### E04: Purchase Request Service
 | Task | Status |

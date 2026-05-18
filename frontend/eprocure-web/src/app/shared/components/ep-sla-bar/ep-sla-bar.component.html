@@ -1,0 +1,9 @@
+<div class="ep-sla">
+  <div class="ep-sla__meta">
+    <span>{{ 'shared.sla.label' | translate }}</span>
+    <strong>{{ percent() }}%</strong>
+  </div>
+  <div class="ep-sla__track" [class.ep-sla__track--warning]="tone() === 'warning'" [class.ep-sla__track--danger]="tone() === 'danger'">
+    <span [style.width.%]="percent()"></span>
+  </div>
+</div>

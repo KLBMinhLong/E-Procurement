@@ -1,0 +1,10 @@
+<nav class="ep-breadcrumb" [attr.aria-label]="'shared.breadcrumb.label' | translate">
+  @for (item of items(); track item.route; let last = $last) {
+    @if (!last) {
+      <a [routerLink]="item.route">{{ item.labelKey | translate }}</a>
+      <ep-icon name="chevron-right" [size]="14"></ep-icon>
+    } @else {
+      <span>{{ item.labelKey | translate }}</span>
+    }
+  }
+</nav>

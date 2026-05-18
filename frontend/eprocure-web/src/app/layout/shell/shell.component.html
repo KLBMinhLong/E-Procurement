@@ -1,0 +1,81 @@
+<a class="skip-link" href="#main-content">{{ 'accessibility.skipToContent' | translate }}</a>
+
+<div class="shell" [class.shell--open]="isSidebarOpen()">
+  <aside class="shell__sidebar" [attr.aria-label]="'nav.primary' | translate">
+    <a class="shell__brand" routerLink="/dashboard" (click)="closeSidebar()">
+      <span class="shell__brand-mark">
+        <ep-icon name="shield-check" [size]="22"></ep-icon>
+      </span>
+      <span>
+        <strong>{{ 'app.name' | translate }}</strong>
+        <small>{{ 'app.tagline' | translate }}</small>
+      </span>
+    </a>
+
+    <nav class="shell__nav">
+      @for (item of navItems(); track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+          (click)="closeSidebar()">
+          <ep-icon [name]="item.icon" [size]="18"></ep-icon>
+          <span>{{ item.labelKey | translate }}</span>
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <div class="shell__backdrop" (click)="closeSidebar()" aria-hidden="true"></div>
+
+  <section class="shell__workspace">
+    <header class="shell__topbar">
+      <div class="shell__topbar-left">
+        <ep-button variant="ghost" [ariaLabel]="'nav.openMenu' | translate" (click)="toggleSidebar()">
+          <ep-icon name="menu"></ep-icon>
+        </ep-button>
+        <ep-breadcrumb></ep-breadcrumb>
+      </div>
+
+      <div class="shell__topbar-right">
+        <ep-lang-switcher></ep-lang-switcher>
+        <ep-button variant="ghost" [ariaLabel]="'notification.open' | translate">
+          <ep-icon name="bell"></ep-icon>
+        </ep-button>
+        @if (user(); as currentUser) {
+          <div class="shell__user">
+            <ep-avatar [name]="currentUser.fullName" [imageUrl]="currentUser.avatarUrl"></ep-avatar>
+            <span>
+              <strong>{{ currentUser.fullName }}</strong>
+              <small>{{ currentUser.department?.name ?? ('user.noDepartment' | translate) }}</small>
+            </span>
+          </div>
+        }
+        <ep-button variant="ghost" [ariaLabel]="'auth.logout' | translate" (click)="logout()">
+          <ep-icon name="log-out"></ep-icon>
+        </ep-button>
+      </div>
+    </header>
+
+    <main id="main-content" class="shell__main" tabindex="-1">
+      <router-outlet></router-outlet>
+    </main>
+  </section>
+
+  <div class="toast-stack" aria-live="polite">
+    @for (message of toastMessages(); track message.id) {
+      <article class="toast" [class.toast--warning]="message.kind === 'warning'" [class.toast--error]="message.kind === 'error'">
+        <span>
+          @if (message.isTranslationKey) {
+            {{ message.message | translate }}
+          } @else {
+            {{ message.message }}
+          }
+        </span>
+        <button type="button" [attr.aria-label]="'shared.toast.dismiss' | translate" (click)="dismissToast(message.id)">
+          <ep-icon name="x" [size]="14"></ep-icon>
+        </button>
+      </article>
+    }
+  </div>
+</div>

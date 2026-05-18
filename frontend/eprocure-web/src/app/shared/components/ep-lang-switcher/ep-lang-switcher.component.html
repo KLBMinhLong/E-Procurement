@@ -1,0 +1,8 @@
+<div class="ep-lang-switcher" role="group" [attr.aria-label]="'language.switcher' | translate">
+  <button type="button" [class.is-active]="currentLang() === 'vi'" (click)="useLanguage('vi')">
+    {{ 'language.vi.short' | translate }}
+  </button>
+  <button type="button" [class.is-active]="currentLang() === 'en'" (click)="useLanguage('en')">
+    {{ 'language.en.short' | translate }}
+  </button>
+</div>

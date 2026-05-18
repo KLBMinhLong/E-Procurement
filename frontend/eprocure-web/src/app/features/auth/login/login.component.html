@@ -1,0 +1,39 @@
+<main class="login">
+  <section class="login__panel">
+    <header class="login__header">
+      <span class="login__mark">
+        <ep-icon name="shield-check" [size]="28"></ep-icon>
+      </span>
+      <ep-lang-switcher></ep-lang-switcher>
+    </header>
+
+    <div class="login__copy">
+      <p>{{ 'auth.login.eyebrow' | translate }}</p>
+      <h1>{{ 'auth.login.title' | translate }}</h1>
+      <span>{{ 'auth.login.subtitle' | translate }}</span>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <ep-form-field [label]="'auth.login.username' | translate">
+        <input
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          spellcheck="false"
+          inputmode="email" />
+      </ep-form-field>
+
+      <ep-form-field [label]="'auth.login.password' | translate">
+        <input type="password" formControlName="password" autocomplete="current-password" />
+      </ep-form-field>
+
+      @if (errorKey()) {
+        <p class="login__error">{{ errorKey()! | translate }}</p>
+      }
+
+      <ep-button type="submit" icon="log-in" [loading]="isSubmitting()">
+        {{ 'auth.login.submit' | translate }}
+      </ep-button>
+    </form>
+  </section>
+</main>

@@ -1,0 +1,31 @@
+.ep-lang-switcher {
+  background: var(--color-surface-raised);
+  border: var(--border-subtle);
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  padding: var(--spacing-1);
+}
+
+button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  min-height: var(--lang-button-size);
+  min-width: var(--lang-button-size);
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+
+button:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+button.is-active {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}

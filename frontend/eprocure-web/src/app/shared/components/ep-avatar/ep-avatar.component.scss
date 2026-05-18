@@ -1,0 +1,20 @@
+.ep-avatar {
+  align-items: center;
+  background: var(--color-accent-subtle);
+  border: var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent);
+  display: inline-flex;
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  height: var(--avatar-size);
+  justify-content: center;
+  overflow: hidden;
+  width: var(--avatar-size);
+}
+
+.ep-avatar img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
