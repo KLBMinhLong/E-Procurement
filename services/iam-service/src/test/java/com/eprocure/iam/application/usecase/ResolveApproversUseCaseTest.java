@@ -20,6 +20,7 @@ import com.eprocure.iam.domain.repository.OrganizationRepository;
 import com.eprocure.iam.domain.repository.Page;
 import com.eprocure.iam.domain.repository.RoleRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
+import com.eprocure.iam.testsupport.StubPermissionResolutionService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +61,10 @@ class ResolveApproversUseCaseTest {
             FakeOrganizationRepository organizationRepository,
             FakeRoleRepository roleRepository) {
         UserRepository userRepository = new EmptyUserRepository();
-        UserViewAssembler assembler = new UserViewAssembler(new FakeDepartmentRepository(), userRepository);
+        UserViewAssembler assembler = new UserViewAssembler(
+                new FakeDepartmentRepository(),
+                userRepository,
+                new StubPermissionResolutionService());
         return new ResolveApproversUseCase(organizationRepository, roleRepository, assembler);
     }
 

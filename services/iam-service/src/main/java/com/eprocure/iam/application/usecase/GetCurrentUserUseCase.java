@@ -2,6 +2,7 @@ package com.eprocure.iam.application.usecase;
 
 import com.eprocure.iam.application.service.CurrentUserView;
 import com.eprocure.iam.application.service.DepartmentView;
+import com.eprocure.iam.application.service.PermissionResolutionService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.common.util.LogMaskingUtil;
@@ -9,6 +10,7 @@ import com.eprocure.iam.domain.model.Department;
 import com.eprocure.iam.domain.model.User;
 import com.eprocure.iam.domain.repository.DepartmentRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -19,10 +21,15 @@ public class GetCurrentUserUseCase {
     private static final Logger log = LogManager.getLogger(GetCurrentUserUseCase.class);
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final PermissionResolutionService permissionResolutionService;
 
-    public GetCurrentUserUseCase(UserRepository userRepository, DepartmentRepository departmentRepository) {
+    public GetCurrentUserUseCase(
+            UserRepository userRepository,
+            DepartmentRepository departmentRepository,
+            PermissionResolutionService permissionResolutionService) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
+        this.permissionResolutionService = permissionResolutionService;
     }
 
     public CurrentUserView execute(UUID userId) {
@@ -32,6 +39,7 @@ public class GetCurrentUserUseCase {
         DepartmentView department = departmentRepository.findById(user.getDepartmentId())
                 .map(this::toDepartmentView)
                 .orElse(null);
+        Set<String> roles = userRepository.findRoleCodesByUserId(user.getId());
         CurrentUserView view = new CurrentUserView(
                 user.getId(),
                 user.getEmployeeCode(),
@@ -42,8 +50,8 @@ public class GetCurrentUserUseCase {
                 user.getAvatarUrl().orElse(null),
                 department,
                 user.getOrgNodeId().orElse(null),
-                userRepository.findRoleCodesByUserId(user.getId()),
-                userRepository.findPermissionCodesByUserId(user.getId()),
+                roles,
+                permissionResolutionService.resolveByRoleCodes(roles),
                 user.getStatus(),
                 user.isTwoFactorEnabled(),
                 user.getLastLoginAt().orElse(null),

@@ -21,6 +21,7 @@ public class SessionService {
     private final UserRepository userRepository;
     private final SessionCachePort sessionCachePort;
     private final OpaqueTokenService opaqueTokenService;
+    private final PermissionResolutionService permissionResolutionService;
     private final Duration sessionTtl;
 
     public SessionService(
@@ -28,11 +29,13 @@ public class SessionService {
             UserRepository userRepository,
             SessionCachePort sessionCachePort,
             OpaqueTokenService opaqueTokenService,
+            PermissionResolutionService permissionResolutionService,
             @Value("${eprocure.session.ttl-hours:8}") long sessionTtlHours) {
         this.sessionRepository = sessionRepository;
         this.userRepository = userRepository;
         this.sessionCachePort = sessionCachePort;
         this.opaqueTokenService = opaqueTokenService;
+        this.permissionResolutionService = permissionResolutionService;
         this.sessionTtl = Duration.ofHours(sessionTtlHours);
     }
 
@@ -53,9 +56,9 @@ public class SessionService {
                 expiresAt);
         sessionRepository.save(sessionRecord);
 
-        Set<String> permissions = userRepository.findPermissionCodesByUserId(user.getId());
-        sessionCachePort.store(new SessionData(tokenHash, user.getId(), expiresAt, permissions), sessionTtl);
-        return new CreatedSession(rawToken, tokenHash, expiresAt, permissions);
+        Set<String> roles = userRepository.findRoleCodesByUserId(user.getId());
+        sessionCachePort.store(new SessionData(tokenHash, user.getId(), expiresAt, roles), sessionTtl);
+        return new CreatedSession(rawToken, tokenHash, expiresAt, roles);
     }
 
     public Optional<UserPrincipal> authenticate(String rawToken) {
@@ -72,12 +75,12 @@ public class SessionService {
 
         return sessionRepository.findActiveByTokenHash(tokenHash, now)
                 .flatMap(sessionRecord -> {
-                    Set<String> permissions = userRepository.findPermissionCodesByUserId(sessionRecord.getUserId());
+                    Set<String> roles = userRepository.findRoleCodesByUserId(sessionRecord.getUserId());
                     SessionData sessionData = new SessionData(
                             tokenHash,
                             sessionRecord.getUserId(),
                             sessionRecord.getExpiresAt(),
-                            permissions);
+                            roles);
                     sessionCachePort.store(sessionData, Duration.between(now, sessionRecord.getExpiresAt()));
                     return toPrincipal(sessionData, tokenHash);
                 });
@@ -97,9 +100,16 @@ public class SessionService {
         sessionRepository.revokeActiveByUserId(userId, revokedBy, revokedAt);
     }
 
+    public void evictActiveCacheForUser(UUID userId) {
+        sessionRepository.findActiveTokenHashesByUserId(userId, Instant.now()).forEach(sessionCachePort::evict);
+    }
+
     private Optional<UserPrincipal> toPrincipal(SessionData sessionData, String tokenHash) {
         return userRepository.findById(sessionData.userId())
                 .filter(User::canLogin)
-                .map(user -> UserPrincipal.from(user, tokenHash, sessionData.permissions()));
+                .map(user -> UserPrincipal.from(
+                        user,
+                        tokenHash,
+                        permissionResolutionService.resolveByRoleCodes(sessionData.roles())));
     }
 }

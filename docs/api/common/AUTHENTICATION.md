@@ -215,28 +215,30 @@ KHÔNG phải JWT — không decode được — không chứa thông tin.
 ### 6.2 Session Data trong Redis
 
 ```
-Key:   session:{token}
+Key:   session:{tokenHash}
 Value: {
   "userId": "uuid",
-  "username": "nguyenvana",
-  "sessionId": "uuid",    ← ID của session trong DB
-  "createdAt": "...",
-  "lastActivity": "..."
+  "expiresAt": "...",
+  "roles": ["REQUESTER", "MANAGER"]
 }
 TTL: Sliding window — reset mỗi request (mặc định 8h không hoạt động → expire)
 ```
 
+Session cache chỉ lưu identity + role codes. KHÔNG lưu permission snapshot trong session,
+vì thay đổi permission của role phải có hiệu lực với request kế tiếp mà không cần revoke session.
+
 ### 6.3 Role-Permission Cache
 
 ```
-Key:   user-perm:{userId}
-Value: ["PR_CREATE", "PR_APPROVE_L1", "PO_VIEW_OWN", ...]
-TTL:   15 phút (refresh khi role thay đổi)
-
 Key:   role-perm:{roleCode}
 Value: ["PR_CREATE", "PR_EDIT_OWN_DRAFT", ...]
-TTL:   1 giờ
+TTL:   PERM_CACHE_TTL_MINUTES
 ```
+
+Consistency:
+- Khi đổi role của user: cập nhật DB user_roles, sau đó evict active session cache của user để request kế tiếp load roles mới từ DB.
+- Khi đổi permission của role: cập nhật DB role_permissions, sau đó refresh/evict role-perm:{roleCode}.
+- Redis là cache; IAM DB vẫn là source of truth.
 
 ### 6.4 Single Session Enforcement
 
@@ -245,8 +247,7 @@ Khi user đăng nhập từ thiết bị/trình duyệt mới:
 1. Backend tìm tất cả session active của userId trong DB
 2. Set is_active = false, invalidated_by = 'NEW_LOGIN' cho session cũ
 3. Xóa key Redis của token cũ: DEL session:{old_token}
-4. Xóa user-perm cache: DEL user-perm:{userId}
-5. Tạo session mới → Set-Cookie token mới
+4. Tạo session mới, cache userId + roles → Set-Cookie token mới
 
 Effect: Device cũ sẽ nhận IAM_005 trong request tiếp theo.
 ```
@@ -271,8 +272,8 @@ public void verify(HttpServletRequest request) {
         redisClient.set("session:" + token, session, Duration.ofHours(8));
     }
 
-    // 4. Lấy permissions từ cache
-    Set<String> permissions = permissionCache.get(session.getUserId());
+    // 4. Lấy permissions từ role-perm cache theo role trong session
+    Set<String> permissions = permissionResolver.resolve(session.getRoles());
 
     // 5. Inject vào SecurityContext
     SecurityContextHolder.getContext().setAuthentication(
@@ -295,9 +296,8 @@ Cookie: ep_session={token}
 ### Backend:
 # 1. Đọc token từ cookie
 # 2. Set session.is_active = false, invalidated_by = 'LOGOUT' trong DB
-# 3. DEL session:{token} khỏi Redis
-# 4. DEL user-perm:{userId} khỏi Redis
-# 5. Clear cookie
+# 3. DEL session:{tokenHash} khỏi Redis
+# 4. Clear cookie
 
 HTTP 200
 Set-Cookie: ep_session=; HttpOnly; Secure; Max-Age=0; Path=/

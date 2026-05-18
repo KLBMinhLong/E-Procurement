@@ -4,16 +4,22 @@ import com.eprocure.iam.domain.model.Department;
 import com.eprocure.iam.domain.model.User;
 import com.eprocure.iam.domain.repository.DepartmentRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserViewAssembler {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
+    private final PermissionResolutionService permissionResolutionService;
 
-    public UserViewAssembler(DepartmentRepository departmentRepository, UserRepository userRepository) {
+    public UserViewAssembler(
+            DepartmentRepository departmentRepository,
+            UserRepository userRepository,
+            PermissionResolutionService permissionResolutionService) {
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
+        this.permissionResolutionService = permissionResolutionService;
     }
 
     public UserSummaryView toSummary(User user) {
@@ -29,6 +35,7 @@ public class UserViewAssembler {
     }
 
     public UserDetailView toDetail(User user) {
+        Set<String> roles = userRepository.findRoleCodesByUserId(user.getId());
         return new UserDetailView(
                 user.getId(),
                 user.getEmployeeCode(),
@@ -40,8 +47,8 @@ public class UserViewAssembler {
                 user.getStatus(),
                 user.getPhone().orElse(null),
                 user.getOrgNodeId().orElse(null),
-                userRepository.findRoleCodesByUserId(user.getId()),
-                userRepository.findPermissionCodesByUserId(user.getId()),
+                roles,
+                permissionResolutionService.resolveByRoleCodes(roles),
                 user.isTwoFactorEnabled(),
                 user.getLastLoginAt().orElse(null),
                 user.getCreatedAt());

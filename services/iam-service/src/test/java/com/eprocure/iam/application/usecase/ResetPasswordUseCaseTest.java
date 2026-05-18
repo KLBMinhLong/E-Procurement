@@ -13,6 +13,7 @@ import com.eprocure.iam.application.service.SessionService;
 import com.eprocure.iam.application.port.out.SessionCachePort;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
+import com.eprocure.iam.testsupport.StubPermissionResolutionService;
 import com.eprocure.iam.domain.model.PasswordResetToken;
 import com.eprocure.iam.domain.model.SessionRecord;
 import com.eprocure.iam.domain.model.SortDirection;
@@ -53,7 +54,13 @@ class ResetPasswordUseCaseTest {
                 tokenRepository,
                 passwordHistoryRepository,
                 userRepository,
-                new SessionService(sessionRepository, userRepository, sessionCachePort, opaqueTokenService, 8),
+                new SessionService(
+                        sessionRepository,
+                        userRepository,
+                        sessionCachePort,
+                        opaqueTokenService,
+                        new StubPermissionResolutionService(),
+                        8),
                 opaqueTokenService,
                 passwordHashService,
                 new PasswordPolicyService(passwordHashService),
@@ -110,7 +117,13 @@ class ResetPasswordUseCaseTest {
                 new FakePasswordResetTokenRepository(token.orElse(null)),
                 new FakePasswordHistoryRepository(),
                 userRepository,
-                new SessionService(new FakeSessionRepository(List.of()), userRepository, new FakeSessionCachePort(), opaqueTokenService, 8),
+                new SessionService(
+                        new FakeSessionRepository(List.of()),
+                        userRepository,
+                        new FakeSessionCachePort(),
+                        opaqueTokenService,
+                        new StubPermissionResolutionService(),
+                        8),
                 opaqueTokenService,
                 passwordHashService,
                 new PasswordPolicyService(passwordHashService),

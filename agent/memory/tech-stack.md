@@ -320,9 +320,8 @@ src/main/resources/bpmn/
 ## REDIS KEY PATTERNS
 
 ```
-session:{token}                   → SessionData JSON (TTL 8h sliding)
-user-perm:{userId}                → Set<permissionCode> (TTL 15min)
-role-perm:{roleCode}              → Set<permissionCode> (TTL 1h)
+session:{tokenHash}               → SessionData JSON with userId, expiresAt, roles only (TTL 8h sliding)
+role-perm:{roleCode}              → Set<permissionCode> (TTL PERM_CACHE_TTL_MINUTES)
 idempotent:{idempotencyKey}       → CachedResponse JSON (TTL 24h)
 kafka-consumed:{messageId}        → "1" (TTL 48h, Kafka dedup)
 budget:{deptId}:{year}:{quarter}  → BudgetDashboard JSON (TTL 5min)

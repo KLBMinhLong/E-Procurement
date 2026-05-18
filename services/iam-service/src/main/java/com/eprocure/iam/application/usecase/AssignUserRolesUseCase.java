@@ -2,6 +2,7 @@ package com.eprocure.iam.application.usecase;
 
 import com.eprocure.iam.application.port.in.AssignUserRolesCommand;
 import com.eprocure.iam.application.service.IdempotencyGuard;
+import com.eprocure.iam.application.service.SessionService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.common.util.LogMaskingUtil;
@@ -19,14 +20,17 @@ public class AssignUserRolesUseCase {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final IdempotencyGuard idempotencyGuard;
+    private final SessionService sessionService;
 
     public AssignUserRolesUseCase(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            IdempotencyGuard idempotencyGuard) {
+            IdempotencyGuard idempotencyGuard,
+            SessionService sessionService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.idempotencyGuard = idempotencyGuard;
+        this.sessionService = sessionService;
     }
 
     @Transactional
@@ -43,6 +47,7 @@ public class AssignUserRolesUseCase {
             throw new BusinessException(ErrorCode.IAM_031);
         }
         userRepository.replaceRoles(command.userId(), roleCodes, command.actorId());
+        sessionService.evictActiveCacheForUser(command.userId());
         log.info("[ACTION] Complete AssignUserRoles | actor={} | userId={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 LogMaskingUtil.maskId(command.userId()));

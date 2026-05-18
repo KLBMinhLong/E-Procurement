@@ -28,6 +28,7 @@ import com.eprocure.iam.domain.model.UserStatus;
 import com.eprocure.iam.domain.repository.Page;
 import com.eprocure.iam.domain.repository.SessionRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
+import com.eprocure.iam.testsupport.StubPermissionResolutionService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -112,7 +113,13 @@ class HandleGoogleOAuthCallbackUseCaseTest {
                 googleOAuthPort,
                 oauthStateService,
                 userRepository,
-                new SessionService(sessionRepository, userRepository, sessionCachePort, new OpaqueTokenService(), 8),
+                new SessionService(
+                        sessionRepository,
+                        userRepository,
+                        sessionCachePort,
+                        new OpaqueTokenService(),
+                        new StubPermissionResolutionService(),
+                        8),
                 new TwoFactorChallengeService(new FakeTwoFactorChallengeCachePort(), new OpaqueTokenService(), 5));
     }
 

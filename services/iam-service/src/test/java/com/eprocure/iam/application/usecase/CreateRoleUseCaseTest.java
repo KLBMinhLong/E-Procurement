@@ -19,16 +19,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import com.eprocure.iam.testsupport.StubPermissionResolutionService;
 import org.junit.jupiter.api.Test;
 
 class CreateRoleUseCaseTest {
     @Test
     void should_create_role_when_permissions_exist() {
         FakeRoleRepository roleRepository = new FakeRoleRepository();
+        StubPermissionResolutionService permissionResolutionService = new StubPermissionResolutionService();
         CreateRoleUseCase useCase = new CreateRoleUseCase(
                 roleRepository,
                 new FakePermissionRepository(Set.of("ADMIN_USER_VIEW")),
-                new IdempotencyGuard());
+                new IdempotencyGuard(),
+                permissionResolutionService);
 
         RoleDetailView view = useCase.execute(
                 new CreateRoleCommand(UUID.randomUUID(), "AUDITOR", "Auditor", null, List.of("ADMIN_USER_VIEW")),
@@ -37,6 +40,8 @@ class CreateRoleUseCaseTest {
         assertThat(view.code()).isEqualTo("AUDITOR");
         assertThat(view.permissions()).containsExactly("ADMIN_USER_VIEW");
         assertThat(roleRepository.savedRole).isNotNull();
+        assertThat(permissionResolutionService.refreshedRoleCode()).isEqualTo("AUDITOR");
+        assertThat(permissionResolutionService.refreshedPermissionCodes()).containsExactly("ADMIN_USER_VIEW");
     }
 
     @Test
@@ -44,7 +49,8 @@ class CreateRoleUseCaseTest {
         CreateRoleUseCase useCase = new CreateRoleUseCase(
                 new FakeRoleRepository(),
                 new FakePermissionRepository(Set.of()),
-                new IdempotencyGuard());
+                new IdempotencyGuard(),
+                new StubPermissionResolutionService());
 
         assertThatThrownBy(() -> useCase.execute(
                 new CreateRoleCommand(UUID.randomUUID(), "AUDITOR", "Auditor", null, List.of("ADMIN_USER_VIEW")),
