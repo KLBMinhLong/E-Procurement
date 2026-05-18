@@ -205,7 +205,7 @@ Metrics:   Micrometer → Prometheus → Grafana
 Tracing:   OTel → Tempo
 Log Agg:   Log4j2 → Loki
 DB:        PostgreSQL 15+ (NUMERIC, TIMESTAMPTZ, UUID, JSONB, Array)
-Frontend:  Angular 17, SCSS, IBM Plex fonts, Bootstrap+Tailwind+AntD+Material
+Frontend:  Angular 21, SCSS, IBM Plex fonts, Bootstrap+Tailwind+AntD+Material
 i18n:      ngx-translate (VI/EN)
 Container: Docker + Docker Compose
 CI/CD:     Jenkins

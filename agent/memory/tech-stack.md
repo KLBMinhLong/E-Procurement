@@ -162,16 +162,16 @@ mybatis:
 ```json
 // package.json key deps
 {
-  "@angular/core": "^17.x",
-  "@angular/router": "^17.x",
-  "@angular/forms": "^17.x",
-  "@angular/common": "^17.x",
+  "@angular/core": "^21.x",
+  "@angular/router": "^21.x",
+  "@angular/forms": "^21.x",
+  "@angular/common": "^21.x",
   "@ngx-translate/core": "^15.x",
   "@ngx-translate/http-loader": "^8.x",
   "@stomp/stompjs": "^7.x",
   "sockjs-client": "^1.x",
   "rxjs": "^7.x",
-  "typescript": "~5.2"
+  "typescript": "~5.6"
 }
 ```
 
@@ -196,8 +196,7 @@ mybatis:
 |---|---|---|---|
 | PostgreSQL | postgres:15-alpine | 15.x | 5432 |
 | Redis | redis:7-alpine | 7.x | 6379 |
-| Kafka | confluentinc/cp-kafka | 7.5.0 | 9092 |
-| Zookeeper | confluentinc/cp-zookeeper | 7.5.0 | 2181 |
+| Kafka (KRaft) | confluentinc/cp-kafka | 7.6.1 | 9092 |
 | Keycloak | quay.io/keycloak/keycloak | 23.0 | 8180 |
 | Prometheus | prom/prometheus | v2.47.0 | 9090 |
 | Grafana | grafana/grafana | 10.1.0 | 3000 |

@@ -8,7 +8,7 @@ The E01 foundation stack is defined in `docker-compose.yml`.
 
 ```powershell
 Copy-Item .env.example .env
-docker compose up -d postgres redis zookeeper kafka kafka-init keycloak nginx-gateway
+docker compose up -d postgres redis kafka kafka-init keycloak nginx-gateway
 ```
 
 Optional monitoring stack:

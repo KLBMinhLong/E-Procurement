@@ -2,9 +2,9 @@
 
 ## [2026-05-17] E01 local infrastructure baseline
 
-- Decision: Tạo Docker Compose nền ở chế độ infra-only gồm PostgreSQL, Redis, Zookeeper/Kafka, Kafka topic init, Keycloak realm import, NGINX gateway skeleton và monitoring profile Prometheus/Grafana/Loki/Tempo.
+- Decision: Tạo Docker Compose nền ở chế độ infra-only gồm PostgreSQL, Redis, Kafka (KRaft), Kafka topic init, Keycloak realm import, NGINX gateway skeleton và monitoring profile Prometheus/Grafana/Loki/Tempo.
 - Reason: Các Spring/Angular service image chưa tồn tại; đưa app containers vào compose lúc này sẽ làm stack fail. App service containers sẽ được thêm khi skeleton từng service được tạo.
-- Impact: Developer có thể chạy hạ tầng trước bằng `docker compose up -d postgres redis zookeeper kafka kafka-init keycloak nginx-gateway`; monitoring bật riêng bằng `--profile monitoring`.
+- Impact: Developer có thể chạy hạ tầng trước bằng `docker compose up -d postgres redis kafka kafka-init keycloak nginx-gateway`; monitoring bật riêng bằng `--profile monitoring`.
 - Constraint: Keycloak custom provider được hoàn thiện ở lát cắt E01/E02 sau; dev users nằm trong IAM DB, không seed credential cục bộ trong Keycloak.
 
 ## [2026-05-17] E02 IAM auth/session foundation
@@ -83,3 +83,17 @@
 - Reason: Caching a permission snapshot inside session lets a user keep stale authorities after an admin changes a role's permissions.
 - Impact: Updating role permissions refreshes `role-perm:{roleCode}`; updating a user's roles evicts active session cache for that user so the next request reloads current roles from DB.
 - Constraint: Redis remains cache-only; IAM DB role and permission tables are still the source of truth.
+
+## [2026-05-18] E03 Angular 21 frontend baseline
+
+- Decision: Standardize frontend documentation on Angular 21 with standalone-first components, signals, and control flow blocks.
+- Reason: Align frontend guidance with the modern Angular baseline before any UI code is scaffolded.
+- Impact: E03 UI shell and design-system docs reference Angular 21, standalone app config/routes, and signal-driven view state.
+- Constraint: Exact package versions will be finalized when the frontend workspace is generated.
+
+## [2026-05-18] E01 Kafka KRaft mode (no ZooKeeper)
+
+- Decision: Switch local Kafka to KRaft mode and remove ZooKeeper from the compose stack.
+- Reason: Kafka supports KRaft natively, reducing dev infra complexity and resource usage.
+- Impact: Core stack runs with `docker compose up -d postgres redis kafka kafka-init keycloak nginx-gateway`; KRaft uses `KAFKA_CLUSTER_ID` persisted in the Kafka volume.
+- Constraint: If changing `KAFKA_CLUSTER_ID` or switching modes, delete the Kafka data volume to reformat storage.

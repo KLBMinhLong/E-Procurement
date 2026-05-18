@@ -29,7 +29,7 @@ Agent cần phân bổ resource Docker theo budget.
 | vendor-service | 0.25 | 512M | RFQ + Vendor |
 | postgresql | 0.50 | 512M | Shared cluster |
 | redis | 0.10 | 256M | Session + Cache |
-| kafka | 0.50 | 512M | Includes Zookeeper |
+| kafka (kraft) | 0.50 | 512M | No ZooKeeper |
 | keycloak | 0.25 | 512M | Auth provider |
 | prometheus | 0.10 | 256M | Metrics scraper |
 | grafana | 0.10 | 128M | Dashboard |

@@ -6,7 +6,7 @@ Local infrastructure for E01.
 
 ```powershell
 Copy-Item .env.example .env
-docker compose up -d postgres redis zookeeper kafka kafka-init keycloak nginx-gateway
+docker compose up -d postgres redis kafka kafka-init keycloak nginx-gateway
 ```
 
 ## Start monitoring profile
