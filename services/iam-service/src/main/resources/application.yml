@@ -57,7 +57,7 @@ eprocure:
     cookie-same-site: ${COOKIE_SAMESITE:Strict}
     cookie-domain: ${COOKIE_DOMAIN:}
   internal:
-    api-key: ${IAM_INTERNAL_API_KEY:dev-internal-api-key}
+    api-key: ${IAM_INTERNAL_API_KEY:}
   session:
     ttl-hours: ${SESSION_TTL_HOURS:8}
     permission-cache-ttl-minutes: ${PERM_CACHE_TTL_MINUTES:15}
@@ -76,7 +76,7 @@ eprocure:
     url: ${KEYCLOAK_URL:http://localhost:18080}
     realm: ${KEYCLOAK_REALM:eprocure}
     client-id: ${KEYCLOAK_CLIENT_ID:eprocure-iam}
-    client-secret: ${KEYCLOAK_CLIENT_SECRET:dev-secret}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:}
     admin-user: ${KEYCLOAK_ADMIN_USER:admin}
     admin-password: ${KEYCLOAK_ADMIN_PASS:admin}
   password-reset:

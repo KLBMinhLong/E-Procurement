@@ -46,7 +46,8 @@ public class CustomAuthenticatorFactory implements AuthenticatorFactory {
 - Provider id: `eprocure-iam-user-storage`
 - Docker image: `infra/keycloak/Dockerfile` builds the provider jar and installs it into `/opt/keycloak/providers/`
 - Realm config: `infra/keycloak/realm-eprocure.json` registers the provider under `org.keycloak.storage.UserStorageProvider`
-- IAM provider base URL in compose: `http://iam-service:8081`
+- IAM provider base URL comes from `IAM_PROVIDER_BASE_URL` and is injected into `realm-eprocure.json` during import.
+- Provider HTTP timeout comes from `IAM_PROVIDER_TIMEOUT_SECONDS`; default local sample is 3 seconds.
 - Internal auth header: `X-Internal-Api-Key`, value from `IAM_INTERNAL_API_KEY`
 
 ## IAM internal endpoints used by the provider

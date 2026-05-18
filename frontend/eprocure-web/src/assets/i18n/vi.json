@@ -19,12 +19,27 @@
     }
   },
   "auth": {
+    "forgotPassword": {
+      "backToLogin": "Quay lại đăng nhập",
+      "description": "Nhập email tài khoản để nhận hướng dẫn đặt lại mật khẩu.",
+      "email": "Email công việc",
+      "eyebrow": "Khôi phục truy cập",
+      "failed": "Chưa thể gửi hướng dẫn. Vui lòng thử lại.",
+      "submit": "Gửi hướng dẫn",
+      "success": "Nếu email tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi tới hộp thư.",
+      "title": "Quên mật khẩu",
+      "validation": "Vui lòng nhập email hợp lệ."
+    },
     "login": {
       "eyebrow": "IAM bảo mật",
       "failed": "Không thể đăng nhập. Vui lòng kiểm tra thông tin.",
+      "forgotPassword": "Quên mật khẩu?",
+      "google": "Đăng nhập với Google",
+      "hidePassword": "Ẩn mật khẩu",
+      "or": "hoặc",
       "password": "Mật khẩu",
+      "showPassword": "Hiện mật khẩu",
       "submit": "Đăng nhập",
-      "subtitle": "Đăng nhập bằng cookie HttpOnly và phiên opaque token.",
       "title": "Đăng nhập hệ thống mua sắm",
       "username": "Tên đăng nhập hoặc email",
       "validation": "Vui lòng nhập đủ thông tin đăng nhập."

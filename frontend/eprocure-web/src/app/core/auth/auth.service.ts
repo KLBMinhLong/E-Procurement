@@ -1,13 +1,15 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
-import { LoginRequest, PublicKeyResponse, UserContext } from '../models/user-context.model';
+import { ForgotPasswordRequest, LoginRequest, PublicKeyResponse, UserContext } from '../models/user-context.model';
 import { ApiService } from '../http/api.service';
+import { API_BASE_URL } from '../http/api-tokens';
 import { EncryptionService } from '../http/encryption.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
+  private readonly apiBaseUrl = inject(API_BASE_URL);
   private readonly encryptionService = inject(EncryptionService);
 
   readonly currentUser = signal<UserContext | null>(null);
@@ -44,6 +46,14 @@ export class AuthService {
     return this.api.post<null>('/auth/logout', {}).pipe(
       tap(() => this.clearSession())
     );
+  }
+
+  forgotPassword(request: ForgotPasswordRequest): Observable<ApiResponse<null>> {
+    return this.api.post<null>('/auth/forgot-password', request);
+  }
+
+  googleLoginUrl(): string {
+    return `${this.apiBaseUrl}/auth/oauth/google`;
   }
 
   clearSession(): void {

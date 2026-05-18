@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -11,7 +11,7 @@ import { EpIconComponent } from '../../../shared/components/ep-icon/ep-icon.comp
 import { EpLangSwitcherComponent } from '../../../shared/components/ep-lang-switcher/ep-lang-switcher.component';
 
 @Component({
-  selector: 'ep-login',
+  selector: 'ep-forgot-password',
   standalone: true,
   imports: [
     ReactiveFormsModule,
@@ -22,50 +22,42 @@ import { EpLangSwitcherComponent } from '../../../shared/components/ep-lang-swit
     EpIconComponent,
     EpLangSwitcherComponent
   ],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  templateUrl: './forgot-password.component.html',
+  styleUrl: './forgot-password.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent {
+export class ForgotPasswordComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isSubmitting = signal(false);
+  readonly messageKey = signal<string | null>(null);
   readonly errorKey = signal<string | null>(null);
-  readonly showPassword = signal(false);
   readonly form = this.formBuilder.nonNullable.group({
-    username: ['', [Validators.required, Validators.minLength(3)]],
-    password: ['', [Validators.required]]
+    email: ['', [Validators.required, Validators.email]]
   });
 
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.errorKey.set('auth.login.validation');
+      this.errorKey.set('auth.forgotPassword.validation');
+      this.messageKey.set(null);
       return;
     }
 
     this.isSubmitting.set(true);
     this.errorKey.set(null);
+    this.messageKey.set(null);
 
-    this.authService.login(this.form.getRawValue())
+    this.authService.forgotPassword(this.form.getRawValue())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isSubmitting.set(false))
       )
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
-        error: () => this.errorKey.set('auth.login.failed')
+        next: () => this.messageKey.set('auth.forgotPassword.success'),
+        error: () => this.errorKey.set('auth.forgotPassword.failed')
       });
-  }
-
-  togglePasswordVisibility(): void {
-    this.showPassword.update((visible) => !visible);
-  }
-
-  loginWithGoogle(): void {
-    window.location.assign(this.authService.googleLoginUrl());
   }
 }
