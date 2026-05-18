@@ -44,6 +44,7 @@ management:
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
+  type-handlers-package: com.eprocure.iam.infrastructure.persistence.typehandler
   configuration:
     map-underscore-to-camel-case: true
     default-fetch-size: 100

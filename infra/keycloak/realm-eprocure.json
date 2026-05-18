@@ -33,7 +33,6 @@
       {
         "name": "eprocure-iam-user-storage",
         "providerId": "eprocure-iam-user-storage",
-        "providerType": "org.keycloak.storage.UserStorageProvider",
         "config": {
           "enabled": ["true"],
           "priority": ["0"],

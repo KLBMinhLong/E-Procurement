@@ -17,10 +17,7 @@ import java.util.Locale;
 import java.util.Set;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
-@Service
 public class TotpService {
     private static final char[] BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".toCharArray();
     private static final String BACKUP_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -35,7 +32,7 @@ public class TotpService {
     private final Clock clock;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public TotpService(@Value("${eprocure.two-factor.issuer:eProcure}") String issuer) {
+    public TotpService(String issuer) {
         this(issuer, Clock.systemUTC());
     }
 

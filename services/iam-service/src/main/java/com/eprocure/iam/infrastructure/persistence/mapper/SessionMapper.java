@@ -18,7 +18,8 @@ public interface SessionMapper {
                 issued_at, expires_at, is_revoked, created_by, updated_at
             )
             VALUES (
-                #{session.id}, #{session.userId}, #{session.tokenHash}, #{session.ipAddress}, #{session.userAgent},
+                #{session.id}, #{session.userId}, #{session.tokenHash},
+                CAST(#{session.ipAddress,jdbcType=VARCHAR} AS INET), #{session.userAgent},
                 #{session.issuedAt}, #{session.expiresAt}, #{session.revoked}, #{session.userId}, NOW()
             )
             """)
