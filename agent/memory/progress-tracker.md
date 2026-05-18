@@ -118,7 +118,7 @@
 | ep-empty-state, ep-skeleton | ✅ |
 | /ui-showcase page | ✅ |
 | i18n setup (vi/en) | ✅ |
-| Auth interceptors | 🔄 |
+| Auth interceptors | ✅ |
 | Error interceptor | ✅ |
 | WebSocket service | ✅ |
 | Permission guard + directive | ✅ |

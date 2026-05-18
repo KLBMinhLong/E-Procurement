@@ -23,6 +23,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface EncryptedRequest {
+  encryptedPayload: string;
+  encryptedAesKey: string;
+  iv: string;
+  keyVersion: string;
+}
+
 export interface PublicKeyResponse {
   publicKey: string;
   keyVersion: string;
