@@ -78,6 +78,7 @@
       "title": "Không đủ quyền truy cập"
     },
     "generic": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "encryptionKeyExpired": "Khóa mã hóa đã thay đổi. Vui lòng thử lại.",
     "notFound": {
       "message": "Đường dẫn không tồn tại hoặc đã được di chuyển.",
       "title": "Không tìm thấy trang"

@@ -43,6 +43,7 @@ import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { API_BASE_URL, ENCRYPTION_ENABLED, WS_BASE_URL } from './core/http/api-tokens';
 import { credentialsInterceptor } from './core/http/credentials.interceptor';
+import { encryptionInterceptor } from './core/http/encryption.interceptor';
 import { errorInterceptor } from './core/http/error.interceptor';
 import { idempotencyInterceptor } from './core/http/idempotency.interceptor';
 
@@ -54,6 +55,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         credentialsInterceptor,
         idempotencyInterceptor,
+        encryptionInterceptor,
         errorInterceptor
       ])
     ),

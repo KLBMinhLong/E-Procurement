@@ -3,12 +3,12 @@ import { Observable, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
 import { LoginRequest, PublicKeyResponse, UserContext } from '../models/user-context.model';
 import { ApiService } from '../http/api.service';
-import { ENCRYPTION_ENABLED } from '../http/api-tokens';
+import { EncryptionService } from '../http/encryption.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
-  private readonly encryptionEnabled = inject(ENCRYPTION_ENABLED);
+  private readonly encryptionService = inject(EncryptionService);
 
   readonly currentUser = signal<UserContext | null>(null);
   readonly isHydrating = signal(false);
@@ -18,9 +18,7 @@ export class AuthService {
   }
 
   login(request: LoginRequest): Observable<ApiResponse<UserContext>> {
-    const payload = this.encryptionEnabled ? this.toEncryptedPlaceholder(request) : request;
-
-    return this.api.post<UserContext>('/auth/login', payload).pipe(
+    return this.api.post<UserContext>('/auth/login', request).pipe(
       tap((response) => this.currentUser.set(response.data))
     );
   }
@@ -52,7 +50,8 @@ export class AuthService {
     this.currentUser.set(null);
   }
 
-  private toEncryptedPlaceholder(request: LoginRequest): LoginRequest {
-    return request;
+  refreshPublicKey(): Promise<PublicKeyResponse> {
+    this.encryptionService.clearPublicKeyCache();
+    return this.encryptionService.loadPublicKey();
   }
 }

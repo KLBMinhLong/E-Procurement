@@ -78,6 +78,7 @@
       "title": "Permission required"
     },
     "generic": "Something went wrong. Try again.",
+    "encryptionKeyExpired": "The encryption key changed. Try again.",
     "notFound": {
       "message": "This route does not exist or has moved.",
       "title": "Page not found"

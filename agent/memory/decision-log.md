@@ -104,3 +104,10 @@
 - Reason: E03 needs a reusable shell/design-system foundation before PR/Approval screens so feature pages do not duplicate layout, i18n, permission, and request conventions.
 - Impact: `/ui-showcase` is public for visual QA; authenticated workspace routes use `AuthGuard` and permission-code based `PermissionGuard`; POST/PUT/PATCH receive `Idempotency-Key` automatically and all requests use `withCredentials=true`.
 - Constraint: The frontend RSA+AES request/response encryption adapter is still pending; the current login flow keeps the feature flag/hook but sends plain payload when local/dev encryption is disabled.
+
+## [2026-05-18] E03 frontend request encryption adapter
+
+- Decision: Add an Angular functional encryption interceptor that encrypts JSON POST/PUT/PATCH request bodies with AES-256-GCM and wraps the AES key with the IAM RSA-OAEP-SHA-256 public key.
+- Reason: Encryption must remain cross-cutting at the HTTP layer so feature services do not duplicate security code and so login/logout/idempotent state changes all follow the same contract.
+- Impact: When `ENCRYPTION_ENABLED=true`, frontend sends `{ encryptedPayload, encryptedAesKey, iv, keyVersion }`; the public key is fetched from `/auth/public-key` via `HttpBackend` and cached only in memory. `SYS_003` clears the key cache.
+- Constraint: Response body decryption is intentionally not implemented because IAM currently only decrypts requests; response encryption remains a later hardening slice once the backend response filter contract is implemented.
