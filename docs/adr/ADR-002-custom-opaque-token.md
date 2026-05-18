@@ -19,7 +19,7 @@ Không dùng Keycloak JWT trực tiếp với Frontend. Thay vào đó:
 // Token format (không phải JWT)
 String token = UUID.randomUUID().toString().replace("-","") 
              + SecureRandom.alphanumeric(32);
-// Lưu: Redis key = "session:{token}", value = userId + roles + metadata
+// Lưu: Redis key = "session:{tokenHash}", value = userId + roles + metadata
 ```
 
 ### Hậu quả

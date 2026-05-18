@@ -2,6 +2,7 @@ package com.eprocure.iam.application.usecase;
 
 import com.eprocure.iam.application.port.in.CreateRoleCommand;
 import com.eprocure.iam.application.service.IdempotencyGuard;
+import com.eprocure.iam.application.service.PermissionResolutionService;
 import com.eprocure.iam.application.service.RoleDetailView;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
@@ -23,14 +24,17 @@ public class CreateRoleUseCase {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final IdempotencyGuard idempotencyGuard;
+    private final PermissionResolutionService permissionResolutionService;
 
     public CreateRoleUseCase(
             RoleRepository roleRepository,
             PermissionRepository permissionRepository,
-            IdempotencyGuard idempotencyGuard) {
+            IdempotencyGuard idempotencyGuard,
+            PermissionResolutionService permissionResolutionService) {
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.idempotencyGuard = idempotencyGuard;
+        this.permissionResolutionService = permissionResolutionService;
     }
 
     @Transactional
@@ -46,6 +50,7 @@ public class CreateRoleUseCase {
         validatePermissions(permissionCodes);
         Role role = Role.create(UUID.randomUUID(), command.code(), command.name(), command.description(), false, Instant.now());
         roleRepository.save(role, permissionCodes, command.actorId());
+        permissionResolutionService.refreshRolePermissions(role.getCode(), permissionCodes);
         RoleDetailView view = new RoleDetailView(
                 role.getCode(),
                 role.getName(),

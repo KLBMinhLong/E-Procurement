@@ -197,9 +197,8 @@ inventory.gr.created
 ### 2.5 Redis Keys
 
 ```
-session:{token}                          → User session data (TTL sliding)
+session:{tokenHash}                      → User session data with roles only (TTL sliding)
 role-perm:{roleCode}                     → Set<permissionCode> cho role
-user-perm:{userId}                       → Set<permissionCode> tổng hợp
 idempotent:{idempotencyKey}              → Cached response (TTL 24h)
 budget:{departmentId}:{fiscalYear}:{q}   → Budget snapshot
 dashboard:manager:{userId}               → Dashboard data (TTL 5min)

@@ -22,19 +22,20 @@ Response data includes publicKey, keyVersion, algorithm.
 - Not JWT, not decodable
 
 ## Session data in Redis
-Key: session:{token}
-Value includes userId, username, sessionId, createdAt, lastActivity
+Key: session:{tokenHash}
+Value includes userId, expiresAt, and role codes only. Do not store permission snapshots in session data.
 TTL: sliding window, default 8h, refresh on each request
 
 ## Permission cache
-- user-perm:{userId} TTL 15 minutes
-- role-perm:{roleCode} TTL 1 hour
+- role-perm:{roleCode} TTL PERM_CACHE_TTL_MINUTES
+- Permissions are resolved from session roles via role-perm cache, with DB fallback.
+- When user roles change, evict that user's active session cache so the next request loads current roles.
+- When role permissions change, refresh or evict role-perm:{roleCode}; active sessions remain valid.
 
 ## Single session enforcement
 On new login:
 - Mark old sessions inactive in DB
 - Delete session:{oldToken}
-- Delete user-perm:{userId}
 - Create new session and cookie
 
 ## Two-factor auth
@@ -56,5 +57,5 @@ On new login:
 ## Logout
 POST /api/v1/auth/logout
 - Invalidate session in DB
-- Delete session:{token} and user-perm:{userId}
+- Delete session:{tokenHash}
 - Clear ep_session cookie

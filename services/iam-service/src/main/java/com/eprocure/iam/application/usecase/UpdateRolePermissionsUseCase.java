@@ -2,6 +2,7 @@ package com.eprocure.iam.application.usecase;
 
 import com.eprocure.iam.application.port.in.UpdateRolePermissionsCommand;
 import com.eprocure.iam.application.service.IdempotencyGuard;
+import com.eprocure.iam.application.service.PermissionResolutionService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.common.util.LogMaskingUtil;
@@ -19,14 +20,17 @@ public class UpdateRolePermissionsUseCase {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final IdempotencyGuard idempotencyGuard;
+    private final PermissionResolutionService permissionResolutionService;
 
     public UpdateRolePermissionsUseCase(
             RoleRepository roleRepository,
             PermissionRepository permissionRepository,
-            IdempotencyGuard idempotencyGuard) {
+            IdempotencyGuard idempotencyGuard,
+            PermissionResolutionService permissionResolutionService) {
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.idempotencyGuard = idempotencyGuard;
+        this.permissionResolutionService = permissionResolutionService;
     }
 
     @Transactional
@@ -43,6 +47,7 @@ public class UpdateRolePermissionsUseCase {
             throw new BusinessException(ErrorCode.IAM_032);
         }
         roleRepository.replacePermissions(command.roleCode(), permissionCodes, command.actorId());
+        permissionResolutionService.refreshRolePermissions(command.roleCode(), permissionCodes);
         log.info("[ACTION] Complete UpdateRolePermissions | actor={} | roleCode={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 command.roleCode());

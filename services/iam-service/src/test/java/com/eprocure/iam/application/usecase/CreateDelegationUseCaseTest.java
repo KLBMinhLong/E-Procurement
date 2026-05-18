@@ -23,6 +23,7 @@ import com.eprocure.iam.domain.repository.DelegationRepository;
 import com.eprocure.iam.domain.repository.DepartmentRepository;
 import com.eprocure.iam.domain.repository.Page;
 import com.eprocure.iam.domain.repository.UserRepository;
+import com.eprocure.iam.testsupport.StubPermissionResolutionService;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -84,7 +85,10 @@ class CreateDelegationUseCaseTest {
     private static CreateDelegationUseCase newUseCase(
             FakeDelegationRepository delegationRepository,
             FakeUserRepository userRepository) {
-        UserViewAssembler userViewAssembler = new UserViewAssembler(new FakeDepartmentRepository(), userRepository);
+        UserViewAssembler userViewAssembler = new UserViewAssembler(
+                new FakeDepartmentRepository(),
+                userRepository,
+                new StubPermissionResolutionService());
         DelegationViewAssembler delegationViewAssembler = new DelegationViewAssembler(userRepository, userViewAssembler, CLOCK);
         return new CreateDelegationUseCase(
                 delegationRepository,

@@ -41,3 +41,9 @@
 - Root cause: `iam.sessions.ip_address` is PostgreSQL `INET`, but `SessionMapper.save` bound the value as VARCHAR.
 - Fix: Cast the bound IP string with `CAST(#{session.ipAddress,jdbcType=VARCHAR} AS INET)` in the insert statement.
 - Prevention: Match mapper parameter binding to PostgreSQL-specific column types during local end-to-end login tests.
+
+## [2026-05-18] Bug: Permission updates did not affect active sessions immediately
+
+- Root cause: IAM session cache stored permission codes as a snapshot, so a user could keep stale authorities after an admin changed role-permission mapping.
+- Fix: Store only role codes in session cache, resolve authorities via `role-perm:{roleCode}` cache on each authentication, refresh role-perm cache when role permissions change, and evict active session cache when user roles change.
+- Prevention: Never cache user permission snapshots inside session data; permission checks must flow through role-permission cache with DB fallback.

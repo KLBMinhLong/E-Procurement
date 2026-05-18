@@ -76,3 +76,10 @@
 - Reason: The runtime already uses `spring-boot-starter-log4j2`, but older slices still imported SLF4J, which conflicts with the always-applied logging rule and creates noisy review churn for future features.
 - Impact: Existing log messages keep their layer prefixes while logger creation now uses `LogManager.getLogger(...)`; `LogMaskingUtil` now supports phone, token, and name masking.
 - Constraint: This is a mechanical rule-alignment change only; log message content and levels are intentionally unchanged except for helper availability.
+
+## [2026-05-18] E02 RBAC session and role-permission cache consistency
+
+- Decision: IAM session cache stores user identity and role codes only; permission authorities are resolved on each authentication from `role-perm:{roleCode}` cache with DB fallback.
+- Reason: Caching a permission snapshot inside session lets a user keep stale authorities after an admin changes a role's permissions.
+- Impact: Updating role permissions refreshes `role-perm:{roleCode}`; updating a user's roles evicts active session cache for that user so the next request reloads current roles from DB.
+- Constraint: Redis remains cache-only; IAM DB role and permission tables are still the source of truth.

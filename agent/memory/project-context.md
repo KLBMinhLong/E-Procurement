@@ -149,7 +149,8 @@ Key permissions:
   ADMIN_USER_MANAGE, ADMIN_ROLE_MANAGE, ADMIN_APPROVAL_RULE
   SYSTEM_CONFIG (Super Admin only)
 
-Cache: Redis key = "role-perm:{roleCode}" và "user-perm:{userId}"
+Cache: session chỉ lưu role codes; permissions resolve qua Redis key "role-perm:{roleCode}" rồi fallback DB.
+Khi đổi role của user: evict active session cache của user. Khi đổi permission của role: refresh/evict role-perm:{roleCode}.
 ```
 
 ---

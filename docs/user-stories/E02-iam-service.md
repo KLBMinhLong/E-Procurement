@@ -78,8 +78,8 @@ Cung cấp xác thực, opaque session token, RBAC permission cache, user/role m
 2. Verify credential với Keycloak; Keycloak provider gọi IAM internal credential API.
 3. Invalidate old active session của user trong Redis và DB.
 4. Generate opaque token 64 chars.
-5. Save session:{token} vào Redis và sessions table.
-6. Load permissions từ role mapping, cache user-perm:{userId}.
+5. Save session:{tokenHash} vào Redis và sessions table; session cache chỉ lưu userId, expiresAt, roles.
+6. Resolve permissions qua role-perm:{roleCode}; nếu miss thì load role_permissions từ DB và cache lại.
 7. Set-Cookie ep_session; HttpOnly; Secure; SameSite=Strict; Path=/.
 8. Return ApiResponse với user summary, roles, permissions, requiresTwoFactor nếu cần.
 ```
@@ -109,7 +109,7 @@ Cung cấp xác thực, opaque session token, RBAC permission cache, user/role m
 ```
 1. Lấy token từ HttpOnly cookie.
 2. Mark session inactive/revoked trong DB.
-3. Delete session:{token} và user-perm:{userId}.
+3. Delete session:{tokenHash}.
 4. Clear cookie ep_session.
 5. Return ApiResponse success.
 ```
@@ -129,7 +129,7 @@ Cung cấp xác thực, opaque session token, RBAC permission cache, user/role m
 ```
 1. Gateway/IAM verify token.
 2. Load user detail từ IAM DB.
-3. Load permissions từ Redis cache hoặc DB.
+3. Load roles từ IAM DB/session context, resolve permissions qua role-perm cache hoặc DB.
 4. Return user profile, roles, permissions.
 ```
 
@@ -189,7 +189,9 @@ ListPermissionsUseCase
 - Permission code là source of truth cho @PreAuthorize.
 - Không hardcode role trong business code.
 - System role không thể soft delete/deactivate nếu đang được dùng.
-- Cập nhật permission phải evict role-perm:{roleCode} và user-perm:* liên quan.
+- Session cache không được lưu permission snapshot; chỉ lưu role codes của user.
+- Cập nhật permission của role phải refresh/evict role-perm:{roleCode}.
+- Cập nhật role của user phải evict active session cache của user để request kế tiếp load role mới từ DB.
 ```
 
 ### E02-UC-007: ResolveApproverUseCase

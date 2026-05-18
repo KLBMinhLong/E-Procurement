@@ -16,6 +16,7 @@ import com.eprocure.iam.application.service.TwoFactorChallengeData;
 import com.eprocure.iam.application.service.TwoFactorChallengeService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
+import com.eprocure.iam.testsupport.StubPermissionResolutionService;
 import com.eprocure.iam.domain.model.SessionRecord;
 import com.eprocure.iam.domain.model.SortDirection;
 import com.eprocure.iam.domain.model.User;
@@ -50,6 +51,7 @@ class LoginUseCaseTest {
                 userRepository,
                 sessionCachePort,
                 new OpaqueTokenService(),
+                new StubPermissionResolutionService(),
                 8);
         OpaqueTokenService opaqueTokenService = new OpaqueTokenService();
         LoginUseCase useCase = new LoginUseCase(
@@ -71,6 +73,7 @@ class LoginUseCaseTest {
         assertThat(sessionRepository.revokeActiveByUserIdCalled).isTrue();
         assertThat(sessionRepository.savedSession).isNotNull();
         assertThat(sessionCachePort.storedSession).isNotNull();
+        assertThat(sessionCachePort.storedSession.roles()).containsExactly("REQUESTER");
         assertThat(userRepository.lastLoginAt).isNotNull();
     }
 
@@ -84,6 +87,7 @@ class LoginUseCaseTest {
                 userRepository,
                 sessionCachePort,
                 new OpaqueTokenService(),
+                new StubPermissionResolutionService(),
                 8);
         FakeTwoFactorChallengeCachePort challengeCachePort = new FakeTwoFactorChallengeCachePort();
         LoginUseCase useCase = new LoginUseCase(
@@ -117,6 +121,7 @@ class LoginUseCaseTest {
                 userRepository,
                 new FakeSessionCachePort(),
                 new OpaqueTokenService(),
+                new StubPermissionResolutionService(),
                 8);
         CredentialVerificationPort credentialVerificationPort = (username, password) -> false;
         OpaqueTokenService opaqueTokenService = new OpaqueTokenService();
