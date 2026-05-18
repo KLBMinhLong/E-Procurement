@@ -40,6 +40,8 @@
 | KEYCLOAK_REALM | eprocure |
 | KEYCLOAK_CLIENT_ID | eprocure-backend |
 | KEYCLOAK_CLIENT_SECRET | secret |
+| IAM_PROVIDER_BASE_URL | http://iam-service:8081 |
+| IAM_INTERNAL_API_KEY | Shared key for Keycloak provider -> IAM internal endpoints |
 | GOOGLE_CLIENT_ID | Google OAuth client ID |
 | GOOGLE_CLIENT_SECRET | Google OAuth client secret |
 | GOOGLE_REDIRECT_URI | http://localhost:8081/api/v1/auth/oauth/google/callback |

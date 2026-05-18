@@ -7,10 +7,10 @@
 
 ```
 ┌──────────────┐   ①encrypt(RSA+AES)   ┌──────────────┐   ②verify cred   ┌──────────┐
-│   Angular    │──── POST /auth/login ──▶│  IAM Service │──── CustomProv ──▶│ Keycloak │
-│  (Frontend)  │                         │              │◀── OK ────────────│          │
-│              │◀── Set-Cookie: token ──│   ③gen token │                   └──────────┘
-│              │    (HttpOnly,Secure)    │   ④save Redis│
+│   Angular    │──── POST /auth/login ──▶│  IAM Service │─────────────────▶│ Keycloak │
+│  (Frontend)  │                         │              │◀── OK ───────────│ Provider │
+│              │◀── Set-Cookie: token ──│   ③gen token │◀── IAM internal ─│          │
+│              │    (HttpOnly,Secure)    │   ④save Redis│                   └──────────┘
 └──────────────┘                         └──────────────┘
                                                 │
                                          ⑤save DB (backup)
@@ -104,7 +104,7 @@ public ResponseEntity<ApiResponse<LoginResponse>> login(
     );
     LoginCredential credential = objectMapper.readValue(plainJson, LoginCredential.class);
 
-    // 3. Gọi Keycloak Custom Provider để verify
+    // 3. Gọi Keycloak để verify; Keycloak User Storage Provider gọi IAM internal API
     keycloakService.verify(credential.getUsername(), credential.getPassword());
 
     // 4. Tạo opaque session token

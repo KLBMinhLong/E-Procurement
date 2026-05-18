@@ -3,7 +3,7 @@
 ## Auth flow
 1) FE fetches RSA public key: GET /api/v1/auth/public-key
 2) FE encrypts login payload (RSA+AES) and POST /api/v1/auth/login
-3) IAM verifies with Keycloak, creates opaque token
+3) IAM asks Keycloak to verify credentials; Keycloak User Storage SPI calls IAM internal credential APIs
 4) Token stored in Redis (primary) and DB (backup)
 5) Response sets HttpOnly cookie ep_session
 
@@ -50,7 +50,7 @@ On new login:
 ## Forgot/reset password
 - POST /api/v1/auth/forgot-password requires Idempotency-Key and always returns 200 to avoid user enumeration
 - Reset token is opaque 64 chars; only SHA-256 token_hash is stored in iam.password_reset_tokens
-- POST /api/v1/auth/reset-password validates token, password policy, updates Keycloak credential, stores BCrypt(password + userId) backup hash, records password history, and revokes active sessions
+- POST /api/v1/auth/reset-password validates token, password policy, updates the IAM BCrypt(password + userId) credential hash, records password history, and revokes active sessions
 - Email delivery is behind PasswordResetDeliveryPort; notification-service/Brevo integration is the production adapter target
 
 ## Logout

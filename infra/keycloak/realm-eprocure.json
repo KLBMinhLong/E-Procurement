@@ -28,61 +28,20 @@
       ]
     }
   ],
-  "users": [
-    {
-      "username": "requester",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Request",
-      "lastName": "User",
-      "email": "requester@eprocure.local",
-      "credentials": [
-        { "type": "password", "value": "Password@123", "temporary": false }
-      ]
-    },
-    {
-      "username": "manager",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Manager",
-      "lastName": "User",
-      "email": "manager@eprocure.local",
-      "credentials": [
-        { "type": "password", "value": "Password@123", "temporary": false }
-      ]
-    },
-    {
-      "username": "director",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Director",
-      "lastName": "User",
-      "email": "director@eprocure.local",
-      "credentials": [
-        { "type": "password", "value": "Password@123", "temporary": false }
-      ]
-    },
-    {
-      "username": "finance",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Finance",
-      "lastName": "User",
-      "email": "finance@eprocure.local",
-      "credentials": [
-        { "type": "password", "value": "Password@123", "temporary": false }
-      ]
-    },
-    {
-      "username": "admin",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Admin",
-      "lastName": "User",
-      "email": "admin@eprocure.local",
-      "credentials": [
-        { "type": "password", "value": "Password@123", "temporary": false }
-      ]
-    }
-  ]
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "name": "eprocure-iam-user-storage",
+        "providerId": "eprocure-iam-user-storage",
+        "providerType": "org.keycloak.storage.UserStorageProvider",
+        "config": {
+          "enabled": ["true"],
+          "priority": ["0"],
+          "cachePolicy": ["NO_CACHE"],
+          "iamBaseUrl": ["http://iam-service:8081"],
+          "timeoutSeconds": ["5"]
+        }
+      }
+    ]
+  }
 }

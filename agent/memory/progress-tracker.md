@@ -75,7 +75,7 @@
 | Docker Compose dev environment | ✅ |
 | PostgreSQL init scripts (multiple DBs) | ✅ |
 | Kafka topic creation scripts | ✅ |
-| Keycloak realm + custom provider setup | 🔄 |
+| Keycloak realm + custom provider setup | ✅ |
 | Redis config | ✅ |
 | Prometheus + Grafana + Loki + Tempo | ✅ |
 | NGINX config (dev + prod) | ✅ |
@@ -91,7 +91,7 @@
 | RSA+AES encryption interceptor | 🔄 |
 | HttpOnly Cookie management | ✅ |
 | Single session enforcement | ✅ |
-| Forgot/reset password token + Keycloak reset | ✅ |
+| Forgot/reset password token + IAM credential reset | ✅ |
 | Password reset email delivery adapter | 🔄 |
 | RBAC permission loading | ✅ |
 | Admin user CRUD API | ✅ |

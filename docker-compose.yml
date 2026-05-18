@@ -181,7 +181,9 @@ services:
     logging: *default-logging
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0
+    build:
+      context: .
+      dockerfile: infra/keycloak/Dockerfile
     container_name: eprocure-keycloak
     restart: unless-stopped
     command: ["start-dev", "--import-realm"]
@@ -199,6 +201,8 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_HTTP_ENABLED: "true"
       KC_HTTP_PORT: 8080
+      IAM_PROVIDER_BASE_URL: http://iam-service:8081
+      IAM_INTERNAL_API_KEY: ${IAM_INTERNAL_API_KEY:-dev-internal-api-key}
     ports:
       - "${KEYCLOAK_PORT:-18080}:8080"
     volumes:
@@ -250,6 +254,7 @@ services:
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-eprocure}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-eprocure-iam}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-dev-secret}
+      IAM_INTERNAL_API_KEY: ${IAM_INTERNAL_API_KEY:-dev-internal-api-key}
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-8}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       COOKIE_SAMESITE: ${COOKIE_SAMESITE:-Strict}

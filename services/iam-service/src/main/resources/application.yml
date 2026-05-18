@@ -55,6 +55,8 @@ eprocure:
     cookie-secure: ${COOKIE_SECURE:false}
     cookie-same-site: ${COOKIE_SAMESITE:Strict}
     cookie-domain: ${COOKIE_DOMAIN:}
+  internal:
+    api-key: ${IAM_INTERNAL_API_KEY:dev-internal-api-key}
   session:
     ttl-hours: ${SESSION_TTL_HOURS:8}
     permission-cache-ttl-minutes: ${PERM_CACHE_TTL_MINUTES:15}
