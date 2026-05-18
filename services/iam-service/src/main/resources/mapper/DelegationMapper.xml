@@ -4,17 +4,20 @@
 
 <mapper namespace="com.eprocure.iam.infrastructure.persistence.mapper.DelegationMapper">
     <resultMap id="delegationResult" type="com.eprocure.iam.infrastructure.persistence.entity.DelegationDbEntity">
-        <id property="id" column="id"/>
-        <result property="delegatorId" column="delegator_id"/>
-        <result property="delegateId" column="delegate_id"/>
-        <result property="startAt" column="start_at"/>
-        <result property="endAt" column="end_at"/>
-        <result property="maxValue" column="max_value"/>
-        <result property="currency" column="currency"/>
-        <result property="allowedCategoriesJson" column="allowed_categories_json"/>
-        <result property="scope" column="scope"/>
-        <result property="status" column="status"/>
-        <result property="createdAt" column="created_at"/>
+        <id property="id" column="id" javaType="java.util.UUID" jdbcType="OTHER"
+            typeHandler="com.eprocure.iam.infrastructure.persistence.typehandler.UuidTypeHandler"/>
+        <result property="delegatorId" column="delegator_id" javaType="java.util.UUID" jdbcType="OTHER"
+            typeHandler="com.eprocure.iam.infrastructure.persistence.typehandler.UuidTypeHandler"/>
+        <result property="delegateId" column="delegate_id" javaType="java.util.UUID" jdbcType="OTHER"
+            typeHandler="com.eprocure.iam.infrastructure.persistence.typehandler.UuidTypeHandler"/>
+        <result property="startAt" column="start_at" javaType="java.time.Instant"/>
+        <result property="endAt" column="end_at" javaType="java.time.Instant"/>
+        <result property="maxValue" column="max_value" javaType="java.math.BigDecimal"/>
+        <result property="currency" column="currency" javaType="java.lang.String"/>
+        <result property="allowedCategoriesJson" column="allowed_categories_json" javaType="java.lang.String"/>
+        <result property="scope" column="scope" javaType="com.eprocure.iam.domain.model.DelegationScope"/>
+        <result property="status" column="status" javaType="com.eprocure.iam.domain.model.DelegationStatus"/>
+        <result property="createdAt" column="created_at" javaType="java.time.Instant"/>
     </resultMap>
 
     <select id="findById" resultMap="delegationResult">

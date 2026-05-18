@@ -3,6 +3,7 @@ FROM maven:3.9.9-eclipse-temurin-17 AS builder
 WORKDIR /workspace
 COPY pom.xml .
 COPY services/iam-service/pom.xml services/iam-service/pom.xml
+COPY infra/keycloak/eprocure-keycloak-provider/pom.xml infra/keycloak/eprocure-keycloak-provider/pom.xml
 RUN mvn -pl services/iam-service -am dependency:go-offline
 
 COPY services/iam-service services/iam-service
