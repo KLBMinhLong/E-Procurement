@@ -14,7 +14,7 @@
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "secret": "dev-secret",
+      "secret": "${KEYCLOAK_CLIENT_SECRET}",
       "serviceAccountsEnabled": true,
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
@@ -37,8 +37,8 @@
           "enabled": ["true"],
           "priority": ["0"],
           "cachePolicy": ["NO_CACHE"],
-          "iamBaseUrl": ["http://iam-service:8081"],
-          "timeoutSeconds": ["5"]
+          "iamBaseUrl": ["${IAM_PROVIDER_BASE_URL}"],
+          "timeoutSeconds": ["${IAM_PROVIDER_TIMEOUT_SECONDS}"]
         }
       }
     ]

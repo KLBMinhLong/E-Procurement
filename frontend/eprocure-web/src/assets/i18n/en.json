@@ -19,12 +19,27 @@
     }
   },
   "auth": {
+    "forgotPassword": {
+      "backToLogin": "Back to sign in",
+      "description": "Enter your account email to receive reset instructions.",
+      "email": "Work email",
+      "eyebrow": "Access recovery",
+      "failed": "Could not send instructions. Try again.",
+      "submit": "Send instructions",
+      "success": "If the email exists, reset instructions will be sent to the mailbox.",
+      "title": "Forgot password",
+      "validation": "Enter a valid email."
+    },
     "login": {
       "eyebrow": "Secure IAM",
       "failed": "Login failed. Check your credentials.",
+      "forgotPassword": "Forgot password?",
+      "google": "Sign in with Google",
+      "hidePassword": "Hide password",
+      "or": "or",
       "password": "Password",
+      "showPassword": "Show password",
       "submit": "Sign in",
-      "subtitle": "Sign in with HttpOnly cookie auth and opaque sessions.",
       "title": "Sign in to procurement",
       "username": "Username or email",
       "validation": "Enter your login information."

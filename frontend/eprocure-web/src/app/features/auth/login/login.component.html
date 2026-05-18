@@ -1,19 +1,20 @@
 <main class="login">
   <section class="login__panel">
     <header class="login__header">
+      <div class="login__language">
+        <ep-lang-switcher></ep-lang-switcher>
+      </div>
       <span class="login__mark">
         <ep-icon name="shield-check" [size]="28"></ep-icon>
       </span>
-      <ep-lang-switcher></ep-lang-switcher>
     </header>
 
     <div class="login__copy">
       <p>{{ 'auth.login.eyebrow' | translate }}</p>
       <h1>{{ 'auth.login.title' | translate }}</h1>
-      <span>{{ 'auth.login.subtitle' | translate }}</span>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form class="login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <ep-form-field [label]="'auth.login.username' | translate">
         <input
           type="text"
@@ -24,16 +25,43 @@
       </ep-form-field>
 
       <ep-form-field [label]="'auth.login.password' | translate">
-        <input type="password" formControlName="password" autocomplete="current-password" />
+        <span class="login__password-control">
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password" />
+          <button
+            class="login__password-toggle"
+            type="button"
+            [attr.aria-label]="(showPassword() ? 'auth.login.hidePassword' : 'auth.login.showPassword') | translate"
+            (click)="togglePasswordVisibility()">
+            <ep-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18"></ep-icon>
+          </button>
+        </span>
       </ep-form-field>
+
+      <a class="login__forgot" routerLink="/forgot-password">
+        {{ 'auth.login.forgotPassword' | translate }}
+      </a>
 
       @if (errorKey()) {
         <p class="login__error">{{ errorKey()! | translate }}</p>
       }
 
-      <ep-button type="submit" icon="log-in" [loading]="isSubmitting()">
-        {{ 'auth.login.submit' | translate }}
-      </ep-button>
+      <div class="login__actions">
+        <ep-button type="submit" icon="log-in" [loading]="isSubmitting()" [disabled]="isSubmitting()">
+          {{ 'auth.login.submit' | translate }}
+        </ep-button>
+      </div>
+
+      <div class="login__divider" aria-hidden="true">
+        <span>{{ 'auth.login.or' | translate }}</span>
+      </div>
+
+      <button class="login__google" type="button" (click)="loginWithGoogle()">
+        <span class="login__google-mark" aria-hidden="true">G</span>
+        <span>{{ 'auth.login.google' | translate }}</span>
+      </button>
     </form>
   </section>
 </main>

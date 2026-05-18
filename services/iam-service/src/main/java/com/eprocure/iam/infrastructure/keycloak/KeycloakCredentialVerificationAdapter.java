@@ -23,7 +23,7 @@ public class KeycloakCredentialVerificationAdapter implements CredentialVerifica
             RestClient keycloakRestClient,
             @Value("${eprocure.keycloak.realm:eprocure}") String realm,
             @Value("${eprocure.keycloak.client-id:eprocure-iam}") String clientId,
-            @Value("${eprocure.keycloak.client-secret:dev-secret}") String clientSecret) {
+            @Value("${eprocure.keycloak.client-secret:}") String clientSecret) {
         this.keycloakRestClient = keycloakRestClient;
         this.realm = realm;
         this.clientId = clientId;

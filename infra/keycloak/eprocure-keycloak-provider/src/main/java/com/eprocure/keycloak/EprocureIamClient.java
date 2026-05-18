@@ -19,10 +19,12 @@ final class EprocureIamClient {
     private final HttpClient httpClient;
     private final String iamBaseUrl;
     private final String internalApiKey;
+    private final Duration requestTimeout;
 
     EprocureIamClient(String iamBaseUrl, String internalApiKey, Duration timeout) {
         this.iamBaseUrl = normalizeBaseUrl(iamBaseUrl);
         this.internalApiKey = internalApiKey == null ? "" : internalApiKey;
+        this.requestTimeout = timeout;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(timeout)
                 .build();
@@ -98,13 +100,16 @@ final class EprocureIamClient {
 
     private HttpRequest.Builder requestBuilder(String pathAndQuery) {
         return HttpRequest.newBuilder(URI.create(iamBaseUrl + pathAndQuery))
-                .timeout(Duration.ofSeconds(5))
+                .timeout(requestTimeout)
                 .header(INTERNAL_API_KEY_HEADER, internalApiKey)
                 .header("Accept", "application/json");
     }
 
     private String normalizeBaseUrl(String baseUrl) {
-        String value = baseUrl == null || baseUrl.isBlank() ? "http://iam-service:8081" : baseUrl.trim();
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new IllegalArgumentException("IAM provider base URL must be configured");
+        }
+        String value = baseUrl.trim();
         return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     }
 

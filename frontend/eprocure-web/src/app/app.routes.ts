@@ -9,6 +9,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
   },
   {
+    path: 'forgot-password',
+    loadComponent: () => import('./features/auth/forgot-password/forgot-password.component')
+      .then((m) => m.ForgotPasswordComponent)
+  },
+  {
     path: 'ui-showcase',
     title: 'route.uiShowcase',
     loadComponent: () => import('./ui-showcase/ui-showcase.component').then((m) => m.UiShowcaseComponent)

@@ -15,12 +15,19 @@ public final class EprocureIamUserStorageProviderFactory
     private static final String CFG_IAM_BASE_URL = "iamBaseUrl";
     private static final String CFG_INTERNAL_API_KEY = "internalApiKey";
     private static final String CFG_TIMEOUT_SECONDS = "timeoutSeconds";
+    private static final String ENV_IAM_PROVIDER_BASE_URL = "IAM_PROVIDER_BASE_URL";
+    private static final String ENV_IAM_INTERNAL_API_KEY = "IAM_INTERNAL_API_KEY";
+    private static final String ENV_IAM_PROVIDER_TIMEOUT_SECONDS = "IAM_PROVIDER_TIMEOUT_SECONDS";
+    private static final String DEFAULT_TIMEOUT_SECONDS = "3";
 
     @Override
     public EprocureIamUserStorageProvider create(KeycloakSession session, ComponentModel model) {
-        String iamBaseUrl = configValue(model, CFG_IAM_BASE_URL, env("IAM_PROVIDER_BASE_URL", "http://iam-service:8081"));
-        String internalApiKey = configValue(model, CFG_INTERNAL_API_KEY, env("IAM_INTERNAL_API_KEY", ""));
-        long timeoutSeconds = Long.parseLong(configValue(model, CFG_TIMEOUT_SECONDS, "5"));
+        String iamBaseUrl = requiredConfig(model, CFG_IAM_BASE_URL, ENV_IAM_PROVIDER_BASE_URL);
+        String internalApiKey = configValue(model, CFG_INTERNAL_API_KEY, env(ENV_IAM_INTERNAL_API_KEY, ""));
+        long timeoutSeconds = parsePositiveLong(configValue(
+                model,
+                CFG_TIMEOUT_SECONDS,
+                env(ENV_IAM_PROVIDER_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS)));
         EprocureIamClient client = new EprocureIamClient(
                 iamBaseUrl,
                 internalApiKey,
@@ -45,7 +52,7 @@ public final class EprocureIamUserStorageProviderFactory
                 "IAM base URL",
                 "Base URL for IAM internal Keycloak provider APIs.",
                 ProviderConfigProperty.STRING_TYPE,
-                env("IAM_PROVIDER_BASE_URL", "http://iam-service:8081"));
+                env(ENV_IAM_PROVIDER_BASE_URL, ""));
         ProviderConfigProperty internalApiKey = new ProviderConfigProperty(
                 CFG_INTERNAL_API_KEY,
                 "Internal API key",
@@ -57,7 +64,7 @@ public final class EprocureIamUserStorageProviderFactory
                 "Timeout seconds",
                 "HTTP timeout for IAM internal API calls.",
                 ProviderConfigProperty.STRING_TYPE,
-                "5");
+                env(ENV_IAM_PROVIDER_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
         return List.of(iamBaseUrl, internalApiKey, timeoutSeconds);
     }
 
@@ -74,12 +81,36 @@ public final class EprocureIamUserStorageProviderFactory
     }
 
     private String configValue(ComponentModel model, String key, String fallback) {
-        String value = model.getConfig().getFirst(key);
+        String value = resolveEnvPlaceholder(model.getConfig().getFirst(key));
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String requiredConfig(ComponentModel model, String key, String envKey) {
+        String value = configValue(model, key, env(envKey, ""));
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(key + " must be configured through component config or " + envKey);
+        }
+        return value;
     }
 
     private String env(String key, String fallback) {
         String value = System.getenv(key);
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private long parsePositiveLong(String value) {
+        long parsed = Long.parseLong(value);
+        if (parsed <= 0) {
+            throw new IllegalArgumentException(CFG_TIMEOUT_SECONDS + " must be greater than zero");
+        }
+        return parsed;
+    }
+
+    private String resolveEnvPlaceholder(String value) {
+        if (value == null || !value.startsWith("${") || !value.endsWith("}")) {
+            return value;
+        }
+        String key = value.substring(2, value.length() - 1);
+        return env(key, "");
     }
 }

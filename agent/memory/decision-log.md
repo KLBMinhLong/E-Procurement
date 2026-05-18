@@ -111,3 +111,10 @@
 - Reason: Encryption must remain cross-cutting at the HTTP layer so feature services do not duplicate security code and so login/logout/idempotent state changes all follow the same contract.
 - Impact: When `ENCRYPTION_ENABLED=true`, frontend sends `{ encryptedPayload, encryptedAesKey, iv, keyVersion }`; the public key is fetched from `/auth/public-key` via `HttpBackend` and cached only in memory. `SYS_003` clears the key cache.
 - Constraint: Response body decryption is intentionally not implemented because IAM currently only decrypts requests; response encryption remains a later hardening slice once the backend response filter contract is implemented.
+
+## [2026-05-18] Keycloak realm env placeholders and login polish
+
+- Decision: Move Keycloak realm client secret, IAM provider base URL, and provider timeout to environment-driven placeholders and remove Java fallback to the fixed IAM service URL.
+- Reason: Realm import and provider runtime config must not persist development secrets or topology-specific URLs in source-controlled code.
+- Impact: `.env` must provide `KEYCLOAK_CLIENT_SECRET`, `IAM_PROVIDER_BASE_URL`, and `IAM_INTERNAL_API_KEY`; `IAM_PROVIDER_TIMEOUT_SECONDS` defaults to 3 seconds in the local sample. Login UI now centers the brand/action area and exposes Google login, forgot-password, and password visibility actions.
+- Constraint: Existing Keycloak volumes keep previously imported realm values; recreate Keycloak/PostgreSQL volumes when validating the new realm import.

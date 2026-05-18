@@ -1,7 +1,12 @@
 :host {
   align-items: center;
-  display: inline-flex;
+  display: inline-grid;
   flex: 0 0 auto;
   justify-content: center;
   line-height: 0;
+  place-items: center;
+}
+
+:host svg {
+  display: block;
 }
