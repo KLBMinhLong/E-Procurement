@@ -84,6 +84,13 @@
 - Impact: Updating role permissions refreshes `role-perm:{roleCode}`; updating a user's roles evicts active session cache for that user so the next request reloads current roles from DB.
 - Constraint: Redis remains cache-only; IAM DB role and permission tables are still the source of truth.
 
+## [2026-05-18] E03 Angular 21 frontend baseline
+
+- Decision: Standardize frontend documentation on Angular 21 with standalone-first components, signals, and control flow blocks.
+- Reason: Align frontend guidance with the modern Angular baseline before any UI code is scaffolded.
+- Impact: E03 UI shell and design-system docs reference Angular 21, standalone app config/routes, and signal-driven view state.
+- Constraint: Exact package versions will be finalized when the frontend workspace is generated.
+
 ## [2026-05-18] E01 Kafka KRaft mode (no ZooKeeper)
 
 - Decision: Switch local Kafka to KRaft mode and remove ZooKeeper from the compose stack.

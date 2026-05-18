@@ -147,7 +147,7 @@ eProcure là hệ thống số hoá toàn bộ quy trình mua sắm nội bộ d
 
 | Layer | Technology | Version / Note |
 |---|---|---|
-| Frontend | Angular | 17+ |
+| Frontend | Angular | 21+ |
 | Frontend UI | Bootstrap + TailwindCSS + SCSS | Design tokens từ UI Design System |
 | Frontend i18n | ngx-translate | VI/EN tự động |
 | Frontend Web Server | NGINX | Reverse proxy, HTTPS, HSTS |

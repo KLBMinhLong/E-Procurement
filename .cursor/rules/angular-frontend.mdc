@@ -32,7 +32,7 @@ frontend/src/
 │   │   ├── services/
 │   │   │   ├── api.service.ts               ← Base HTTP service
 │   │   │   └── websocket.service.ts         ← STOMP WebSocket
-│   │   └── core.module.ts
+│   │   └── core.providers.ts                ← Providers for app.config
 │   │
 │   ├── shared/                      ← Shared components (ep-* prefix)
 │   │   ├── components/
@@ -59,9 +59,9 @@ frontend/src/
 │   │   │   └── time-ago.pipe.ts
 │   │   ├── directives/
 │   │   │   └── permission.directive.ts  ← *epHasPermission="'PR_CREATE'"
-│   │   └── shared.module.ts
+│   │   └── shared.index.ts              ← Optional barrel exports
 │   │
-│   ├── features/                    ← Feature modules (lazy loaded)
+│   ├── features/                    ← Feature shells (standalone, lazy routes)
 │   │   ├── procurement/             ← Purchase Requests
 │   │   ├── approvals/               ← Approval Inbox
 │   │   ├── finance/                 ← Budget, PO, Invoice
@@ -74,7 +74,9 @@ frontend/src/
 │   ├── ui-showcase/                 ← Trang xem toàn bộ component library
 │   │   └── ui-showcase.component.ts
 │   │
-│   └── app-routing.module.ts        ← Lazy loading routes
+│   ├── app.routes.ts                ← Route config (standalone)
+│   ├── app.config.ts                ← App providers + HttpClient
+│   └── app.component.ts
 │
 ├── assets/
 │   ├── i18n/
@@ -101,7 +103,8 @@ frontend/src/
     templateUrl: './pr-list.component.html',
     styleUrls: ['./pr-list.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,  // ✅ Luôn OnPush
-    standalone: false                                  // Dùng NgModule pattern
+    standalone: true,                                  // Standalone-first
+    imports: [CommonModule, EpTableComponent, EpSkeletonComponent, EpEmptyStateComponent]
 })
 export class PrListComponent implements OnInit {
 
@@ -161,6 +164,7 @@ export class PrListComponent implements OnInit {
 ### Component Rules
 ```
 □ ChangeDetectionStrategy.OnPush LUÔN LUÔN
+□ Standalone-first; NgModule chỉ khi 3rd-party bắt buộc
 □ inject() thay vì constructor injection
 □ takeUntilDestroyed(this.destroyRef) cho mọi subscription
 □ Signals cho state management

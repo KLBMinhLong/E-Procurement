@@ -5,7 +5,7 @@
 
 ## 1. Epic Goal
 
-Xây Angular 17 shell và design system `ep-*` đủ để triển khai nhanh các màn hình nghiệp vụ PR/Approval, đảm bảo i18n VI/EN, auth cookie, permission guard, error handling và Idempotency-Key cho state-changing requests.
+Xây Angular 21 shell và design system `ep-*` đủ để triển khai nhanh các màn hình nghiệp vụ PR/Approval, đảm bảo i18n VI/EN, auth cookie, permission guard, error handling và Idempotency-Key cho state-changing requests.
 
 ---
 
@@ -45,7 +45,7 @@ Xây Angular 17 shell và design system `ep-*` đủ để triển khai nhanh c�
 **Main flow:**
 
 ```
-1. Tạo Angular 17 project.
+1. Tạo Angular 21 project (standalone, app.config/app.routes).
 2. Cấu hình SCSS, route lazy loading, environments.
 3. Cài ngx-translate.
 4. Thiết lập app layout route group: auth, workspace, admin.
@@ -56,6 +56,7 @@ Xây Angular 17 shell và design system `ep-*` đủ để triển khai nhanh c�
 
 ```
 [ ] App build được.
+[ ] Standalone-first; không tạo NgModule mới trừ khi 3rd-party bắt buộc.
 [ ] Mọi component dùng ChangeDetectionStrategy.OnPush.
 [ ] Không hardcode màu ngoài design token CSS variables.
 ```

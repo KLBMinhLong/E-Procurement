@@ -162,16 +162,16 @@ mybatis:
 ```json
 // package.json key deps
 {
-  "@angular/core": "^17.x",
-  "@angular/router": "^17.x",
-  "@angular/forms": "^17.x",
-  "@angular/common": "^17.x",
+  "@angular/core": "^21.x",
+  "@angular/router": "^21.x",
+  "@angular/forms": "^21.x",
+  "@angular/common": "^21.x",
   "@ngx-translate/core": "^15.x",
   "@ngx-translate/http-loader": "^8.x",
   "@stomp/stompjs": "^7.x",
   "sockjs-client": "^1.x",
   "rxjs": "^7.x",
-  "typescript": "~5.2"
+  "typescript": "~5.6"
 }
 ```
 
