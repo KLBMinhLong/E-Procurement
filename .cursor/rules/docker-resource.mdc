@@ -35,15 +35,14 @@ Resource allocation dev environment:
 │ admin-service           │ 0.10 │ 256MB  │ Config + Audit               │
 │ postgres                │ 0.50 │ 512MB  │ Tất cả DB (dev: 1 instance)  │
 │ redis                   │ 0.10 │ 128MB  │ Cache + Session              │
-│ kafka                   │ 0.50 │ 512MB  │ Message broker               │
-│ zookeeper               │ 0.10 │ 128MB  │ Kafka coordination           │
+│ kafka (kraft)           │ 0.50 │ 512MB  │ Message broker               │
 │ keycloak                │ 0.25 │ 512MB  │ Auth provider                │
 │ prometheus              │ 0.10 │ 128MB  │ Metrics                      │
 │ grafana                 │ 0.10 │ 128MB  │ Dashboard                    │
 │ loki                    │ 0.10 │ 128MB  │ Log aggregation              │
 │ tempo                   │ 0.10 │ 128MB  │ Tracing                      │
 ├─────────────────────────┼──────┼────────┼──────────────────────────────┤
-│ TOTAL                   │ ~4.0 │~5.4GB  │                              │
+│ TOTAL                   │ ~3.9 │~5.3GB  │                              │
 └─────────────────────────┴──────┴────────┴──────────────────────────────┘
 
 ⚠️ Nếu thiếu RAM → tắt: grafana/loki/tempo/prometheus (chạy khi cần)
@@ -272,40 +271,19 @@ services:
       timeout: 5s
       retries: 3
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: ep-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-      TZ: ${TZ:-Asia/Ho_Chi_Minh}
-    volumes:
-      - zookeeper-data:/var/lib/zookeeper/data
-    networks:
-      - eprocure-net
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.10'
-          memory: 128M
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
+    image: confluentinc/cp-kafka:7.6.1
     container_name: ep-kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-8F4Qf35tQ2e8rE9rQ9k8wA}
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_LOG_RETENTION_HOURS: 24
@@ -729,7 +707,6 @@ volumes:
   postgres-data:
   redis-data:
   kafka-data:
-  zookeeper-data:
   prometheus-data:
   grafana-data:
   loki-data:

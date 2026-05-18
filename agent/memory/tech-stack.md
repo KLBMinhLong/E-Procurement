@@ -196,8 +196,7 @@ mybatis:
 |---|---|---|---|
 | PostgreSQL | postgres:15-alpine | 15.x | 5432 |
 | Redis | redis:7-alpine | 7.x | 6379 |
-| Kafka | confluentinc/cp-kafka | 7.5.0 | 9092 |
-| Zookeeper | confluentinc/cp-zookeeper | 7.5.0 | 2181 |
+| Kafka (KRaft) | confluentinc/cp-kafka | 7.6.1 | 9092 |
 | Keycloak | quay.io/keycloak/keycloak | 23.0 | 8180 |
 | Prometheus | prom/prometheus | v2.47.0 | 9090 |
 | Grafana | grafana/grafana | 10.1.0 | 3000 |

@@ -813,7 +813,7 @@ services:
 | Notification Service | 0.1 | 256MB |
 | PostgreSQL (all DBs) | 0.5 | 512MB |
 | Redis | 0.1 | 256MB |
-| Kafka + Zookeeper | 0.5 | 512MB |
+| Kafka (KRaft) | 0.5 | 512MB |
 | Keycloak | 0.25 | 512MB |
 | Prometheus | 0.1 | 256MB |
 | Grafana + Loki + Tempo | 0.25 | 256MB |

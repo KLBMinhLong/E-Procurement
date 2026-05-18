@@ -145,7 +145,6 @@
 5432     → PostgreSQL
 6379     → Redis
 9092     → Kafka
-2181     → Zookeeper
 9090     → Prometheus
 3000     → Grafana
 3100     → Loki
