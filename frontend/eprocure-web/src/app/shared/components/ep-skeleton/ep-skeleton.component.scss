@@ -23,7 +23,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ep-skeleton__row {
+  :host-context(html:not([data-motion='full'])) .ep-skeleton__row {
     animation: none;
   }
 }

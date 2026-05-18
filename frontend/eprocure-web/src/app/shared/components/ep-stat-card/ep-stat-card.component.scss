@@ -20,26 +20,26 @@
   width: var(--stat-icon-size);
 }
 
-.ep-stat-card p,
-.ep-stat-card strong,
-.ep-stat-card span {
+.ep-stat-card__content p,
+.ep-stat-card__content strong,
+.ep-stat-card__content span {
   display: block;
 }
 
-.ep-stat-card p {
+.ep-stat-card__content p {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   margin: 0 0 var(--spacing-1);
 }
 
-.ep-stat-card strong {
+.ep-stat-card__content strong {
   color: var(--color-text-primary);
   font-family: var(--font-mono);
   font-size: var(--font-size-2xl);
   line-height: 1;
 }
 
-.ep-stat-card span {
+.ep-stat-card__content span {
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   margin-top: var(--spacing-2);

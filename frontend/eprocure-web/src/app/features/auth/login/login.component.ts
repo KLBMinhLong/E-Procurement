@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -31,6 +32,10 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
+  private readonly motionAttr = 'data-motion';
+  private readonly motionValue = 'full';
+  private motionOverrideApplied = false;
 
   readonly isSubmitting = signal(false);
   readonly errorKey = signal<string | null>(null);
@@ -49,11 +54,15 @@ export class LoginComponent {
 
     this.isSubmitting.set(true);
     this.errorKey.set(null);
+    this.setMotionOverride(true);
 
     this.authService.login(this.form.getRawValue())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isSubmitting.set(false))
+        finalize(() => {
+          this.isSubmitting.set(false);
+          this.setMotionOverride(false);
+        })
       )
       .subscribe({
         next: () => this.router.navigate(['/dashboard']),
@@ -67,5 +76,25 @@ export class LoginComponent {
 
   loginWithGoogle(): void {
     window.location.assign(this.authService.googleLoginUrl());
+  }
+
+  private setMotionOverride(enabled: boolean): void {
+    const root = this.document?.documentElement;
+    if (!root) {
+      return;
+    }
+
+    if (enabled) {
+      if (root.getAttribute(this.motionAttr) !== this.motionValue) {
+        root.setAttribute(this.motionAttr, this.motionValue);
+        this.motionOverrideApplied = true;
+      }
+      return;
+    }
+
+    if (this.motionOverrideApplied && root.getAttribute(this.motionAttr) === this.motionValue) {
+      root.removeAttribute(this.motionAttr);
+    }
+    this.motionOverrideApplied = false;
   }
 }

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PageMeta } from '../core/models/api-response.model';
 import { EpAmountComponent } from '../shared/components/ep-amount/ep-amount.component';
@@ -40,7 +41,10 @@ import { EpTableColumn, EpTableComponent } from '../shared/components/ep-table/e
   styleUrl: './ui-showcase.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class UiShowcaseComponent {
+export class UiShowcaseComponent implements OnInit, OnDestroy {
+  private readonly document = inject(DOCUMENT);
+  private readonly motionAttr = 'data-motion';
+  private readonly motionValue = 'full';
   readonly modalOpen = signal(false);
   readonly query = signal('');
   readonly columns: EpTableColumn[] = [
@@ -60,4 +64,16 @@ export class UiShowcaseComponent {
     isFirst: true,
     isLast: true
   };
+
+  ngOnInit(): void {
+    const root = this.document?.documentElement;
+    root?.setAttribute(this.motionAttr, this.motionValue);
+  }
+
+  ngOnDestroy(): void {
+    const root = this.document?.documentElement;
+    if (root?.getAttribute(this.motionAttr) === this.motionValue) {
+      root.removeAttribute(this.motionAttr);
+    }
+  }
 }
