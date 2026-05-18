@@ -61,6 +61,11 @@
   color: var(--color-danger-contrast);
 }
 
+.ep-button--danger:hover:not(:disabled) {
+  background: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
+}
+
 .ep-button--sm {
   min-height: var(--control-height-sm);
   padding: 0 var(--spacing-3);
@@ -82,8 +87,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ep-button,
-  .ep-button__spinner {
+  :host-context(html:not([data-motion='full'])) .ep-button,
+  :host-context(html:not([data-motion='full'])) .ep-button__spinner {
     animation: none;
     transition: none;
   }
