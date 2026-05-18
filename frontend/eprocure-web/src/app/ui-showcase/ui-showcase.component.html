@@ -1,0 +1,79 @@
+<main class="showcase">
+  <header class="showcase__header">
+    <div>
+      <p>{{ 'showcase.eyebrow' | translate }}</p>
+      <h1>{{ 'showcase.title' | translate }}</h1>
+      <span>{{ 'showcase.subtitle' | translate }}</span>
+    </div>
+    <ep-lang-switcher></ep-lang-switcher>
+  </header>
+
+  <section class="showcase__grid">
+    <ep-stat-card icon="layout-dashboard" [title]="'showcase.stat.shell' | translate" value="17" [hint]="'showcase.stat.shellHint' | translate"></ep-stat-card>
+    <ep-stat-card icon="shield-check" [title]="'showcase.stat.guard' | translate" value="RBAC" [hint]="'showcase.stat.guardHint' | translate"></ep-stat-card>
+    <ep-stat-card icon="globe" [title]="'showcase.stat.i18n' | translate" value="VI/EN" [hint]="'showcase.stat.i18nHint' | translate"></ep-stat-card>
+  </section>
+
+  <section class="showcase__section">
+    <h2>{{ 'showcase.section.actions' | translate }}</h2>
+    <div class="showcase__row">
+      <ep-button icon="plus">{{ 'action.create' | translate }}</ep-button>
+      <ep-button variant="secondary" icon="filter">{{ 'shared.filter.apply' | translate }}</ep-button>
+      <ep-button variant="ghost" icon="bell">{{ 'notification.open' | translate }}</ep-button>
+      <ep-button variant="danger" icon="x">{{ 'action.cancel' | translate }}</ep-button>
+      <ep-button icon="loader-circle" [loading]="true">{{ 'action.processing' | translate }}</ep-button>
+    </div>
+  </section>
+
+  <section class="showcase__section">
+    <h2>{{ 'showcase.section.data' | translate }}</h2>
+    <div class="showcase__row">
+      <ep-badge status="SUBMITTED" tone="info"></ep-badge>
+      <ep-badge status="PENDING_APPROVAL" tone="warning"></ep-badge>
+      <ep-badge status="APPROVED" tone="success"></ep-badge>
+      <ep-amount value="35000000.5000"></ep-amount>
+      <ep-avatar name="Nguyen Van A"></ep-avatar>
+    </div>
+  </section>
+
+  <section class="showcase__section">
+    <h2>{{ 'showcase.section.forms' | translate }}</h2>
+    <div class="showcase__form">
+      <ep-filter-bar [value]="query()" (valueChange)="query.set($event)"></ep-filter-bar>
+      <ep-form-field [label]="'showcase.form.label' | translate" [error]="'showcase.form.error' | translate">
+        <input type="text" autocomplete="off" spellcheck="false" />
+      </ep-form-field>
+    </div>
+  </section>
+
+  <section class="showcase__section">
+    <h2>{{ 'showcase.section.table' | translate }}</h2>
+    <ep-table [columns]="columns" [data]="rows" [meta]="meta"></ep-table>
+  </section>
+
+  <section class="showcase__section showcase__split">
+    <div>
+      <h2>{{ 'showcase.section.feedback' | translate }}</h2>
+      <ep-empty-state
+        icon="inbox"
+        [title]="'shared.empty.title' | translate"
+        [message]="'shared.empty.message' | translate">
+      </ep-empty-state>
+    </div>
+    <div>
+      <h2>{{ 'showcase.section.workflow' | translate }}</h2>
+      <ep-sla-bar assignedAt="2026-05-18T08:00:00+07:00" deadline="2026-05-18T18:00:00+07:00"></ep-sla-bar>
+      <ep-approval-action></ep-approval-action>
+      <ep-button variant="secondary" (click)="modalOpen.set(true)">{{ 'shared.modal.open' | translate }}</ep-button>
+    </div>
+  </section>
+
+  <section class="showcase__section">
+    <h2>{{ 'showcase.section.loading' | translate }}</h2>
+    <ep-skeleton [rows]="4"></ep-skeleton>
+  </section>
+
+  <ep-modal [open]="modalOpen()" [title]="'shared.modal.title' | translate" (close)="modalOpen.set(false)">
+    <p>{{ 'shared.modal.body' | translate }}</p>
+  </ep-modal>
+</main>

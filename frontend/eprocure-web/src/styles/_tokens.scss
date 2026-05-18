@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --color-bg: #020617;
+  --color-sidebar: #07111f;
+  --color-topbar: rgba(7, 17, 31, 0.92);
+  --color-surface: #0f172a;
+  --color-surface-raised: #162033;
+  --color-surface-hover: #1e293b;
+  --color-backdrop: rgba(2, 6, 23, 0.72);
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-accent: #f59e0b;
+  --color-accent-hover: #d97706;
+  --color-accent-subtle: rgba(245, 158, 11, 0.12);
+  --color-accent-contrast: #111827;
+  --color-neutral-subtle: rgba(148, 163, 184, 0.12);
+  --color-success: #22c55e;
+  --color-success-subtle: rgba(34, 197, 94, 0.12);
+  --color-success-border: rgba(34, 197, 94, 0.35);
+  --color-warning: #f59e0b;
+  --color-warning-subtle: rgba(245, 158, 11, 0.12);
+  --color-warning-border: rgba(245, 158, 11, 0.35);
+  --color-danger: #ef4444;
+  --color-danger-subtle: rgba(239, 68, 68, 0.12);
+  --color-danger-border: rgba(239, 68, 68, 0.35);
+  --color-danger-contrast: #fff7ed;
+  --color-info: #38bdf8;
+  --color-info-subtle: rgba(56, 189, 248, 0.12);
+  --color-info-border: rgba(56, 189, 248, 0.35);
+  --color-border-subtle: rgba(148, 163, 184, 0.18);
+  --color-border-strong: rgba(203, 213, 225, 0.32);
+
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Fira Code', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+
+  --radius-1: 0.25rem;
+  --radius-2: 0.5rem;
+  --radius-3: 0.75rem;
+  --radius-pill: 999px;
+
+  --border-subtle: 1px solid var(--color-border-subtle);
+  --border-strong: 1px solid var(--color-border-strong);
+  --focus-ring: 0 0 0 3px rgba(245, 158, 11, 0.28);
+  --shadow-1: 0 1px 2px rgba(2, 6, 23, 0.38);
+  --shadow-2: 0 12px 30px rgba(2, 6, 23, 0.32);
+  --shadow-3: 0 24px 70px rgba(2, 6, 23, 0.48);
+
+  --motion-fast: 160ms ease;
+  --motion-normal: 240ms ease;
+  --motion-slow: 850ms;
+  --opacity-disabled: 0.5;
+  --opacity-muted: 0.52;
+
+  --control-height-sm: 2rem;
+  --control-height-md: 2.5rem;
+  --control-height-lg: 3rem;
+  --avatar-size: 2.25rem;
+  --brand-mark-size: 2.75rem;
+  --empty-icon-size: 3.5rem;
+  --filter-min-width: 18rem;
+  --filter-max-width: 34rem;
+  --lang-button-size: 1.8rem;
+  --login-mark-size: 3.5rem;
+  --login-panel-width: 30rem;
+  --modal-max-width: 34rem;
+  --mobile-button-min-width: 10rem;
+  --nav-item-height: 2.75rem;
+  --shell-sidebar-width: 17.5rem;
+  --showcase-form-width: 38rem;
+  --showcase-copy-width: 42rem;
+  --side-panel-min-width: 22rem;
+  --skeleton-row-height: 2.5rem;
+  --sla-min-width: 12rem;
+  --sla-track-height: 0.5rem;
+  --stat-icon-size: 2.5rem;
+  --table-min-width: 42rem;
+  --toast-width: 24rem;
+  --topbar-height: 4.5rem;
+  --user-summary-width: 15rem;
+
+  --z-backdrop: 20;
+  --z-sidebar: 30;
+  --z-topbar: 10;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-skip-link: 80;
+}

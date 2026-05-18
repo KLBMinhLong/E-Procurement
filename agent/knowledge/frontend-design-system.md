@@ -22,7 +22,7 @@
 - Component prefix: ep-
 - No hardcoded colors in components; use CSS variables
 - 100% text via ngx-translate (vi default, en toggle)
-- Icons are custom SVG components (ep-icon)
+- Icons render through `ep-icon`, backed by `@lucide/angular` for consistent SVG paths
 
 ## Shared components (core)
 - ep-button, ep-badge, ep-card, ep-table, ep-modal

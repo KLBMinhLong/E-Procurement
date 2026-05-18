@@ -97,3 +97,10 @@
 - Reason: Kafka supports KRaft natively, reducing dev infra complexity and resource usage.
 - Impact: Core stack runs with `docker compose up -d postgres redis kafka kafka-init keycloak nginx-gateway`; KRaft uses `KAFKA_CLUSTER_ID` persisted in the Kafka volume.
 - Constraint: If changing `KAFKA_CLUSTER_ID` or switching modes, delete the Kafka data volume to reformat storage.
+
+## [2026-05-18] E03 Angular UI shell foundation
+
+- Decision: Scaffold `frontend/eprocure-web` as an Angular 21 standalone app and use `ep-*` shared components backed by `@lucide/angular`, ngx-translate, functional guards, and functional HTTP interceptors.
+- Reason: E03 needs a reusable shell/design-system foundation before PR/Approval screens so feature pages do not duplicate layout, i18n, permission, and request conventions.
+- Impact: `/ui-showcase` is public for visual QA; authenticated workspace routes use `AuthGuard` and permission-code based `PermissionGuard`; POST/PUT/PATCH receive `Idempotency-Key` automatically and all requests use `withCredentials=true`.
+- Constraint: The frontend RSA+AES request/response encryption adapter is still pending; the current login flow keeps the feature flag/hook but sends plain payload when local/dev encryption is disabled.

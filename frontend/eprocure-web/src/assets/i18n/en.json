@@ -1,0 +1,185 @@
+{
+  "accessibility": {
+    "skipToContent": "Skip to content"
+  },
+  "action": {
+    "cancel": "Cancel",
+    "create": "Create",
+    "processing": "Processing"
+  },
+  "app": {
+    "name": "eProcure",
+    "tagline": "Enterprise Procurement"
+  },
+  "approval": {
+    "action": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "requestChanges": "Request changes"
+    }
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "Secure IAM",
+      "failed": "Login failed. Check your credentials.",
+      "password": "Password",
+      "submit": "Sign in",
+      "subtitle": "Sign in with HttpOnly cookie auth and opaque sessions.",
+      "title": "Sign in to procurement",
+      "username": "Username or email",
+      "validation": "Enter your login information."
+    },
+    "logout": "Sign out"
+  },
+  "dashboard": {
+    "badge": {
+      "live": "Live data"
+    },
+    "eyebrow": "Command center",
+    "panel": {
+      "monthSpend": "Month spend",
+      "pipeline": "Purchase request pipeline",
+      "sla": "Approval SLA"
+    },
+    "sla": {
+      "finance": "Finance approval",
+      "procurement": "Procurement review"
+    },
+    "stat": {
+      "completed": {
+        "hint": "Last 30 days",
+        "title": "On-time completion"
+      },
+      "pending": {
+        "hint": "Needs action today",
+        "title": "Pending"
+      },
+      "sla": {
+        "hint": "Near breach",
+        "title": "SLA risk"
+      },
+      "spend": {
+        "hint": "VND this month",
+        "title": "Total spend"
+      }
+    },
+    "table": {
+      "amount": "Amount",
+      "code": "PR code",
+      "owner": "Owner",
+      "status": "Status"
+    },
+    "title": "Procurement overview"
+  },
+  "error": {
+    "backDashboard": "Back to overview",
+    "forbidden": {
+      "message": "The current account does not have the required permission.",
+      "title": "Permission required"
+    },
+    "generic": "Something went wrong. Try again.",
+    "notFound": {
+      "message": "This route does not exist or has moved.",
+      "title": "Page not found"
+    },
+    "rateLimit": "Try again in a few minutes."
+  },
+  "language": {
+    "en": {
+      "short": "EN"
+    },
+    "switcher": "Switch language",
+    "vi": {
+      "short": "VI"
+    }
+  },
+  "nav": {
+    "admin": "Admin",
+    "approvals": "Approvals",
+    "dashboard": "Dashboard",
+    "openMenu": "Open menu",
+    "primary": "Primary navigation",
+    "procurement": "Procurement"
+  },
+  "notification": {
+    "open": "Open notifications"
+  },
+  "route": {
+    "admin": "Admin",
+    "approvals": "Approvals",
+    "dashboard": "Dashboard",
+    "procurement": "Procurement",
+    "uiShowcase": "UI library"
+  },
+  "shared": {
+    "breadcrumb": {
+      "label": "Breadcrumb"
+    },
+    "empty": {
+      "message": "No records match the current filters.",
+      "title": "No data"
+    },
+    "filter": {
+      "apply": "Apply",
+      "placeholder": "Search PR code, owner, status"
+    },
+    "modal": {
+      "body": "Shared modal for confirmations and compact forms.",
+      "close": "Close modal",
+      "open": "Open modal",
+      "title": "Confirm action"
+    },
+    "sla": {
+      "label": "SLA used"
+    },
+    "table": {
+      "next": "Next",
+      "pageSummary": "Page {{page}} / {{total}}",
+      "previous": "Previous"
+    },
+    "toast": {
+      "dismiss": "Dismiss notification"
+    }
+  },
+  "showcase": {
+    "eyebrow": "Design system",
+    "form": {
+      "error": "This field is required.",
+      "label": "Filter name"
+    },
+    "section": {
+      "actions": "Actions",
+      "data": "Status and data",
+      "feedback": "Empty state",
+      "forms": "Filters and forms",
+      "loading": "Loading state",
+      "table": "Data table",
+      "workflow": "Approval workflow"
+    },
+    "stat": {
+      "guard": "Permission",
+      "guardHint": "Code-based visibility",
+      "i18n": "Language",
+      "i18nHint": "ngx-translate",
+      "shell": "Components",
+      "shellHint": "MVP foundation"
+    },
+    "subtitle": "A quick review page for component states, responsiveness, and i18n.",
+    "table": {
+      "amount": "Amount",
+      "code": "Code",
+      "status": "Status"
+    },
+    "title": "eProcure UI library"
+  },
+  "status": {
+    "APPROVED": "Approved",
+    "CHANGES_REQUESTED": "Changes requested",
+    "PENDING_APPROVAL": "Pending approval",
+    "SUBMITTED": "Submitted",
+    "unknown": "Unknown"
+  },
+  "user": {
+    "noDepartment": "No department"
+  }
+}

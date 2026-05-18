@@ -26,3 +26,7 @@ dist/
 
 # Docker local overrides
 docker-compose.override.yml
+
+# Codex
+.codex
+.codex-runtime

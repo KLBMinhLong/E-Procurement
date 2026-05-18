@@ -1,0 +1,15 @@
+@if (open()) {
+  <div class="ep-modal" role="dialog" aria-modal="true">
+    <div class="ep-modal__panel">
+      <header>
+        <h2>{{ title() }}</h2>
+        <ep-button variant="ghost" [ariaLabel]="'shared.modal.close' | translate" (click)="close.emit()">
+          <ep-icon name="x"></ep-icon>
+        </ep-button>
+      </header>
+      <div class="ep-modal__body">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  </div>
+}

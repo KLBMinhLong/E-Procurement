@@ -1,0 +1,131 @@
+.showcase {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  display: grid;
+  gap: var(--spacing-6);
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding: var(--spacing-6);
+  width: 100%;
+}
+
+.showcase__header {
+  align-items: start;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+}
+
+.showcase__header > div,
+.showcase__section,
+.showcase__grid {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.showcase__header p,
+.showcase__header h1,
+.showcase__header span,
+.showcase__section h2 {
+  margin: 0;
+}
+
+.showcase__header p {
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+}
+
+.showcase__header h1 {
+  font-size: var(--font-size-3xl);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.showcase__header span {
+  color: var(--color-text-secondary);
+  display: block;
+  max-width: var(--showcase-copy-width);
+  overflow-wrap: anywhere;
+}
+
+.showcase__grid {
+  display: grid;
+  gap: var(--spacing-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.showcase__section {
+  background: var(--color-surface);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  display: grid;
+  gap: var(--spacing-4);
+  overflow: hidden;
+  padding: var(--spacing-4);
+}
+
+.showcase__section h2 {
+  font-size: var(--font-size-lg);
+}
+
+.showcase__row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.showcase__form {
+  display: grid;
+  gap: var(--spacing-4);
+  max-width: var(--showcase-form-width);
+}
+
+.showcase__split {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.showcase__split > div {
+  display: grid;
+  gap: var(--spacing-4);
+}
+
+@media (max-width: 900px) {
+  .showcase {
+    padding: var(--spacing-4);
+  }
+
+  .showcase__header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .showcase__header h1 {
+    font-size: var(--font-size-2xl);
+    max-width: calc(100vw - var(--spacing-8));
+  }
+
+  .showcase__header span {
+    max-width: calc(100vw - var(--spacing-8));
+  }
+
+  .showcase__grid,
+  .showcase__split {
+    grid-template-columns: 1fr;
+  }
+
+  .showcase__row ep-button {
+    flex: 1 1 var(--mobile-button-min-width);
+  }
+}
+
+@media (max-width: 480px) {
+  .showcase__row ep-button {
+    flex-basis: 100%;
+  }
+}

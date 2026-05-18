@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.ep-card {
+  background: var(--color-surface);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-1);
+}
+
+.ep-card--raised {
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-2);
+}

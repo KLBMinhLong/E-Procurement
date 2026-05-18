@@ -1,0 +1,185 @@
+{
+  "accessibility": {
+    "skipToContent": "Bỏ qua điều hướng"
+  },
+  "action": {
+    "cancel": "Hủy",
+    "create": "Tạo mới",
+    "processing": "Đang xử lý"
+  },
+  "app": {
+    "name": "eProcure",
+    "tagline": "Enterprise Procurement"
+  },
+  "approval": {
+    "action": {
+      "approve": "Phê duyệt",
+      "reject": "Từ chối",
+      "requestChanges": "Yêu cầu bổ sung"
+    }
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "IAM bảo mật",
+      "failed": "Không thể đăng nhập. Vui lòng kiểm tra thông tin.",
+      "password": "Mật khẩu",
+      "submit": "Đăng nhập",
+      "subtitle": "Đăng nhập bằng cookie HttpOnly và phiên opaque token.",
+      "title": "Đăng nhập hệ thống mua sắm",
+      "username": "Tên đăng nhập hoặc email",
+      "validation": "Vui lòng nhập đủ thông tin đăng nhập."
+    },
+    "logout": "Đăng xuất"
+  },
+  "dashboard": {
+    "badge": {
+      "live": "Dữ liệu trực tiếp"
+    },
+    "eyebrow": "Trung tâm điều hành",
+    "panel": {
+      "monthSpend": "Chi tiêu tháng",
+      "pipeline": "Luồng yêu cầu mua sắm",
+      "sla": "SLA phê duyệt"
+    },
+    "sla": {
+      "finance": "Phê duyệt tài chính",
+      "procurement": "Kiểm tra mua hàng"
+    },
+    "stat": {
+      "completed": {
+        "hint": "Trong 30 ngày",
+        "title": "Hoàn tất đúng hạn"
+      },
+      "pending": {
+        "hint": "Cần xử lý hôm nay",
+        "title": "Đang chờ"
+      },
+      "sla": {
+        "hint": "Gần quá hạn",
+        "title": "Rủi ro SLA"
+      },
+      "spend": {
+        "hint": "VND trong tháng",
+        "title": "Tổng chi"
+      }
+    },
+    "table": {
+      "amount": "Giá trị",
+      "code": "Mã PR",
+      "owner": "Người tạo",
+      "status": "Trạng thái"
+    },
+    "title": "Tổng quan mua sắm"
+  },
+  "error": {
+    "backDashboard": "Về tổng quan",
+    "forbidden": {
+      "message": "Tài khoản hiện tại chưa có permission phù hợp.",
+      "title": "Không đủ quyền truy cập"
+    },
+    "generic": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "notFound": {
+      "message": "Đường dẫn không tồn tại hoặc đã được di chuyển.",
+      "title": "Không tìm thấy trang"
+    },
+    "rateLimit": "Vui lòng thử lại sau ít phút."
+  },
+  "language": {
+    "en": {
+      "short": "EN"
+    },
+    "switcher": "Chuyển ngôn ngữ",
+    "vi": {
+      "short": "VI"
+    }
+  },
+  "nav": {
+    "admin": "Quản trị",
+    "approvals": "Phê duyệt",
+    "dashboard": "Tổng quan",
+    "openMenu": "Mở menu",
+    "primary": "Điều hướng chính",
+    "procurement": "Mua sắm"
+  },
+  "notification": {
+    "open": "Mở thông báo"
+  },
+  "route": {
+    "admin": "Quản trị",
+    "approvals": "Phê duyệt",
+    "dashboard": "Tổng quan",
+    "procurement": "Mua sắm",
+    "uiShowcase": "Thư viện giao diện"
+  },
+  "shared": {
+    "breadcrumb": {
+      "label": "Breadcrumb"
+    },
+    "empty": {
+      "message": "Bộ lọc hiện tại chưa có dữ liệu phù hợp.",
+      "title": "Chưa có dữ liệu"
+    },
+    "filter": {
+      "apply": "Áp dụng",
+      "placeholder": "Tìm mã PR, người tạo, trạng thái"
+    },
+    "modal": {
+      "body": "Modal dùng chung cho xác nhận thao tác và biểu mẫu ngắn.",
+      "close": "Đóng modal",
+      "open": "Mở modal",
+      "title": "Xác nhận thao tác"
+    },
+    "sla": {
+      "label": "SLA đã dùng"
+    },
+    "table": {
+      "next": "Sau",
+      "pageSummary": "Trang {{page}} / {{total}}",
+      "previous": "Trước"
+    },
+    "toast": {
+      "dismiss": "Đóng thông báo"
+    }
+  },
+  "showcase": {
+    "eyebrow": "Design system",
+    "form": {
+      "error": "Thông tin này là bắt buộc.",
+      "label": "Tên bộ lọc"
+    },
+    "section": {
+      "actions": "Nút thao tác",
+      "data": "Trạng thái và dữ liệu",
+      "feedback": "Trạng thái rỗng",
+      "forms": "Bộ lọc và form",
+      "loading": "Loading state",
+      "table": "Bảng dữ liệu",
+      "workflow": "Workflow phê duyệt"
+    },
+    "stat": {
+      "guard": "Permission",
+      "guardHint": "Ẩn hiện theo code",
+      "i18n": "Ngôn ngữ",
+      "i18nHint": "ngx-translate",
+      "shell": "Component",
+      "shellHint": "MVP foundation"
+    },
+    "subtitle": "Trang kiểm tra nhanh component, state, responsive và i18n.",
+    "table": {
+      "amount": "Giá trị",
+      "code": "Mã",
+      "status": "Trạng thái"
+    },
+    "title": "Thư viện giao diện eProcure"
+  },
+  "status": {
+    "APPROVED": "Đã phê duyệt",
+    "CHANGES_REQUESTED": "Cần bổ sung",
+    "PENDING_APPROVAL": "Chờ phê duyệt",
+    "SUBMITTED": "Đã gửi",
+    "unknown": "Không xác định"
+  },
+  "user": {
+    "noDepartment": "Chưa có phòng ban"
+  }
+}

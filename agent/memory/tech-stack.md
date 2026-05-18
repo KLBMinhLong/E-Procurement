@@ -166,12 +166,13 @@ mybatis:
   "@angular/router": "^21.x",
   "@angular/forms": "^21.x",
   "@angular/common": "^21.x",
-  "@ngx-translate/core": "^15.x",
-  "@ngx-translate/http-loader": "^8.x",
+  "@ngx-translate/core": "^17.x",
+  "@ngx-translate/http-loader": "^17.x",
+  "@lucide/angular": "^1.x",
   "@stomp/stompjs": "^7.x",
   "sockjs-client": "^1.x",
   "rxjs": "^7.x",
-  "typescript": "~5.6"
+  "typescript": "~5.9"
 }
 ```
 

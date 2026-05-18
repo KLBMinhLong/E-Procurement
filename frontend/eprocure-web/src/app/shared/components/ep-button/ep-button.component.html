@@ -1,0 +1,19 @@
+<button
+  class="ep-button"
+  [type]="type()"
+  [class.ep-button--primary]="variant() === 'primary'"
+  [class.ep-button--secondary]="variant() === 'secondary'"
+  [class.ep-button--ghost]="variant() === 'ghost'"
+  [class.ep-button--danger]="variant() === 'danger'"
+  [class.ep-button--sm]="size() === 'sm'"
+  [class.ep-button--lg]="size() === 'lg'"
+  [disabled]="disabled()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-busy]="loading()">
+  @if (loading()) {
+    <ep-icon name="loader-circle" class="ep-button__spinner"></ep-icon>
+  } @else if (icon()) {
+    <ep-icon [name]="icon()!"></ep-icon>
+  }
+  <span class="ep-button__content"><ng-content></ng-content></span>
+</button>

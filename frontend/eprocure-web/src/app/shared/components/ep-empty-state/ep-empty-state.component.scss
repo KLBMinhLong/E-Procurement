@@ -1,0 +1,31 @@
+.ep-empty-state {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: grid;
+  gap: var(--spacing-3);
+  justify-items: center;
+  padding: var(--spacing-8);
+  text-align: center;
+}
+
+.ep-empty-state__icon {
+  align-items: center;
+  background: var(--color-surface-raised);
+  border: var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent);
+  display: inline-flex;
+  height: var(--empty-icon-size);
+  justify-content: center;
+  width: var(--empty-icon-size);
+}
+
+.ep-empty-state h2,
+.ep-empty-state p {
+  margin: 0;
+}
+
+.ep-empty-state h2 {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+}

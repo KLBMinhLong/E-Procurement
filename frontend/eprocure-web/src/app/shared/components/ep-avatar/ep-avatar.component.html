@@ -1,0 +1,7 @@
+<span class="ep-avatar">
+  @if (imageUrl()) {
+    <img [src]="imageUrl()!" [alt]="name()" />
+  } @else {
+    <span aria-hidden="true">{{ initials() }}</span>
+  }
+</span>
