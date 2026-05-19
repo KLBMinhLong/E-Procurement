@@ -125,3 +125,10 @@
 - Reason: E04 needs a runnable backend and stable domain/schema boundary before adding Create/Submit/Update/Cancel use cases and controllers.
 - Impact: Docker can start `pr-service` without Kafka; Flyway creates schema objects under `pr`, and domain tests cover Money precision, line item totals, draft creation, submit, cancel, and requester ownership checks.
 - Constraint: Controllers, MyBatis repositories, idempotency replay, Redis adapters, budget/inventory ports, and Kafka publishing remain deferred to the next E04 slices.
+
+## [2026-05-19] E04 Create Purchase Request command slice
+
+- Decision: Implement Create PR as the first vertical slice with gateway header authentication, permission-code `PR_CREATE`, Redis-backed idempotency replay, MyBatis inserts, and a small catalog-category seed migration.
+- Reason: Submit/update/cancel depend on a persisted draft PR path and a repeatable POST contract with `Idempotency-Key`.
+- Impact: `POST /api/v1/purchase-requests` creates draft PRs, stores line items, returns `ApiResponse<CreatedPurchaseRequestResponse>`, and replays cached responses with `Idempotency-Replayed: true`.
+- Constraint: Gateway is assumed to pass `X-User-ID`, `X-Department-ID`, and `X-Permissions`; list/detail/update/submit/cancel, catalog APIs, attachments, and Kafka events remain later E04 slices.

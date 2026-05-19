@@ -46,12 +46,15 @@ management:
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
+  type-handlers-package: com.eprocure.pr.infrastructure.persistence.typehandler
   configuration:
     map-underscore-to-camel-case: true
     default-fetch-size: 100
     default-statement-timeout: 30
 
 eprocure:
+  internal:
+    api-key: ${PR_INTERNAL_API_KEY:}
   pr:
     number-prefix: ${PR_NUMBER_PREFIX:PR}
     attachment-max-size-mb: ${PR_ATTACHMENT_MAX_SIZE_MB:20}

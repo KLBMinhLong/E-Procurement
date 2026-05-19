@@ -6,6 +6,9 @@
         </Console>
     </Appenders>
     <Loggers>
+        <Logger name="com.eprocure.pr.infrastructure.persistence.mapper" level="${env:LOG_LEVEL_SQL:-INFO}" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Logger name="com.eprocure" level="${env:LOG_LEVEL_APP:-DEBUG}" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>

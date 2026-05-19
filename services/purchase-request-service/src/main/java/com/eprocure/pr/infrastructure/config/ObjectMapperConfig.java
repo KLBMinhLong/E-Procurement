@@ -32,6 +32,7 @@ public class ObjectMapperConfig {
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .visibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
+                .visibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY)
                 .visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
                 .build();
     }
