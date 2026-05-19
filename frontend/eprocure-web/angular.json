@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": false
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -75,7 +76,8 @@
               "buildTarget": "eprocure-web:build:production"
             },
             "development": {
-              "buildTarget": "eprocure-web:build:development"
+              "buildTarget": "eprocure-web:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
