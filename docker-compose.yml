@@ -265,6 +265,56 @@ services:
       start_period: 75s
     logging: *default-logging
 
+  pr-service:
+    build:
+      context: .
+      dockerfile: services/purchase-request-service/Dockerfile
+    container_name: eprocure-pr-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: purchase-request-service
+      SERVER_PORT: 8082
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      PR_DB_HOST: postgres
+      PR_DB_PORT: 5432
+      PR_DB_NAME: db_procurement
+      PR_DB_SCHEMA: pr
+      PR_DB_USER: ${PR_DB_USER:-pr_user}
+      PR_DB_PASS: ${PR_DB_PASS:-pr_pass_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASS: ${REDIS_PASS:-}
+      PR_NUMBER_PREFIX: ${PR_NUMBER_PREFIX:-PR}
+      PR_ATTACHMENT_MAX_SIZE_MB: ${PR_ATTACHMENT_MAX_SIZE_MB:-20}
+      PR_EMERGENCY_MONTHLY_LIMIT: ${PR_EMERGENCY_MONTHLY_LIMIT:-3}
+    ports:
+      - "${PR_SERVICE_PORT:-8082}:8082"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    cpus: 0.25
+    mem_limit: 512m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 75s
+    logging: *default-logging
+
   nginx-gateway:
     image: nginx:1.25-alpine
     container_name: eprocure-nginx-gateway

@@ -126,9 +126,9 @@
 ### E04: Purchase Request Service
 | Task | Status |
 |---|---|
-| Spring Boot project setup | ⬜ |
-| Flyway migrations | ⬜ |
-| Domain model (PurchaseRequest, PrLineItem, Money) | ⬜ |
+| Spring Boot project setup | ✅ |
+| Flyway migrations | ✅ |
+| Domain model (PurchaseRequest, PrLineItem, Money) | ✅ |
 | CreatePR UseCase | ⬜ |
 | SubmitPR UseCase (budget check + inventory check) | ⬜ |
 | UpdatePR UseCase | ⬜ |
@@ -136,7 +136,7 @@
 | File attachment upload | ⬜ |
 | Catalog API | ⬜ |
 | Kafka event publishing | ⬜ |
-| Unit tests (domain + use cases) | ⬜ |
+| Unit tests (domain + use cases) | 🔄 |
 | Frontend: PR list page | ⬜ |
 | Frontend: PR create form | ⬜ |
 | Frontend: PR detail page | ⬜ |
