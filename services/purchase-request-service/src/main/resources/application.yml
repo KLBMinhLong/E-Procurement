@@ -1,0 +1,58 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: ${SERVICE_NAME:purchase-request-service}
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: jdbc:postgresql://${PR_DB_HOST:${DB_HOST:localhost}}:${PR_DB_PORT:${DB_PORT:5432}}/${PR_DB_NAME:${DB_NAME:db_procurement}}
+    username: ${PR_DB_USER:${DB_USER:pr_user}}
+    password: ${PR_DB_PASS:${DB_PASS:pr_pass_dev}}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: ${PR_DB_POOL_MIN:${DB_POOL_MIN:2}}
+      maximum-pool-size: ${PR_DB_POOL_MAX:${DB_POOL_MAX:5}}
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      validation-timeout: 3000
+      connection-test-query: SELECT 1
+      connection-init-sql: SET search_path TO ${PR_DB_SCHEMA:${DB_SCHEMA:pr}}
+      pool-name: ${SERVICE_NAME:purchase-request-service}-HikariPool
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: ${PR_DB_SCHEMA:${DB_SCHEMA:pr}}
+    baseline-on-migrate: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+  jackson:
+    time-zone: UTC
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+
+eprocure:
+  pr:
+    number-prefix: ${PR_NUMBER_PREFIX:PR}
+    attachment-max-size-mb: ${PR_ATTACHMENT_MAX_SIZE_MB:20}
+    emergency-monthly-limit: ${PR_EMERGENCY_MONTHLY_LIMIT:3}

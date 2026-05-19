@@ -20,6 +20,7 @@
 
     <modules>
         <module>services/iam-service</module>
+        <module>services/purchase-request-service</module>
         <module>infra/keycloak/eprocure-keycloak-provider</module>
     </modules>
 

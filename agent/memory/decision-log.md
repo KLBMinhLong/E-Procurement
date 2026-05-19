@@ -118,3 +118,10 @@
 - Reason: Realm import and provider runtime config must not persist development secrets or topology-specific URLs in source-controlled code.
 - Impact: `.env` must provide `KEYCLOAK_CLIENT_SECRET`, `IAM_PROVIDER_BASE_URL`, and `IAM_INTERNAL_API_KEY`; `IAM_PROVIDER_TIMEOUT_SECONDS` defaults to 3 seconds in the local sample. Login UI now centers the brand/action area and exposes Google login, forgot-password, and password visibility actions.
 - Constraint: Existing Keycloak volumes keep previously imported realm values; recreate Keycloak/PostgreSQL volumes when validating the new realm import.
+
+## [2026-05-19] E04 Purchase Request service foundation
+
+- Decision: Scaffold `purchase-request-service` as a Maven module with Spring Boot port 8082, PR datasource/Flyway config, Dockerfile, compose service, PR/catalog/attachment foundation migration, and domain POJO aggregate models.
+- Reason: E04 needs a runnable backend and stable domain/schema boundary before adding Create/Submit/Update/Cancel use cases and controllers.
+- Impact: Docker can start `pr-service` without Kafka; Flyway creates schema objects under `pr`, and domain tests cover Money precision, line item totals, draft creation, submit, cancel, and requester ownership checks.
+- Constraint: Controllers, MyBatis repositories, idempotency replay, Redis adapters, budget/inventory ports, and Kafka publishing remain deferred to the next E04 slices.
