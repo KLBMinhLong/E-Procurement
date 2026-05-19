@@ -47,3 +47,9 @@
 - Root cause: IAM session cache stored permission codes as a snapshot, so a user could keep stale authorities after an admin changed role-permission mapping.
 - Fix: Store only role codes in session cache, resolve authorities via `role-perm:{roleCode}` cache on each authentication, refresh role-perm cache when role permissions change, and evict active session cache when user roles change.
 - Prevention: Never cache user permission snapshots inside session data; permission checks must flow through role-permission cache with DB fallback.
+
+## [2026-05-19] Bug: PR service runtime failed on UUID and record conversion
+
+- Root cause: `purchase-request-service` initially lacked a PostgreSQL UUID MyBatis type handler, and the field-only `domainObjectMapper` disabled record creator visibility for nested value objects during domain-to-DB conversion.
+- Fix: Add `UuidTypeHandler`, register `mybatis.type-handlers-package`, and enable `PropertyAccessor.CREATOR` on `domainObjectMapper`.
+- Prevention: Validate new service slices with Docker runtime plus API calls, not only unit tests; keep field-based domain/entity conversion mappers able to construct record value objects.

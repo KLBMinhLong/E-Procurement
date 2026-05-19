@@ -129,14 +129,14 @@
 | Spring Boot project setup | ✅ |
 | Flyway migrations | ✅ |
 | Domain model (PurchaseRequest, PrLineItem, Money) | ✅ |
-| CreatePR UseCase | ⬜ |
+| CreatePR UseCase | ✅ |
 | SubmitPR UseCase (budget check + inventory check) | ⬜ |
 | UpdatePR UseCase | ⬜ |
 | CancelPR UseCase | ⬜ |
 | File attachment upload | ⬜ |
 | Catalog API | ⬜ |
 | Kafka event publishing | ⬜ |
-| Unit tests (domain + use cases) | 🔄 |
+| Unit tests (domain + CreatePR use case) | 🔄 |
 | Frontend: PR list page | ⬜ |
 | Frontend: PR create form | ⬜ |
 | Frontend: PR detail page | ⬜ |

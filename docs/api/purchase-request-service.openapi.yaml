@@ -544,7 +544,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /purchase-requests/{id}/submit:
-    post:
+    patch:
       tags: [Purchase Requests]
       summary: Submit PR để bắt đầu quy trình phê duyệt
       operationId: submitPurchaseRequest
@@ -611,7 +611,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /purchase-requests/{id}/submit-with-override:
-    post:
+    patch:
       tags: [Purchase Requests]
       summary: Submit PR dù vượt ngân sách (requester xác nhận)
       operationId: submitWithBudgetOverride
