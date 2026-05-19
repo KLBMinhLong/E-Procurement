@@ -2,6 +2,7 @@ package com.eprocure.pr.infrastructure.persistence.mapper;
 
 import com.eprocure.pr.infrastructure.persistence.entity.PrLineItemDbEntity;
 import com.eprocure.pr.infrastructure.persistence.entity.PurchaseRequestDbEntity;
+import com.eprocure.pr.infrastructure.persistence.typehandler.InventoryCheckResultTypeHandler;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -50,11 +51,40 @@ public interface PurchaseRequestMapper {
             """)
     void insertLineItem(@Param("entity") PrLineItemDbEntity entity, @Param("createdBy") UUID createdBy);
 
+    @Update("""
+            UPDATE pr.purchase_requests
+            SET title = #{title},
+                justification = #{justification},
+                priority = #{priority},
+                urgency_reason = #{urgencyReason},
+                status = #{status},
+                total_amount = #{totalAmount.amount},
+                currency = #{totalAmount.currency},
+                fiscal_year = #{fiscalYear},
+                need_by_date = #{needByDate},
+                related_contract_id = #{relatedContractId},
+                is_blanket_release = #{blanketRelease},
+                budget_allocated = #{budgetAllocatedAmount},
+                budget_committed = #{budgetCommittedAmount},
+                budget_spent = #{budgetSpentAmount},
+                budget_available = #{budgetAvailableAmount},
+                budget_check_status = #{budgetCheckStatus},
+                budget_warning_message = #{budgetWarningMessage},
+                inventory_check = #{inventoryCheck,jdbcType=OTHER,typeHandler=com.eprocure.pr.infrastructure.persistence.typehandler.InventoryCheckResultTypeHandler},
+                submitted_at = #{submittedAt},
+                updated_at = #{updatedAt},
+                updated_by = #{updatedBy}
+            WHERE id = #{id} AND is_deleted = false
+            """)
+    void updateRoot(PurchaseRequestDbEntity entity);
+
     @Select("""
             SELECT
                 id, pr_number, requester_id, department_id, title, justification, priority,
                 urgency_reason, status, total_amount, currency, fiscal_year, need_by_date,
-                related_contract_id, is_blanket_release, submitted_at, created_at, updated_at,
+                related_contract_id, is_blanket_release, budget_allocated, budget_committed,
+                budget_spent, budget_available, budget_check_status, budget_warning_message, inventory_check,
+                submitted_at, created_at, updated_at,
                 created_by, updated_by, is_deleted, deleted_at, deleted_by
             FROM pr.purchase_requests
             WHERE id = #{id} AND is_deleted = false
@@ -71,6 +101,13 @@ public interface PurchaseRequestMapper {
             @Result(property = "needByDate", column = "need_by_date"),
             @Result(property = "relatedContractId", column = "related_contract_id"),
             @Result(property = "blanketRelease", column = "is_blanket_release"),
+            @Result(property = "budgetAllocatedAmount", column = "budget_allocated"),
+            @Result(property = "budgetCommittedAmount", column = "budget_committed"),
+            @Result(property = "budgetSpentAmount", column = "budget_spent"),
+            @Result(property = "budgetAvailableAmount", column = "budget_available"),
+            @Result(property = "budgetCheckStatus", column = "budget_check_status"),
+            @Result(property = "budgetWarningMessage", column = "budget_warning_message"),
+            @Result(property = "inventoryCheck", column = "inventory_check", typeHandler = InventoryCheckResultTypeHandler.class),
             @Result(property = "submittedAt", column = "submitted_at"),
             @Result(property = "createdAt", column = "created_at"),
             @Result(property = "updatedAt", column = "updated_at"),
@@ -86,7 +123,9 @@ public interface PurchaseRequestMapper {
             SELECT
                 id, pr_number, requester_id, department_id, title, justification, priority,
                 urgency_reason, status, total_amount, currency, fiscal_year, need_by_date,
-                related_contract_id, is_blanket_release, submitted_at, created_at, updated_at,
+                related_contract_id, is_blanket_release, budget_allocated, budget_committed,
+                budget_spent, budget_available, budget_check_status, budget_warning_message, inventory_check,
+                submitted_at, created_at, updated_at,
                 created_by, updated_by, is_deleted, deleted_at, deleted_by
             FROM pr.purchase_requests
             WHERE pr_number = #{prNumber} AND is_deleted = false
@@ -103,6 +142,13 @@ public interface PurchaseRequestMapper {
             @Result(property = "needByDate", column = "need_by_date"),
             @Result(property = "relatedContractId", column = "related_contract_id"),
             @Result(property = "blanketRelease", column = "is_blanket_release"),
+            @Result(property = "budgetAllocatedAmount", column = "budget_allocated"),
+            @Result(property = "budgetCommittedAmount", column = "budget_committed"),
+            @Result(property = "budgetSpentAmount", column = "budget_spent"),
+            @Result(property = "budgetAvailableAmount", column = "budget_available"),
+            @Result(property = "budgetCheckStatus", column = "budget_check_status"),
+            @Result(property = "budgetWarningMessage", column = "budget_warning_message"),
+            @Result(property = "inventoryCheck", column = "inventory_check", typeHandler = InventoryCheckResultTypeHandler.class),
             @Result(property = "submittedAt", column = "submitted_at"),
             @Result(property = "createdAt", column = "created_at"),
             @Result(property = "updatedAt", column = "updated_at"),

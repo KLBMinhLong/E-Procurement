@@ -553,10 +553,10 @@ paths:
         Hệ thống sẽ tự động:
         1. Kiểm tra ngân sách phòng ban
         2. Kiểm tra tồn kho (nếu item có trong catalog)
-        3. Xác định approval chain theo approval rules
-        4. Kích hoạt Camunda BPMN process
+        3. Lưu snapshot kiểm tra ngân sách/tồn kho vào PR
+        4. Phát sự kiện `PURCHASE_REQUEST_SUBMITTED` cho Approval Engine
         
-        Nếu vượt ngân sách → trả về WARNING, cần gọi `/submit-with-override` để xác nhận.
+        Nếu vượt ngân sách → trả về PR_002, cần gọi `/submit-with-override` để xác nhận.
       parameters:
         - name: id
           in: path
@@ -576,18 +576,15 @@ paths:
                       data:
                         type: object
                         properties:
-                          status:
-                            type: string
-                            example: PENDING_APPROVAL
-                          approvalProcessId:
+                          id:
                             type: string
                             format: uuid
-                          firstApprover:
-                            type: object
-                            properties:
-                              fullName: { type: string }
-                              role:     { type: string }
-                              slaDeadline: { type: string, format: date-time }
+                          prNumber:
+                            type: string
+                            example: PR-2026-05-00001
+                          status:
+                            type: string
+                            example: SUBMITTED
         '422':
           description: Ngân sách không đủ — cần override (PR_002)
           content:
@@ -597,7 +594,7 @@ paths:
                   - $ref: '#/components/schemas/ErrorResponse'
                   - type: object
                     properties:
-                      data:
+                      details:
                         type: object
                         properties:
                           requiresOverrideApproval: { type: boolean, example: true }

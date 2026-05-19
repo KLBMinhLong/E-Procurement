@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.pr.domain.event.PrCancelledEvent;
 import com.eprocure.pr.domain.event.PrSubmittedEvent;
+import com.eprocure.pr.domain.model.vo.BudgetCheckResult;
+import com.eprocure.pr.domain.model.vo.InventoryCheckResult;
 import com.eprocure.pr.domain.model.vo.Money;
 import com.eprocure.pr.domain.model.vo.Quantity;
 import java.math.BigDecimal;
@@ -66,10 +68,12 @@ class PurchaseRequestTest {
         PurchaseRequest purchaseRequest = createDefaultPr(List.of(lineItem("Laptop Dell XPS 15", "2", "35000000")));
         Instant submittedAt = Instant.parse("2026-05-19T02:00:00Z");
 
-        purchaseRequest.submit(REQUESTER_ID, submittedAt);
+        purchaseRequest.submit(REQUESTER_ID, submittedAt, budgetPass(purchaseRequest), InventoryCheckResult.empty());
 
         assertThat(purchaseRequest.getStatus()).isEqualTo(PrStatus.SUBMITTED);
         assertThat(purchaseRequest.getSubmittedAt()).contains(submittedAt);
+        assertThat(purchaseRequest.getBudgetCheck()).contains(budgetPass(purchaseRequest));
+        assertThat(purchaseRequest.getInventoryCheck()).contains(InventoryCheckResult.empty());
         assertThat(purchaseRequest.pullDomainEvents())
                 .hasSize(1)
                 .first()
@@ -98,7 +102,11 @@ class PurchaseRequestTest {
     @Test
     void should_cancel_submitted_pr_by_requester() {
         PurchaseRequest purchaseRequest = createDefaultPr(List.of(lineItem("Laptop Dell XPS 15", "2", "35000000")));
-        purchaseRequest.submit(REQUESTER_ID, Instant.parse("2026-05-19T02:00:00Z"));
+        purchaseRequest.submit(
+                REQUESTER_ID,
+                Instant.parse("2026-05-19T02:00:00Z"),
+                budgetPass(purchaseRequest),
+                InventoryCheckResult.empty());
         purchaseRequest.pullDomainEvents();
 
         purchaseRequest.cancel(
@@ -128,6 +136,10 @@ class PurchaseRequestTest {
                 false,
                 lineItems,
                 Instant.parse("2026-05-19T01:00:00Z"));
+    }
+
+    private static BudgetCheckResult budgetPass(PurchaseRequest purchaseRequest) {
+        return BudgetCheckResult.pass(purchaseRequest.getTotalAmount());
     }
 
     private static PrLineItem lineItem(String itemName, String quantity, String unitPrice) {

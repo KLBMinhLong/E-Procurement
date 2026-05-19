@@ -132,3 +132,10 @@
 - Reason: Submit/update/cancel depend on a persisted draft PR path and a repeatable POST contract with `Idempotency-Key`.
 - Impact: `POST /api/v1/purchase-requests` creates draft PRs, stores line items, returns `ApiResponse<CreatedPurchaseRequestResponse>`, and replays cached responses with `Idempotency-Replayed: true`.
 - Constraint: Gateway is assumed to pass `X-User-ID`, `X-Department-ID`, and `X-Permissions`; list/detail/update/submit/cancel, catalog APIs, attachments, and Kafka events remain later E04 slices.
+
+## [2026-05-19] E04 Submit Purchase Request command slice
+
+- Decision: Implement Submit PR through `BudgetCheckPort`, `InventoryCheckPort`, and `PrSubmittedEventPublisher`, with local fallback adapters enabled by default through `eprocure.pr.integration.fallback-enabled`.
+- Reason: Submit must persist budget/inventory snapshots and emit the domain event without coupling the PR service to Finance, Inventory, or Kafka transports before those epics are implemented.
+- Impact: `PATCH /api/v1/purchase-requests/{id}/submit` validates requester/status/idempotency, stores `budget_check_status` plus `inventory_check`, transitions PR to `SUBMITTED`, and replays cached submit responses with `Idempotency-Replayed: true`.
+- Constraint: Real Finance/Inventory integrations, Kafka transport publishing, submit-with-override, approval process creation, and PR detail/list APIs remain later E04/E05 slices.

@@ -2,6 +2,9 @@ package com.eprocure.pr.infrastructure.persistence.entity;
 
 import com.eprocure.pr.domain.model.PrPriority;
 import com.eprocure.pr.domain.model.PrStatus;
+import com.eprocure.pr.domain.model.vo.BudgetCheckResult;
+import com.eprocure.pr.domain.model.vo.BudgetCheckStatus;
+import com.eprocure.pr.domain.model.vo.InventoryCheckResult;
 import com.eprocure.pr.domain.model.vo.Money;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -26,6 +29,14 @@ public class PurchaseRequestDbEntity {
     private LocalDate needByDate;
     private UUID relatedContractId;
     private boolean blanketRelease;
+    private BudgetCheckResult budgetCheck;
+    private BigDecimal budgetAllocatedAmount;
+    private BigDecimal budgetCommittedAmount;
+    private BigDecimal budgetSpentAmount;
+    private BigDecimal budgetAvailableAmount;
+    private BudgetCheckStatus budgetCheckStatus;
+    private String budgetWarningMessage;
+    private InventoryCheckResult inventoryCheck;
     private Instant submittedAt;
     private Instant createdAt;
     private Instant updatedAt;
@@ -125,10 +136,12 @@ public class PurchaseRequestDbEntity {
 
     public void setTotalAmountAmount(BigDecimal amount) {
         this.totalAmount = new Money(amount, totalAmount == null ? "VND" : totalAmount.currency());
+        rebuildBudgetCheck();
     }
 
     public void setTotalAmountCurrency(String currency) {
         this.totalAmount = new Money(totalAmount == null ? BigDecimal.ZERO : totalAmount.amount(), currency);
+        rebuildBudgetCheck();
     }
 
     public int getFiscalYear() {
@@ -161,6 +174,76 @@ public class PurchaseRequestDbEntity {
 
     public void setBlanketRelease(boolean blanketRelease) {
         this.blanketRelease = blanketRelease;
+    }
+
+    public BudgetCheckResult getBudgetCheck() {
+        return budgetCheck;
+    }
+
+    public void setBudgetCheck(BudgetCheckResult budgetCheck) {
+        this.budgetCheck = budgetCheck;
+    }
+
+    public BigDecimal getBudgetAllocatedAmount() {
+        return budgetCheck == null ? budgetAllocatedAmount : budgetCheck.allocated().amount();
+    }
+
+    public void setBudgetAllocatedAmount(BigDecimal budgetAllocatedAmount) {
+        this.budgetAllocatedAmount = budgetAllocatedAmount;
+        rebuildBudgetCheck();
+    }
+
+    public BigDecimal getBudgetCommittedAmount() {
+        return budgetCheck == null ? budgetCommittedAmount : budgetCheck.committed().amount();
+    }
+
+    public void setBudgetCommittedAmount(BigDecimal budgetCommittedAmount) {
+        this.budgetCommittedAmount = budgetCommittedAmount;
+        rebuildBudgetCheck();
+    }
+
+    public BigDecimal getBudgetSpentAmount() {
+        return budgetCheck == null ? budgetSpentAmount : budgetCheck.spent().amount();
+    }
+
+    public void setBudgetSpentAmount(BigDecimal budgetSpentAmount) {
+        this.budgetSpentAmount = budgetSpentAmount;
+        rebuildBudgetCheck();
+    }
+
+    public BigDecimal getBudgetAvailableAmount() {
+        return budgetCheck == null ? budgetAvailableAmount : budgetCheck.available().amount();
+    }
+
+    public void setBudgetAvailableAmount(BigDecimal budgetAvailableAmount) {
+        this.budgetAvailableAmount = budgetAvailableAmount;
+        rebuildBudgetCheck();
+    }
+
+    public BudgetCheckStatus getBudgetCheckStatus() {
+        return budgetCheck == null ? budgetCheckStatus : budgetCheck.status();
+    }
+
+    public void setBudgetCheckStatus(BudgetCheckStatus budgetCheckStatus) {
+        this.budgetCheckStatus = budgetCheckStatus;
+        rebuildBudgetCheck();
+    }
+
+    public String getBudgetWarningMessage() {
+        return budgetCheck == null ? budgetWarningMessage : budgetCheck.warningMessage();
+    }
+
+    public void setBudgetWarningMessage(String budgetWarningMessage) {
+        this.budgetWarningMessage = budgetWarningMessage;
+        rebuildBudgetCheck();
+    }
+
+    public InventoryCheckResult getInventoryCheck() {
+        return inventoryCheck;
+    }
+
+    public void setInventoryCheck(InventoryCheckResult inventoryCheck) {
+        this.inventoryCheck = inventoryCheck;
     }
 
     public Instant getSubmittedAt() {
@@ -225,5 +308,23 @@ public class PurchaseRequestDbEntity {
 
     public void setDeletedBy(UUID deletedBy) {
         this.deletedBy = deletedBy;
+    }
+
+    private void rebuildBudgetCheck() {
+        if (budgetAllocatedAmount == null
+                || budgetCommittedAmount == null
+                || budgetSpentAmount == null
+                || budgetAvailableAmount == null
+                || budgetCheckStatus == null) {
+            return;
+        }
+        String currency = totalAmount == null ? "VND" : totalAmount.currency();
+        this.budgetCheck = new BudgetCheckResult(
+                new Money(budgetAllocatedAmount, currency),
+                new Money(budgetCommittedAmount, currency),
+                new Money(budgetSpentAmount, currency),
+                new Money(budgetAvailableAmount, currency),
+                budgetCheckStatus,
+                budgetWarningMessage);
     }
 }
