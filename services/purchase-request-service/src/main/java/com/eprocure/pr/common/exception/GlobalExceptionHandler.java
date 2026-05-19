@@ -24,7 +24,11 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = exception.getErrorCode();
         log.warn("[EXCEPTION][{}] {} | path={}", errorCode.code(), errorCode.message(), request.getRequestURI());
         return ResponseEntity.status(errorCode.status())
-                .body(ApiResponse.failure(errorCode.code(), errorCode.message(), null, RequestIdUtil.resolve(request)));
+                .body(ApiResponse.failure(
+                        errorCode.code(),
+                        errorCode.message(),
+                        exception.getDetails().orElse(null),
+                        RequestIdUtil.resolve(request)));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

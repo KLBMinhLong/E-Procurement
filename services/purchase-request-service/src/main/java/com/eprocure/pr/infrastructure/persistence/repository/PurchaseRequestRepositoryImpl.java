@@ -38,7 +38,9 @@ public class PurchaseRequestRepositoryImpl implements PurchaseRequestRepository 
 
     @Override
     public void update(PurchaseRequest purchaseRequest) {
-        throw new UnsupportedOperationException("PurchaseRequest update is not implemented in this slice");
+        log.debug("[REPO] update purchase_requests | id={}", purchaseRequest.getId());
+        PurchaseRequestDbEntity entity = objectMapper.convertValue(purchaseRequest, PurchaseRequestDbEntity.class);
+        mapper.updateRoot(entity);
     }
 
     @Override

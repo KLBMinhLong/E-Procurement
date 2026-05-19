@@ -2,6 +2,8 @@ package com.eprocure.pr.domain.model;
 
 import com.eprocure.pr.domain.event.PrCancelledEvent;
 import com.eprocure.pr.domain.event.PrSubmittedEvent;
+import com.eprocure.pr.domain.model.vo.BudgetCheckResult;
+import com.eprocure.pr.domain.model.vo.InventoryCheckResult;
 import com.eprocure.pr.domain.model.vo.Money;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,6 +33,8 @@ public class PurchaseRequest {
     private LocalDate needByDate;
     private UUID relatedContractId;
     private boolean blanketRelease;
+    private BudgetCheckResult budgetCheck;
+    private InventoryCheckResult inventoryCheck;
     private Instant submittedAt;
     private Instant createdAt;
     private Instant updatedAt;
@@ -141,11 +145,17 @@ public class PurchaseRequest {
         replaceLineItems(lineItems);
     }
 
-    public void submit(UUID actorId, Instant submittedAt) {
+    public void submit(
+            UUID actorId,
+            Instant submittedAt,
+            BudgetCheckResult budgetCheck,
+            InventoryCheckResult inventoryCheck) {
         ensureEditableBy(actorId);
         if (needByDate == null) {
             throw new IllegalStateException("needByDate is required before submit");
         }
+        this.budgetCheck = Objects.requireNonNull(budgetCheck, "budgetCheck must not be null");
+        this.inventoryCheck = Objects.requireNonNull(inventoryCheck, "inventoryCheck must not be null");
         this.status = PrStatus.SUBMITTED;
         this.submittedAt = Objects.requireNonNull(submittedAt, "submittedAt must not be null");
         this.updatedAt = submittedAt;
@@ -267,6 +277,14 @@ public class PurchaseRequest {
 
     public boolean isBlanketRelease() {
         return blanketRelease;
+    }
+
+    public Optional<BudgetCheckResult> getBudgetCheck() {
+        return Optional.ofNullable(budgetCheck);
+    }
+
+    public Optional<InventoryCheckResult> getInventoryCheck() {
+        return Optional.ofNullable(inventoryCheck);
     }
 
     public Optional<Instant> getSubmittedAt() {

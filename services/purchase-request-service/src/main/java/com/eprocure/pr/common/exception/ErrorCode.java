@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     IAM_004("IAM_004", "Permission denied", HttpStatus.FORBIDDEN),
     PR_001("PR_001", "Purchase request not found", HttpStatus.NOT_FOUND),
+    PR_002("PR_002", "Department budget is insufficient", HttpStatus.UNPROCESSABLE_ENTITY),
     PR_003("PR_003", "Purchase request cannot be changed in current status", HttpStatus.CONFLICT),
     PR_006("PR_006", "Urgency reason must be at least 100 characters", HttpStatus.UNPROCESSABLE_ENTITY),
     PR_010("PR_010", "Quantity must be greater than zero", HttpStatus.BAD_REQUEST),

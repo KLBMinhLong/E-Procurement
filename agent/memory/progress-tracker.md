@@ -130,13 +130,13 @@
 | Flyway migrations | ✅ |
 | Domain model (PurchaseRequest, PrLineItem, Money) | ✅ |
 | CreatePR UseCase | ✅ |
-| SubmitPR UseCase (budget check + inventory check) | ⬜ |
+| SubmitPR UseCase (budget check + inventory check) | ✅ |
 | UpdatePR UseCase | ⬜ |
 | CancelPR UseCase | ⬜ |
 | File attachment upload | ⬜ |
 | Catalog API | ⬜ |
 | Kafka event publishing | ⬜ |
-| Unit tests (domain + CreatePR use case) | 🔄 |
+| Unit tests (domain + CreatePR use case) | 🔄 | Domain + CreatePR + SubmitPR covered |
 | Frontend: PR list page | ⬜ |
 | Frontend: PR create form | ⬜ |
 | Frontend: PR detail page | ⬜ |

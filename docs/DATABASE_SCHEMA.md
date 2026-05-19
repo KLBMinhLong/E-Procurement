@@ -317,6 +317,8 @@ CREATE TABLE pr.purchase_requests (
     budget_spent        NUMERIC(19,4),
     budget_available    NUMERIC(19,4),
     budget_check_status VARCHAR(20),                        -- 'PASS','WARNING','FAIL'
+    budget_warning_message TEXT,
+    inventory_check     JSONB,                              -- Inventory check snapshot at submit
 
     -- Emergency tracking
     emergency_abuse_count SMALLINT      NOT NULL DEFAULT 0,
@@ -326,6 +328,7 @@ CREATE TABLE pr.purchase_requests (
     updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     submitted_at        TIMESTAMPTZ,
     created_by          UUID            NOT NULL,
+    updated_by          UUID,
     is_deleted          BOOLEAN         NOT NULL DEFAULT FALSE,
     deleted_at          TIMESTAMPTZ,
     deleted_by          UUID,
