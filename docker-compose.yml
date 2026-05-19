@@ -285,7 +285,7 @@ services:
       - "${GATEWAY_PORT:-8080}:80"
     volumes:
       - ./infra/nginx/templates/default.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - ./infra/nginx/templates/proxy-common.conf.template:/etc/nginx/templates/proxy-common.conf.template:ro
+      - ./infra/nginx/templates/proxy-common.template:/etc/nginx/templates/proxy-common.template:ro
     networks:
       - eprocure-net
     cpus: 0.10

@@ -1,0 +1,15 @@
+{
+  "/api/v1": {
+    "target": "http://localhost:58080",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/ws": {
+    "target": "http://localhost:58080",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true,
+    "logLevel": "debug"
+  }
+}
