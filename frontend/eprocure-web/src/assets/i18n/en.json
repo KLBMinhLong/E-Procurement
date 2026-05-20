@@ -111,6 +111,9 @@
   },
   "nav": {
     "admin": "Admin",
+    "adminUsers": "User Directory",
+    "adminRbac": "Permissions Matrix",
+    "adminOrgChart": "Department Chart",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "openMenu": "Open menu",

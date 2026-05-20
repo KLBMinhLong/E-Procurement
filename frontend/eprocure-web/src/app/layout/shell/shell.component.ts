@@ -45,7 +45,9 @@ export class ShellComponent {
     { icon: 'layout-dashboard', labelKey: 'nav.dashboard', route: '/dashboard' },
     { icon: 'shopping-cart', labelKey: 'nav.purchaseRequest', route: '/procurement', permissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL', 'ADMIN_USER_VIEW'] },
     { icon: 'inbox', labelKey: 'nav.approvals', route: '/approvals', permissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
-    { icon: 'users', labelKey: 'nav.admin', route: '/admin', permissions: ['ADMIN_USER_VIEW', 'SYSTEM_CONFIG'] }
+    { icon: 'users', labelKey: 'nav.adminUsers', route: '/admin/users', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] },
+    { icon: 'shield', labelKey: 'nav.adminRbac', route: '/admin/rbac', permissions: ['ADMIN_ROLE_MANAGE'] },
+    { icon: 'hierarchy', labelKey: 'nav.adminOrgChart', route: '/admin/org-chart', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] }
   ].filter((item) => this.permissionService.hasAnyPermission(item.permissions)));
 
   toggleSidebar(): void {
