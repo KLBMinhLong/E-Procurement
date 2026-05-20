@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../../core/http/api-tokens';
 import { ApiResponse } from '../../../core/models/api-response.model';
 import { AdminPermission, AdminRole } from '../models/admin.model';
@@ -18,9 +19,32 @@ export class AdminRbacService {
   }
 
   getPermissions(): Observable<ApiResponse<AdminPermission[]>> {
-    return this.http.get<ApiResponse<AdminPermission[]>>(
+    return this.http.get<ApiResponse<any>>(
       `${this.baseUrl}/permissions`,
       { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          const flatPermissions: AdminPermission[] = [];
+          for (const [moduleName, permList] of Object.entries(response.data)) {
+            if (Array.isArray(permList)) {
+              for (const perm of permList) {
+                flatPermissions.push({
+                  code: perm.code,
+                  name: perm.name,
+                  description: perm.description || null,
+                  module: moduleName
+                });
+              }
+            }
+          }
+          return {
+            ...response,
+            data: flatPermissions
+          } as ApiResponse<AdminPermission[]>;
+        }
+        return response;
+      })
     );
   }
 

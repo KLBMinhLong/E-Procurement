@@ -5,7 +5,8 @@
   "action": {
     "cancel": "Cancel",
     "create": "Create",
-    "processing": "Processing"
+    "processing": "Processing",
+    "refresh": "Refresh"
   },
   "app": {
     "name": "eProcure",

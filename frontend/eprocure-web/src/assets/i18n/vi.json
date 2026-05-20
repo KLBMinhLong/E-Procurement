@@ -5,7 +5,8 @@
   "action": {
     "cancel": "Hủy",
     "create": "Tạo mới",
-    "processing": "Đang xử lý"
+    "processing": "Đang xử lý",
+    "refresh": "Tải lại"
   },
   "app": {
     "name": "eProcure",

@@ -42,6 +42,23 @@
 
   .matrix-table-wrapper {
     overflow-x: auto;
+
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 4px;
+      transition: background 0.15s ease;
+
+      &:hover {
+        background: rgba(100, 116, 139, 0.6);
+      }
+    }
   }
 
   .matrix-table {
@@ -185,7 +202,7 @@
     .matrix-switch {
       position: relative;
       width: 40px;
-      height: 20px;
+      height: 22px;
       background-color: var(--bg-input, #0f172a);
       border: 1px solid var(--border-color, #334155);
       border-radius: 999px;
@@ -195,20 +212,21 @@
       padding: 2px;
 
       &__handle {
-        width: 14px;
-        height: 14px;
-        background-color: var(--text-muted, #64748b);
+        width: 16px;
+        height: 16px;
+        background-color: #cbd5e1;
         border-radius: 50%;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
       }
 
       &--active {
-        background-color: rgba(59, 130, 246, 0.2);
+        background-color: var(--color-primary, #3b82f6);
         border-color: var(--color-primary, #3b82f6);
 
         .matrix-switch__handle {
-          transform: translateX(20px);
-          background-color: var(--color-primary, #3b82f6);
+          transform: translateX(18px);
+          background-color: #ffffff;
         }
       }
     }

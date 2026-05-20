@@ -47,7 +47,7 @@ export class ShellComponent {
     { icon: 'inbox', labelKey: 'nav.approvals', route: '/approvals', permissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
     { icon: 'users', labelKey: 'nav.adminUsers', route: '/admin/users', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] },
     { icon: 'shield', labelKey: 'nav.adminRbac', route: '/admin/rbac', permissions: ['ADMIN_ROLE_MANAGE'] },
-    { icon: 'hierarchy', labelKey: 'nav.adminOrgChart', route: '/admin/org-chart', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] }
+    { icon: 'network', labelKey: 'nav.adminOrgChart', route: '/admin/org-chart', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] }
   ].filter((item) => this.permissionService.hasAnyPermission(item.permissions)));
 
   toggleSidebar(): void {

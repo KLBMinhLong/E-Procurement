@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../../core/http/api-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
@@ -17,6 +18,15 @@ export class AdminUserService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
+  private mapUser<T>(user: any): T {
+    if (!user) return user;
+    return {
+      ...user,
+      departmentId: user.department?.id || null,
+      departmentName: user.department?.name || null
+    } as T;
+  }
+
   list(filter: UserListFilter): Observable<ApiResponse<AdminUserSummary[]> & { meta: PageMeta }> {
     let params = new HttpParams()
       .set('page', filter.page)
@@ -29,6 +39,16 @@ export class AdminUserService {
     return this.http.get<ApiResponse<AdminUserSummary[]> & { meta: PageMeta }>(
       `${this.baseUrl}/users`,
       { params, withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            ...response,
+            data: response.data.map(user => this.mapUser<AdminUserSummary>(user))
+          };
+        }
+        return response;
+      })
     );
   }
 
@@ -36,6 +56,16 @@ export class AdminUserService {
     return this.http.get<ApiResponse<AdminUserDetail>>(
       `${this.baseUrl}/users/${id}`,
       { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          return {
+            ...response,
+            data: this.mapUser<AdminUserDetail>(response.data)
+          };
+        }
+        return response;
+      })
     );
   }
 
@@ -44,6 +74,16 @@ export class AdminUserService {
       `${this.baseUrl}/users`,
       request,
       { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          return {
+            ...response,
+            data: this.mapUser<AdminUserDetail>(response.data)
+          };
+        }
+        return response;
+      })
     );
   }
 
@@ -52,6 +92,16 @@ export class AdminUserService {
       `${this.baseUrl}/users/${id}`,
       request,
       { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          return {
+            ...response,
+            data: this.mapUser<AdminUserDetail>(response.data)
+          };
+        }
+        return response;
+      })
     );
   }
 
