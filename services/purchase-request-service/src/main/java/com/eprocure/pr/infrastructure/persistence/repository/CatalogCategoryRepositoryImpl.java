@@ -63,7 +63,7 @@ public class CatalogCategoryRepositoryImpl implements CatalogCategoryRepository 
                 requiresRfqAbove,
                 entity.isCapex(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt(),
+                entity.getUpdatedAt() != null ? entity.getUpdatedAt() : entity.getCreatedAt(),
                 entity.isDeleted()
         );
     }

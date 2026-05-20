@@ -1,0 +1,176 @@
+<section class="pr-list-page" aria-labelledby="pr-list-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'pr.list.eyebrow' | translate }}</span>
+      <h1 id="pr-list-heading" class="page-header__title">{{ 'pr.list.title' | translate }}</h1>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        *epHasPermission="'PR_CREATE'"
+        id="btn-create-pr"
+        variant="primary"
+        icon="plus"
+        (click)="navigateCreate()">
+        {{ 'pr.list.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <!-- ── Toolbar ──────────────────────────────────────────────────── -->
+  <div class="pr-toolbar">
+    <ep-filter-bar
+      id="pr-search"
+      placeholderKey="pr.list.filter.placeholder"
+      [value]="searchQuery()"
+      (valueChange)="onSearchChange($event)"
+      (refresh)="loadData()">
+    </ep-filter-bar>
+
+    <div class="pr-toolbar__filters">
+      <!-- Status filter -->
+      <div class="filter-chip-group">
+        <button
+          id="filter-status-all"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === ''"
+          (click)="onStatusChange('')">
+          {{ 'pr.list.filter.allStatus' | translate }}
+        </button>
+        @for (s of statuses; track s) {
+          <button
+            [id]="'filter-status-' + s"
+            class="filter-chip"
+            [class.filter-chip--active]="activeStatus() === s"
+            (click)="onStatusChange(s)">
+            {{ ('pr.status.' + s) | translate }}
+          </button>
+        }
+      </div>
+
+      <!-- Priority filter -->
+      <div class="filter-chip-group">
+        <button
+          id="filter-priority-all"
+          class="filter-chip"
+          [class.filter-chip--active]="activePriority() === ''"
+          (click)="onPriorityChange('')">
+          {{ 'pr.list.filter.allPriority' | translate }}
+        </button>
+        @for (p of priorities; track p) {
+          <button
+            [id]="'filter-priority-' + p"
+            class="filter-chip"
+            [class.filter-chip--active]="activePriority() === p"
+            (click)="onPriorityChange(p)">
+            {{ ('pr.priority.' + p) | translate }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Content ──────────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="clipboard-list"
+      [title]="'pr.list.empty.title' | translate"
+      [message]="'pr.list.empty.message' | translate" />
+  } @else {
+    <div class="pr-table-wrapper">
+      <table class="pr-table" role="grid" aria-labelledby="pr-list-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'pr.list.col.number' | translate }}</th>
+            <th scope="col">{{ 'pr.list.col.title' | translate }}</th>
+            <th scope="col">{{ 'pr.list.col.priority' | translate }}</th>
+            <th scope="col">{{ 'pr.list.col.status' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'pr.list.col.amount' | translate }}</th>
+            <th scope="col">{{ 'pr.list.col.requester' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'pr.list.col.createdAt' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pr of items(); track pr.id) {
+            <tr
+              [id]="'pr-row-' + pr.id"
+              class="pr-table__row"
+              role="button"
+              tabindex="0"
+              (click)="onRowClick({ id: pr.id })"
+              (keydown.enter)="onRowClick({ id: pr.id })">
+
+              <td class="pr-table__number">
+                <span class="mono">{{ pr.prNumber }}</span>
+              </td>
+
+              <td class="pr-table__title">
+                <span class="pr-table__title-text">{{ pr.title }}</span>
+              </td>
+
+              <td>
+                <ep-badge
+                  [tone]="priorityTone[pr.priority] || 'neutral'"
+                  [labelKey]="pr.priority ? 'pr.priority.' + pr.priority : null" />
+              </td>
+
+              <td>
+                <ep-badge
+                  [tone]="statusTone[pr.status] || 'neutral'"
+                  [labelKey]="pr.status ? 'pr.status.' + pr.status : null" />
+              </td>
+
+              <td class="align-right">
+                <ep-amount [value]="pr.totalAmount?.amount" [currency]="pr.totalAmount?.currency || 'VND'" />
+              </td>
+
+              <td class="pr-table__requester">
+                <span class="pr-table__requester-name">{{ pr.requester?.fullName || pr['requesterId'] }}</span>
+                <span class="pr-table__requester-dept">{{ pr.requester?.department || pr['departmentId'] }}</span>
+              </td>
+
+              <td class="align-right pr-table__date">
+                {{ pr.createdAt ? formatDate(pr.createdAt) : '--' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (meta(); as m) {
+      <div class="pr-pagination">
+        <span class="pr-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: m.page, total: m.totalPages } }}
+          &nbsp;·&nbsp;
+          {{ m.totalElements }} {{ 'pr.list.totalItems' | translate }}
+        </span>
+        <div class="pr-pagination__controls">
+          <ep-button
+            id="btn-prev-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="m.isFirst"
+            (click)="onPageChange({ page: m.page - 1, size: m.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="m.isLast"
+            (click)="onPageChange({ page: m.page + 1, size: m.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+</section>

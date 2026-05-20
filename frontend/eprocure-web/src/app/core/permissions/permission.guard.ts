@@ -5,13 +5,13 @@ import { PermissionService } from './permission.service';
 export const permissionGuard: CanActivateFn = (route) => {
   const permissionService = inject(PermissionService);
   const router = inject(Router);
-  const requiredPermission = route.data['requiredPermission'];
+  const requiredPermissions = route.data['requiredPermissions'] as string[] | undefined;
 
-  if (typeof requiredPermission !== 'string') {
+  if (!requiredPermissions || !Array.isArray(requiredPermissions)) {
     return true;
   }
 
-  return permissionService.hasPermission(requiredPermission)
+  return permissionService.hasAnyPermission(requiredPermissions)
     ? true
     : router.createUrlTree(['/forbidden']);
 };

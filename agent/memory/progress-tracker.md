@@ -138,9 +138,9 @@
 | Catalog API | ✅ |
 | Kafka event publishing | ✅ |
 | Unit tests (domain + CreatePR + SubmitPR + UpdatePR + CancelPR) | ✅ | 26 tests pass |
-| Frontend: PR list page | ⬜ |
-| Frontend: PR create form | ⬜ |
-| Frontend: PR detail page | ⬜ |
+| Frontend: PR list page | ✅ |
+| Frontend: PR create form | ✅ |
+| Frontend: PR detail page | ✅ |
 
 ### E05: Approval Engine
 | Task | Status |

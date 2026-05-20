@@ -10,6 +10,7 @@ import com.eprocure.iam.application.port.out.PublicKeyInfo;
 import com.eprocure.iam.application.service.GoogleOAuthRedirect;
 import com.eprocure.iam.application.service.LoginResult;
 import com.eprocure.iam.application.service.TwoFactorVerificationResult;
+import com.eprocure.iam.application.service.CurrentUserView;
 import com.eprocure.iam.application.service.UserSummaryView;
 import com.eprocure.iam.application.usecase.GetPublicKeyUseCase;
 import com.eprocure.iam.application.usecase.ForgotPasswordUseCase;
@@ -60,6 +61,7 @@ public class AuthController {
     private final VerifyTwoFactorUseCase verifyTwoFactorUseCase;
     private final StartGoogleOAuthUseCase startGoogleOAuthUseCase;
     private final HandleGoogleOAuthCallbackUseCase handleGoogleOAuthCallbackUseCase;
+    private final com.eprocure.iam.application.usecase.GetCurrentUserUseCase getCurrentUserUseCase;
     private final String cookieName;
     private final String twoFactorCookieName;
     private final String oauthStateCookieName;
@@ -79,6 +81,7 @@ public class AuthController {
             VerifyTwoFactorUseCase verifyTwoFactorUseCase,
             StartGoogleOAuthUseCase startGoogleOAuthUseCase,
             HandleGoogleOAuthCallbackUseCase handleGoogleOAuthCallbackUseCase,
+            com.eprocure.iam.application.usecase.GetCurrentUserUseCase getCurrentUserUseCase,
             @Value("${eprocure.security.cookie-name:ep_session}") String cookieName,
             @Value("${eprocure.two-factor.challenge-cookie-name:ep_2fa}") String twoFactorCookieName,
             @Value("${eprocure.google-oauth.state-cookie-name:ep_oauth_state}") String oauthStateCookieName,
@@ -96,6 +99,7 @@ public class AuthController {
         this.verifyTwoFactorUseCase = verifyTwoFactorUseCase;
         this.startGoogleOAuthUseCase = startGoogleOAuthUseCase;
         this.handleGoogleOAuthCallbackUseCase = handleGoogleOAuthCallbackUseCase;
+        this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.cookieName = cookieName;
         this.twoFactorCookieName = twoFactorCookieName;
         this.oauthStateCookieName = oauthStateCookieName;
@@ -236,6 +240,28 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie(result.rawToken()).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(twoFactorCookieName).toString());
         return ResponseEntity.ok(ApiResponse.success(result.user(), RequestIdUtil.resolve(request)));
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<Void> verify(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        // Called by API Gateway (Nginx auth_request)
+        if (principal == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        // Use the use case to fetch the current user's full view (which includes departmentId)
+        CurrentUserView userView = getCurrentUserUseCase.execute(principal.getId());
+        String deptId = userView.department() != null ? userView.department().id().toString() : "";
+        String permissions = String.join(",", userView.permissions());
+        
+        return ResponseEntity.ok()
+                .header("X-User-ID", userView.id().toString())
+                .header("X-Department-ID", deptId)
+                .header("X-Username", userView.username())
+                .header("X-Full-Name", userView.fullName())
+                .header("X-Permissions", permissions)
+                .build();
     }
 
     private ResponseCookie sessionCookie(String rawToken) {

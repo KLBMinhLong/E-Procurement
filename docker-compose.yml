@@ -336,6 +336,7 @@ services:
     volumes:
       - ./infra/nginx/templates/default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ./infra/nginx/templates/proxy-common.template:/etc/nginx/templates/proxy-common.template:ro
+      - ./infra/nginx/templates/proxy-protected.template:/etc/nginx/templates/proxy-protected.template:ro
     networks:
       - eprocure-net
     cpus: 0.10

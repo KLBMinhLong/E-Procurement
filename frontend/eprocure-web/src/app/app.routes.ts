@@ -1,11 +1,13 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { loginGuard } from './core/auth/login.guard';
 import { permissionGuard } from './core/permissions/permission.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 
 export const routes: Routes = [
   {
     path: 'login',
+    canActivate: [loginGuard],
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
   },
   {
@@ -39,23 +41,23 @@ export const routes: Routes = [
       },
       {
         path: 'procurement',
-        title: 'route.procurement',
         canActivate: [permissionGuard],
-        data: { requiredPermission: 'PR_VIEW_OWN' },
-        loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+        data: { requiredPermissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL', 'ADMIN_USER_VIEW'] },
+        loadChildren: () =>
+          import('./features/procurement/procurement.routes').then((m) => m.procurementRoutes)
       },
       {
         path: 'approvals',
         title: 'route.approvals',
         canActivate: [permissionGuard],
-        data: { requiredPermission: 'PR_APPROVE_L1' },
+        data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
         loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
       },
       {
         path: 'admin',
         title: 'route.admin',
         canActivate: [permissionGuard],
-        data: { requiredPermission: 'ADMIN_USER_VIEW' },
+        data: { requiredPermissions: ['ADMIN_USER_VIEW', 'SYSTEM_CONFIG'] },
         loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
       }
     ]

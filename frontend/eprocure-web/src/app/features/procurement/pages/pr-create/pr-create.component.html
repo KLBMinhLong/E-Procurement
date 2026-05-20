@@ -1,0 +1,341 @@
+<section class="pr-create-page" aria-labelledby="pr-create-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'pr.create.eyebrow' | translate }}</span>
+      <h1 id="pr-create-heading" class="page-header__title">{{ 'pr.create.title' | translate }}</h1>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pr-form" novalidate>
+    <div class="pr-form__layout">
+
+      <!-- ── LEFT COLUMN: main details ─────────────────────────── -->
+      <div class="pr-form__main">
+
+        <!-- Basic info card -->
+        <ep-card>
+          <div class="card-section">
+            <h2 class="card-section__title">{{ 'pr.create.section.basic' | translate }}</h2>
+
+            <ep-form-field
+              [label]="'pr.create.field.title' | translate"
+              [error]="fieldError('title') ? (fieldError('title')! | translate) : null">
+              <input
+                id="pr-title"
+                type="text"
+                formControlName="title"
+                class="ep-input"
+                [placeholder]="'pr.create.field.titlePlaceholder' | translate"
+                autocomplete="off">
+            </ep-form-field>
+
+            <ep-form-field
+              [label]="'pr.create.field.justification' | translate"
+              [error]="fieldError('justification') ? (fieldError('justification')! | translate) : null">
+              <textarea
+                id="pr-justification"
+                formControlName="justification"
+                class="ep-textarea"
+                rows="4"
+                [placeholder]="'pr.create.field.justificationPlaceholder' | translate">
+              </textarea>
+              <span class="field-hint">
+                {{ form.get('justification')?.value?.length || 0 }} / 50 {{ 'validation.minChars' | translate }}
+              </span>
+            </ep-form-field>
+
+            <div class="form-row">
+              <ep-form-field [label]="'pr.create.field.priority' | translate">
+                <div class="priority-selector">
+                  @for (p of priorities; track p) {
+                    <button
+                      type="button"
+                      [id]="'priority-' + p"
+                      class="priority-option"
+                      [class.priority-option--active]="form.get('priority')?.value === p"
+                      [class.priority-option--urgent]="p === 'URGENT'"
+                      [class.priority-option--emergency]="p === 'EMERGENCY'"
+                      (click)="form.get('priority')?.setValue(p)">
+                      {{ ('pr.priority.' + p) | translate }}
+                    </button>
+                  }
+                </div>
+              </ep-form-field>
+
+              <ep-form-field [label]="'pr.create.field.needByDate' | translate">
+                <input
+                  id="pr-need-by-date"
+                  type="date"
+                  formControlName="needByDate"
+                  class="ep-input">
+              </ep-form-field>
+            </div>
+
+            @if (showUrgencyReason()) {
+              <ep-form-field
+                [label]="'pr.create.field.urgencyReason' | translate"
+                [error]="fieldError('urgencyReason') ? (fieldError('urgencyReason')! | translate) : null">
+                <textarea
+                  id="pr-urgency-reason"
+                  formControlName="urgencyReason"
+                  class="ep-textarea"
+                  rows="3"
+                  [placeholder]="'pr.create.field.urgencyReasonPlaceholder' | translate">
+                </textarea>
+              </ep-form-field>
+            }
+          </div>
+        </ep-card>
+
+        <!-- Line items card -->
+        <ep-card>
+          <div class="card-section">
+            <div class="card-section__header">
+              <h2 class="card-section__title">{{ 'pr.create.section.lineItems' | translate }}</h2>
+              <ep-button
+                type="button"
+                id="btn-add-line-item"
+                variant="ghost"
+                size="sm"
+                icon="plus"
+                (click)="addLineItem()">
+                {{ 'pr.create.action.addItem' | translate }}
+              </ep-button>
+            </div>
+
+            <div formArrayName="lineItems" class="line-items">
+              @for (item of lineItems.controls; track $index) {
+                <div [formGroupName]="$index" class="line-item">
+                  <div class="line-item__header">
+                    <span class="line-item__number">{{ 'pr.create.lineItem.label' | translate }} #{{ $index + 1 }}</span>
+                    <div class="line-item__actions">
+                      <ep-button
+                        type="button"
+                        [id]="'btn-catalog-' + $index"
+                        variant="ghost"
+                        size="sm"
+                        icon="search"
+                        (click)="openCatalogPicker($index)">
+                        {{ 'pr.create.action.searchCatalog' | translate }}
+                      </ep-button>
+                      @if (lineItems.length > 1) {
+                        <ep-button
+                          type="button"
+                          [id]="'btn-remove-item-' + $index"
+                          variant="ghost"
+                          size="sm"
+                          icon="x"
+                          (click)="removeLineItem($index)">
+                        </ep-button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="line-item__body">
+                    <ep-form-field
+                      [label]="'pr.create.lineItem.itemName' | translate"
+                      [error]="getLineItemError($index, 'itemName') ? (getLineItemError($index, 'itemName')! | translate) : null">
+                      <input
+                        [id]="'line-item-name-' + $index"
+                        type="text"
+                        formControlName="itemName"
+                        class="ep-input"
+                        [placeholder]="'pr.create.lineItem.itemNamePlaceholder' | translate">
+                    </ep-form-field>
+
+                    <div class="form-row">
+                      <ep-form-field
+                        [label]="'pr.create.lineItem.category' | translate"
+                        [error]="getLineItemError($index, 'categoryCode') ? (getLineItemError($index, 'categoryCode')! | translate) : null">
+                        <select
+                          [id]="'line-item-category-' + $index"
+                          formControlName="categoryCode"
+                          class="ep-select">
+                          <option value="">{{ 'pr.create.lineItem.categoryPlaceholder' | translate }}</option>
+                          @for (cat of catalogCategories(); track cat.code) {
+                            <option [value]="cat.code">{{ cat.name }}</option>
+                          }
+                        </select>
+                      </ep-form-field>
+
+                      <ep-form-field [label]="'pr.create.lineItem.glAccount' | translate">
+                        <input
+                          [id]="'line-item-gl-' + $index"
+                          type="text"
+                          formControlName="glAccountCode"
+                          class="ep-input"
+                          placeholder="6002">
+                      </ep-form-field>
+                    </div>
+
+                    <div class="form-row form-row--3">
+                      <ep-form-field [label]="'pr.create.lineItem.quantity' | translate">
+                        <input
+                          [id]="'line-item-qty-' + $index"
+                          type="number"
+                          formControlName="quantityAmount"
+                          class="ep-input"
+                          min="0.001"
+                          step="1">
+                      </ep-form-field>
+
+                      <ep-form-field [label]="'pr.create.lineItem.unit' | translate">
+                        <input
+                          [id]="'line-item-unit-' + $index"
+                          type="text"
+                          formControlName="quantityUnit"
+                          class="ep-input"
+                          placeholder="cái">
+                      </ep-form-field>
+
+                      <ep-form-field [label]="'pr.create.lineItem.unitPrice' | translate">
+                        <input
+                          [id]="'line-item-price-' + $index"
+                          type="number"
+                          formControlName="unitPriceAmount"
+                          class="ep-input"
+                          min="0"
+                          step="1000">
+                      </ep-form-field>
+                    </div>
+
+                    <div class="line-item__total">
+                      <span class="line-item__total-label">{{ 'pr.create.lineItem.total' | translate }}</span>
+                      <ep-amount
+                        [value]="(+item.get('quantityAmount')!.value * +item.get('unitPriceAmount')!.value).toFixed(4)"
+                        currency="VND" />
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </ep-card>
+
+        <!-- Attachments card -->
+        <ep-card>
+          <div class="card-section">
+            <h2 class="card-section__title">{{ 'pr.create.section.attachments' | translate }}</h2>
+
+            <label class="upload-area" for="file-upload">
+              <ep-icon name="upload-cloud" class="upload-area__icon" />
+              <span class="upload-area__primary">{{ 'pr.create.upload.prompt' | translate }}</span>
+              <span class="upload-area__hint">{{ 'pr.create.upload.hint' | translate }}</span>
+              <input
+                id="file-upload"
+                type="file"
+                class="upload-area__input"
+                accept=".pdf,.xlsx,.docx,.jpg,.png"
+                (change)="onFileSelect($event)">
+            </label>
+
+            @if (isUploadingFile()) {
+              <ep-skeleton [rows]="1" />
+            }
+
+            @if (uploadedAttachments().length > 0) {
+              <ul class="attachment-list">
+                @for (att of uploadedAttachments(); track att.id) {
+                  <li class="attachment-item">
+                    <ep-icon name="paperclip" class="attachment-item__icon" />
+                    <span class="attachment-item__name">{{ att.fileName }}</span>
+                    <span class="attachment-item__size">{{ formatFileSize(att.fileSize) }}</span>
+                    <button
+                      type="button"
+                      [id]="'btn-remove-att-' + att.id"
+                      class="attachment-item__remove"
+                      (click)="removeAttachment(att.id)"
+                      [attr.aria-label]="'pr.create.upload.remove' | translate">
+                      <ep-icon name="x" />
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </ep-card>
+
+      </div><!-- /main -->
+
+      <!-- ── RIGHT COLUMN: summary sidebar ──────────────────────── -->
+      <aside class="pr-form__sidebar">
+        <ep-card tone="raised">
+          <div class="card-section">
+            <h2 class="card-section__title">{{ 'pr.create.section.summary' | translate }}</h2>
+
+            <div class="summary-row">
+              <span class="summary-row__label">{{ 'pr.create.summary.lineItems' | translate }}</span>
+              <span class="summary-row__value">{{ lineItems.length }}</span>
+            </div>
+
+            <div class="summary-row summary-row--total">
+              <span class="summary-row__label">{{ 'pr.create.summary.totalAmount' | translate }}</span>
+              <ep-amount [value]="totalAmount()" currency="VND" />
+            </div>
+
+            <div class="summary-actions">
+              <ep-button
+                id="btn-submit-pr"
+                type="submit"
+                variant="primary"
+                [loading]="isSubmitting()"
+                [disabled]="isSubmitting()">
+                {{ 'pr.create.action.submit' | translate }}
+              </ep-button>
+              <ep-button
+                id="btn-cancel-create"
+                type="button"
+                variant="ghost"
+                [disabled]="isSubmitting()"
+                (click)="onCancel()">
+                {{ 'action.cancel' | translate }}
+              </ep-button>
+            </div>
+          </div>
+        </ep-card>
+      </aside>
+
+    </div><!-- /layout -->
+  </form>
+
+  <!-- ── Catalog Picker Modal ─────────────────────────────────────── -->
+  <ep-modal
+    [open]="showCatalogPicker()"
+    [title]="'pr.create.catalog.title' | translate"
+    (close)="closeCatalogPicker()">
+    <div class="catalog-picker">
+      <div class="catalog-picker__search">
+        <ep-icon name="search" class="catalog-picker__search-icon" />
+        <input
+          id="catalog-search-input"
+          type="text"
+          class="ep-input"
+          [placeholder]="'pr.create.catalog.searchPlaceholder' | translate"
+          [value]="catalogSearchQuery()"
+          (input)="onCatalogSearch($any($event.target).value)"
+          autofocus>
+      </div>
+
+      @if (isCatalogLoading()) {
+        <ep-skeleton [rows]="4" />
+      } @else if (catalogItems().length === 0 && catalogSearchQuery().length >= 2) {
+        <p class="catalog-picker__empty">{{ 'pr.create.catalog.noResults' | translate }}</p>
+      } @else {
+        <ul class="catalog-results">
+          @for (item of catalogItems(); track item.id) {
+            <li class="catalog-result" (click)="selectCatalogItem(item)">
+              <div class="catalog-result__info">
+                <span class="catalog-result__name">{{ item.name }}</span>
+                <span class="catalog-result__code">{{ item.itemCode }} · {{ item.categoryCode }}</span>
+              </div>
+              <ep-amount [value]="item.unitPrice.amount" [currency]="item.unitPrice.currency" />
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </ep-modal>
+
+</section>

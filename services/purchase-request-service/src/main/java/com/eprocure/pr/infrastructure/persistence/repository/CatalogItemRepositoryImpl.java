@@ -45,7 +45,7 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
                 entity.getReorderPoint(),
                 entity.isActive(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt(),
+                entity.getUpdatedAt() != null ? entity.getUpdatedAt() : entity.getCreatedAt(),
                 entity.isDeleted(),
                 entity.getDeletedAt(),
                 entity.getDeletedBy()
