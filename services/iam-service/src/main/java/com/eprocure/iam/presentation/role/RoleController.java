@@ -5,6 +5,7 @@ import com.eprocure.iam.application.port.in.UpdateRolePermissionsCommand;
 import com.eprocure.iam.application.service.PermissionView;
 import com.eprocure.iam.application.service.RoleDetailView;
 import com.eprocure.iam.application.usecase.CreateRoleUseCase;
+import com.eprocure.iam.application.usecase.GetRolePermissionsUseCase;
 import com.eprocure.iam.application.usecase.ListPermissionsUseCase;
 import com.eprocure.iam.application.usecase.ListRolesUseCase;
 import com.eprocure.iam.application.usecase.UpdateRolePermissionsUseCase;
@@ -16,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.springframework.http.HttpStatus;
@@ -39,16 +41,19 @@ public class RoleController {
     private final CreateRoleUseCase createRoleUseCase;
     private final UpdateRolePermissionsUseCase updateRolePermissionsUseCase;
     private final ListPermissionsUseCase listPermissionsUseCase;
+    private final GetRolePermissionsUseCase getRolePermissionsUseCase;
 
     public RoleController(
             ListRolesUseCase listRolesUseCase,
             CreateRoleUseCase createRoleUseCase,
             UpdateRolePermissionsUseCase updateRolePermissionsUseCase,
-            ListPermissionsUseCase listPermissionsUseCase) {
+            ListPermissionsUseCase listPermissionsUseCase,
+            GetRolePermissionsUseCase getRolePermissionsUseCase) {
         this.listRolesUseCase = listRolesUseCase;
         this.createRoleUseCase = createRoleUseCase;
         this.updateRolePermissionsUseCase = updateRolePermissionsUseCase;
         this.listPermissionsUseCase = listPermissionsUseCase;
+        this.getRolePermissionsUseCase = getRolePermissionsUseCase;
     }
 
     @GetMapping("/roles")
@@ -90,6 +95,19 @@ public class RoleController {
                 new UpdateRolePermissionsCommand(principal.getId(), code, body.permissions()),
                 idempotencyKey);
         return ResponseEntity.ok(ApiResponse.successMessage("Role permissions updated", RequestIdUtil.resolve(request)));
+    }
+
+    @GetMapping("/roles/{code}/permissions")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE_MANAGE')")
+    public ResponseEntity<ApiResponse<Set<String>>> getRolePermissions(
+            @PathVariable String code,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] GET /api/v1/roles/{}/permissions | userId={}",
+                code,
+                LogMaskingUtil.maskId(principal.getId()));
+        Set<String> permissions = getRolePermissionsUseCase.execute(code);
+        return ResponseEntity.ok(ApiResponse.success(permissions, RequestIdUtil.resolve(request)));
     }
 
     @GetMapping("/permissions")

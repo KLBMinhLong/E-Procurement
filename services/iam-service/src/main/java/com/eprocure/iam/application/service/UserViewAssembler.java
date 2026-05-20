@@ -23,6 +23,7 @@ public class UserViewAssembler {
     }
 
     public UserSummaryView toSummary(User user) {
+        Set<String> roles = userRepository.findRoleCodesByUserId(user.getId());
         return new UserSummaryView(
                 user.getId(),
                 user.getEmployeeCode(),
@@ -31,7 +32,10 @@ public class UserViewAssembler {
                 user.getEmail(),
                 user.getAvatarUrl().orElse(null),
                 departmentRepository.findById(user.getDepartmentId()).map(this::toDepartmentView).orElse(null),
-                user.getStatus());
+                user.getStatus(),
+                user.getPhone().orElse(null),
+                roles,
+                user.getCreatedAt());
     }
 
     public UserDetailView toDetail(User user) {
