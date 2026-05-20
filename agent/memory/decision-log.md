@@ -146,3 +146,10 @@
 - Reason: After Create and Submit, Update and Cancel complete the requester's workflow. GetPR list/detail are required before the frontend can render the PR module.
 - Impact: `updateWithLineItems()` replaces line items atomically (soft-delete old + insert new); `findByFilter()`/`countByFilter()` delegate to an XML mapper with dynamic WHERE clause and whitelist ORDER BY. ViewScope (OWN/DEPARTMENT/ALL) is resolved from the principal's granted authorities in the controller. `ApiResponse.ok()` and `successWithMeta()` factory methods added. 26 tests pass.
 - Constraint: File attachment upload, catalog API, Kafka real transport, and PR frontend pages remain deferred to subsequent E04 slices.
+
+## [2026-05-20] E13-A Admin Portal (User, RBAC, Org Chart UI) Priority Shift
+
+- Decision: Tách phần giao diện Admin quản lý người dùng, phân quyền RBAC và Sơ đồ tổ chức (Org Tree) lên trước và gom nhóm thành Epic E13-A để triển khai ngay.
+- Reason: Việc xây dựng giao diện Admin cho phép thiết lập và quản lý dữ liệu nhân sự, vai trò, phòng ban trực quan trên trình duyệt trước khi triển khai hệ thống phê duyệt Approval Engine (E05) - vốn phụ thuộc trực tiếp vào cấu trúc sơ đồ tổ chức (Org Chart) và ma trận phân quyền để phê duyệt.
+- Impact: Toàn bộ module Admin frontend bao gồm User CRUD, Role-Permission Matrix, và Org Chart UI sẽ được xây dựng trước Epic E05. Các API nghiệp vụ từ IAM Service (E02) đã hoàn thiện sẽ được gọi trực tiếp.
+- Constraint: Các chức năng quản trị cấu hình rules phê duyệt nâng cao (Approval rules) và quản lý catalog danh mục hệ thống vẫn sẽ được giữ lại trong Epic E13 gốc để triển khai sau cùng với các tính năng tương ứng.

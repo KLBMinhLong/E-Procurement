@@ -268,6 +268,7 @@ Xem tài liệu `DOMAIN_MODEL.md` phần Approval Engine để biết ma trận 
 | E02 | IAM & Auth | Đăng nhập, RBAC, org chart, session, 2FA, OAuth Google |
 | E03 | UI Shell & Design System | Angular shell, component library, i18n |
 | E04 | Purchase Request | Tạo PR, budget check, inventory check, catalog |
+| E13-A | Admin Portal UI | Giao diện User CRUD, phân quyền RBAC và Org Tree |
 | E05 | Approval Engine | Camunda BPMN, approval rules, SLA, escalation |
 | E06 | RFQ & Vendor | Thu thập báo giá, AVL, vendor scorecard |
 | E07 | Purchase Order | Tạo PO, tracking, blanket PO |

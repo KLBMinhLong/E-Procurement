@@ -48,7 +48,8 @@ Backbone theo người dùng:
 | E02 IAM Service | Auth, opaque token, RBAC, session, org chart, delegation | MVP | E01 | iam-service, Keycloak realm, Redis session |
 | E03 UI Shell & Design System | Angular shell, design tokens, shared components, i18n, interceptors | MVP | E01, E02 | web app, ep-* components, guards |
 | E04 Purchase Request Service | PR lifecycle, catalog, budget/inventory check, attachments, events | MVP | E01, E02, E03 | pr-service, PR pages |
-| E05 Approval Engine | Camunda workflow, rules, inbox, actions, SLA, delegation, SoD | MVP | E01, E02, E04 | approval-service, approval UI |
+| E13-A Admin Portal UI | Giao diện User CRUD, phân quyền RBAC và Org Tree | MVP | E02, E03 | Admin UI, User/RBAC/Org pages |
+| E05 Approval Engine | Camunda workflow, rules, inbox, actions, SLA, delegation, SoD | MVP | E01, E02, E04, E13-A | approval-service, approval UI |
 | E06 RFQ & Vendor | Vendor master, AVL, RFQ, quote comparison | P1 | E04, E05 | vendor-service, RFQ pages |
 | E07 Purchase Order | PO creation from approved PR, vendor send, PO tracking | P1 | E04, E06 | finance/procurement PO module |
 | E08 Goods Receipt & Inventory | Catalog, stock, GR, issue out, stock movement | P1 | E07 | inventory-service, warehouse UI |
@@ -71,8 +72,9 @@ Slice đầu tiên cần code theo thứ tự:
 2. E02: IAM login tạo opaque cookie + /users/me trả user và permissions.
 3. E03: Angular shell login + interceptor withCredentials + Idempotency-Key.
 4. E04: PR draft/create/submit/list/detail + PrSubmittedEvent.
-5. E05: Approval process start + inbox + approve/reject/request changes.
-6. E04: PR nhận PrApproved/PrRejected/PrChangesRequested event và cập nhật status.
+5. E13-A: Admin UI quản lý User, phân quyền RBAC và sơ đồ phòng ban (Org Tree).
+6. E05: Approval process start + inbox + approve/reject/request changes.
+7. E04: PR nhận PrApproved/PrRejected/PrChangesRequested event và cập nhật status.
 ```
 
 Luồng demo:
