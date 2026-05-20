@@ -1,21 +1,101 @@
 <section class="admin-rbac-page" aria-labelledby="admin-rbac-heading">
   <ep-breadcrumb />
 
-  <!-- Page Header -->
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
   <div class="page-header">
     <div class="page-header__meta">
       <span class="page-header__eyebrow">{{ 'admin.rbac.eyebrow' | translate }}</span>
       <h1 id="admin-rbac-heading" class="page-header__title">{{ 'admin.rbac.title' | translate }}</h1>
     </div>
+    <div class="page-header__actions">
+      <ep-button
+        id="btn-refresh-matrix"
+        variant="secondary"
+        icon="refresh"
+        [disabled]="isLoading()"
+        (click)="loadMatrixData()">
+        {{ 'action.refresh' | translate }}
+      </ep-button>
+    </div>
   </div>
 
-  <!-- Content Placeholder -->
+  <!-- ── Matrix Grid Content ────────────────────────────────────────── -->
   @if (isLoading()) {
-    <ep-skeleton [rows]="6" />
-  } @else {
+    <ep-skeleton [rows]="10" />
+  } @else if (roles().length === 0 || permissions().length === 0) {
     <ep-empty-state
       icon="shield"
       [title]="'admin.rbac.empty.title' | translate"
       [message]="'admin.rbac.empty.message' | translate" />
+  } @else {
+    <div class="matrix-card">
+      <div class="matrix-table-wrapper">
+        <table class="matrix-table" role="grid" aria-labelledby="admin-rbac-heading">
+          <thead>
+            <tr>
+              <th scope="col" class="permission-th">
+                {{ 'admin.rbac.col.permission' | translate }}
+              </th>
+              @for (role of roles(); track role.code) {
+                <th scope="col" class="role-th">
+                  <div class="role-th-content">
+                    <span class="role-name">{{ role.name }}</span>
+                    <span class="role-code mono">{{ role.code }}</span>
+                  </div>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (modName of modulesList(); track modName) {
+              <!-- Module Section Header Row -->
+              <tr class="module-header-row">
+                <td [attr.colspan]="roles().length + 1" class="module-header-cell">
+                  <span class="module-title-badge">{{ modName }} MODULE</span>
+                </td>
+              </tr>
+
+              <!-- Permissions of this module -->
+              @for (perm of permissionsByModule().get(modName); track perm.code) {
+                <tr class="matrix-row">
+                  <td class="permission-cell">
+                    <div class="permission-info">
+                      <div class="permission-header">
+                        <span class="permission-code mono">{{ perm.code }}</span>
+                        <span class="permission-name">{{ perm.name }}</span>
+                      </div>
+                      @if (perm.description) {
+                        <p class="permission-desc">{{ perm.description }}</p>
+                      }
+                    </div>
+                  </td>
+
+                  @for (role of roles(); track role.code) {
+                    <td class="checkbox-cell">
+                      <label class="matrix-switch-label" [class.matrix-switch-label--disabled]="isToggling(role.code, perm.code)">
+                        <input
+                          type="checkbox"
+                          [checked]="hasPermission(role.code, perm.code)"
+                          [disabled]="isToggling(role.code, perm.code)"
+                          (change)="togglePermission(role.code, perm.code)"
+                          class="sr-only" />
+                        
+                        <div class="matrix-switch" [class.matrix-switch--active]="hasPermission(role.code, perm.code)">
+                          @if (isToggling(role.code, perm.code)) {
+                            <div class="spinner-circle"></div>
+                          } @else {
+                            <div class="matrix-switch__handle"></div>
+                          }
+                        </div>
+                      </label>
+                    </td>
+                  }
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 </section>

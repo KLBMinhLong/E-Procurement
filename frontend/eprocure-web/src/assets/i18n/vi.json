@@ -410,6 +410,12 @@
     "rbac": {
       "eyebrow": "Kiểm soát truy cập (RBAC)",
       "title": "Ma trận phân quyền",
+      "col": {
+        "permission": "Quyền hạn / Chức năng"
+      },
+      "toast": {
+        "updateSuccess": "Đã cập nhật phân quyền vai trò thành công."
+      },
       "empty": {
         "title": "Không tìm thấy vai trò",
         "message": "Không thể tải danh sách vai trò hệ thống."

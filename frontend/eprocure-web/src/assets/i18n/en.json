@@ -410,6 +410,12 @@
     "rbac": {
       "eyebrow": "Role Based Access Control",
       "title": "Permissions Matrix",
+      "col": {
+        "permission": "Permission / Module"
+      },
+      "toast": {
+        "updateSuccess": "Role permissions successfully updated."
+      },
       "empty": {
         "title": "No roles found",
         "message": "Role mapping could not be loaded."
