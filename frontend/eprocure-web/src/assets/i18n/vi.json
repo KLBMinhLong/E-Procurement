@@ -378,9 +378,32 @@
         "LOCKED": "Đang khóa",
         "PENDING_VERIFY": "Chờ xác minh"
       },
+      "modal": {
+        "titleCreate": "Thêm tài khoản mới",
+        "titleEdit": "Cập nhật tài khoản"
+      },
+      "field": {
+        "username": "Tên đăng nhập",
+        "usernamePlaceholder": "Nhập tên đăng nhập (tối thiểu 3 ký tự)",
+        "email": "Địa chỉ Email",
+        "emailPlaceholder": "VD: employee@company.com",
+        "fullName": "Họ và tên",
+        "fullNamePlaceholder": "Nhập họ và tên đầy đủ",
+        "phone": "Số điện thoại",
+        "phonePlaceholder": "Nhập số điện thoại (tùy chọn)",
+        "dept": "Bộ phận / Phòng ban",
+        "selectDeptPlaceholder": "Lựa chọn bộ phận phòng ban trực thuộc",
+        "roles": "Vai trò hệ thống được cấp"
+      },
+      "validation": {
+        "required": "Thông tin này là bắt buộc",
+        "email": "Địa chỉ email không hợp lệ"
+      },
       "toast": {
         "lockSuccess": "Đã khóa tài khoản người dùng thành công.",
-        "unlockSuccess": "Đã mở khóa tài khoản người dùng thành công."
+        "unlockSuccess": "Đã mở khóa tài khoản người dùng thành công.",
+        "createSuccess": "Đã tạo tài khoản người dùng mới thành công.",
+        "updateSuccess": "Đã cập nhật thông tin tài khoản thành công."
       },
       "totalItems": "người dùng"
     },

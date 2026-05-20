@@ -378,9 +378,32 @@
         "LOCKED": "Locked",
         "PENDING_VERIFY": "Pending Verify"
       },
+      "modal": {
+        "titleCreate": "Add New User",
+        "titleEdit": "Edit User Details"
+      },
+      "field": {
+        "username": "Username",
+        "usernamePlaceholder": "Enter username (min 3 characters)",
+        "email": "Email Address",
+        "emailPlaceholder": "E.g., employee@company.com",
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "Enter user's full name",
+        "phone": "Phone Number",
+        "phonePlaceholder": "Enter phone number (optional)",
+        "dept": "Department",
+        "selectDeptPlaceholder": "Select organizational department",
+        "roles": "Assigned System Roles"
+      },
+      "validation": {
+        "required": "This field is mandatory",
+        "email": "Enter a valid email address"
+      },
       "toast": {
         "lockSuccess": "User account successfully locked.",
-        "unlockSuccess": "User account successfully unlocked."
+        "unlockSuccess": "User account successfully unlocked.",
+        "createSuccess": "User account successfully created.",
+        "updateSuccess": "User account details successfully updated."
       },
       "totalItems": "users"
     },
