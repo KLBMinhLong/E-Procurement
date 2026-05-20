@@ -139,3 +139,10 @@
 - Reason: Submit must persist budget/inventory snapshots and emit the domain event without coupling the PR service to Finance, Inventory, or Kafka transports before those epics are implemented.
 - Impact: `PATCH /api/v1/purchase-requests/{id}/submit` validates requester/status/idempotency, stores `budget_check_status` plus `inventory_check`, transitions PR to `SUBMITTED`, and replays cached submit responses with `Idempotency-Replayed: true`.
 - Constraint: Real Finance/Inventory integrations, Kafka transport publishing, submit-with-override, approval process creation, and PR detail/list APIs remain later E04/E05 slices.
+
+## [2026-05-20] E04 UpdatePR + CancelPR + GetPR list/detail slice
+
+- Decision: Implement UpdatePR (PUT /{id}), CancelPR (PATCH /{id}/cancel), GetPR Detail (GET /{id}), and GetPR List (GET /) as a single vertical slice completing the E04 PR CRUD lifecycle.
+- Reason: After Create and Submit, Update and Cancel complete the requester's workflow. GetPR list/detail are required before the frontend can render the PR module.
+- Impact: `updateWithLineItems()` replaces line items atomically (soft-delete old + insert new); `findByFilter()`/`countByFilter()` delegate to an XML mapper with dynamic WHERE clause and whitelist ORDER BY. ViewScope (OWN/DEPARTMENT/ALL) is resolved from the principal's granted authorities in the controller. `ApiResponse.ok()` and `successWithMeta()` factory methods added. 26 tests pass.
+- Constraint: File attachment upload, catalog API, Kafka real transport, and PR frontend pages remain deferred to subsequent E04 slices.

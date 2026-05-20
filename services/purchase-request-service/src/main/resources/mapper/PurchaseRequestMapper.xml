@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.pr.infrastructure.persistence.mapper.PurchaseRequestMapper">
+
+    <!-- ── ResultMap for list/filter queries (no line items) ──────────────── -->
+    <resultMap id="prSummaryResultMap"
+               type="com.eprocure.pr.infrastructure.persistence.entity.PurchaseRequestDbEntity">
+        <id  property="id"                   column="id"/>
+        <result property="prNumber"          column="pr_number"/>
+        <result property="requesterId"       column="requester_id"/>
+        <result property="departmentId"      column="department_id"/>
+        <result property="title"             column="title"/>
+        <result property="justification"     column="justification"/>
+        <result property="priority"          column="priority"/>
+        <result property="urgencyReason"     column="urgency_reason"/>
+        <result property="status"            column="status"/>
+        <result property="totalAmountAmount" column="total_amount"/>
+        <result property="totalAmountCurrency" column="currency"/>
+        <result property="fiscalYear"        column="fiscal_year"/>
+        <result property="needByDate"        column="need_by_date"/>
+        <result property="relatedContractId" column="related_contract_id"/>
+        <result property="blanketRelease"    column="is_blanket_release"/>
+        <result property="submittedAt"       column="submitted_at"/>
+        <result property="createdAt"         column="created_at"/>
+        <result property="updatedAt"         column="updated_at"/>
+        <result property="createdBy"         column="created_by"/>
+        <result property="updatedBy"         column="updated_by"/>
+        <result property="deleted"           column="is_deleted"/>
+        <result property="deletedAt"         column="deleted_at"/>
+        <result property="deletedBy"         column="deleted_by"/>
+    </resultMap>
+
+    <!-- ── Reusable WHERE fragment ─────────────────────────────────────────── -->
+    <sql id="filterWhereClause">
+        WHERE p.is_deleted = false
+        <!-- viewScope = OWN → only requester's own PRs -->
+        <if test="filter.viewScope != null and filter.viewScope == 'OWN'">
+            AND p.requester_id = #{filter.actorId}
+        </if>
+        <!-- viewScope = DEPARTMENT → requester's department PRs -->
+        <if test="filter.viewScope != null and filter.viewScope == 'DEPARTMENT'">
+            AND p.department_id = #{filter.departmentId}
+        </if>
+        <!-- viewScope = ALL → no additional restriction (checked by @PreAuthorize) -->
+        <if test="filter.status != null and filter.status != ''">
+            AND p.status = #{filter.status}
+        </if>
+        <if test="filter.priority != null and filter.priority != ''">
+            AND p.priority = #{filter.priority}
+        </if>
+        <if test="filter.departmentId != null and (filter.viewScope == null or filter.viewScope != 'DEPARTMENT')">
+            AND p.department_id = #{filter.departmentId}
+        </if>
+        <if test="filter.requesterId != null">
+            AND p.requester_id = #{filter.requesterId}
+        </if>
+        <if test="filter.fromDate != null">
+            AND p.created_at &gt;= #{filter.fromDate}
+        </if>
+        <if test="filter.toDate != null">
+            AND p.created_at &lt;= #{filter.toDate}
+        </if>
+        <if test="filter.minAmount != null">
+            AND p.total_amount &gt;= #{filter.minAmount}
+        </if>
+        <if test="filter.maxAmount != null">
+            AND p.total_amount &lt;= #{filter.maxAmount}
+        </if>
+        <if test="filter.q != null and filter.q != ''">
+            AND (p.title ILIKE '%' || #{filter.q} || '%'
+                 OR p.pr_number ILIKE #{filter.q} || '%')
+        </if>
+    </sql>
+
+    <!-- ── findByFilter: paginated list (no line items) ────────────────────── -->
+    <select id="findByFilter" resultMap="prSummaryResultMap">
+        SELECT
+            p.id, p.pr_number, p.requester_id, p.department_id, p.title, p.justification,
+            p.priority, p.urgency_reason, p.status, p.total_amount, p.currency,
+            p.fiscal_year, p.need_by_date, p.related_contract_id, p.is_blanket_release,
+            p.submitted_at, p.created_at, p.updated_at,
+            p.created_by, p.updated_by, p.is_deleted, p.deleted_at, p.deleted_by
+        FROM pr.purchase_requests p
+        <include refid="filterWhereClause"/>
+        ORDER BY
+        <choose>
+            <when test="filter.sort != null and filter.sort.startsWith('totalAmount')">
+                p.total_amount
+            </when>
+            <when test="filter.sort != null and filter.sort.startsWith('prNumber')">
+                p.pr_number
+            </when>
+            <when test="filter.sort != null and filter.sort.startsWith('needByDate')">
+                p.need_by_date
+            </when>
+            <otherwise>
+                p.created_at
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="filter.sort != null and filter.sort.endsWith(',asc')">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>
+        LIMIT #{filter.size} OFFSET ${(filter.page - 1) * filter.size}
+    </select>
+
+    <!-- ── countByFilter: total count for pagination meta ───────────────────── -->
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        FROM pr.purchase_requests p
+        <include refid="filterWhereClause"/>
+    </select>
+
+</mapper>

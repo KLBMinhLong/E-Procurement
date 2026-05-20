@@ -155,6 +155,21 @@ class CreatePurchaseRequestUseCaseTest {
         @Override
         public void softDelete(UUID id, UUID deletedBy, Instant deletedAt) {
         }
+
+        @Override
+        public void updateWithLineItems(PurchaseRequest purchaseRequest) {
+            this.saved = purchaseRequest;
+        }
+
+        @Override
+        public java.util.List<PurchaseRequest> findByFilter(com.eprocure.pr.domain.repository.PurchaseRequestFilter filter) {
+            return java.util.List.of();
+        }
+
+        @Override
+        public long countByFilter(com.eprocure.pr.domain.repository.PurchaseRequestFilter filter) {
+            return 0L;
+        }
     }
 
     private static final class FixedPurchaseRequestNumberGenerator extends PurchaseRequestNumberGenerator {
