@@ -145,12 +145,12 @@
 ### E13-A: Admin Portal (User, RBAC, Org Chart UI) [PRIORITIZED 🚀]
 | Task | Status |
 |---|---|
-| Create Admin lazy-loaded module & routing config (`/admin`) | 🔄 |
-| Create Admin HTTP Services (User, RBAC, Org Chart tree) | 🔄 |
-| Frontend UI: User Management Screen (CRUD & Lock/Unlock) | ⬜ |
-| Frontend UI: Role-Permission Matrix Screen (RBAC mapping) | ⬜ |
-| Frontend UI: Org Chart Visual Tree Screen (Department hierarchy) | ⬜ |
-| i18n localization (VI/EN) & Integration tests | ⬜ |
+| Create Admin lazy-loaded module & routing config (`/admin`) | ✅ |
+| Create Admin HTTP Services (User, RBAC, Org Chart tree) | ✅ |
+| Frontend UI: User Management Screen (CRUD & Lock/Unlock) | ✅ |
+| Frontend UI: Role-Permission Matrix Screen (RBAC mapping) | ✅ |
+| Frontend UI: Org Chart Visual Tree Screen (Department hierarchy) | ✅ |
+| i18n localization (VI/EN) & Integration tests | ✅ |
 
 ### E05: Approval Engine
 | Task | Status |
@@ -171,7 +171,7 @@
 ### E06–E15: (Xem PROJECT_BRIEF.md)
 | Epic | Status |
 |---|---|
-| E13-A: Admin Portal (User/RBAC/Org Tree UI) | 🔄 |
+| E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
 | E06: RFQ & Vendor | ⬜ |
 | E07: Purchase Order | ⬜ |
 | E08: Goods Receipt & Inventory | ⬜ |
