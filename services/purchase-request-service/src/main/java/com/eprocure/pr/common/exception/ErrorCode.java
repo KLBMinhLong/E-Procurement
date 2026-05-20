@@ -8,6 +8,8 @@ public enum ErrorCode {
     PR_002("PR_002", "Department budget is insufficient", HttpStatus.UNPROCESSABLE_ENTITY),
     PR_003("PR_003", "Purchase request cannot be changed in current status", HttpStatus.CONFLICT),
     PR_006("PR_006", "Urgency reason must be at least 100 characters", HttpStatus.UNPROCESSABLE_ENTITY),
+    PR_008("PR_008", "File size exceeds limit (10MB)", HttpStatus.UNPROCESSABLE_ENTITY),
+    PR_009("PR_009", "Invalid file type", HttpStatus.UNPROCESSABLE_ENTITY),
     PR_010("PR_010", "Quantity must be greater than zero", HttpStatus.BAD_REQUEST),
     PR_011("PR_011", "Unit price must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
     PR_012("PR_012", "Purchase request must have at least one line item", HttpStatus.BAD_REQUEST),
