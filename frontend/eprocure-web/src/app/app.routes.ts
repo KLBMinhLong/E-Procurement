@@ -55,10 +55,9 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
-        title: 'route.admin',
         canActivate: [permissionGuard],
-        data: { requiredPermissions: ['ADMIN_USER_VIEW', 'SYSTEM_CONFIG'] },
-        loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+        data: { requiredPermissions: ['ADMIN_USER_VIEW', 'ADMIN_ROLE_MANAGE', 'SYSTEM_CONFIG'] },
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes)
       }
     ]
   },

@@ -1,0 +1,21 @@
+<section class="admin-rbac-page" aria-labelledby="admin-rbac-heading">
+  <ep-breadcrumb />
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.rbac.eyebrow' | translate }}</span>
+      <h1 id="admin-rbac-heading" class="page-header__title">{{ 'admin.rbac.title' | translate }}</h1>
+    </div>
+  </div>
+
+  <!-- Content Placeholder -->
+  @if (isLoading()) {
+    <ep-skeleton [rows]="6" />
+  } @else {
+    <ep-empty-state
+      icon="shield"
+      [title]="'admin.rbac.empty.title' | translate"
+      [message]="'admin.rbac.empty.message' | translate" />
+  }
+</section>

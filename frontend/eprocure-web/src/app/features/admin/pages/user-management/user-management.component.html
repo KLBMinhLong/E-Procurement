@@ -1,0 +1,40 @@
+<section class="admin-users-page" aria-labelledby="admin-users-heading">
+  <ep-breadcrumb />
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.users.eyebrow' | translate }}</span>
+      <h1 id="admin-users-heading" class="page-header__title">{{ 'admin.users.title' | translate }}</h1>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        id="btn-create-user"
+        variant="primary"
+        icon="plus">
+        {{ 'admin.users.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="admin-toolbar">
+    <ep-filter-bar
+      id="user-search"
+      placeholderKey="admin.users.filter.placeholder"
+      [value]="searchQuery()"
+      (valueChange)="onSearchChange($event)"
+      (refresh)="loadData()">
+    </ep-filter-bar>
+  </div>
+
+  <!-- Content Placeholder -->
+  @if (isLoading()) {
+    <ep-skeleton [rows]="6" />
+  } @else {
+    <ep-empty-state
+      icon="users"
+      [title]="'admin.users.empty.title' | translate"
+      [message]="'admin.users.empty.message' | translate" />
+  }
+</section>

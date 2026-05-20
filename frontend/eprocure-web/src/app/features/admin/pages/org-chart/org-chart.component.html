@@ -1,0 +1,21 @@
+<section class="admin-org-chart-page" aria-labelledby="admin-org-chart-heading">
+  <ep-breadcrumb />
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.org.eyebrow' | translate }}</span>
+      <h1 id="admin-org-chart-heading" class="page-header__title">{{ 'admin.org.title' | translate }}</h1>
+    </div>
+  </div>
+
+  <!-- Content Placeholder -->
+  @if (isLoading()) {
+    <ep-skeleton [rows]="6" />
+  } @else {
+    <ep-empty-state
+      icon="git-merge"
+      [title]="'admin.org.empty.title' | translate"
+      [message]="'admin.org.empty.message' | translate" />
+  }
+</section>

@@ -1,0 +1,33 @@
+.admin-rbac-page {
+  padding: var(--spacing-lg, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 24px);
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &__meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    &__eyebrow {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-secondary, #a0aec0);
+      font-weight: 600;
+    }
+
+    &__title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary, #ffffff);
+      margin: 0;
+    }
+  }
+}
