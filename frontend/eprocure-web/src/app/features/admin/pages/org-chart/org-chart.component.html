@@ -1,21 +1,187 @@
-<section class="admin-org-chart-page" aria-labelledby="admin-org-chart-heading">
+<section class="admin-org-page" aria-labelledby="admin-org-heading">
   <ep-breadcrumb />
 
-  <!-- Page Header -->
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
   <div class="page-header">
     <div class="page-header__meta">
-      <span class="page-header__eyebrow">{{ 'admin.org.eyebrow' | translate }}</span>
-      <h1 id="admin-org-chart-heading" class="page-header__title">{{ 'admin.org.title' | translate }}</h1>
+      <span class="page-header__eyebrow">{{ 'org.eyebrow' | translate }}</span>
+      <h1 id="admin-org-heading" class="page-header__title">{{ 'org.title' | translate }}</h1>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        id="btn-create-root-dept"
+        variant="primary"
+        icon="plus"
+        (click)="openCreateModal()">
+        {{ 'org.action.create' | translate }}
+      </ep-button>
     </div>
   </div>
 
-  <!-- Content Placeholder -->
+  <!-- ── Tree Grid Content ────────────────────────────────────────── -->
   @if (isLoading()) {
-    <ep-skeleton [rows]="6" />
-  } @else {
+    <ep-skeleton [rows]="8" />
+  } @else if (departments().length === 0) {
     <ep-empty-state
-      icon="git-merge"
-      [title]="'admin.org.empty.title' | translate"
-      [message]="'admin.org.empty.message' | translate" />
+      icon="hierarchy"
+      [title]="'org.empty.title' | translate"
+      [message]="'org.empty.message' | translate" />
+  } @else {
+    <div class="org-card">
+      <div class="org-table-wrapper">
+        <table class="org-table" role="treegrid" aria-labelledby="admin-org-heading">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'org.col.deptName' | translate }}</th>
+              <th scope="col">{{ 'org.col.deptCode' | translate }}</th>
+              <th scope="col">{{ 'org.col.manager' | translate }}</th>
+              <th scope="col" class="align-right">{{ 'org.col.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of flatDepartments(); track item.node.id) {
+              <tr [id]="'org-row-' + item.node.id" class="org-row">
+                <td class="dept-name-cell">
+                  <div class="dept-indent-wrapper" [style.padding-left.px]="item.depth * 24">
+                    @if (item.hasChildren) {
+                      <button
+                        [id]="'btn-toggle-node-' + item.node.id"
+                        class="toggle-btn"
+                        (click)="toggleNode(item.node.id)"
+                        [ariaLabel]="(item.isExpanded ? 'shared.action.collapse' : 'shared.action.expand') | translate">
+                        <ep-icon [name]="item.isExpanded ? 'chevron-down' : 'chevron-right'" />
+                      </button>
+                    } @else {
+                      <div class="toggle-btn-placeholder"></div>
+                    }
+                    
+                    <ep-icon name="folder" class="folder-icon" />
+                    <span class="dept-name">{{ item.node.name }}</span>
+                  </div>
+                </td>
+
+                <td class="dept-code-cell mono text-secondary">
+                  {{ item.node.code }}
+                </td>
+
+                <td class="dept-manager-cell">
+                  @if (item.node.managerName) {
+                    <span class="manager-name">{{ item.node.managerName }}</span>
+                  } @else {
+                    <span class="text-muted">--</span>
+                  }
+                </td>
+
+                <td class="align-right actions-col">
+                  <div class="actions-group">
+                    <ep-button
+                      [id]="'btn-add-sub-' + item.node.id"
+                      variant="ghost"
+                      size="sm"
+                      icon="plus"
+                      [ariaLabel]="'org.action.addSubDept' | translate"
+                      (click)="openCreateModal(item.node)">
+                    </ep-button>
+
+                    <ep-button
+                      [id]="'btn-edit-dept-' + item.node.id"
+                      variant="ghost"
+                      size="sm"
+                      icon="pencil"
+                      [ariaLabel]="'shared.action.edit' | translate"
+                      (click)="openEditModal(item.node)">
+                    </ep-button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 </section>
+
+<!-- ── Department Form Modal ────────────────────────────────────── -->
+<ep-modal
+  [open]="isModalOpen()"
+  [title]="(modalMode() === 'create' ? 'org.modal.titleCreate' : 'org.modal.titleEdit') | translate"
+  (close)="closeModal()">
+  
+  <form [formGroup]="deptForm" (ngSubmit)="onSubmit()" class="dept-form">
+    <div class="form-grid">
+      <!-- Department Code -->
+      <ep-form-field
+        [label]="'org.field.code' | translate"
+        [error]="deptForm.get('code')?.touched && deptForm.get('code')?.hasError('required') ? ('org.validation.required' | translate) : (deptForm.get('code')?.touched && deptForm.get('code')?.hasError('pattern') ? ('org.validation.pattern' | translate) : null)">
+        <input
+          id="dept-code"
+          type="text"
+          formControlName="code"
+          class="form-input"
+          [placeholder]="'org.field.codePlaceholder' | translate" />
+      </ep-form-field>
+
+      <!-- Department Name -->
+      <ep-form-field
+        [label]="'org.field.name' | translate"
+        [error]="deptForm.get('name')?.touched && deptForm.get('name')?.hasError('required') ? ('org.validation.required' | translate) : null">
+        <input
+          id="dept-name"
+          type="text"
+          formControlName="name"
+          class="form-input"
+          [placeholder]="'org.field.namePlaceholder' | translate" />
+      </ep-form-field>
+
+      <!-- Parent Department -->
+      <ep-form-field
+        [label]="'org.field.parentCode' | translate">
+        <select
+          id="dept-parentCode"
+          formControlName="parentCode"
+          class="form-select">
+          <option value="">{{ 'org.field.selectParentPlaceholder' | translate }}</option>
+          @for (d of flatSelectDepartments(); track d.id) {
+            @if (modalMode() === 'create' || d.id !== selectedDeptId()) {
+              <option [value]="d.code">{{ d.name }}</option>
+            }
+          }
+        </select>
+      </ep-form-field>
+
+      <!-- Department Manager -->
+      <ep-form-field
+        [label]="'org.field.manager' | translate">
+        <select
+          id="dept-managerId"
+          formControlName="managerId"
+          class="form-select">
+          <option value="">{{ 'org.field.selectManagerPlaceholder' | translate }}</option>
+          @for (u of managers(); track u.id) {
+            <option [value]="u.id">{{ u.fullName }} (@{{ u.username }})</option>
+          }
+        </select>
+      </ep-form-field>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="form-actions">
+      <ep-button
+        id="btn-form-cancel"
+        variant="ghost"
+        [disabled]="isSubmitting()"
+        (click)="closeModal()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button
+        id="btn-form-submit"
+        variant="primary"
+        type="submit"
+        [loading]="isSubmitting()"
+        [disabled]="deptForm.invalid || isSubmitting()">
+        {{ (modalMode() === 'create' ? 'action.create' : 'action.submit') | translate }}
+      </ep-button>
+    </div>
+  </form>
+</ep-modal>

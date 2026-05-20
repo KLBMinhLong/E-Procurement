@@ -424,6 +424,38 @@
     "org": {
       "eyebrow": "Organization Structure",
       "title": "Department Chart",
+      "action": {
+        "create": "New Department",
+        "addSubDept": "Add Sub-department"
+      },
+      "col": {
+        "deptName": "Department Name",
+        "deptCode": "Code",
+        "manager": "Manager",
+        "actions": "Actions"
+      },
+      "modal": {
+        "titleCreate": "Add New Department",
+        "titleEdit": "Edit Department Details"
+      },
+      "field": {
+        "code": "Department Code",
+        "codePlaceholder": "E.g., TECH_DEPT (Uppercase and numbers)",
+        "name": "Department Name",
+        "namePlaceholder": "E.g., Technology Division",
+        "parentCode": "Parent Department",
+        "selectParentPlaceholder": "None (Root department)",
+        "manager": "Department Manager",
+        "selectManagerPlaceholder": "Select department manager"
+      },
+      "validation": {
+        "required": "This field is mandatory",
+        "pattern": "Only uppercase letters, numbers, and underscores allowed"
+      },
+      "toast": {
+        "createSuccess": "Department successfully created.",
+        "updateSuccess": "Department details successfully updated."
+      },
       "empty": {
         "title": "No departments found",
         "message": "Organizational tree chart could not be loaded."

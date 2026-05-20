@@ -424,6 +424,38 @@
     "org": {
       "eyebrow": "Cơ cấu tổ chức",
       "title": "Sơ đồ phòng ban",
+      "action": {
+        "create": "Thêm phòng ban",
+        "addSubDept": "Thêm bộ phận con"
+      },
+      "col": {
+        "deptName": "Tên phòng ban",
+        "deptCode": "Mã bộ phận",
+        "manager": "Trưởng bộ phận",
+        "actions": "Thao tác"
+      },
+      "modal": {
+        "titleCreate": "Tạo phòng ban mới",
+        "titleEdit": "Cập nhật phòng ban"
+      },
+      "field": {
+        "code": "Mã phòng ban",
+        "codePlaceholder": "VD: TECH_DEPT (Chữ viết hoa và số, gạch dưới)",
+        "name": "Tên phòng ban",
+        "namePlaceholder": "VD: Phòng Công nghệ Thông tin",
+        "parentCode": "Bộ phận cha trực thuộc",
+        "selectParentPlaceholder": "Không có (Bộ phận gốc)",
+        "manager": "Quản lý / Trưởng bộ phận",
+        "selectManagerPlaceholder": "Lựa chọn trưởng bộ phận quản lý"
+      },
+      "validation": {
+        "required": "Thông tin này là bắt buộc",
+        "pattern": "Mã bộ phận chỉ chấp nhận chữ hoa, số và gạch dưới"
+      },
+      "toast": {
+        "createSuccess": "Đã tạo phòng ban bộ phận mới thành công.",
+        "updateSuccess": "Đã cập nhật chi tiết phòng ban thành công."
+      },
       "empty": {
         "title": "Không tìm thấy phòng ban",
         "message": "Không thể tải cây sơ đồ tổ chức phòng ban."
