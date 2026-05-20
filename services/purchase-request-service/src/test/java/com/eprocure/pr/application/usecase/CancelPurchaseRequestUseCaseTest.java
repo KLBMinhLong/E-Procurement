@@ -11,6 +11,7 @@ import com.eprocure.pr.domain.model.PrPriority;
 import com.eprocure.pr.domain.model.PurchaseRequest;
 import com.eprocure.pr.domain.repository.PurchaseRequestFilter;
 import com.eprocure.pr.domain.repository.PurchaseRequestRepository;
+import com.eprocure.pr.application.port.out.PrCancelledEventPublisher;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -32,13 +33,15 @@ class CancelPurchaseRequestUseCaseTest {
     private final Clock clock = Clock.fixed(Instant.parse("2026-05-20T00:00:00Z"), ZoneOffset.UTC);
     private InMemoryPurchaseRequestRepository purchaseRequestRepository;
     private FakeIdempotencyService idempotencyService;
+    private PrCancelledEventPublisher eventPublisher;
     private CancelPurchaseRequestUseCase useCase;
 
     @BeforeEach
     void setUp() {
         purchaseRequestRepository = new InMemoryPurchaseRequestRepository();
         idempotencyService = new FakeIdempotencyService();
-        useCase = new CancelPurchaseRequestUseCase(purchaseRequestRepository, idempotencyService, clock);
+        eventPublisher = event -> {};
+        useCase = new CancelPurchaseRequestUseCase(purchaseRequestRepository, idempotencyService, eventPublisher, clock);
     }
 
     @Test

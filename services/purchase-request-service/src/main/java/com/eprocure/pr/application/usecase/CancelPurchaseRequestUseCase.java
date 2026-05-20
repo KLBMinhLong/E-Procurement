@@ -5,8 +5,10 @@ import com.eprocure.pr.application.service.IdempotencyService;
 import com.eprocure.pr.common.exception.BusinessException;
 import com.eprocure.pr.common.exception.ErrorCode;
 import com.eprocure.pr.common.util.LogMaskingUtil;
+import com.eprocure.pr.domain.event.PrCancelledEvent;
 import com.eprocure.pr.domain.model.PurchaseRequest;
 import com.eprocure.pr.domain.repository.PurchaseRequestRepository;
+import com.eprocure.pr.application.port.out.PrCancelledEventPublisher;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
@@ -41,12 +43,16 @@ public class CancelPurchaseRequestUseCase {
     private final IdempotencyService idempotencyService;
     private final Clock clock;
 
+    private final PrCancelledEventPublisher eventPublisher;
+
     public CancelPurchaseRequestUseCase(
             PurchaseRequestRepository purchaseRequestRepository,
             IdempotencyService idempotencyService,
+            PrCancelledEventPublisher eventPublisher,
             Clock clock) {
         this.purchaseRequestRepository = purchaseRequestRepository;
         this.idempotencyService = idempotencyService;
+        this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
 
@@ -98,7 +104,13 @@ public class CancelPurchaseRequestUseCase {
         // 5. Soft-delete
         purchaseRequestRepository.softDelete(pr.getId(), command.actorId(), now);
 
-        // 6. Cache idempotency
+        // 6. Publish events
+        pr.pullDomainEvents().stream()
+                .filter(PrCancelledEvent.class::isInstance)
+                .map(PrCancelledEvent.class::cast)
+                .forEach(eventPublisher::publish);
+
+        // 7. Cache idempotency
         idempotencyService.save(IDEMPOTENCY_OPERATION, command.actorId(), idempotencyKey, CANCELLED_SENTINEL);
 
         log.info("[ACTION] Complete CancelPurchaseRequest | userId={} | prId={} | prNumber={}",
