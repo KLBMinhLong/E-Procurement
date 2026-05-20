@@ -343,5 +343,62 @@
       "WARNING": "Cảnh báo",
       "FAIL": "Vượt ngân sách"
     }
+  },
+  "admin": {
+    "users": {
+      "eyebrow": "Quản lý tài khoản",
+      "title": "Danh sách người dùng",
+      "action": {
+        "create": "Thêm người dùng",
+        "edit": "Sửa người dùng",
+        "lock": "Khóa tài khoản",
+        "unlock": "Mở khóa tài khoản"
+      },
+      "filter": {
+        "placeholder": "Tìm họ tên, email, tên đăng nhập...",
+        "allDepts": "Tất cả phòng ban",
+        "allStatus": "Tất cả trạng thái"
+      },
+      "empty": {
+        "title": "Không tìm thấy người dùng",
+        "message": "Không có tài khoản nào phù hợp với bộ lọc hiện tại."
+      },
+      "col": {
+        "fullName": "Họ và tên",
+        "username": "Tên đăng nhập",
+        "email": "Email liên hệ",
+        "dept": "Phòng ban",
+        "roles": "Vai trò",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
+      "status": {
+        "ACTIVE": "Hoạt động",
+        "INACTIVE": "Tạm dừng",
+        "LOCKED": "Đang khóa",
+        "PENDING_VERIFY": "Chờ xác minh"
+      },
+      "toast": {
+        "lockSuccess": "Đã khóa tài khoản người dùng thành công.",
+        "unlockSuccess": "Đã mở khóa tài khoản người dùng thành công."
+      },
+      "totalItems": "người dùng"
+    },
+    "rbac": {
+      "eyebrow": "Kiểm soát truy cập (RBAC)",
+      "title": "Ma trận phân quyền",
+      "empty": {
+        "title": "Không tìm thấy vai trò",
+        "message": "Không thể tải danh sách vai trò hệ thống."
+      }
+    },
+    "org": {
+      "eyebrow": "Cơ cấu tổ chức",
+      "title": "Sơ đồ phòng ban",
+      "empty": {
+        "title": "Không tìm thấy phòng ban",
+        "message": "Không thể tải cây sơ đồ tổ chức phòng ban."
+      }
+    }
   }
 }

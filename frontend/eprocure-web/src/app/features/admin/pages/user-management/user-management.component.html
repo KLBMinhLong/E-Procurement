@@ -1,7 +1,7 @@
 <section class="admin-users-page" aria-labelledby="admin-users-heading">
   <ep-breadcrumb />
 
-  <!-- Page Header -->
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
   <div class="page-header">
     <div class="page-header__meta">
       <span class="page-header__eyebrow">{{ 'admin.users.eyebrow' | translate }}</span>
@@ -11,30 +11,204 @@
       <ep-button
         id="btn-create-user"
         variant="primary"
-        icon="plus">
+        icon="plus"
+        (click)="openCreateModal()">
         {{ 'admin.users.action.create' | translate }}
       </ep-button>
     </div>
   </div>
 
-  <!-- Toolbar -->
+  <!-- ── Toolbar & Filters ────────────────────────────────────────── -->
   <div class="admin-toolbar">
-    <ep-filter-bar
-      id="user-search"
-      placeholderKey="admin.users.filter.placeholder"
-      [value]="searchQuery()"
-      (valueChange)="onSearchChange($event)"
-      (refresh)="loadData()">
-    </ep-filter-bar>
+    <div class="admin-toolbar__row">
+      <ep-filter-bar
+        id="user-search"
+        placeholderKey="admin.users.filter.placeholder"
+        [value]="searchQuery()"
+        (valueChange)="onSearchChange($event)"
+        (refresh)="loadData()">
+      </ep-filter-bar>
+
+      <!-- Department Filter Dropdown -->
+      <div class="admin-toolbar__select-wrapper">
+        <label for="filter-dept" class="sr-only">{{ 'admin.users.filter.dept' | translate }}</label>
+        <select
+          id="filter-dept"
+          class="admin-select"
+          [value]="selectedDepartmentId()"
+          (change)="onDepartmentChange($event)">
+          <option value="">{{ 'admin.users.filter.allDepts' | translate }}</option>
+          @for (dept of departments(); track dept.id) {
+            <option [value]="dept.id">{{ dept.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Status filter chips -->
+    <div class="admin-toolbar__filters">
+      <div class="filter-chip-group">
+        <button
+          id="filter-status-all"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === ''"
+          (click)="onStatusChange('')">
+          {{ 'admin.users.filter.allStatus' | translate }}
+        </button>
+        <button
+          id="filter-status-active"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'ACTIVE'"
+          (click)="onStatusChange('ACTIVE')">
+          {{ 'admin.users.status.ACTIVE' | translate }}
+        </button>
+        <button
+          id="filter-status-inactive"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'INACTIVE'"
+          (click)="onStatusChange('INACTIVE')">
+          {{ 'admin.users.status.INACTIVE' | translate }}
+        </button>
+        <button
+          id="filter-status-locked"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'LOCKED'"
+          (click)="onStatusChange('LOCKED')">
+          {{ 'admin.users.status.LOCKED' | translate }}
+        </button>
+        <button
+          id="filter-status-pending"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'PENDING_VERIFY'"
+          (click)="onStatusChange('PENDING_VERIFY')">
+          {{ 'admin.users.status.PENDING_VERIFY' | translate }}
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Content Placeholder -->
+  <!-- ── Main Grid Content ────────────────────────────────────────── -->
   @if (isLoading()) {
-    <ep-skeleton [rows]="6" />
-  } @else {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
     <ep-empty-state
       icon="users"
       [title]="'admin.users.empty.title' | translate"
       [message]="'admin.users.empty.message' | translate" />
+  } @else {
+    <div class="users-table-wrapper">
+      <table class="users-table" role="grid" aria-labelledby="admin-users-heading">
+        <thead>
+          <tr>
+            <th scope="col" class="avatar-col"></th>
+            <th scope="col">{{ 'admin.users.col.fullName' | translate }}</th>
+            <th scope="col">{{ 'admin.users.col.username' | translate }}</th>
+            <th scope="col">{{ 'admin.users.col.email' | translate }}</th>
+            <th scope="col">{{ 'admin.users.col.dept' | translate }}</th>
+            <th scope="col">{{ 'admin.users.col.roles' | translate }}</th>
+            <th scope="col">{{ 'admin.users.col.status' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'admin.users.col.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of items(); track user.id) {
+            <tr [id]="'user-row-' + user.id" class="users-table__row">
+              <td class="avatar-col">
+                <ep-avatar [name]="user.fullName" />
+              </td>
+
+              <td class="users-table__name font-bold">
+                {{ user.fullName }}
+              </td>
+
+              <td class="users-table__username mono">
+                {{ user.username }}
+              </td>
+
+              <td class="users-table__email text-secondary">
+                {{ user.email }}
+                @if (user.phone) {
+                  <span class="users-table__phone block text-xs font-normal text-muted">{{ user.phone }}</span>
+                }
+              </td>
+
+              <td class="users-table__dept">
+                {{ user.departmentName || '--' }}
+              </td>
+
+              <td class="users-table__roles">
+                <div class="roles-badges">
+                  @for (role of user.roles; track role) {
+                    <span class="role-pill">{{ role }}</span>
+                  } @empty {
+                    <span class="role-pill role-pill--none">--</span>
+                  }
+                </div>
+              </td>
+
+              <td>
+                <ep-badge
+                  [tone]="statusTone[user.status] || 'neutral'"
+                  [labelKey]="'admin.users.status.' + user.status" />
+              </td>
+
+              <td class="align-right actions-col">
+                <div class="actions-group">
+                  <ep-button
+                    [id]="'btn-edit-user-' + user.id"
+                    variant="ghost"
+                    size="sm"
+                    icon="pencil"
+                    [ariaLabel]="'admin.users.action.edit' | translate"
+                    (click)="openEditModal(user)">
+                  </ep-button>
+
+                  <ep-button
+                    [id]="'btn-toggle-status-' + user.id"
+                    [variant]="user.status === 'ACTIVE' ? 'danger' : 'secondary'"
+                    size="sm"
+                    [icon]="isStatusMutating() === user.id ? null : (user.status === 'ACTIVE' ? 'lock' : 'unlock')"
+                    [loading]="isStatusMutating() === user.id"
+                    [ariaLabel]="(user.status === 'ACTIVE' ? 'admin.users.action.lock' : 'admin.users.action.unlock') | translate"
+                    (click)="toggleStatus(user)">
+                  </ep-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    @if (meta(); as m) {
+      <div class="users-pagination">
+        <span class="users-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: m.page, total: m.totalPages } }}
+          &nbsp;·&nbsp;
+          {{ m.totalElements }} {{ 'admin.users.totalItems' | translate }}
+        </span>
+        <div class="users-pagination__controls">
+          <ep-button
+            id="btn-prev-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="m.isFirst"
+            (click)="onPageChange({ page: m.page - 1, size: m.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="m.isLast"
+            (click)="onPageChange({ page: m.page + 1, size: m.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
   }
 </section>

@@ -343,5 +343,62 @@
       "WARNING": "Warning",
       "FAIL": "Budget Exceeded"
     }
+  },
+  "admin": {
+    "users": {
+      "eyebrow": "User Management",
+      "title": "User Directory",
+      "action": {
+        "create": "New User",
+        "edit": "Edit User",
+        "lock": "Lock Account",
+        "unlock": "Unlock Account"
+      },
+      "filter": {
+        "placeholder": "Search user by name, email, username...",
+        "allDepts": "All Departments",
+        "allStatus": "All Statuses"
+      },
+      "empty": {
+        "title": "No users found",
+        "message": "No user accounts match your current filters."
+      },
+      "col": {
+        "fullName": "Full Name",
+        "username": "Username",
+        "email": "Email",
+        "dept": "Department",
+        "roles": "Roles",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "LOCKED": "Locked",
+        "PENDING_VERIFY": "Pending Verify"
+      },
+      "toast": {
+        "lockSuccess": "User account successfully locked.",
+        "unlockSuccess": "User account successfully unlocked."
+      },
+      "totalItems": "users"
+    },
+    "rbac": {
+      "eyebrow": "Role Based Access Control",
+      "title": "Permissions Matrix",
+      "empty": {
+        "title": "No roles found",
+        "message": "Role mapping could not be loaded."
+      }
+    },
+    "org": {
+      "eyebrow": "Organization Structure",
+      "title": "Department Chart",
+      "empty": {
+        "title": "No departments found",
+        "message": "Organizational tree chart could not be loaded."
+      }
+    }
   }
 }
