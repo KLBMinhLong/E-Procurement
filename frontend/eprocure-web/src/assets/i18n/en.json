@@ -115,7 +115,8 @@
     "dashboard": "Dashboard",
     "openMenu": "Open menu",
     "primary": "Primary navigation",
-    "procurement": "Procurement"
+    "procurement": "Procurement",
+    "purchaseRequest": "Purchase Requests"
   },
   "notification": {
     "open": "Open notifications"
@@ -125,7 +126,9 @@
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "procurement": "Procurement",
-    "uiShowcase": "UI library"
+    "uiShowcase": "UI library",
+    "pr.create": "Create Request",
+    "pr.detail": "Request Details"
   },
   "shared": {
     "breadcrumb": {
@@ -197,5 +200,148 @@
   },
   "user": {
     "noDepartment": "No department"
+  },
+  "pr": {
+    "list": {
+      "eyebrow": "Procurement Management",
+      "title": "Purchase Requests",
+      "action": {
+        "create": "Create request"
+      },
+      "filter": {
+        "placeholder": "Search PR code, title...",
+        "allStatus": "All Statuses",
+        "allPriority": "All Priorities"
+      },
+      "empty": {
+        "title": "No requests found",
+        "message": "No purchase requests match your filters."
+      },
+      "col": {
+        "number": "PR Code",
+        "title": "Title",
+        "priority": "Priority",
+        "status": "Status",
+        "amount": "Total Amount",
+        "requester": "Requester",
+        "createdAt": "Created At"
+      },
+      "totalItems": "items"
+    },
+    "create": {
+      "eyebrow": "Create New",
+      "title": "Create Purchase Request",
+      "section": {
+        "basic": "Basic Information",
+        "lineItems": "Line Items",
+        "attachments": "Attachments",
+        "summary": "Summary"
+      },
+      "field": {
+        "title": "Title",
+        "titlePlaceholder": "E.g., Q3 IT Equipment Purchase",
+        "justification": "Justification",
+        "justificationPlaceholder": "Provide a detailed explanation of the need (min 50 chars)...",
+        "priority": "Priority",
+        "needByDate": "Need By Date",
+        "urgencyReason": "Urgency Reason",
+        "urgencyReasonPlaceholder": "Explain why this request is urgent..."
+      },
+      "lineItem": {
+        "label": "Item",
+        "itemName": "Item Name",
+        "itemNamePlaceholder": "Enter item name...",
+        "category": "Category",
+        "categoryPlaceholder": "Select category...",
+        "glAccount": "GL Account",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit Price",
+        "total": "Total"
+      },
+      "action": {
+        "addItem": "Add Item",
+        "searchCatalog": "Search Catalog",
+        "submit": "Create Request"
+      },
+      "upload": {
+        "prompt": "Drag and drop or click to upload",
+        "hint": "Supports: PDF, Excel, Word, JPG, PNG (Max 10MB)",
+        "remove": "Remove file"
+      },
+      "summary": {
+        "lineItems": "Total Line Items:",
+        "totalAmount": "Estimated Total:"
+      },
+      "catalog": {
+        "title": "Item Catalog",
+        "searchPlaceholder": "Search item name or code...",
+        "noResults": "No items match your search."
+      }
+    },
+    "detail": {
+      "eyebrow": "Request Details",
+      "action": {
+        "submit": "Submit for Approval",
+        "confirmCancel": "Confirm Cancel"
+      },
+      "label": {
+        "justification": "Justification",
+        "urgencyReason": "Urgency Reason",
+        "requester": "Requester",
+        "createdAt": "Created At",
+        "needByDate": "Need By Date",
+        "totalAmount": "Total Amount",
+        "fromCatalog": "From catalog"
+      },
+      "section": {
+        "lineItems": "Line Items",
+        "attachments": "Attachments",
+        "budget": "Budget Check",
+        "approval": "Approval Workflow"
+      },
+      "col": {
+        "item": "Item",
+        "category": "Category",
+        "quantity": "Qty",
+        "price": "Unit Price",
+        "total": "Total"
+      },
+      "budget": {
+        "allocated": "Allocated Budget:",
+        "available": "Available Balance:"
+      },
+      "modal": {
+        "cancel": {
+          "title": "Cancel Request",
+          "message": "Are you sure you want to cancel this purchase request? This action cannot be undone.",
+          "reason": "Reason for cancellation",
+          "reasonPlaceholder": "Enter reason for cancellation (required)..."
+        }
+      }
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Submitted",
+      "PENDING_APPROVAL": "Pending Approval",
+      "CHANGES_REQUESTED": "Changes Requested",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CONVERTED_TO_PO": "Converted to PO",
+      "CANCELLED": "Cancelled",
+      "CLOSED": "Closed"
+    },
+    "priority": {
+      "NORMAL": "Normal",
+      "URGENT": "Urgent",
+      "EMERGENCY": "Emergency"
+    }
+  },
+  "budget": {
+    "status": {
+      "PASS": "Pass",
+      "WARNING": "Warning",
+      "FAIL": "Budget Exceeded"
+    }
   }
 }

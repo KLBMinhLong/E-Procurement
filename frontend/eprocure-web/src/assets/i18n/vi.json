@@ -115,7 +115,8 @@
     "dashboard": "Tổng quan",
     "openMenu": "Mở menu",
     "primary": "Điều hướng chính",
-    "procurement": "Mua sắm"
+    "procurement": "Mua sắm",
+    "purchaseRequest": "Yêu cầu mua sắm"
   },
   "notification": {
     "open": "Mở thông báo"
@@ -125,7 +126,9 @@
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
     "procurement": "Mua sắm",
-    "uiShowcase": "Thư viện giao diện"
+    "uiShowcase": "Thư viện giao diện",
+    "pr.create": "Tạo yêu cầu",
+    "pr.detail": "Chi tiết yêu cầu"
   },
   "shared": {
     "breadcrumb": {
@@ -197,5 +200,148 @@
   },
   "user": {
     "noDepartment": "Chưa có phòng ban"
+  },
+  "pr": {
+    "list": {
+      "eyebrow": "Quản lý mua sắm",
+      "title": "Yêu cầu mua sắm",
+      "action": {
+        "create": "Tạo yêu cầu"
+      },
+      "filter": {
+        "placeholder": "Tìm kiếm mã PR, tiêu đề...",
+        "allStatus": "Tất cả trạng thái",
+        "allPriority": "Tất cả mức độ"
+      },
+      "empty": {
+        "title": "Không có yêu cầu nào",
+        "message": "Không tìm thấy yêu cầu mua sắm nào khớp với bộ lọc của bạn."
+      },
+      "col": {
+        "number": "Mã PR",
+        "title": "Tiêu đề",
+        "priority": "Mức độ",
+        "status": "Trạng thái",
+        "amount": "Tổng tiền",
+        "requester": "Người yêu cầu",
+        "createdAt": "Ngày tạo"
+      },
+      "totalItems": "kết quả"
+    },
+    "create": {
+      "eyebrow": "Tạo mới",
+      "title": "Tạo yêu cầu mua sắm",
+      "section": {
+        "basic": "Thông tin cơ bản",
+        "lineItems": "Danh sách hàng hóa",
+        "attachments": "Tài liệu đính kèm",
+        "summary": "Tổng hợp"
+      },
+      "field": {
+        "title": "Tiêu đề",
+        "titlePlaceholder": "VD: Mua sắm thiết bị IT quý 3",
+        "justification": "Lý do mua sắm",
+        "justificationPlaceholder": "Giải thích chi tiết về mục đích sử dụng và sự cần thiết (tối thiểu 50 ký tự)...",
+        "priority": "Mức độ ưu tiên",
+        "needByDate": "Cần hàng trước ngày",
+        "urgencyReason": "Lý do khẩn cấp",
+        "urgencyReasonPlaceholder": "Giải thích tại sao yêu cầu này cần được xử lý khẩn cấp..."
+      },
+      "lineItem": {
+        "label": "Hàng hóa",
+        "itemName": "Tên hàng hóa",
+        "itemNamePlaceholder": "Nhập tên hàng hóa...",
+        "category": "Danh mục",
+        "categoryPlaceholder": "Chọn danh mục...",
+        "glAccount": "Tài khoản GL",
+        "quantity": "Số lượng",
+        "unit": "ĐVT",
+        "unitPrice": "Đơn giá",
+        "total": "Thành tiền"
+      },
+      "action": {
+        "addItem": "Thêm hàng hóa",
+        "searchCatalog": "Tìm trong catalog",
+        "submit": "Tạo yêu cầu"
+      },
+      "upload": {
+        "prompt": "Kéo thả file hoặc click để tải lên",
+        "hint": "Hỗ trợ: PDF, Excel, Word, JPG, PNG (Tối đa 10MB)",
+        "remove": "Xóa file"
+      },
+      "summary": {
+        "lineItems": "Tổng số hàng hóa:",
+        "totalAmount": "Tổng giá trị dự kiến:"
+      },
+      "catalog": {
+        "title": "Danh mục hàng hóa",
+        "searchPlaceholder": "Tìm tên hoặc mã hàng hóa...",
+        "noResults": "Không tìm thấy hàng hóa nào phù hợp."
+      }
+    },
+    "detail": {
+      "eyebrow": "Chi tiết yêu cầu",
+      "action": {
+        "submit": "Gửi phê duyệt",
+        "confirmCancel": "Xác nhận hủy"
+      },
+      "label": {
+        "justification": "Lý do mua sắm",
+        "urgencyReason": "Lý do khẩn cấp",
+        "requester": "Người tạo",
+        "createdAt": "Ngày tạo",
+        "needByDate": "Cần hàng trước",
+        "totalAmount": "Tổng cộng",
+        "fromCatalog": "Từ catalog"
+      },
+      "section": {
+        "lineItems": "Danh sách hàng hóa",
+        "attachments": "Tài liệu đính kèm",
+        "budget": "Kiểm tra ngân sách",
+        "approval": "Quy trình phê duyệt"
+      },
+      "col": {
+        "item": "Hàng hóa",
+        "category": "Danh mục",
+        "quantity": "Số lượng",
+        "price": "Đơn giá",
+        "total": "Thành tiền"
+      },
+      "budget": {
+        "allocated": "Ngân sách cấp:",
+        "available": "Còn lại khả dụng:"
+      },
+      "modal": {
+        "cancel": {
+          "title": "Hủy yêu cầu",
+          "message": "Bạn có chắc chắn muốn hủy yêu cầu mua sắm này không? Hành động này không thể hoàn tác.",
+          "reason": "Lý do hủy",
+          "reasonPlaceholder": "Nhập lý do hủy yêu cầu (bắt buộc)..."
+        }
+      }
+    },
+    "status": {
+      "DRAFT": "Bản nháp",
+      "SUBMITTED": "Đã gửi",
+      "PENDING_APPROVAL": "Chờ phê duyệt",
+      "CHANGES_REQUESTED": "Cần bổ sung",
+      "APPROVED": "Đã phê duyệt",
+      "REJECTED": "Từ chối",
+      "CONVERTED_TO_PO": "Đã tạo PO",
+      "CANCELLED": "Đã hủy",
+      "CLOSED": "Đã đóng"
+    },
+    "priority": {
+      "NORMAL": "Bình thường",
+      "URGENT": "Khẩn cấp",
+      "EMERGENCY": "Nghiêm trọng"
+    }
+  },
+  "budget": {
+    "status": {
+      "PASS": "Đạt",
+      "WARNING": "Cảnh báo",
+      "FAIL": "Vượt ngân sách"
+    }
   }
 }

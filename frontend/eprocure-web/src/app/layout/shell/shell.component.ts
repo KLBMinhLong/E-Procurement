@@ -43,8 +43,8 @@ export class ShellComponent {
 
   readonly navItems = computed<NavigationItem[]>(() => [
     { icon: 'layout-dashboard', labelKey: 'nav.dashboard', route: '/dashboard' },
-    { icon: 'shopping-cart', labelKey: 'nav.procurement', route: '/procurement', permissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'] },
-    { icon: 'inbox', labelKey: 'nav.approvals', route: '/approvals', permissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3'] },
+    { icon: 'shopping-cart', labelKey: 'nav.purchaseRequest', route: '/procurement', permissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL', 'ADMIN_USER_VIEW'] },
+    { icon: 'inbox', labelKey: 'nav.approvals', route: '/approvals', permissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
     { icon: 'users', labelKey: 'nav.admin', route: '/admin', permissions: ['ADMIN_USER_VIEW', 'SYSTEM_CONFIG'] }
   ].filter((item) => this.permissionService.hasAnyPermission(item.permissions)));
 

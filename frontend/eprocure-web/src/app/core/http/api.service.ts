@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
@@ -6,14 +6,19 @@ import { API_BASE_URL } from './api-tokens';
 
 type QueryValue = string | number | boolean | null | undefined;
 
+type ApiRequestOptions = {
+  context?: HttpContext;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  get<T>(path: string, params?: Record<string, QueryValue>): Observable<ApiResponse<T>> {
+  get<T>(path: string, params?: Record<string, QueryValue>, options?: ApiRequestOptions): Observable<ApiResponse<T>> {
     return this.http.get<ApiResponse<T>>(this.url(path), {
-      params: this.toParams(params)
+      params: this.toParams(params),
+      context: options?.context
     });
   }
 

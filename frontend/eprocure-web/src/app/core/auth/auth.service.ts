@@ -1,10 +1,14 @@
 import { inject, Injectable, signal } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
 import { ForgotPasswordRequest, LoginRequest, PublicKeyResponse, UserContext } from '../models/user-context.model';
 import { ApiService } from '../http/api.service';
 import { API_BASE_URL } from '../http/api-tokens';
 import { EncryptionService } from '../http/encryption.service';
+import { BYPASS_ERROR_INTERCEPTOR_TOKEN } from '../http/http-context-tokens';
+
+export const BYPASS_ERROR_INTERCEPTOR = new HttpContext().set(BYPASS_ERROR_INTERCEPTOR_TOKEN, true);
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -28,7 +32,9 @@ export class AuthService {
   hydrateUserContext(): Observable<ApiResponse<UserContext>> {
     this.isHydrating.set(true);
 
-    return this.api.get<UserContext>('/users/me').pipe(
+    return this.api.get<UserContext>('/users/me', undefined, {
+      context: BYPASS_ERROR_INTERCEPTOR
+    }).pipe(
       tap({
         next: (response) => {
           this.currentUser.set(response.data);
