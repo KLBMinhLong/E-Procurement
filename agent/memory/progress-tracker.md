@@ -131,12 +131,13 @@
 | Domain model (PurchaseRequest, PrLineItem, Money) | ✅ |
 | CreatePR UseCase | ✅ |
 | SubmitPR UseCase (budget check + inventory check) | ✅ |
-| UpdatePR UseCase | ⬜ |
-| CancelPR UseCase | ⬜ |
+| UpdatePR UseCase | ✅ |
+| CancelPR UseCase | ✅ |
+| GetPR Detail + List (paginated, filtered) | ✅ |
 | File attachment upload | ⬜ |
 | Catalog API | ⬜ |
 | Kafka event publishing | ⬜ |
-| Unit tests (domain + CreatePR use case) | 🔄 | Domain + CreatePR + SubmitPR covered |
+| Unit tests (domain + CreatePR + SubmitPR + UpdatePR + CancelPR) | ✅ | 26 tests pass |
 | Frontend: PR list page | ⬜ |
 | Frontend: PR create form | ⬜ |
 | Frontend: PR detail page | ⬜ |

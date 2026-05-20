@@ -205,4 +205,28 @@ public interface PurchaseRequestMapper {
             WHERE id = #{id} AND is_deleted = false
             """)
     void softDelete(@Param("id") UUID id, @Param("deletedBy") UUID deletedBy, @Param("deletedAt") Instant deletedAt);
+
+    /**
+     * Soft-delete all line items belonging to a PR.
+     * Called before re-inserting new line items in UpdatePR.
+     */
+    @Update("""
+            UPDATE pr.pr_line_items
+            SET is_deleted = true
+            WHERE pr_id = #{prId} AND is_deleted = false
+            """)
+    void deleteLineItemsByPrId(UUID prId);
+
+    // ── List / filter queries (complex dynamic SQL → XML mapper) ─────────────
+
+    /**
+     * Paginated list without loading line items (lightweight for list view).
+     * Dynamic WHERE implemented in PurchaseRequestMapper.xml.
+     */
+    List<PurchaseRequestDbEntity> findByFilter(@Param("filter") com.eprocure.pr.domain.repository.PurchaseRequestFilter filter);
+
+    /**
+     * Count matching rows for pagination meta.
+     */
+    long countByFilter(@Param("filter") com.eprocure.pr.domain.repository.PurchaseRequestFilter filter);
 }
