@@ -134,8 +134,8 @@
 | UpdatePR UseCase | ✅ |
 | CancelPR UseCase | ✅ |
 | GetPR Detail + List (paginated, filtered) | ✅ |
-| File attachment upload | ⬜ |
-| Catalog API | ⬜ |
+| File attachment upload | ✅ |
+| Catalog API | ✅ |
 | Kafka event publishing | ⬜ |
 | Unit tests (domain + CreatePR + SubmitPR + UpdatePR + CancelPR) | ✅ | 26 tests pass |
 | Frontend: PR list page | ⬜ |
