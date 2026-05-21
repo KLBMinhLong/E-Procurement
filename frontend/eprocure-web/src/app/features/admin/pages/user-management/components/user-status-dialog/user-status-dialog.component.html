@@ -1,0 +1,44 @@
+<ep-modal
+  [open]="isOpen"
+  [title]="'admin.users.statusDialog.title' | translate"
+  (close)="onClose()">
+  @if (user; as u) {
+    <div class="status-dialog">
+      <p class="status-dialog__message">
+        @if (u.status === 'ACTIVE') {
+          {{ 'admin.users.statusDialog.lockMessage' | translate: { name: u.fullName } }}
+        } @else {
+          {{ 'admin.users.statusDialog.unlockMessage' | translate: { name: u.fullName } }}
+        }
+      </p>
+
+      @if (u.status === 'ACTIVE') {
+        <div class="status-dialog__reason">
+          <label for="status-reason" class="status-dialog__label">
+            {{ 'admin.users.statusDialog.reasonLabel' | translate }}
+          </label>
+          <textarea
+            id="status-reason"
+            class="form-input status-dialog__textarea"
+            rows="3"
+            maxlength="500"
+            [value]="reason"
+            (input)="onReasonInput($event)"
+            [placeholder]="'admin.users.statusDialog.reasonPlaceholder' | translate">
+          </textarea>
+        </div>
+      }
+
+      <div class="form-actions">
+        <ep-button variant="ghost" (click)="onClose()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          [variant]="u.status === 'ACTIVE' ? 'danger' : 'primary'"
+          (click)="onConfirm()">
+          {{ (u.status === 'ACTIVE' ? 'admin.users.action.lock' : 'admin.users.action.unlock') | translate }}
+        </ep-button>
+      </div>
+    </div>
+  }
+</ep-modal>

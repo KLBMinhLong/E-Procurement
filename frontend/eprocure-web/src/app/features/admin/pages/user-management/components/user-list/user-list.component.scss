@@ -1,0 +1,162 @@
+// ── Users Table ──────────────────────────────────────────────────
+.users-table-wrapper {
+  background: var(--color-surface);
+  border-radius: var(--radius-3);
+  border: var(--border-subtle);
+  overflow-x: auto;
+  box-shadow: var(--shadow-1);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-sm);
+
+  th {
+    background: var(--color-surface-raised);
+    color: var(--color-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.06em;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-bottom: var(--border-subtle);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-bottom: var(--border-subtle);
+    color: var(--color-text-primary);
+    vertical-align: middle;
+  }
+
+  &__row {
+    transition: background-color var(--motion-fast);
+
+    &:hover {
+      background-color: var(--color-neutral-subtle);
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+// Column widths
+.col-user { min-width: 14rem; }
+.col-code { width: 7rem; }
+.col-email { min-width: 12rem; }
+.col-dept { min-width: 8rem; }
+.col-roles { min-width: 10rem; }
+.col-status { width: 7rem; }
+.col-actions { width: 6rem; text-align: right; }
+
+// User cell (avatar + name + username)
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__username {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+}
+
+.code-badge {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-1);
+  letter-spacing: 0.03em;
+}
+
+.email-text {
+  display: block;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.phone-text {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 1px;
+}
+
+.roles-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+}
+
+.role-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-warning-border);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &--none {
+    color: var(--color-text-muted);
+    background: transparent;
+    border: none;
+  }
+}
+
+.actions-group {
+  display: flex;
+  gap: var(--spacing-2);
+  justify-content: flex-end;
+}
+
+// ── Pagination ───────────────────────────────────────────────────
+.users-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-3);
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-1);
+
+  &__summary {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  &__controls {
+    display: flex;
+    gap: var(--spacing-2);
+  }
+}
