@@ -356,7 +356,8 @@
         "create": "Thêm người dùng",
         "edit": "Sửa người dùng",
         "lock": "Khóa tài khoản",
-        "unlock": "Mở khóa tài khoản"
+        "unlock": "Mở khóa tài khoản",
+        "resetPassword": "Đặt lại mật khẩu"
       },
       "filter": {
         "placeholder": "Tìm họ tên, email, tên đăng nhập...",
@@ -387,6 +388,11 @@
         "titleCreate": "Thêm tài khoản mới",
         "titleEdit": "Cập nhật tài khoản"
       },
+      "resetPasswordModal": {
+        "title": "Đặt lại mật khẩu",
+        "newPassword": "Mật khẩu mới",
+        "newPasswordPlaceholder": "Nhập mật khẩu mới (ít nhất 8 ký tự)"
+      },
       "field": {
         "employeeCode": "Mã nhân viên",
         "employeeCodePlaceholder": "VD: NV001",
@@ -406,13 +412,16 @@
         "required": "Thông tin này là bắt buộc",
         "email": "Địa chỉ email không hợp lệ",
         "usernameMinLength": "Tên đăng nhập phải chứa tối thiểu 3 ký tự",
-        "usernamePattern": "Chỉ chấp nhận chữ thường, số, dấu chấm, gạch dưới, gạch ngang"
+        "usernamePattern": "Chỉ chấp nhận chữ thường, số, dấu chấm, gạch dưới, gạch ngang",
+        "passwordMinLength": "Mật khẩu phải chứa tối thiểu 8 ký tự",
+        "passwordPattern": "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt"
       },
       "toast": {
         "lockSuccess": "Đã khóa tài khoản người dùng thành công.",
         "unlockSuccess": "Đã mở khóa tài khoản người dùng thành công.",
         "createSuccess": "Đã tạo tài khoản người dùng mới thành công.",
-        "updateSuccess": "Đã cập nhật thông tin tài khoản thành công."
+        "updateSuccess": "Đã cập nhật thông tin tài khoản thành công.",
+        "resetPasswordSuccess": "Đã đặt lại mật khẩu cho người dùng thành công."
       },
       "statusDialog": {
         "title": "Xác nhận thay đổi trạng thái",

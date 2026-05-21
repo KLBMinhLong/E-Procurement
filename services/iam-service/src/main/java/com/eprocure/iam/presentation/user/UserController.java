@@ -47,6 +47,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.eprocure.iam.application.usecase.AdminResetPasswordUseCase;
+import com.eprocure.iam.application.port.in.AdminResetPasswordCommand;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -61,6 +63,7 @@ public class UserController {
     private final AssignUserRolesUseCase assignUserRolesUseCase;
     private final EnableTwoFactorUseCase enableTwoFactorUseCase;
     private final ConfirmTwoFactorUseCase confirmTwoFactorUseCase;
+    private final AdminResetPasswordUseCase adminResetPasswordUseCase;
 
     public UserController(
             GetCurrentUserUseCase getCurrentUserUseCase,
@@ -71,7 +74,8 @@ public class UserController {
             ChangeUserStatusUseCase changeUserStatusUseCase,
             AssignUserRolesUseCase assignUserRolesUseCase,
             EnableTwoFactorUseCase enableTwoFactorUseCase,
-            ConfirmTwoFactorUseCase confirmTwoFactorUseCase) {
+            ConfirmTwoFactorUseCase confirmTwoFactorUseCase,
+            AdminResetPasswordUseCase adminResetPasswordUseCase) {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.listUsersUseCase = listUsersUseCase;
         this.createUserUseCase = createUserUseCase;
@@ -81,6 +85,7 @@ public class UserController {
         this.assignUserRolesUseCase = assignUserRolesUseCase;
         this.enableTwoFactorUseCase = enableTwoFactorUseCase;
         this.confirmTwoFactorUseCase = confirmTwoFactorUseCase;
+        this.adminResetPasswordUseCase = adminResetPasswordUseCase;
     }
 
     @GetMapping("/me")
@@ -231,5 +236,22 @@ public class UserController {
                 new AssignUserRolesCommand(principal.getId(), id, body.roles()),
                 idempotencyKey);
         return ResponseEntity.ok(ApiResponse.successMessage("User roles updated", RequestIdUtil.resolve(request)));
+    }
+
+    @PutMapping("/{id}/password")
+    @PreAuthorize("hasAuthority('ADMIN_USER_MANAGE')")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @PathVariable UUID id,
+            @Valid @RequestBody AdminResetPasswordRequest body,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] PUT /api/v1/users/{}/password | userId={}",
+                LogMaskingUtil.maskId(id),
+                LogMaskingUtil.maskId(principal.getId()));
+        adminResetPasswordUseCase.execute(
+                new AdminResetPasswordCommand(principal.getId(), id, body.newPassword()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.successMessage("User password reset successfully", RequestIdUtil.resolve(request)));
     }
 }

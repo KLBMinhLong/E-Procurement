@@ -109,6 +109,14 @@ export class UserManagementComponent implements OnInit {
   readonly statusDialogUser = signal<AdminUserSummary | null>(null);
   readonly statusDialogReason = signal('');
 
+  // ── Reset Password Modal ───────────────────────────────────────
+  readonly isResetPasswordModalOpen = signal(false);
+  readonly resetPasswordUser = signal<AdminUserSummary | null>(null);
+  readonly isResetPasswordSubmitting = signal(false);
+  readonly resetPasswordForm: FormGroup = this.fb.group({
+    newPassword: ['', [Validators.required, Validators.minLength(8), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^])[A-Za-z\d@$!%*?&#^]{8,128}$/)]]
+  });
+
   // Original roles for the user being edited (to detect changes)
   private editOriginalRoles: string[] = [];
 
@@ -255,6 +263,47 @@ export class UserManagementComponent implements OnInit {
 
   closeModal(): void {
     this.isModalOpen.set(false);
+  }
+
+  // ── Reset Password Handlers ─────────────────────────────────────
+  openResetPasswordModal(user: AdminUserSummary): void {
+    this.resetPasswordUser.set(user);
+    this.resetPasswordForm.reset({ newPassword: '' });
+    this.isResetPasswordModalOpen.set(true);
+  }
+
+  closeResetPasswordModal(): void {
+    this.isResetPasswordModalOpen.set(false);
+    this.resetPasswordUser.set(null);
+  }
+
+  onResetPasswordSubmit(): void {
+    this.resetPasswordForm.markAllAsTouched();
+    if (this.resetPasswordForm.invalid) {
+      return;
+    }
+
+    const user = this.resetPasswordUser();
+    if (!user) return;
+
+    this.isResetPasswordSubmitting.set(true);
+    const { newPassword } = this.resetPasswordForm.getRawValue();
+
+    this.userService
+      .resetPassword(user.id, newPassword)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isResetPasswordSubmitting.set(false))
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.successKey('admin.users.toast.resetPasswordSuccess');
+          this.closeResetPasswordModal();
+        },
+        error: (err: any) => {
+          this.toastService.error(err.message || 'Failed to reset password');
+        }
+      });
   }
 
   onRoleCheckboxChange(event: Event, roleCode: string): void {

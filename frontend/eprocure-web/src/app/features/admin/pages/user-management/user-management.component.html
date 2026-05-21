@@ -165,6 +165,15 @@
                   </ep-button>
 
                   <ep-button
+                    [id]="'btn-reset-password-' + user.id"
+                    variant="ghost"
+                    size="sm"
+                    icon="key"
+                    [ariaLabel]="'admin.users.action.resetPassword' | translate"
+                    (click)="openResetPasswordModal(user)">
+                  </ep-button>
+
+                  <ep-button
                     [id]="'btn-toggle-status-' + user.id"
                     [variant]="user.status === 'ACTIVE' ? 'danger' : 'secondary'"
                     size="sm"
@@ -393,5 +402,44 @@
         </ep-button>
       </div>
     </div>
+  }
+</ep-modal>
+
+<!-- ── Reset Password Modal ────────────────────────────────────── -->
+<ep-modal
+  [open]="isResetPasswordModalOpen()"
+  [title]="'admin.users.resetPasswordModal.title' | translate"
+  (close)="closeResetPasswordModal()">
+  @if (resetPasswordUser(); as u) {
+    <form [formGroup]="resetPasswordForm" (ngSubmit)="onResetPasswordSubmit()" class="user-form">
+      <div class="form-grid">
+        <ep-form-field
+          [label]="'admin.users.resetPasswordModal.newPassword' | translate"
+          [error]="resetPasswordForm.get('newPassword')?.touched && resetPasswordForm.get('newPassword')?.hasError('required') ? ('admin.users.validation.required' | translate) : (resetPasswordForm.get('newPassword')?.touched && resetPasswordForm.get('newPassword')?.hasError('minlength') ? ('admin.users.validation.passwordMinLength' | translate) : (resetPasswordForm.get('newPassword')?.touched && resetPasswordForm.get('newPassword')?.hasError('pattern') ? ('admin.users.validation.passwordPattern' | translate) : null))">
+          <input
+            id="form-newPassword"
+            type="password"
+            formControlName="newPassword"
+            class="form-input"
+            [placeholder]="'admin.users.resetPasswordModal.newPasswordPlaceholder' | translate" />
+        </ep-form-field>
+      </div>
+      <div class="form-actions" style="margin-top: var(--spacing-6);">
+        <ep-button
+          variant="ghost"
+          [disabled]="isResetPasswordSubmitting()"
+          (click)="closeResetPasswordModal()"
+          type="button">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          variant="primary"
+          type="submit"
+          [loading]="isResetPasswordSubmitting()"
+          [disabled]="isResetPasswordSubmitting() || resetPasswordForm.invalid">
+          {{ 'action.submit' | translate }}
+        </ep-button>
+      </div>
+    </form>
   }
 </ep-modal>

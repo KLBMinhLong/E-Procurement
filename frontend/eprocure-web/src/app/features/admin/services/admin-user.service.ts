@@ -123,4 +123,12 @@ export class AdminUserService {
       { withCredentials: true }
     );
   }
+
+  resetPassword(id: string, newPassword: string): Observable<ApiResponse<void>> {
+    return this.http.put<ApiResponse<void>>(
+      `${this.baseUrl}/users/${id}/password`,
+      { newPassword },
+      { withCredentials: true }
+    );
+  }
 }

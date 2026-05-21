@@ -595,6 +595,8 @@ paths:
                 newPassword:
                   type: string
                   minLength: 8
+                  maxLength: 128
+                  pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#^])[A-Za-z\\d@$!%*?&#^]{8,128}$"
                 confirmPassword:
                   type: string
       responses:
@@ -723,6 +725,8 @@ paths:
                 newPassword:
                   type: string
                   minLength: 8
+                  maxLength: 128
+                  pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#^])[A-Za-z\\d@$!%*?&#^]{8,128}$"
                 confirmPassword:
                   type: string
       responses:
@@ -968,6 +972,41 @@ paths:
       responses:
         '200':
           description: Đổi trạng thái thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/{id}/password:
+    put:
+      tags: [Users]
+      summary: Admin đặt lại mật khẩu cho người dùng
+      operationId: resetUserPasswordByAdmin
+      x-required-permission: ADMIN_USER_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newPassword]
+              properties:
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+                  pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#^])[A-Za-z\\d@$!%*?&#^]{8,128}$"
+      responses:
+        '200':
+          description: Đổi mật khẩu thành công
           content:
             application/json:
               schema:

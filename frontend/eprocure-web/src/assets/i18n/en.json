@@ -356,7 +356,8 @@
         "create": "New User",
         "edit": "Edit User",
         "lock": "Lock Account",
-        "unlock": "Unlock Account"
+        "unlock": "Unlock Account",
+        "resetPassword": "Reset Password"
       },
       "filter": {
         "placeholder": "Search user by name, email, username...",
@@ -387,6 +388,11 @@
         "titleCreate": "Add New User",
         "titleEdit": "Edit User Details"
       },
+      "resetPasswordModal": {
+        "title": "Reset Password",
+        "newPassword": "New Password",
+        "newPasswordPlaceholder": "Enter new password (min 8 characters)"
+      },
       "field": {
         "employeeCode": "Employee Code",
         "employeeCodePlaceholder": "E.g. NV001",
@@ -406,13 +412,16 @@
         "required": "This field is mandatory",
         "email": "Enter a valid email address",
         "usernameMinLength": "Username must be at least 3 characters",
-        "usernamePattern": "Only lowercase, numbers, dots, hyphens, and underscores allowed"
+        "usernamePattern": "Only lowercase, numbers, dots, hyphens, and underscores allowed",
+        "passwordMinLength": "Password must be at least 8 characters",
+        "passwordPattern": "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character"
       },
       "toast": {
         "lockSuccess": "User account successfully locked.",
         "unlockSuccess": "User account successfully unlocked.",
         "createSuccess": "User account successfully created.",
-        "updateSuccess": "User account details successfully updated."
+        "updateSuccess": "User account details successfully updated.",
+        "resetPasswordSuccess": "User password successfully reset."
       },
       "statusDialog": {
         "title": "Confirm Status Change",
