@@ -97,6 +97,33 @@
   color: var(--color-text-primary);
 }
 
+.shell__nav-skeleton {
+  border-radius: var(--radius-2);
+  display: block;
+  height: var(--nav-item-height);
+  overflow: hidden;
+  position: relative;
+  background: var(--color-surface-hover);
+
+  &::after {
+    animation: skeleton-shimmer 1.4s ease infinite;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-text-primary) 6%, transparent) 50%,
+      transparent 100%
+    );
+    content: '';
+    inset: 0;
+    position: absolute;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 .shell__workspace {
   min-width: 0;
 }
@@ -253,5 +280,9 @@
   .shell__sidebar,
   .shell__nav a {
     transition: none;
+  }
+
+  .shell__nav-skeleton::after {
+    animation: none;
   }
 }

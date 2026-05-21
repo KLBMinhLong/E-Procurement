@@ -39,6 +39,7 @@ export class ShellComponent {
 
   readonly isSidebarOpen = signal(false);
   readonly user = this.authService.currentUser;
+  readonly isHydrating = this.authService.isHydrating;
   readonly toastMessages = this.toastService.messages;
 
   readonly navItems = computed<NavigationItem[]>(() => [

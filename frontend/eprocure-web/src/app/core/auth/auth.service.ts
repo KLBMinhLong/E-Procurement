@@ -18,12 +18,14 @@ export class AuthService {
 
   readonly currentUser = signal<UserContext | null>(null);
   readonly isHydrating = signal(false);
+  readonly isFullyHydrated = signal(false);
 
   loadPublicKey(): Observable<ApiResponse<PublicKeyResponse>> {
     return this.api.get<PublicKeyResponse>('/auth/public-key');
   }
 
   login(request: LoginRequest): Observable<ApiResponse<UserContext>> {
+    this.isFullyHydrated.set(false);
     return this.api.post<UserContext>('/auth/login', request).pipe(
       tap((response) => this.currentUser.set(response.data))
     );
@@ -39,10 +41,12 @@ export class AuthService {
         next: (response) => {
           this.currentUser.set(response.data);
           this.isHydrating.set(false);
+          this.isFullyHydrated.set(true);
         },
         error: () => {
           this.currentUser.set(null);
           this.isHydrating.set(false);
+          this.isFullyHydrated.set(false);
         }
       })
     );
@@ -64,6 +68,7 @@ export class AuthService {
 
   clearSession(): void {
     this.currentUser.set(null);
+    this.isFullyHydrated.set(false);
   }
 
   refreshPublicKey(): Promise<PublicKeyResponse> {

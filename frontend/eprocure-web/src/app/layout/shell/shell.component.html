@@ -13,15 +13,21 @@
     </a>
 
     <nav class="shell__nav">
-      @for (item of navItems(); track item.route) {
-        <a
-          [routerLink]="item.route"
-          routerLinkActive="is-active"
-          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
-          (click)="closeSidebar()">
-          <ep-icon [name]="item.icon" [size]="18"></ep-icon>
-          <span>{{ item.labelKey | translate }}</span>
-        </a>
+      @if (isHydrating()) {
+        @for (_ of [1, 2, 3, 4]; track $index) {
+          <span class="shell__nav-skeleton"></span>
+        }
+      } @else {
+        @for (item of navItems(); track item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+            (click)="closeSidebar()">
+            <ep-icon [name]="item.icon" [size]="18"></ep-icon>
+            <span>{{ item.labelKey | translate }}</span>
+          </a>
+        }
       }
     </nav>
   </aside>
