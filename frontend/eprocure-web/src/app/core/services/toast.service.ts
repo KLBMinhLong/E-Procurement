@@ -30,14 +30,19 @@ export class ToastService {
   }
 
   private push(kind: ToastKind, message: string, isTranslationKey: boolean): void {
+    const id = crypto.randomUUID();
     this.messages.update((messages) => [
       ...messages,
       {
-        id: crypto.randomUUID(),
+        id,
         kind,
         message,
         isTranslationKey
       }
     ]);
+
+    setTimeout(() => {
+      this.dismiss(id);
+    }, 5000);
   }
 }

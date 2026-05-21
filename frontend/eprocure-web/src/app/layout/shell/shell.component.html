@@ -1,6 +1,6 @@
 <a class="skip-link" href="#main-content">{{ 'accessibility.skipToContent' | translate }}</a>
 
-<div class="shell" [class.shell--open]="isSidebarOpen()">
+<div class="shell" [class.shell--open]="isSidebarOpen()" [class.shell--collapsed]="isSidebarCollapsed()">
   <aside class="shell__sidebar" [attr.aria-label]="'nav.primary' | translate">
     <a class="shell__brand" routerLink="/dashboard" (click)="closeSidebar()">
       <span class="shell__brand-mark">

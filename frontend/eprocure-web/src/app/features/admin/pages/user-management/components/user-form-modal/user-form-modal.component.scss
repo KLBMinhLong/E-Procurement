@@ -32,12 +32,19 @@
   }
 }
 
+:host {
+  --modal-max-width: 48rem;
+}
+
 // ── Form Modal ───────────────────────────────────────────────────
 .user-form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
-  padding: var(--spacing-4) 0;
+  height: 100%;
+  max-height: calc(100vh - 12rem);
+  overflow: hidden;
+  gap: 0;
+  padding: 0;
 
   .form-grid {
     display: grid;
@@ -71,6 +78,29 @@
       color: var(--color-text-muted);
       cursor: not-allowed;
       opacity: var(--opacity-disabled);
+    }
+  }
+}
+
+.user-form__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-6) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border-subtle);
+    border-radius: var(--radius-pill);
+    &:hover {
+      background: var(--color-text-muted);
     }
   }
 }
@@ -166,6 +196,8 @@
   gap: var(--spacing-3);
   border-top: var(--border-subtle);
   padding-top: var(--spacing-5);
+  background: var(--color-surface);
+  flex-shrink: 0;
 }
 
 .form-error {

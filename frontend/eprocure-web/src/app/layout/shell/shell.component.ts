@@ -38,6 +38,7 @@ export class ShellComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isSidebarOpen = signal(false);
+  readonly isSidebarCollapsed = signal(false);
   readonly user = this.authService.currentUser;
   readonly isHydrating = this.authService.isHydrating;
   readonly toastMessages = this.toastService.messages;
@@ -52,7 +53,11 @@ export class ShellComponent {
   ].filter((item) => this.permissionService.hasAnyPermission(item.permissions)));
 
   toggleSidebar(): void {
-    this.isSidebarOpen.update((value) => !value);
+    if (typeof window !== 'undefined' && window.innerWidth > 900) {
+      this.isSidebarCollapsed.update((value) => !value);
+    } else {
+      this.isSidebarOpen.update((value) => !value);
+    }
   }
 
   closeSidebar(): void {

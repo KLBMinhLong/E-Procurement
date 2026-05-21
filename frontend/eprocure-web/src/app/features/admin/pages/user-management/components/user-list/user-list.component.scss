@@ -9,7 +9,8 @@
 
 .users-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
   font-size: var(--font-size-sm);
 
@@ -20,13 +21,13 @@
     text-transform: uppercase;
     font-size: var(--font-size-xs);
     letter-spacing: 0.06em;
-    padding: var(--spacing-3) var(--spacing-4);
+    padding: var(--spacing-2) var(--spacing-3);
     border-bottom: var(--border-subtle);
     white-space: nowrap;
   }
 
   td {
-    padding: var(--spacing-3) var(--spacing-4);
+    padding: var(--spacing-2) var(--spacing-3);
     border-bottom: var(--border-subtle);
     color: var(--color-text-primary);
     vertical-align: middle;
@@ -37,6 +38,10 @@
 
     &:hover {
       background-color: var(--color-neutral-subtle);
+
+      td.col-actions {
+        background-color: var(--color-neutral-subtle) !important;
+      }
     }
 
     &:last-child td {
@@ -45,14 +50,52 @@
   }
 }
 
-// Column widths
-.col-user { min-width: 14rem; }
-.col-code { width: 7rem; }
-.col-email { min-width: 12rem; }
-.col-dept { min-width: 8rem; }
-.col-roles { min-width: 10rem; }
-.col-status { width: 7rem; }
-.col-actions { width: 6rem; text-align: right; }
+// Column widths and layout constraints
+.col-user {
+  min-width: 12rem;
+  max-width: 16rem;
+}
+.col-code {
+  width: 6rem;
+}
+.col-email {
+  min-width: 10rem;
+  max-width: 14rem;
+}
+.col-dept {
+  min-width: 7rem;
+}
+.col-roles {
+  min-width: 9rem;
+}
+.col-status {
+  width: 6.5rem;
+}
+.col-actions {
+  width: 7.5rem;
+  min-width: 7.5rem;
+  text-align: right;
+  position: sticky;
+  right: 0;
+  background: var(--color-surface);
+  z-index: 2;
+  box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.25);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    background: var(--border-subtle);
+  }
+}
+
+th.col-actions {
+  background: var(--color-surface-raised) !important;
+  z-index: 3;
+}
 
 // User cell (avatar + name + username)
 .user-cell {
@@ -73,6 +116,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 10rem;
   }
 
   &__username {
@@ -99,6 +143,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 11rem;
 }
 
 .phone-text {

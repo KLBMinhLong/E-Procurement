@@ -6,7 +6,8 @@
     "cancel": "Hủy",
     "create": "Tạo mới",
     "processing": "Đang xử lý",
-    "refresh": "Tải lại"
+    "refresh": "Tải lại",
+    "submit": "Lưu thay đổi"
   },
   "app": {
     "name": "eProcure",
@@ -391,7 +392,9 @@
       "resetPasswordModal": {
         "title": "Đặt lại mật khẩu",
         "newPassword": "Mật khẩu mới",
-        "newPasswordPlaceholder": "Nhập mật khẩu mới (ít nhất 8 ký tự)"
+        "newPasswordPlaceholder": "Nhập mật khẩu mới (ít nhất 8 ký tự)",
+        "confirmPassword": "Nhập lại mật khẩu",
+        "confirmPasswordPlaceholder": "Nhập lại mật khẩu mới để xác nhận"
       },
       "field": {
         "employeeCode": "Mã nhân viên",
@@ -414,7 +417,8 @@
         "usernameMinLength": "Tên đăng nhập phải chứa tối thiểu 3 ký tự",
         "usernamePattern": "Chỉ chấp nhận chữ thường, số, dấu chấm, gạch dưới, gạch ngang",
         "passwordMinLength": "Mật khẩu phải chứa tối thiểu 8 ký tự",
-        "passwordPattern": "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt"
+        "passwordPattern": "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt",
+        "passwordMismatch": "Mật khẩu xác nhận không khớp"
       },
       "toast": {
         "lockSuccess": "Đã khóa tài khoản người dùng thành công.",

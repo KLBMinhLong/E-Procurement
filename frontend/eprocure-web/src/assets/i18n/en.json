@@ -6,7 +6,8 @@
     "cancel": "Cancel",
     "create": "Create",
     "processing": "Processing",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "submit": "Save Changes"
   },
   "app": {
     "name": "eProcure",
@@ -391,7 +392,9 @@
       "resetPasswordModal": {
         "title": "Reset Password",
         "newPassword": "New Password",
-        "newPasswordPlaceholder": "Enter new password (min 8 characters)"
+        "newPasswordPlaceholder": "Enter new password (min 8 characters)",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter new password to confirm"
       },
       "field": {
         "employeeCode": "Employee Code",
@@ -414,7 +417,8 @@
         "usernameMinLength": "Username must be at least 3 characters",
         "usernamePattern": "Only lowercase, numbers, dots, hyphens, and underscores allowed",
         "passwordMinLength": "Password must be at least 8 characters",
-        "passwordPattern": "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character"
+        "passwordPattern": "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character",
+        "passwordMismatch": "Passwords do not match"
       },
       "toast": {
         "lockSuccess": "User account successfully locked.",
