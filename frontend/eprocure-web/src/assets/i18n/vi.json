@@ -34,6 +34,7 @@
     },
     "login": {
       "eyebrow": "IAM bảo mật",
+      "accountLocked": "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.",
       "failed": "Không thể đăng nhập. Vui lòng kiểm tra thông tin.",
       "forgotPassword": "Quên mật khẩu?",
       "google": "Đăng nhập với Google",
@@ -131,6 +132,7 @@
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
     "procurement": "Mua sắm",
+    "profile": "Thông tin cá nhân",
     "uiShowcase": "Thư viện giao diện",
     "pr.create": "Tạo yêu cầu",
     "pr.detail": "Chi tiết yêu cầu"
@@ -425,7 +427,8 @@
         "unlockSuccess": "Đã mở khóa tài khoản người dùng thành công.",
         "createSuccess": "Đã tạo tài khoản người dùng mới thành công.",
         "updateSuccess": "Đã cập nhật thông tin tài khoản thành công.",
-        "resetPasswordSuccess": "Đã đặt lại mật khẩu cho người dùng thành công."
+        "resetPasswordSuccess": "Đã đặt lại mật khẩu cho người dùng thành công.",
+        "selfLockError": "Bạn không thể khóa hoặc thay đổi trạng thái tài khoản của chính mình."
       },
       "statusDialog": {
         "title": "Xác nhận thay đổi trạng thái",
@@ -492,6 +495,45 @@
         "title": "Không tìm thấy phòng ban",
         "message": "Không thể tải cây sơ đồ tổ chức phòng ban."
       }
+    }
+  },
+  "profile": {
+    "title": "Thông tin cá nhân",
+    "subtitle": "Xem và cập nhật thông tin cá nhân, ảnh đại diện và mật khẩu của bạn",
+    "tabs": {
+      "info": "Thông tin chi tiết",
+      "password": "Đổi mật khẩu"
+    },
+    "info": {
+      "employeeCode": "Mã nhân viên",
+      "username": "Tên đăng nhập",
+      "fullName": "Họ và tên",
+      "email": "Email công việc",
+      "phone": "Số điện thoại",
+      "department": "Phòng ban",
+      "roles": "Vai trò hệ thống",
+      "twoFactor": "Xác thực hai lớp (2FA)",
+      "twoFactorEnabled": "Đã kích hoạt",
+      "twoFactorDisabled": "Chưa kích hoạt",
+      "lastLogin": "Lần đăng nhập cuối",
+      "neverLoggedIn": "Chưa từng đăng nhập",
+      "updateProfileSuccess": "Cập nhật thông tin cá nhân thành công."
+    },
+    "password": {
+      "title": "Đổi mật khẩu",
+      "description": "Để đảm bảo bảo mật, vui lòng chọn mật khẩu mạnh gồm ít nhất 8 ký tự.",
+      "oldPassword": "Mật khẩu hiện tại",
+      "newPassword": "Mật khẩu mới",
+      "confirmPassword": "Nhập lại mật khẩu mới",
+      "submit": "Đổi mật khẩu",
+      "mismatch": "Mật khẩu nhập lại không khớp.",
+      "success": "Đổi mật khẩu thành công. Các phiên đăng nhập khác của bạn đã được đăng xuất.",
+      "validation": "Vui lòng điền đầy đủ và đúng định dạng mật khẩu."
+    },
+    "avatar": {
+      "title": "Ảnh đại diện",
+      "description": "Nhấp chọn ảnh đại diện mong muốn từ danh sách",
+      "select": "Chọn làm ảnh đại diện"
     }
   }
 }

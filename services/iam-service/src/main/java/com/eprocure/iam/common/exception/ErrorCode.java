@@ -23,6 +23,7 @@ public enum ErrorCode {
     IAM_033("IAM_033", "Department not found", HttpStatus.NOT_FOUND),
     IAM_034("IAM_034", "Approver not found", HttpStatus.UNPROCESSABLE_ENTITY),
     IAM_035("IAM_035", "Delegation not found", HttpStatus.NOT_FOUND),
+    IAM_036("IAM_036", "Cannot change status of your own account", HttpStatus.UNPROCESSABLE_ENTITY),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_002("SYS_002", "Dependency service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST);

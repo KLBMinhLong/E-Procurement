@@ -15,7 +15,8 @@ const ROUTE_LABELS: Record<string, string> = {
   procurement: 'route.procurement',
   approvals: 'route.approvals',
   admin: 'route.admin',
-  'ui-showcase': 'route.uiShowcase'
+  'ui-showcase': 'route.uiShowcase',
+  profile: 'profile.title'
 };
 
 @Component({

@@ -58,6 +58,11 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { requiredPermissions: ['ADMIN_USER_VIEW', 'ADMIN_ROLE_MANAGE', 'SYSTEM_CONFIG'] },
         loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes)
+      },
+      {
+        path: 'profile',
+        title: 'route.profile',
+        loadComponent: () => import('./features/auth/profile/profile.component').then((m) => m.ProfileComponent)
       }
     ]
   },

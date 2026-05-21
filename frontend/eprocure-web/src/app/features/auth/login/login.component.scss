@@ -128,6 +128,19 @@
   font-size: var(--font-size-sm);
   font-weight: 700;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  margin: 0;
+}
+
+.login__error--locked {
+  color: var(--color-warning, #d97706);
+  background: rgba(217, 119, 6, 0.08);
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  border-radius: var(--radius-2);
+  padding: var(--spacing-2) var(--spacing-3);
 }
 
 .login__actions {

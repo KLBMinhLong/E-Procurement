@@ -25,6 +25,10 @@ export class ToastService {
     this.push('error', message, !message.includes(' '));
   }
 
+  errorKey(message: string): void {
+    this.push('error', message, true);
+  }
+
   dismiss(id: string): void {
     this.messages.update((messages) => messages.filter((message) => message.id !== id));
   }

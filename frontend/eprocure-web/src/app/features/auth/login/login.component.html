@@ -44,8 +44,13 @@
         {{ 'auth.login.forgotPassword' | translate }}
       </a>
 
-      @if (errorKey()) {
-        <p class="login__error">{{ errorKey()! | translate }}</p>
+      @if (errorKey(); as key) {
+        <p class="login__error" [class.login__error--locked]="key === 'auth.login.accountLocked'">
+          @if (key === 'auth.login.accountLocked') {
+            <ep-icon name="lock" [size]="16"></ep-icon>
+          }
+          {{ key | translate }}
+        </p>
       }
 
       <div class="login__actions">

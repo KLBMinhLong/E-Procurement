@@ -48,11 +48,18 @@ public class GlobalExceptionHandler {
                         RequestIdUtil.resolve(request)));
     }
 
-    @ExceptionHandler({AccessDeniedException.class, AuthenticationException.class})
-    public ResponseEntity<ApiResponse<Void>> handleSecurity(Exception exception, HttpServletRequest request) {
-        log.warn("[SECURITY] Unauthorized | path={}", request.getRequestURI());
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException exception, HttpServletRequest request) {
+        log.warn("[SECURITY] Permission denied | path={}", request.getRequestURI());
         return ResponseEntity.status(ErrorCode.IAM_004.status())
                 .body(ApiResponse.failure(ErrorCode.IAM_004.code(), ErrorCode.IAM_004.message(), null, RequestIdUtil.resolve(request)));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException exception, HttpServletRequest request) {
+        log.warn("[SECURITY] Authentication failed | path={}", request.getRequestURI());
+        return ResponseEntity.status(ErrorCode.IAM_003.status())
+                .body(ApiResponse.failure(ErrorCode.IAM_003.code(), ErrorCode.IAM_003.message(), null, RequestIdUtil.resolve(request)));
     }
 
     @ExceptionHandler(Exception.class)

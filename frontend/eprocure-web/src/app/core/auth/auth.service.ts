@@ -2,7 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
-import { ForgotPasswordRequest, LoginRequest, PublicKeyResponse, UserContext } from '../models/user-context.model';
+import { ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, PublicKeyResponse, UserContext } from '../models/user-context.model';
 import { ApiService } from '../http/api.service';
 import { API_BASE_URL } from '../http/api-tokens';
 import { EncryptionService } from '../http/encryption.service';
@@ -50,6 +50,16 @@ export class AuthService {
         }
       })
     );
+  }
+
+  updateProfile(request: { fullName: string; phone: string; avatarUrl: string | null }): Observable<ApiResponse<UserContext>> {
+    return this.api.put<UserContext>('/users/me', request).pipe(
+      tap((response) => this.currentUser.set(response.data))
+    );
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<ApiResponse<null>> {
+    return this.api.put<null>('/users/me/password', request);
   }
 
   logout(): Observable<ApiResponse<null>> {

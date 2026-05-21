@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../../core/http/api-tokens';
+import { BYPASS_ERROR_INTERCEPTOR_TOKEN } from '../../../core/http/http-context-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
   AdminUserDetail,
@@ -120,7 +121,10 @@ export class AdminUserService {
     return this.http.patch<ApiResponse<void>>(
       `${this.baseUrl}/users/${id}/status`,
       request,
-      { withCredentials: true }
+      {
+        withCredentials: true,
+        context: new HttpContext().set(BYPASS_ERROR_INTERCEPTOR_TOKEN, true)
+      }
     );
   }
 

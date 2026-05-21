@@ -49,7 +49,7 @@
           <ep-icon name="bell"></ep-icon>
         </ep-button>
         @if (user(); as currentUser) {
-          <div class="shell__user">
+          <div class="shell__user" routerLink="/profile" style="cursor: pointer;">
             <ep-avatar [name]="currentUser.fullName" [imageUrl]="currentUser.avatarUrl"></ep-avatar>
             <span>
               <strong>{{ currentUser.fullName }}</strong>
@@ -57,8 +57,13 @@
             </span>
           </div>
         }
-        <ep-button variant="ghost" [ariaLabel]="'auth.logout' | translate" (click)="logout()">
+        <ep-button
+          variant="ghost"
+          class="shell__logout"
+          [ariaLabel]="'auth.logout' | translate"
+          (click)="logout()">
           <ep-icon name="log-out"></ep-icon>
+          <span class="shell__logout-text">{{ 'auth.logout' | translate }}</span>
         </ep-button>
       </div>
     </header>

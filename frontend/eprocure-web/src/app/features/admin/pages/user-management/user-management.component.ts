@@ -170,7 +170,13 @@ export class UserManagementComponent implements OnInit {
           this.loadData(false);
         },
         error: (err: any) => {
-          this.toastService.error(err.message || 'Error occurred');
+          const body = err?.error;
+          const code = body?.code;
+          if (code === 'IAM_036') {
+            this.toastService.errorKey('admin.users.toast.selfLockError');
+          } else {
+            this.toastService.error(body?.message || err.message || 'Error occurred');
+          }
           this.cdr.detectChanges();
         }
       });

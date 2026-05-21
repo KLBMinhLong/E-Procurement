@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ApiErrorResponse } from '../../../core/models/api-response.model';
 import { EpButtonComponent } from '../../../shared/components/ep-button/ep-button.component';
 import { EpFormFieldComponent } from '../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpIconComponent } from '../../../shared/components/ep-icon/ep-icon.component';
@@ -27,10 +29,11 @@ import { EpLangSwitcherComponent } from '../../../shared/components/ep-lang-swit
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly motionAttr = 'data-motion';
@@ -44,6 +47,14 @@ export class LoginComponent {
     username: ['', [Validators.required, Validators.minLength(3)]],
     password: ['', [Validators.required]]
   });
+
+  ngOnInit(): void {
+    // Check if redirected here because account was locked (423 Locked)
+    const reason = this.route.snapshot.queryParamMap.get('reason');
+    if (reason === 'locked') {
+      this.errorKey.set('auth.login.accountLocked');
+    }
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -66,7 +77,15 @@ export class LoginComponent {
       )
       .subscribe({
         next: () => this.router.navigate(['/dashboard']),
-        error: () => this.errorKey.set('auth.login.failed')
+        error: (err: HttpErrorResponse) => {
+          const body = err.error as ApiErrorResponse | undefined;
+          const code = body?.code;
+          if (err.status === 423 || code === 'IAM_002') {
+            this.errorKey.set('auth.login.accountLocked');
+          } else {
+            this.errorKey.set('auth.login.failed');
+          }
+        }
       });
   }
 

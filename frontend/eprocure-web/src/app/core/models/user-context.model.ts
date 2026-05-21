@@ -10,6 +10,7 @@ export interface UserContext {
   username: string;
   fullName: string;
   email: string;
+  phone: string | null;
   avatarUrl: string | null;
   department: DepartmentSummary | null;
   roles: string[];
@@ -39,3 +40,10 @@ export interface PublicKeyResponse {
   keyVersion: string;
   algorithm: string;
 }
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+

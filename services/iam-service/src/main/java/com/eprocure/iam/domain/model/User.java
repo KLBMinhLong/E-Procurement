@@ -96,6 +96,12 @@ public class User {
         this.orgNodeId = orgNodeId;
     }
 
+    public void updateMyProfile(String fullName, String phone, String avatarUrl) {
+        this.fullName = requireText(fullName, "fullName");
+        this.phone = normalize(phone);
+        this.avatarUrl = normalize(avatarUrl);
+    }
+
     public void changeStatus(UserStatus status) {
         this.status = Objects.requireNonNull(status, "status must not be null");
     }

@@ -34,6 +34,7 @@
     },
     "login": {
       "eyebrow": "Secure IAM",
+      "accountLocked": "Your account has been locked. Please contact your administrator.",
       "failed": "Login failed. Check your credentials.",
       "forgotPassword": "Forgot password?",
       "google": "Sign in with Google",
@@ -131,6 +132,7 @@
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "procurement": "Procurement",
+    "profile": "Personal Profile",
     "uiShowcase": "UI library",
     "pr.create": "Create Request",
     "pr.detail": "Request Details"
@@ -425,7 +427,8 @@
         "unlockSuccess": "User account successfully unlocked.",
         "createSuccess": "User account successfully created.",
         "updateSuccess": "User account details successfully updated.",
-        "resetPasswordSuccess": "User password successfully reset."
+        "resetPasswordSuccess": "User password successfully reset.",
+        "selfLockError": "You cannot lock or change the status of your own account."
       },
       "statusDialog": {
         "title": "Confirm Status Change",
@@ -492,6 +495,45 @@
         "title": "No departments found",
         "message": "Organizational tree chart could not be loaded."
       }
+    }
+  },
+  "profile": {
+    "title": "Personal Profile",
+    "subtitle": "View and update your personal information, avatar, and password",
+    "tabs": {
+      "info": "Profile Details",
+      "password": "Change Password"
+    },
+    "info": {
+      "employeeCode": "Employee Code",
+      "username": "Username",
+      "fullName": "Full Name",
+      "email": "Work Email",
+      "phone": "Phone Number",
+      "department": "Department",
+      "roles": "System Roles",
+      "twoFactor": "Two-Factor Authentication (2FA)",
+      "twoFactorEnabled": "Enabled",
+      "twoFactorDisabled": "Disabled",
+      "lastLogin": "Last Login At",
+      "neverLoggedIn": "Never logged in",
+      "updateProfileSuccess": "Profile updated successfully."
+    },
+    "password": {
+      "title": "Change Password",
+      "description": "For your security, please choose a strong password with at least 8 characters.",
+      "oldPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Change Password",
+      "mismatch": "Passwords do not match.",
+      "success": "Password successfully changed. Other active sessions have been signed out.",
+      "validation": "Please fill out all fields with valid password formats."
+    },
+    "avatar": {
+      "title": "Profile Picture",
+      "description": "Select your preferred avatar from the list below",
+      "select": "Set as Profile Picture"
     }
   }
 }

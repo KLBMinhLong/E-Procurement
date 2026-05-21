@@ -22,6 +22,10 @@ import com.eprocure.iam.application.usecase.GetCurrentUserUseCase;
 import com.eprocure.iam.application.usecase.GetUserByIdUseCase;
 import com.eprocure.iam.application.usecase.ListUsersUseCase;
 import com.eprocure.iam.application.usecase.UpdateUserUseCase;
+import com.eprocure.iam.application.usecase.UpdateMyProfileUseCase;
+import com.eprocure.iam.application.usecase.ChangeMyPasswordUseCase;
+import com.eprocure.iam.application.port.in.UpdateMyProfileCommand;
+import com.eprocure.iam.application.port.in.ChangeMyPasswordCommand;
 import com.eprocure.iam.common.api.ApiResponse;
 import com.eprocure.iam.common.api.RequestIdUtil;
 import com.eprocure.iam.common.security.UserPrincipal;
@@ -64,6 +68,8 @@ public class UserController {
     private final EnableTwoFactorUseCase enableTwoFactorUseCase;
     private final ConfirmTwoFactorUseCase confirmTwoFactorUseCase;
     private final AdminResetPasswordUseCase adminResetPasswordUseCase;
+    private final UpdateMyProfileUseCase updateMyProfileUseCase;
+    private final ChangeMyPasswordUseCase changeMyPasswordUseCase;
 
     public UserController(
             GetCurrentUserUseCase getCurrentUserUseCase,
@@ -75,7 +81,9 @@ public class UserController {
             AssignUserRolesUseCase assignUserRolesUseCase,
             EnableTwoFactorUseCase enableTwoFactorUseCase,
             ConfirmTwoFactorUseCase confirmTwoFactorUseCase,
-            AdminResetPasswordUseCase adminResetPasswordUseCase) {
+            AdminResetPasswordUseCase adminResetPasswordUseCase,
+            UpdateMyProfileUseCase updateMyProfileUseCase,
+            ChangeMyPasswordUseCase changeMyPasswordUseCase) {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.listUsersUseCase = listUsersUseCase;
         this.createUserUseCase = createUserUseCase;
@@ -86,6 +94,8 @@ public class UserController {
         this.enableTwoFactorUseCase = enableTwoFactorUseCase;
         this.confirmTwoFactorUseCase = confirmTwoFactorUseCase;
         this.adminResetPasswordUseCase = adminResetPasswordUseCase;
+        this.updateMyProfileUseCase = updateMyProfileUseCase;
+        this.changeMyPasswordUseCase = changeMyPasswordUseCase;
     }
 
     @GetMapping("/me")
@@ -97,6 +107,34 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(
                 getCurrentUserUseCase.execute(principal.getId()),
                 RequestIdUtil.resolve(request)));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasAuthority('IAM_PROFILE_READ')")
+    public ResponseEntity<ApiResponse<CurrentUserView>> updateMyProfile(
+            @Valid @RequestBody UpdateMyProfileRequest body,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] PUT /api/v1/users/me | userId={}", LogMaskingUtil.maskId(principal.getId()));
+        CurrentUserView view = updateMyProfileUseCase.execute(
+                new UpdateMyProfileCommand(principal.getId(), body.fullName(), body.phone(), body.avatarUrl()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
+    }
+
+    @PutMapping("/me/password")
+    @PreAuthorize("hasAuthority('IAM_PROFILE_READ')")
+    public ResponseEntity<ApiResponse<Void>> changeMyPassword(
+            @Valid @RequestBody ChangeMyPasswordRequest body,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] PUT /api/v1/users/me/password | userId={}", LogMaskingUtil.maskId(principal.getId()));
+        changeMyPasswordUseCase.execute(
+                new ChangeMyPasswordCommand(principal.getId(), body.oldPassword(), body.newPassword(), body.confirmPassword()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.successMessage("Password updated successfully", RequestIdUtil.resolve(request)));
     }
 
     @PutMapping("/me/two-factor/enable")
