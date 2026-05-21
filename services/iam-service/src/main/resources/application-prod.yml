@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${IAM_DB_HOST}:${IAM_DB_PORT:5432}/${IAM_DB_NAME:db_iam}
+    username: ${IAM_DB_USER}
+    password: ${IAM_DB_PASS}
+    hikari:
+      connection-init-sql: SET search_path TO ${IAM_DB_SCHEMA:iam}
+      minimum-idle: 5
+      maximum-pool-size: 20
+  flyway:
+    schemas: ${IAM_DB_SCHEMA:iam}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS}
+      database: ${REDIS_DB:0}
+
+eprocure:
+  security:
+    cookie-secure: true
+    cookie-same-site: Strict
+    cookie-domain: ${COOKIE_DOMAIN}
+  internal:
+    api-key: ${IAM_INTERNAL_API_KEY}
+  two-factor:
+    secret-encryption-key: ${TOTP_SECRET_ENCRYPTION_KEY}
+  encryption:
+    enabled: true
+    key-version: ${RSA_KEY_VERSION}
+    public-key: ${RSA_PUBLIC_KEY}
+    private-key: ${RSA_PRIVATE_KEY}
+  keycloak:
+    url: ${KEYCLOAK_URL}
+    realm: ${KEYCLOAK_REALM}
+    client-id: ${KEYCLOAK_CLIENT_ID}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET}
+    admin-user: ${KEYCLOAK_ADMIN_USER}
+    admin-password: ${KEYCLOAK_ADMIN_PASS}
+  password-reset:
+    frontend-url: ${PASSWORD_RESET_FRONTEND_URL}
+  google-oauth:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_REDIRECT_URI}
+    authorization-url: ${GOOGLE_AUTHORIZATION_URL}
+    token-url: ${GOOGLE_TOKEN_URL}
+    user-info-url: ${GOOGLE_USER_INFO_URL}
