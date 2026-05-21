@@ -3,6 +3,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import {
   LucideActivity,
+  LucideArrowLeft,
   LucideBell,
   LucideBox,
   LucideChartNoAxesCombined,
@@ -26,6 +27,7 @@ import {
   LucideLock,
   LucideLogIn,
   LucideLogOut,
+  LucideMapPinOff,
   LucideMenu,
   LucideNetwork,
   LucidePackageCheck,
@@ -38,6 +40,7 @@ import {
   LucideSettings,
   LucideShield,
   LucideShieldCheck,
+  LucideShieldOff,
   LucideShoppingCart,
   LucideTruck,
   LucideUploadCloud,
@@ -81,6 +84,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideLucideIcons(
       LucideActivity,
+      LucideArrowLeft,
       LucideBell,
       LucideBox,
       LucideChartNoAxesCombined,
@@ -104,6 +108,7 @@ export const appConfig: ApplicationConfig = {
       LucideLock,
       LucideLogIn,
       LucideLogOut,
+      LucideMapPinOff,
       LucideMenu,
       LucideNetwork,
       LucidePackageCheck,
@@ -116,6 +121,7 @@ export const appConfig: ApplicationConfig = {
       LucideSettings,
       LucideShield,
       LucideShieldCheck,
+      LucideShieldOff,
       LucideShoppingCart,
       LucideTruck,
       LucideUploadCloud,

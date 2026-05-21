@@ -1,0 +1,18 @@
+@use '../error-page' as *;
+
+// Override glow color to danger red for forbidden
+.error-page {
+  --glow-color: var(--color-danger-subtle);
+}
+
+.error-page__code {
+  --badge-bg: var(--color-danger-subtle);
+  --badge-border: var(--color-danger-border);
+  --badge-color: var(--color-danger);
+}
+
+.error-page__icon-wrap {
+  --icon-bg: var(--color-danger-subtle);
+  --icon-border: var(--color-danger-border);
+  --icon-color: var(--color-danger);
+}

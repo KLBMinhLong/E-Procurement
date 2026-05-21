@@ -1,0 +1,4 @@
+@use '../error-page' as *;
+
+// 404 keeps default amber/accent color from shared styles
+// (no overrides needed — base already uses --color-accent)

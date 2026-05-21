@@ -1,9 +1,25 @@
-<ep-empty-state
-  icon="circle-alert"
-  [title]="'error.notFound.title' | translate"
-  [message]="'error.notFound.message' | translate">
-</ep-empty-state>
+<div class="error-page">
+  <div class="error-page__card">
 
-<ep-button routerLink="/dashboard" variant="secondary">
-  {{ 'error.backDashboard' | translate }}
-</ep-button>
+    <span class="error-page__code">
+      <ep-icon name="circle-alert" [size]="12"></ep-icon>
+      404 Not Found
+    </span>
+
+    <span class="error-page__icon-wrap">
+      <ep-icon name="map-pin-off" [size]="32"></ep-icon>
+    </span>
+
+    <div>
+      <h1 class="error-page__title">{{ 'error.notFound.title' | translate }}</h1>
+      <p class="error-page__message">{{ 'error.notFound.message' | translate }}</p>
+    </div>
+
+    <div class="error-page__actions">
+      <ep-button routerLink="/dashboard" variant="primary" icon="layout-dashboard">
+        {{ 'error.backDashboard' | translate }}
+      </ep-button>
+    </div>
+
+  </div>
+</div>
