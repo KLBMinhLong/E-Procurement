@@ -100,43 +100,44 @@
       <table class="users-table" role="grid" aria-labelledby="admin-users-heading">
         <thead>
           <tr>
-            <th scope="col" class="avatar-col"></th>
-            <th scope="col">{{ 'admin.users.col.fullName' | translate }}</th>
-            <th scope="col">{{ 'admin.users.col.username' | translate }}</th>
-            <th scope="col">{{ 'admin.users.col.email' | translate }}</th>
-            <th scope="col">{{ 'admin.users.col.dept' | translate }}</th>
-            <th scope="col">{{ 'admin.users.col.roles' | translate }}</th>
-            <th scope="col">{{ 'admin.users.col.status' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'admin.users.col.actions' | translate }}</th>
+            <th scope="col" class="col-user">{{ 'admin.users.col.fullName' | translate }}</th>
+            <th scope="col" class="col-code">{{ 'admin.users.col.employeeCode' | translate }}</th>
+            <th scope="col" class="col-email">{{ 'admin.users.col.email' | translate }}</th>
+            <th scope="col" class="col-dept">{{ 'admin.users.col.dept' | translate }}</th>
+            <th scope="col" class="col-roles">{{ 'admin.users.col.roles' | translate }}</th>
+            <th scope="col" class="col-status">{{ 'admin.users.col.status' | translate }}</th>
+            <th scope="col" class="col-actions">{{ 'admin.users.col.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           @for (user of items(); track user.id) {
             <tr [id]="'user-row-' + user.id" class="users-table__row">
-              <td class="avatar-col">
-                <ep-avatar [name]="user.fullName" />
+              <td class="col-user">
+                <div class="user-cell">
+                  <ep-avatar [name]="user.fullName" />
+                  <div class="user-cell__info">
+                    <span class="user-cell__name">{{ user.fullName }}</span>
+                    <span class="user-cell__username">{{ user.username }}</span>
+                  </div>
+                </div>
               </td>
 
-              <td class="users-table__name font-bold">
-                {{ user.fullName }}
+              <td class="col-code">
+                <span class="code-badge">{{ user.employeeCode || '--' }}</span>
               </td>
 
-              <td class="users-table__username mono">
-                {{ user.username }}
-              </td>
-
-              <td class="users-table__email text-secondary">
-                {{ user.email }}
+              <td class="col-email">
+                <span class="email-text">{{ user.email }}</span>
                 @if (user.phone) {
-                  <span class="users-table__phone block text-xs font-normal text-muted">{{ user.phone }}</span>
+                  <span class="phone-text">{{ user.phone }}</span>
                 }
               </td>
 
-              <td class="users-table__dept">
+              <td class="col-dept">
                 {{ user.departmentName || '--' }}
               </td>
 
-              <td class="users-table__roles">
+              <td class="col-roles">
                 <div class="roles-badges">
                   @for (role of user.roles; track role) {
                     <span class="role-pill">{{ role }}</span>
@@ -146,13 +147,13 @@
                 </div>
               </td>
 
-              <td>
+              <td class="col-status">
                 <ep-badge
                   [tone]="statusTone[user.status] || 'neutral'"
                   [labelKey]="'admin.users.status.' + user.status" />
               </td>
 
-              <td class="align-right actions-col">
+              <td class="col-actions">
                 <div class="actions-group">
                   <ep-button
                     [id]="'btn-edit-user-' + user.id"
@@ -167,10 +168,10 @@
                     [id]="'btn-toggle-status-' + user.id"
                     [variant]="user.status === 'ACTIVE' ? 'danger' : 'secondary'"
                     size="sm"
-                    [icon]="isStatusMutating() === user.id ? null : (user.status === 'ACTIVE' ? 'lock' : 'unlock')"
+                    [icon]="isStatusMutating() === user.id ? null : (user.status === 'ACTIVE' ? 'lock' : 'lock')"
                     [loading]="isStatusMutating() === user.id"
                     [ariaLabel]="(user.status === 'ACTIVE' ? 'admin.users.action.lock' : 'admin.users.action.unlock') | translate"
-                    (click)="toggleStatus(user)">
+                    (click)="requestToggleStatus(user)">
                   </ep-button>
                 </div>
               </td>
@@ -218,113 +219,179 @@
   [open]="isModalOpen()"
   [title]="(modalMode() === 'create' ? 'admin.users.modal.titleCreate' : 'admin.users.modal.titleEdit') | translate"
   (close)="closeModal()">
-  
-  <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="user-form">
-    <div class="form-grid">
-      <!-- Username Field -->
-      <ep-form-field
-        [label]="'admin.users.field.username' | translate"
-        [error]="userForm.get('username')?.touched && userForm.get('username')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
-        <input
-          id="form-username"
-          type="text"
-          formControlName="username"
-          class="form-input"
-          [placeholder]="'admin.users.field.usernamePlaceholder' | translate" />
-      </ep-form-field>
 
-      <!-- Email Field -->
-      <ep-form-field
-        [label]="'admin.users.field.email' | translate"
-        [error]="userForm.get('email')?.touched && userForm.get('email')?.hasError('required') ? ('admin.users.validation.required' | translate) : (userForm.get('email')?.touched && userForm.get('email')?.hasError('email') ? ('admin.users.validation.email' | translate) : null)">
-        <input
-          id="form-email"
-          type="email"
-          formControlName="email"
-          class="form-input"
-          [placeholder]="'admin.users.field.emailPlaceholder' | translate" />
-      </ep-form-field>
+  @if (isModalLoading()) {
+    <ep-skeleton [rows]="6" />
+  } @else {
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="user-form">
+      <div class="form-grid">
+        <!-- Employee Code -->
+        <ep-form-field
+          [label]="'admin.users.field.employeeCode' | translate"
+          [error]="userForm.get('employeeCode')?.touched && userForm.get('employeeCode')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+          <input
+            id="form-employeeCode"
+            type="text"
+            formControlName="employeeCode"
+            class="form-input"
+            [placeholder]="'admin.users.field.employeeCodePlaceholder' | translate" />
+        </ep-form-field>
 
-      <!-- Full Name Field -->
-      <ep-form-field
-        [label]="'admin.users.field.fullName' | translate"
-        [error]="userForm.get('fullName')?.touched && userForm.get('fullName')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
-        <input
-          id="form-fullName"
-          type="text"
-          formControlName="fullName"
-          class="form-input"
-          [placeholder]="'admin.users.field.fullNamePlaceholder' | translate" />
-      </ep-form-field>
+        <!-- Username Field -->
+        <ep-form-field
+          [label]="'admin.users.field.username' | translate"
+          [error]="userForm.get('username')?.touched && userForm.get('username')?.hasError('required') ? ('admin.users.validation.required' | translate) : (userForm.get('username')?.touched && userForm.get('username')?.hasError('minlength') ? ('admin.users.validation.usernameMinLength' | translate) : (userForm.get('username')?.touched && userForm.get('username')?.hasError('pattern') ? ('admin.users.validation.usernamePattern' | translate) : null))">
+          <input
+            id="form-username"
+            type="text"
+            formControlName="username"
+            class="form-input"
+            [placeholder]="'admin.users.field.usernamePlaceholder' | translate" />
+        </ep-form-field>
 
-      <!-- Phone Field -->
-      <ep-form-field
-        [label]="'admin.users.field.phone' | translate">
-        <input
-          id="form-phone"
-          type="text"
-          formControlName="phone"
-          class="form-input"
-          [placeholder]="'admin.users.field.phonePlaceholder' | translate" />
-      </ep-form-field>
+        <!-- Email Field -->
+        <ep-form-field
+          [label]="'admin.users.field.email' | translate"
+          [error]="userForm.get('email')?.touched && userForm.get('email')?.hasError('required') ? ('admin.users.validation.required' | translate) : (userForm.get('email')?.touched && userForm.get('email')?.hasError('email') ? ('admin.users.validation.email' | translate) : null)">
+          <input
+            id="form-email"
+            type="email"
+            formControlName="email"
+            class="form-input"
+            [placeholder]="'admin.users.field.emailPlaceholder' | translate" />
+        </ep-form-field>
 
-      <!-- Department Select Field -->
-      <ep-form-field
-        [label]="'admin.users.field.dept' | translate"
-        [error]="userForm.get('departmentId')?.touched && userForm.get('departmentId')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
-        <select
-          id="form-departmentId"
-          formControlName="departmentId"
-          class="form-select">
-          <option value="">{{ 'admin.users.field.selectDeptPlaceholder' | translate }}</option>
-          @for (dept of departments(); track dept.id) {
-            <option [value]="dept.id">{{ dept.name }}</option>
-          }
-        </select>
-      </ep-form-field>
-    </div>
+        <!-- Full Name Field -->
+        <ep-form-field
+          [label]="'admin.users.field.fullName' | translate"
+          [error]="userForm.get('fullName')?.touched && userForm.get('fullName')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+          <input
+            id="form-fullName"
+            type="text"
+            formControlName="fullName"
+            class="form-input"
+            [placeholder]="'admin.users.field.fullNamePlaceholder' | translate" />
+        </ep-form-field>
 
-    <!-- Roles Checkboxes Grid -->
-    <div class="roles-section">
-      <span class="roles-section__label">{{ 'admin.users.field.roles' | translate }}</span>
-      @if (userForm.get('roles')?.touched && userForm.get('roles')?.hasError('required')) {
-        <small class="form-error">{{ 'admin.users.validation.required' | translate }}</small>
-      }
-      <div class="roles-grid">
-        @for (role of availableRoles; track role.code) {
-          <label class="role-checkbox-card" [class.role-checkbox-card--active]="isRoleSelected(role.code)">
-            <input
-              type="checkbox"
-              [checked]="isRoleSelected(role.code)"
-              (change)="onRoleCheckboxChange($event, role.code)"
-              class="sr-only" />
-            <div class="role-checkbox-card__body">
-              <span class="role-checkbox-card__name">{{ role.name }}</span>
-              <span class="role-checkbox-card__code mono">{{ role.code }}</span>
-            </div>
-          </label>
-        }
+        <!-- Phone Field -->
+        <ep-form-field
+          [label]="'admin.users.field.phone' | translate">
+          <input
+            id="form-phone"
+            type="text"
+            formControlName="phone"
+            class="form-input"
+            [placeholder]="'admin.users.field.phonePlaceholder' | translate" />
+        </ep-form-field>
+
+        <!-- Department Select Field -->
+        <ep-form-field
+          [label]="'admin.users.field.dept' | translate"
+          [error]="userForm.get('departmentId')?.touched && userForm.get('departmentId')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+          <select
+            id="form-departmentId"
+            formControlName="departmentId"
+            class="form-select">
+            <option value="">{{ 'admin.users.field.selectDeptPlaceholder' | translate }}</option>
+            @for (dept of departments(); track dept.id) {
+              <option [value]="dept.id">{{ dept.name }}</option>
+            }
+          </select>
+        </ep-form-field>
       </div>
-    </div>
 
-    <!-- Actions Bar -->
-    <div class="form-actions">
-      <ep-button
-        id="btn-form-cancel"
-        variant="ghost"
-        [disabled]="isSubmitting()"
-        (click)="closeModal()">
-        {{ 'action.cancel' | translate }}
-      </ep-button>
-      <ep-button
-        id="btn-form-submit"
-        variant="primary"
-        type="submit"
-        [loading]="isSubmitting()"
-        [disabled]="userForm.invalid || isSubmitting()">
-        {{ (modalMode() === 'create' ? 'action.create' : 'action.submit') | translate }}
-      </ep-button>
-    </div>
-  </form>
+      <!-- Roles Section -->
+      <div class="roles-section">
+        <span class="roles-section__label">{{ 'admin.users.field.roles' | translate }}</span>
+        @if (userForm.get('roles')?.touched && userForm.get('roles')?.hasError('required')) {
+          <small class="form-error">{{ 'admin.users.validation.required' | translate }}</small>
+        }
+        <div class="roles-grid">
+          @for (role of roles(); track role.code) {
+            <label class="role-checkbox-card" [class.role-checkbox-card--active]="isRoleSelected(role.code)">
+              <input
+                type="checkbox"
+                [checked]="isRoleSelected(role.code)"
+                (change)="onRoleCheckboxChange($event, role.code)"
+                class="sr-only" />
+              <div class="role-checkbox-card__body">
+                <span class="role-checkbox-card__name">{{ role.name }}</span>
+                <span class="role-checkbox-card__code">{{ role.code }}</span>
+                @if (role.description) {
+                  <span class="role-checkbox-card__desc">{{ role.description }}</span>
+                }
+              </div>
+            </label>
+          } @empty {
+            <p class="roles-section__empty">{{ 'admin.users.roles.loading' | translate }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Actions Bar -->
+      <div class="form-actions">
+        <ep-button
+          id="btn-form-cancel"
+          variant="ghost"
+          [disabled]="isSubmitting()"
+          (click)="closeModal()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-form-submit"
+          variant="primary"
+          type="submit"
+          [loading]="isSubmitting()"
+          [disabled]="isSubmitting()">
+          {{ (modalMode() === 'create' ? 'action.create' : 'action.submit') | translate }}
+        </ep-button>
+      </div>
+    </form>
+  }
 </ep-modal>
 
+<!-- ── Status Confirm Dialog ──────────────────────────────────── -->
+<ep-modal
+  [open]="isStatusDialogOpen()"
+  [title]="'admin.users.statusDialog.title' | translate"
+  (close)="closeStatusDialog()">
+  @if (statusDialogUser(); as u) {
+    <div class="status-dialog">
+      <p class="status-dialog__message">
+        @if (u.status === 'ACTIVE') {
+          {{ 'admin.users.statusDialog.lockMessage' | translate: { name: u.fullName } }}
+        } @else {
+          {{ 'admin.users.statusDialog.unlockMessage' | translate: { name: u.fullName } }}
+        }
+      </p>
+
+      @if (u.status === 'ACTIVE') {
+        <div class="status-dialog__reason">
+          <label for="status-reason" class="status-dialog__label">
+            {{ 'admin.users.statusDialog.reasonLabel' | translate }}
+          </label>
+          <textarea
+            id="status-reason"
+            class="form-input status-dialog__textarea"
+            rows="3"
+            maxlength="500"
+            [value]="statusDialogReason()"
+            (input)="statusDialogReason.set($any($event.target).value)"
+            [placeholder]="'admin.users.statusDialog.reasonPlaceholder' | translate">
+          </textarea>
+        </div>
+      }
+
+      <div class="form-actions">
+        <ep-button variant="ghost" (click)="closeStatusDialog()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          [variant]="u.status === 'ACTIVE' ? 'danger' : 'primary'"
+          (click)="confirmToggleStatus()">
+          {{ (u.status === 'ACTIVE' ? 'admin.users.action.lock' : 'admin.users.action.unlock') | translate }}
+        </ep-button>
+      </div>
+    </div>
+  }
+</ep-modal>

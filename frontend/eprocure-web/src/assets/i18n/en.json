@@ -369,6 +369,7 @@
       },
       "col": {
         "fullName": "Full Name",
+        "employeeCode": "Emp Code",
         "username": "Username",
         "email": "Email",
         "dept": "Department",
@@ -387,6 +388,8 @@
         "titleEdit": "Edit User Details"
       },
       "field": {
+        "employeeCode": "Employee Code",
+        "employeeCodePlaceholder": "E.g. NV001",
         "username": "Username",
         "usernamePlaceholder": "Enter username (min 3 characters)",
         "email": "Email Address",
@@ -401,13 +404,25 @@
       },
       "validation": {
         "required": "This field is mandatory",
-        "email": "Enter a valid email address"
+        "email": "Enter a valid email address",
+        "usernameMinLength": "Username must be at least 3 characters",
+        "usernamePattern": "Only lowercase, numbers, dots, hyphens, and underscores allowed"
       },
       "toast": {
         "lockSuccess": "User account successfully locked.",
         "unlockSuccess": "User account successfully unlocked.",
         "createSuccess": "User account successfully created.",
         "updateSuccess": "User account details successfully updated."
+      },
+      "statusDialog": {
+        "title": "Confirm Status Change",
+        "lockMessage": "Are you sure you want to lock the account of {{name}}? The user will not be able to log in.",
+        "unlockMessage": "Are you sure you want to unlock the account of {{name}}?",
+        "reasonLabel": "Lock Reason (optional)",
+        "reasonPlaceholder": "Enter reason for locking..."
+      },
+      "roles": {
+        "loading": "Loading available system roles..."
       },
       "totalItems": "users"
     },

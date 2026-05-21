@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
@@ -24,8 +24,16 @@ import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-moda
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { AdminUserService } from '../../services/admin-user.service';
 import { AdminOrgService } from '../../services/admin-org.service';
+import { AdminRbacService } from '../../services/admin-rbac.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { AdminUserSummary, AdminDepartment, UserListFilter } from '../../models/admin.model';
+import {
+  AdminUserSummary,
+  AdminUserDetail,
+  AdminDepartment,
+  AdminRole,
+  UserListFilter,
+  UserStatus
+} from '../../models/admin.model';
 import { PageMeta } from '../../../../core/models/api-response.model';
 import { EpPageChangeEvent } from '../../../../shared/shared.index';
 
@@ -60,6 +68,7 @@ const STATUS_TONE: Record<string, EpBadgeTone> = {
 export class UserManagementComponent implements OnInit {
   private readonly userService = inject(AdminUserService);
   private readonly orgService = inject(AdminOrgService);
+  private readonly rbacService = inject(AdminRbacService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
@@ -67,6 +76,7 @@ export class UserManagementComponent implements OnInit {
   // ── State ──────────────────────────────────────────────────────────
   readonly items = signal<AdminUserSummary[]>([]);
   readonly departments = signal<AdminDepartment[]>([]);
+  readonly roles = signal<AdminRole[]>([]);
   readonly meta = signal<PageMeta | null>(null);
   readonly isLoading = signal(false);
   readonly isStatusMutating = signal<string | null>(null);
@@ -74,7 +84,7 @@ export class UserManagementComponent implements OnInit {
   readonly page = signal(1);
   readonly size = signal(10);
   readonly searchQuery = signal('');
-  readonly activeStatus = signal<'PENDING_VERIFY' | 'ACTIVE' | 'INACTIVE' | 'LOCKED' | ''>('');
+  readonly activeStatus = signal<UserStatus | ''>('');
   readonly selectedDepartmentId = signal('');
 
   readonly filter = computed<UserListFilter>(() => ({
@@ -92,26 +102,29 @@ export class UserManagementComponent implements OnInit {
   readonly modalMode = signal<'create' | 'edit'>('create');
   readonly selectedUserId = signal<string | null>(null);
   readonly isSubmitting = signal(false);
+  readonly isModalLoading = signal(false);
 
-  readonly availableRoles = [
-    { code: 'ADMIN', name: 'System Admin' },
-    { code: 'REQUESTER', name: 'Requester' },
-    { code: 'MANAGER', name: 'Department Manager' },
-    { code: 'FINANCE', name: 'Finance Reviewer' },
-    { code: 'PROCUREMENT', name: 'Procurement Executive' }
-  ];
+  // ── Status confirm dialog ────────────────────────────────────
+  readonly isStatusDialogOpen = signal(false);
+  readonly statusDialogUser = signal<AdminUserSummary | null>(null);
+  readonly statusDialogReason = signal('');
+
+  // Original roles for the user being edited (to detect changes)
+  private editOriginalRoles: string[] = [];
 
   readonly userForm: FormGroup = this.fb.group({
-    username: ['', [Validators.required, Validators.minLength(3)]],
+    employeeCode: ['', [Validators.required, Validators.maxLength(20)]],
+    username: ['', [Validators.required, Validators.minLength(3), Validators.pattern(/^[a-z0-9._-]+$/)]],
     email: ['', [Validators.required, Validators.email]],
-    fullName: ['', [Validators.required]],
-    phone: [''],
+    fullName: ['', [Validators.required, Validators.maxLength(200)]],
+    phone: ['', [Validators.maxLength(30)]],
     departmentId: ['', [Validators.required]],
     roles: [[] as string[], [Validators.required]]
   });
 
   ngOnInit(): void {
     this.loadDepartments();
+    this.loadRoles();
     this.loadData();
   }
 
@@ -123,7 +136,7 @@ export class UserManagementComponent implements OnInit {
   }
 
   onStatusChange(status: string): void {
-    this.activeStatus.set(status as any);
+    this.activeStatus.set(status as UserStatus | '');
     this.page.set(1);
     this.loadData();
   }
@@ -141,12 +154,31 @@ export class UserManagementComponent implements OnInit {
     this.loadData();
   }
 
-  toggleStatus(user: AdminUserSummary): void {
+  // ── Status toggle with confirm dialog ──────────────────────────
+  requestToggleStatus(user: AdminUserSummary): void {
+    this.statusDialogUser.set(user);
+    this.statusDialogReason.set('');
+    this.isStatusDialogOpen.set(true);
+  }
+
+  closeStatusDialog(): void {
+    this.isStatusDialogOpen.set(false);
+    this.statusDialogUser.set(null);
+    this.statusDialogReason.set('');
+  }
+
+  confirmToggleStatus(): void {
+    const user = this.statusDialogUser();
+    if (!user) return;
+
     const newStatus = user.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
+    const reason = this.statusDialogReason().trim() || undefined;
+
     this.isStatusMutating.set(user.id);
+    this.closeStatusDialog();
 
     this.userService
-      .changeStatus(user.id, newStatus)
+      .changeStatus(user.id, newStatus, reason)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isStatusMutating.set(null))
@@ -168,7 +200,9 @@ export class UserManagementComponent implements OnInit {
   openCreateModal(): void {
     this.modalMode.set('create');
     this.selectedUserId.set(null);
+    this.editOriginalRoles = [];
     this.userForm.reset({
+      employeeCode: '',
       username: '',
       email: '',
       fullName: '',
@@ -176,6 +210,7 @@ export class UserManagementComponent implements OnInit {
       departmentId: '',
       roles: []
     });
+    this.userForm.get('employeeCode')?.enable();
     this.userForm.get('username')?.enable();
     this.userForm.get('email')?.enable();
     this.isModalOpen.set(true);
@@ -184,19 +219,21 @@ export class UserManagementComponent implements OnInit {
   openEditModal(user: AdminUserSummary): void {
     this.modalMode.set('edit');
     this.selectedUserId.set(user.id);
-    this.isLoading.set(true);
+    this.isModalLoading.set(true);
 
     this.userService
       .getById(user.id)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isLoading.set(false))
+        finalize(() => this.isModalLoading.set(false))
       )
       .subscribe({
         next: (res) => {
           const detail = res.data;
           if (detail) {
+            this.editOriginalRoles = [...(detail.roles || [])];
             this.userForm.reset({
+              employeeCode: detail.employeeCode || '',
               username: detail.username,
               email: detail.email,
               fullName: detail.fullName,
@@ -204,6 +241,7 @@ export class UserManagementComponent implements OnInit {
               departmentId: detail.departmentId || '',
               roles: detail.roles || []
             });
+            this.userForm.get('employeeCode')?.disable();
             this.userForm.get('username')?.disable();
             this.userForm.get('email')?.disable();
             this.isModalOpen.set(true);
@@ -243,35 +281,79 @@ export class UserManagementComponent implements OnInit {
     }
 
     this.isSubmitting.set(true);
-    const formValue = this.userForm.getRawValue(); // raw value gets disabled values like username/email too
-    const obs$ = this.modalMode() === 'create'
-      ? this.userService.create(formValue)
-      : this.userService.update(this.selectedUserId()!, {
-          fullName: formValue.fullName,
-          phone: formValue.phone || null,
-          departmentId: formValue.departmentId,
-          roles: formValue.roles
-        });
+    const formValue = this.userForm.getRawValue();
 
-    obs$
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isSubmitting.set(false))
-      )
-      .subscribe({
-        next: () => {
-          this.toastService.successKey(
-            this.modalMode() === 'create'
-              ? 'admin.users.toast.createSuccess'
-              : 'admin.users.toast.updateSuccess'
-          );
-          this.closeModal();
-          this.loadData();
-        },
-        error: (err: any) => {
-          this.toastService.error(err.message || 'Save operation failed');
-        }
+    if (this.modalMode() === 'create') {
+      // Create: single call includes roles
+      this.userService.create({
+        employeeCode: formValue.employeeCode,
+        username: formValue.username,
+        email: formValue.email,
+        fullName: formValue.fullName,
+        phone: formValue.phone || null,
+        departmentId: formValue.departmentId,
+        roles: formValue.roles
+      })
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          finalize(() => this.isSubmitting.set(false))
+        )
+        .subscribe({
+          next: () => {
+            this.toastService.successKey('admin.users.toast.createSuccess');
+            this.closeModal();
+            this.loadData();
+          },
+          error: (err: any) => {
+            this.toastService.error(err.message || 'Create failed');
+          }
+        });
+    } else {
+      // Edit: update info + assign roles (if changed) as separate calls
+      const userId = this.selectedUserId()!;
+      const updateInfo$ = this.userService.update(userId, {
+        fullName: formValue.fullName,
+        phone: formValue.phone || null,
+        departmentId: formValue.departmentId
       });
+
+      const newRoles: string[] = formValue.roles || [];
+      const rolesChanged = !this.arraysEqual(newRoles, this.editOriginalRoles);
+
+      if (rolesChanged) {
+        forkJoin([updateInfo$, this.userService.assignRoles(userId, newRoles)])
+          .pipe(
+            takeUntilDestroyed(this.destroyRef),
+            finalize(() => this.isSubmitting.set(false))
+          )
+          .subscribe({
+            next: () => {
+              this.toastService.successKey('admin.users.toast.updateSuccess');
+              this.closeModal();
+              this.loadData();
+            },
+            error: (err: any) => {
+              this.toastService.error(err.message || 'Update failed');
+            }
+          });
+      } else {
+        updateInfo$
+          .pipe(
+            takeUntilDestroyed(this.destroyRef),
+            finalize(() => this.isSubmitting.set(false))
+          )
+          .subscribe({
+            next: () => {
+              this.toastService.successKey('admin.users.toast.updateSuccess');
+              this.closeModal();
+              this.loadData();
+            },
+            error: (err: any) => {
+              this.toastService.error(err.message || 'Update failed');
+            }
+          });
+      }
+    }
   }
 
   // ── Private Loader methods ────────────────────────────────────────
@@ -296,6 +378,21 @@ export class UserManagementComponent implements OnInit {
       });
   }
 
+  loadRoles(): void {
+    this.rbacService
+      .getRoles()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.roles.set(res.data ?? []);
+        },
+        error: () => {
+          // Fallback: keep empty, form will still work
+          this.roles.set([]);
+        }
+      });
+  }
+
   loadData(): void {
     this.isLoading.set(true);
     this.userService
@@ -315,5 +412,12 @@ export class UserManagementComponent implements OnInit {
           this.toastService.error(err.message || 'Failed to load users');
         }
       });
+  }
+
+  private arraysEqual(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((val, i) => val === sortedB[i]);
   }
 }

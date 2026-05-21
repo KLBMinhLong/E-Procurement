@@ -369,6 +369,7 @@
       },
       "col": {
         "fullName": "Họ và tên",
+        "employeeCode": "Mã NV",
         "username": "Tên đăng nhập",
         "email": "Email liên hệ",
         "dept": "Phòng ban",
@@ -387,6 +388,8 @@
         "titleEdit": "Cập nhật tài khoản"
       },
       "field": {
+        "employeeCode": "Mã nhân viên",
+        "employeeCodePlaceholder": "VD: NV001",
         "username": "Tên đăng nhập",
         "usernamePlaceholder": "Nhập tên đăng nhập (tối thiểu 3 ký tự)",
         "email": "Địa chỉ Email",
@@ -401,13 +404,25 @@
       },
       "validation": {
         "required": "Thông tin này là bắt buộc",
-        "email": "Địa chỉ email không hợp lệ"
+        "email": "Địa chỉ email không hợp lệ",
+        "usernameMinLength": "Tên đăng nhập phải chứa tối thiểu 3 ký tự",
+        "usernamePattern": "Chỉ chấp nhận chữ thường, số, dấu chấm, gạch dưới, gạch ngang"
       },
       "toast": {
         "lockSuccess": "Đã khóa tài khoản người dùng thành công.",
         "unlockSuccess": "Đã mở khóa tài khoản người dùng thành công.",
         "createSuccess": "Đã tạo tài khoản người dùng mới thành công.",
         "updateSuccess": "Đã cập nhật thông tin tài khoản thành công."
+      },
+      "statusDialog": {
+        "title": "Xác nhận thay đổi trạng thái",
+        "lockMessage": "Bạn có chắc muốn khóa tài khoản của {{name}}? Người dùng sẽ không thể đăng nhập.",
+        "unlockMessage": "Bạn có chắc muốn mở khóa tài khoản của {{name}}?",
+        "reasonLabel": "Lý do khóa (tùy chọn)",
+        "reasonPlaceholder": "Nhập lý do khóa tài khoản..."
+      },
+      "roles": {
+        "loading": "Đang tải danh sách vai trò..."
       },
       "totalItems": "người dùng"
     },

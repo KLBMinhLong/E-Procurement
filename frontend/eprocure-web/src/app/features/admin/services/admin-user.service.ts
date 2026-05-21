@@ -7,6 +7,7 @@ import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
   AdminUserDetail,
   AdminUserSummary,
+  AssignRolesRequest,
   ChangeUserStatusRequest,
   CreateUserRequest,
   UpdateUserRequest,
@@ -33,7 +34,7 @@ export class AdminUserService {
       .set('size', filter.size);
 
     if (filter.q) params = params.set('q', filter.q);
-    if (filter.departmentId) params = params.set('departmentId', filter.departmentId);
+    if (filter.departmentId) params = params.set('department_id', filter.departmentId);
     if (filter.status) params = params.set('status', filter.status);
 
     return this.http.get<ApiResponse<AdminUserSummary[]> & { meta: PageMeta }>(
@@ -105,8 +106,17 @@ export class AdminUserService {
     );
   }
 
-  changeStatus(id: string, status: 'ACTIVE' | 'INACTIVE' | 'LOCKED'): Observable<ApiResponse<void>> {
-    const request: ChangeUserStatusRequest = { status };
+  assignRoles(id: string, roles: string[]): Observable<ApiResponse<void>> {
+    const request: AssignRolesRequest = { roles };
+    return this.http.post<ApiResponse<void>>(
+      `${this.baseUrl}/users/${id}/roles`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  changeStatus(id: string, status: 'ACTIVE' | 'INACTIVE' | 'LOCKED', reason?: string): Observable<ApiResponse<void>> {
+    const request: ChangeUserStatusRequest = { status, reason: reason || null };
     return this.http.patch<ApiResponse<void>>(
       `${this.baseUrl}/users/${id}/status`,
       request,
