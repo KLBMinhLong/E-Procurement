@@ -105,6 +105,7 @@ public class RsaKeyProvider implements PublicKeyProviderPort {
                 .replace("-----END PRIVATE KEY-----", "")
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
+                .replace("\\", "")
                 .replaceAll("\\s", "");
     }
 }

@@ -18,7 +18,11 @@ export class EncryptionService {
   private publicKeyPromise: Promise<PublicKeyResponse> | null = null;
 
   encryptBody(body: unknown): Promise<EncryptedRequest> {
-    return this.loadPublicKey().then((publicKeyInfo) => this.encryptWithPublicKey(body, publicKeyInfo));
+    return this.loadPublicKey()
+      .then((publicKeyInfo) => this.encryptWithPublicKey(body, publicKeyInfo))
+      .catch((error) => {
+        throw error;
+      });
   }
 
   loadPublicKey(): Promise<PublicKeyResponse> {
@@ -68,12 +72,17 @@ export class EncryptionService {
   }
 
   private importPublicKey(pem: string): Promise<CryptoKey> {
-    const der = this.fromBase64(
-      pem
-        .replace('-----BEGIN PUBLIC KEY-----', '')
-        .replace('-----END PUBLIC KEY-----', '')
-        .replace(/\s/g, '')
-    );
+    // 1. Remove the headers and footers clean and safely
+    const cleanHeaders = pem
+      .replace(/-----BEGIN[^-]*-----/g, '')
+      .replace(/-----END[^-]*-----/g, '');
+
+    // 2. Strip all backslashes and all whitespaces (including newlines)
+    const sanitized = cleanHeaders
+      .replace(/\\/g, '')
+      .replace(/\s/g, '');
+
+    const der = this.fromBase64(sanitized);
 
     return crypto.subtle.importKey(
       'spki',
