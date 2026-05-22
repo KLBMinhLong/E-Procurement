@@ -52,7 +52,9 @@
       "twoFactorCode": "Verification Code (OTP) or Backup Code",
       "twoFactorVerify": "Verify",
       "twoFactorBack": "Back to login",
-      "twoFactorInvalid": "Invalid OTP or backup code. Please try again."
+      "twoFactorInvalid": "Invalid OTP or backup code. Please try again.",
+      "googleUserNotFound": "This Google account is not associated with any system user. Please contact your Administrator.",
+      "googleFailed": "Google login failed. Please try again or use your password credentials."
     },
     "logout": "Sign out"
   },

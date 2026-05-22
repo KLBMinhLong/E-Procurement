@@ -60,6 +60,26 @@ export class LoginComponent implements OnInit {
     const reason = this.route.snapshot.queryParamMap.get('reason');
     if (reason === 'locked') {
       this.errorKey.set('auth.login.accountLocked');
+      return;
+    }
+
+    // Check Google OAuth redirect errors
+    const error = this.route.snapshot.queryParamMap.get('error');
+    if (error) {
+      if (error === 'IAM_030') {
+        this.errorKey.set('auth.login.googleUserNotFound');
+      } else {
+        this.errorKey.set('auth.login.googleFailed');
+      }
+      return;
+    }
+
+    // Check Google OAuth 2FA requirement
+    const requires2Fa = this.route.snapshot.queryParamMap.get('requiresTwoFactor');
+    if (requires2Fa === 'true') {
+      this.requiresTwoFactor.set(true);
+      this.errorKey.set(null);
+      this.otpForm.reset();
     }
   }
 

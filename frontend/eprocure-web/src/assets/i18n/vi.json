@@ -52,7 +52,9 @@
       "twoFactorCode": "Mã xác thực (OTP) hoặc Mã dự phòng",
       "twoFactorVerify": "Xác nhận",
       "twoFactorBack": "Quay lại đăng nhập",
-      "twoFactorInvalid": "Mã OTP hoặc mã dự phòng không chính xác. Vui lòng thử lại."
+      "twoFactorInvalid": "Mã OTP hoặc mã dự phòng không chính xác. Vui lòng thử lại.",
+      "googleUserNotFound": "Tài khoản Google này chưa được liên kết với bất kỳ người dùng nào trên hệ thống. Vui lòng liên hệ Quản trị viên để đăng ký.",
+      "googleFailed": "Đăng nhập Google thất bại. Vui lòng thử lại hoặc sử dụng tài khoản/mật khẩu."
     },
     "logout": "Đăng xuất"
   },

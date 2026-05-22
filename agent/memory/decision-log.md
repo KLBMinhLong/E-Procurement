@@ -181,3 +181,13 @@
 - Reason: Giao diện Profile cũ thiết kế đơn giản, thô sơ và sử dụng các biến CSS không tồn tại, lệch chuẩn so với bộ nhận diện tối ưu và cực kỳ thẩm mỹ của eProcure Enterprise.
 - Impact: Trải nghiệm người dùng được nâng tầm tối đa với các hiệu ứng micro-animations mượt mà khi đổi tab và chọn avatar. Toàn bộ các trường readonly được hiển thị trực quan riêng biệt tránh nhầm lẫn, và đảm bảo tương thích 100% với cơ chế OnPush và i18n đa ngôn ngữ của hệ thống.
 - Constraint: Không làm thay đổi logic xử lý reactive forms của Component TypeScript hiện có, giúp bảo toàn tính toàn vẹn nghiệp vụ.
+
+## [2026-05-22] E02 Google OAuth Callback Redirect Flow Redesign
+
+- Decision: Thay thế việc trả về phản hồi JSON thô (`ApiResponse<LoginResponse>` hoặc `BusinessException`) trực tiếp trên trình duyệt của người dùng tại endpoint Callback Google OAuth `/api/v1/auth/oauth/google/callback` bằng cơ chế chuyển hướng HTTP 302 về trang frontend (`http://localhost:4200/login`) kèm theo các tham số truy vấn thích hợp (`error`, `requiresTwoFactor`).
+- Reason: Khi người dùng nhấp vào "Đăng nhập Google", trình duyệt thực hiện điều hướng toàn trang thay vì yêu cầu AJAX/HTTP. Việc trả về chuỗi JSON thô khi đăng nhập lỗi (ví dụ lỗi `IAM_030` - User not found) hoặc khi đăng nhập thành công nhưng yêu cầu 2FA sẽ hiển thị trang trắng chứa chuỗi JSON thô cực kỳ thiếu chuyên nghiệp (unprofessional) và gây ngắt quãng trải nghiệm của người dùng.
+- Impact:
+  1. **Success Flow (Không bật 2FA)**: Backend tự động thiết lập Cookie Session và chuyển hướng trình duyệt về trang chủ `/` (Dashboard). Hệ thống tự động xác thực thông qua Cookie an toàn.
+  2. **Success Flow (Có bật 2FA)**: Backend thiết lập Cookie 2FA Temporary Challenge và chuyển hướng trình duyệt về `/login?requiresTwoFactor=true`. Giao diện đăng nhập frontend tự động bắt tham số và hiển thị biểu mẫu nhập mã OTP/Mã dự phòng cao cấp để hoàn tất xác thực.
+  3. **Failure Flow (Tài khoản chưa được liên kết - `IAM_030` hoặc lỗi khác)**: Backend chuyển hướng trình duyệt về `/login?error=IAM_030`. Giao diện đăng nhập frontend hiển thị thông báo lỗi thân thiện được nội địa hóa chi tiết (i18n): *"Tài khoản Google này chưa được liên kết với bất kỳ người dùng nào trên hệ thống..."*, giúp người dùng hiểu chính xác vấn đề.
+- Constraint: Duy trì hoàn hảo cấu trúc bảo mật Cookie Secure/SameSite của eProcure Enterprise mà không cần can thiệp hay thay đổi cấu hình API Gateway hoặc cơ chế xác thực hiện có.

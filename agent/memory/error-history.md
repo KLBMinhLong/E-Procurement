@@ -53,3 +53,13 @@
 - Root cause: `purchase-request-service` initially lacked a PostgreSQL UUID MyBatis type handler, and the field-only `domainObjectMapper` disabled record creator visibility for nested value objects during domain-to-DB conversion.
 - Fix: Add `UuidTypeHandler`, register `mybatis.type-handlers-package`, and enable `PropertyAccessor.CREATOR` on `domainObjectMapper`.
 - Prevention: Validate new service slices with Docker runtime plus API calls, not only unit tests; keep field-based domain/entity conversion mappers able to construct record value objects.
+
+## [2026-05-22] Bug: Raw JSON displayed on browser during Google OAuth callback and 2FA required logins
+
+- Root cause:
+  1. Google OAuth Callback was returning direct JSON payload response (`ApiResponse<LoginResponse>` or `BusinessException` for `IAM_030`) during standard browser-initiated full-page navigation. This left users looking at raw JSON text on a blank page.
+  2. When a user with 2FA enabled successfully logged in using standard credentials or Google OAuth, the backend returned a successful HTTP 200 response with `requiresTwoFactor = true` but did not perform a redirect or provide the frontend with a direct path to navigate to the 2FA verification panel, causing the login page to sit idle.
+- Fix:
+  1. Updated Google OAuth callback handler to catch successful authentications and exceptions, performing an HTTP 302 redirect back to the Angular frontend (`http://localhost:4200/login`) with appropriate query parameters (`?error=IAM_030` or `?requiresTwoFactor=true`).
+  2. Implemented query parameter interception in Angular `LoginComponent` to automatically show localized error alerts (for `IAM_030` / "Tài khoản Google chưa liên kết") and auto-switch the UI view to the premium OTP and Backup Code verification panel when `requiresTwoFactor=true` is detected.
+- Prevention: Ensure standard full-page browser callback flows always return HTTP 302 redirects instead of raw API responses, and ensure all multi-factor auth states trigger explicit frontend navigation cues.

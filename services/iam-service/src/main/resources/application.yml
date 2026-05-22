@@ -57,3 +57,4 @@ eprocure:
     scope: ${GOOGLE_OAUTH_SCOPE:openid email profile}
     state-cookie-name: ${GOOGLE_OAUTH_STATE_COOKIE_NAME:ep_oauth_state}
     state-ttl-minutes: ${GOOGLE_OAUTH_STATE_TTL_MINUTES:5}
+    frontend-redirect-url: ${GOOGLE_OAUTH_FRONTEND_REDIRECT_URL:http://localhost:4200/login}

@@ -46,3 +46,4 @@ eprocure:
     authorization-url: ${GOOGLE_AUTHORIZATION_URL}
     token-url: ${GOOGLE_TOKEN_URL}
     user-info-url: ${GOOGLE_USER_INFO_URL}
+    frontend-redirect-url: ${GOOGLE_OAUTH_FRONTEND_REDIRECT_URL}
