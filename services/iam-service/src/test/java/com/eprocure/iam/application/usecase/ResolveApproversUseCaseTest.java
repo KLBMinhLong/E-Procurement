@@ -147,6 +147,10 @@ class ResolveApproversUseCaseTest {
         }
 
         @Override
+        public void update(Role role, UUID actorId) {
+        }
+
+        @Override
         public void replacePermissions(String roleCode, Set<String> permissionCodes, UUID actorId) {
         }
     }

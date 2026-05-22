@@ -1,0 +1,39 @@
+.role-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary, #ffffff);
+    margin: 0;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+
+    @media (max-width: 540px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color, #334155);
+  }
+}

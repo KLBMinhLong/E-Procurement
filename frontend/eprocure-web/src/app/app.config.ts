@@ -58,6 +58,7 @@ import {
   LucideUserCog,
   LucideUsers,
   LucideWarehouse,
+  LucideTrash2,
   LucideX,
   provideLucideConfig,
   provideLucideIcons
@@ -150,6 +151,7 @@ export const appConfig: ApplicationConfig = {
       LucideUserCog,
       LucideUsers,
       LucideWarehouse,
+      LucideTrash2,
       LucideX
     ),
     provideLucideConfig({

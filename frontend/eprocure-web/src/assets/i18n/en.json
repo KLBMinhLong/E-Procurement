@@ -8,7 +8,8 @@
     "create": "Create",
     "processing": "Processing",
     "refresh": "Refresh",
-    "submit": "Save Changes"
+    "submit": "Save Changes",
+    "delete": "Delete"
   },
   "app": {
     "name": "eProcure",
@@ -459,14 +460,23 @@
       "title": "Role Manager",
       "action": {
         "create": "New Role",
-        "viewAll": "View All"
+        "edit": "Edit Details",
+        "save": "Save Changes",
+        "viewAll": "View All",
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
+        "expandAll": "Expand All",
+        "collapseAll": "Collapse All",
+        "viewDetails": "View Details",
+        "editPermissions": "Edit Permissions"
       },
       "filter": {
         "placeholder": "Search role by name, code, or description..."
       },
       "badge": {
         "system": "System",
-        "custom": "Custom"
+        "custom": "Custom",
+        "systemLocked": "System Locked"
       },
       "field": {
         "code": "Role Code",
@@ -478,6 +488,7 @@
       },
       "modal": {
         "titleCreate": "Create New Role",
+        "titleEdit": "Edit Role Details",
         "sectionBasic": "Basic Information",
         "sectionPermissions": "Assign Permissions",
         "searchPermissions": "Filter permissions by name or module..."
@@ -486,14 +497,21 @@
         "type": "Type",
         "permissionsTitle": "Assigned Permissions",
         "noPermissions": "No permissions assigned to this role.",
-        "more": "more"
+        "more": "more",
+        "permissions": "permissions",
+        "noDescription": "(No description provided for this role)"
+      },
+      "tooltip": {
+        "systemLocked": "Default system role, modification is restricted"
       },
       "validation": {
         "required": "This field is mandatory",
         "codePattern": "Must start with an uppercase letter, only uppercase letters, numbers, and underscores allowed"
       },
       "toast": {
-        "createSuccess": "Role successfully created."
+        "createSuccess": "Role successfully created.",
+        "updateSuccess": "Role permissions successfully updated.",
+        "updateDetailsSuccess": "Role details successfully updated."
       },
       "empty": {
         "title": "No roles found",

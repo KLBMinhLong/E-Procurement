@@ -1,0 +1,120 @@
+@if (isLoading) {
+  <ep-skeleton [rows]="6" />
+} @else if (items.length === 0) {
+  <ep-empty-state
+    icon="shield-off"
+    [title]="'admin.roles.empty.title' | translate"
+    [message]="'admin.roles.empty.message' | translate" />
+} @else {
+  <div class="role-list-container">
+    @for (role of items; track role.code) {
+      <article
+        class="role-row"
+        [class.role-row--system]="role.isSystem"
+        [class.role-row--expanded]="isExpanded(role.code)">
+
+        <!-- Row Header (Clickable for Expansion) -->
+        <div class="role-row__header" (click)="toggleExpand(role.code)">
+          <div class="role-row__left">
+            <div class="role-row__icon-wrapper" [class.role-row__icon-wrapper--system]="role.isSystem">
+              <ep-icon [name]="role.isSystem ? 'shield-check' : 'shield'" [size]="20"></ep-icon>
+            </div>
+            <div class="role-row__info">
+              <div class="role-row__title-row">
+                <h3 class="role-row__name" [title]="role.name">{{ role.name }}</h3>
+                @if (role.isSystem) {
+                  <span class="role-row__system-tag">
+                    <ep-icon name="lock" [size]="10"></ep-icon>
+                    {{ 'admin.roles.badge.system' | translate }}
+                  </span>
+                } @else {
+                  <span class="role-row__custom-tag">
+                    {{ 'admin.roles.badge.custom' | translate }}
+                  </span>
+                }
+              </div>
+              <span class="role-row__code mono">{{ role.code }}</span>
+            </div>
+          </div>
+
+          <div class="role-row__center">
+            @if (role.description) {
+              <p class="role-row__description">{{ role.description }}</p>
+            } @else {
+              <span class="role-row__no-desc">{{ 'admin.roles.detail.noDescription' | translate }}</span>
+            }
+          </div>
+
+          <div class="role-row__meta">
+            <div class="role-row__perm-count">
+              <ep-icon name="key" [size]="14"></ep-icon>
+              <span>{{ getRolePermissionCount(role.code) }} {{ 'admin.roles.detail.permissions' | translate }}</span>
+            </div>
+            <ep-icon
+              class="role-row__chevron"
+              [class.role-row__chevron--open]="isExpanded(role.code)"
+              name="chevron-down"
+              [size]="16">
+            </ep-icon>
+          </div>
+        </div>
+
+        <!-- Row Expanded Detail Section -->
+        @if (isExpanded(role.code)) {
+          <div class="role-row__detail">
+            <div class="role-row__detail-header">
+              <h4>{{ 'admin.roles.detail.permissionsTitle' | translate }}</h4>
+            </div>
+
+            @if (getRolePermissionCount(role.code) === 0) {
+              <div class="role-row__no-perms">
+                <ep-icon name="info" [size]="14"></ep-icon>
+                <span>{{ 'admin.roles.detail.noPermissions' | translate }}</span>
+              </div>
+            } @else {
+              <div class="role-row__perm-tags">
+                @for (permCode of getRolePermissionCodes(role.code).slice(0, 16); track permCode) {
+                  <span class="perm-tag" [title]="getPermissionName(permCode)">
+                    <span class="perm-tag__module">{{ getPermissionModule(permCode) }}</span>
+                    <span class="perm-tag__code">{{ permCode }}</span>
+                  </span>
+                }
+                @if (getRolePermissionCount(role.code) > 16) {
+                  <span class="perm-tag perm-tag--more">
+                    +{{ getRolePermissionCount(role.code) - 16 }} {{ 'admin.roles.detail.more' | translate }}
+                  </span>
+                }
+              </div>
+            }
+
+            <!-- Row Actions -->
+            <div class="role-row__actions">
+              @if (!role.isSystem) {
+                <ep-button
+                  variant="primary"
+                  size="sm"
+                  icon="pencil"
+                  (click)="editRole.emit(role); $event.stopPropagation()">
+                  {{ 'admin.roles.action.edit' | translate }}
+                </ep-button>
+                <ep-button
+                  variant="danger"
+                  size="sm"
+                  icon="trash-2"
+                  (click)="deleteRole.emit(role); $event.stopPropagation()">
+                  {{ 'action.delete' | translate }}
+                </ep-button>
+              } @else {
+                <div class="role-row__system-lock" title="{{ 'admin.roles.tooltip.systemLocked' | translate }}">
+                  <ep-icon name="lock" [size]="12"></ep-icon>
+                  <span>{{ 'admin.roles.badge.systemLocked' | translate }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </article>
+    }
+  </div>
+}
+

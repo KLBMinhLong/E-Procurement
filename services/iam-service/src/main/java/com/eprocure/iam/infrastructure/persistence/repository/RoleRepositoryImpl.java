@@ -49,6 +49,11 @@ public class RoleRepositoryImpl implements RoleRepository {
     }
 
     @Override
+    public void update(Role role, UUID actorId) {
+        roleMapper.update(toEntity(role), actorId);
+    }
+
+    @Override
     public void replacePermissions(String roleCode, Set<String> permissionCodes, UUID actorId) {
         roleMapper.softDeleteRolePermissionsNotIn(roleCode, permissionCodes, actorId);
         permissionCodes.forEach(permissionCode -> roleMapper.upsertRolePermission(roleCode, permissionCode, actorId));

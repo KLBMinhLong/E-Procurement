@@ -64,6 +64,12 @@ export interface CreateRolePayload {
   permissions: string[];
 }
 
+export interface UpdateRolePayload {
+  code: string;
+  name: string;
+  description: string | null;
+}
+
 export interface AdminPermission {
   code: string;
   name: string;

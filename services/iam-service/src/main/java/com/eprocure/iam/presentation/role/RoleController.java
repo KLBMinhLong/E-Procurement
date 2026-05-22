@@ -1,6 +1,7 @@
 package com.eprocure.iam.presentation.role;
 
 import com.eprocure.iam.application.port.in.CreateRoleCommand;
+import com.eprocure.iam.application.port.in.UpdateRoleCommand;
 import com.eprocure.iam.application.port.in.UpdateRolePermissionsCommand;
 import com.eprocure.iam.application.service.PermissionView;
 import com.eprocure.iam.application.service.RoleDetailView;
@@ -9,6 +10,7 @@ import com.eprocure.iam.application.usecase.GetRolePermissionsUseCase;
 import com.eprocure.iam.application.usecase.ListPermissionsUseCase;
 import com.eprocure.iam.application.usecase.ListRolesUseCase;
 import com.eprocure.iam.application.usecase.UpdateRolePermissionsUseCase;
+import com.eprocure.iam.application.usecase.UpdateRoleUseCase;
 import com.eprocure.iam.common.api.ApiResponse;
 import com.eprocure.iam.common.api.RequestIdUtil;
 import com.eprocure.iam.common.security.UserPrincipal;
@@ -39,6 +41,7 @@ public class RoleController {
     private static final Logger log = LogManager.getLogger(RoleController.class);
     private final ListRolesUseCase listRolesUseCase;
     private final CreateRoleUseCase createRoleUseCase;
+    private final UpdateRoleUseCase updateRoleUseCase;
     private final UpdateRolePermissionsUseCase updateRolePermissionsUseCase;
     private final ListPermissionsUseCase listPermissionsUseCase;
     private final GetRolePermissionsUseCase getRolePermissionsUseCase;
@@ -46,11 +49,13 @@ public class RoleController {
     public RoleController(
             ListRolesUseCase listRolesUseCase,
             CreateRoleUseCase createRoleUseCase,
+            UpdateRoleUseCase updateRoleUseCase,
             UpdateRolePermissionsUseCase updateRolePermissionsUseCase,
             ListPermissionsUseCase listPermissionsUseCase,
             GetRolePermissionsUseCase getRolePermissionsUseCase) {
         this.listRolesUseCase = listRolesUseCase;
         this.createRoleUseCase = createRoleUseCase;
+        this.updateRoleUseCase = updateRoleUseCase;
         this.updateRolePermissionsUseCase = updateRolePermissionsUseCase;
         this.listPermissionsUseCase = listPermissionsUseCase;
         this.getRolePermissionsUseCase = getRolePermissionsUseCase;
@@ -78,6 +83,21 @@ public class RoleController {
                 idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(view, RequestIdUtil.resolve(request)));
+    }
+
+    @PutMapping("/roles/{code}")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE_MANAGE')")
+    public ResponseEntity<ApiResponse<RoleDetailView>> updateRole(
+            @PathVariable String code,
+            @Valid @RequestBody UpdateRoleRequest body,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] PUT /api/v1/roles/{} | userId={}",
+                code,
+                LogMaskingUtil.maskId(principal.getId()));
+        RoleDetailView view = updateRoleUseCase.execute(
+                new UpdateRoleCommand(principal.getId(), code, body.code(), body.name(), body.description()));
+        return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
     }
 
     @PutMapping("/roles/{code}/permissions")

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../../core/http/api-tokens';
 import { ApiResponse } from '../../../core/models/api-response.model';
-import { AdminPermission, AdminRole, CreateRolePayload } from '../models/admin.model';
+import { AdminPermission, AdminRole, CreateRolePayload, UpdateRolePayload } from '../models/admin.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminRbacService {
@@ -69,6 +69,17 @@ export class AdminRbacService {
   createRole(payload: CreateRolePayload): Observable<ApiResponse<AdminRole>> {
     return this.http.post<ApiResponse<AdminRole>>(
       `${this.baseUrl}/roles`,
+      payload,
+      {
+        withCredentials: true,
+        headers: { 'Idempotency-Key': crypto.randomUUID() }
+      }
+    );
+  }
+
+  updateRole(currentCode: string, payload: UpdateRolePayload): Observable<ApiResponse<AdminRole>> {
+    return this.http.put<ApiResponse<AdminRole>>(
+      `${this.baseUrl}/roles/${currentCode}`,
       payload,
       {
         withCredentials: true,

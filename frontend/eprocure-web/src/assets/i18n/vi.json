@@ -8,7 +8,8 @@
     "create": "Tạo mới",
     "processing": "Đang xử lý",
     "refresh": "Tải lại",
-    "submit": "Lưu thay đổi"
+    "submit": "Lưu thay đổi",
+    "delete": "Xóa"
   },
   "app": {
     "name": "eProcure",
@@ -459,14 +460,23 @@
       "title": "Quản lý vai trò",
       "action": {
         "create": "Thêm vai trò",
-        "viewAll": "Xem tất cả"
+        "edit": "Chỉnh sửa",
+        "save": "Lưu thay đổi",
+        "viewAll": "Xem tất cả",
+        "selectAll": "Chọn tất cả",
+        "deselectAll": "Bỏ chọn tất cả",
+        "expandAll": "Mở rộng tất cả",
+        "collapseAll": "Thu gọn tất cả",
+        "viewDetails": "Xem chi tiết",
+        "editPermissions": "Sửa quyền hạn"
       },
       "filter": {
         "placeholder": "Tìm vai trò theo tên, mã, hoặc mô tả..."
       },
       "badge": {
         "system": "Hệ thống",
-        "custom": "Tùy chỉnh"
+        "custom": "Tùy chỉnh",
+        "systemLocked": "Khóa hệ thống"
       },
       "field": {
         "code": "Mã vai trò",
@@ -478,6 +488,7 @@
       },
       "modal": {
         "titleCreate": "Tạo vai trò mới",
+        "titleEdit": "Chỉnh sửa vai trò",
         "sectionBasic": "Thông tin cơ bản",
         "sectionPermissions": "Gán quyền hạn",
         "searchPermissions": "Lọc quyền theo tên hoặc module..."
@@ -486,14 +497,21 @@
         "type": "Loại",
         "permissionsTitle": "Quyền hạn được gán",
         "noPermissions": "Vai trò này chưa có quyền hạn nào.",
-        "more": "thêm"
+        "more": "thêm",
+        "permissions": "quyền hạn",
+        "noDescription": "(Không có mô tả cho vai trò này)"
+      },
+      "tooltip": {
+        "systemLocked": "Vai trò mặc định của hệ thống, không được phép chỉnh sửa"
       },
       "validation": {
         "required": "Thông tin này là bắt buộc",
         "codePattern": "Phải bắt đầu bằng chữ hoa, chỉ chấp nhận chữ hoa, số và gạch dưới"
       },
       "toast": {
-        "createSuccess": "Đã tạo vai trò mới thành công."
+        "createSuccess": "Đã tạo vai trò mới thành công.",
+        "updateSuccess": "Đã cập nhật quyền hạn vai trò thành công.",
+        "updateDetailsSuccess": "Đã cập nhật thông tin vai trò thành công."
       },
       "empty": {
         "title": "Không tìm thấy vai trò",

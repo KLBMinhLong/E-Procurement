@@ -29,6 +29,15 @@ public class Role {
         return new Role(id, code, name, description, systemRole, createdAt);
     }
 
+    public void updateDetails(String code, String name, String description) {
+        if (this.systemRole) {
+            throw new IllegalStateException("System roles cannot be modified");
+        }
+        this.code = requireText(code, "code").toUpperCase();
+        this.name = requireText(name, "name");
+        this.description = normalize(description);
+    }
+
     public UUID getId() {
         return id;
     }

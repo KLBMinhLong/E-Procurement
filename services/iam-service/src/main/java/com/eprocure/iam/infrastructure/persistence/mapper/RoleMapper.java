@@ -8,6 +8,8 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
 
 @Mapper
 public interface RoleMapper {
@@ -70,4 +72,16 @@ public interface RoleMapper {
             @Param("roleCode") String roleCode,
             @Param("permissionCode") String permissionCode,
             @Param("actorId") UUID actorId);
+
+    @Update("""
+            UPDATE iam.roles
+            SET code = #{entity.code},
+                name = #{entity.name},
+                description = #{entity.description},
+                updated_by = #{actorId},
+                updated_at = NOW()
+            WHERE id = #{entity.id}
+              AND is_deleted = FALSE
+            """)
+    void update(@Param("entity") RoleDbEntity entity, @Param("actorId") UUID actorId);
 }
