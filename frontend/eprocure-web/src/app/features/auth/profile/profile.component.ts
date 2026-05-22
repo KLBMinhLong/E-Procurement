@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal, effect } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -75,24 +75,32 @@ export class ProfileComponent {
   });
 
   constructor() {
-    // Set form initial values from current user
-    const currentUserValue = this.user();
-    if (currentUserValue) {
-      this.profileForm.patchValue({
-        fullName: currentUserValue.fullName,
-        phone: currentUserValue.phone || ''
-      });
-      this.selectedAvatarUrl.set(currentUserValue.avatarUrl);
-      
-      // If the current avatarUrl is not in the preset list, it's custom
-      const isPreset = this.presetAvatars.some(p => p.url === currentUserValue.avatarUrl);
-      if (currentUserValue.avatarUrl && !isPreset) {
-        this.isCustomAvatar.set(true);
+    // Reactively update form and avatar selection when user signal changes
+    effect(() => {
+      const currentUserValue = this.user();
+      if (currentUserValue) {
         this.profileForm.patchValue({
-          customAvatarUrl: currentUserValue.avatarUrl
+          fullName: currentUserValue.fullName,
+          phone: currentUserValue.phone || ''
         });
+        
+        this.selectedAvatarUrl.set(currentUserValue.avatarUrl);
+        
+        // If the current avatarUrl is not in the preset list, it's custom
+        const isPreset = this.presetAvatars.some(p => p.url === currentUserValue.avatarUrl);
+        if (currentUserValue.avatarUrl && !isPreset) {
+          this.isCustomAvatar.set(true);
+          this.profileForm.patchValue({
+            customAvatarUrl: currentUserValue.avatarUrl
+          });
+        } else {
+          this.isCustomAvatar.set(false);
+          this.profileForm.patchValue({
+            customAvatarUrl: ''
+          });
+        }
       }
-    }
+    }, { allowSignalWrites: true });
   }
 
   setTab(tab: 'info' | 'password'): void {

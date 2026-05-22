@@ -124,6 +124,7 @@ public interface UserMapper {
             UPDATE iam.users
             SET full_name = #{entity.fullName},
                 phone = #{entity.phone},
+                avatar_url = #{entity.avatarUrl},
                 department_id = #{entity.departmentId},
                 org_node_id = #{entity.orgNodeId},
                 updated_by = #{actorId}

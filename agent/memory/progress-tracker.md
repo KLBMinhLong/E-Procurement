@@ -122,6 +122,7 @@
 | Error interceptor | ✅ |
 | WebSocket service | ✅ |
 | Permission guard + directive | ✅ |
+| Rewrite User Profile UI Screen (Personal details, avatar selector, password change) | ✅ |
 
 ### E04: Purchase Request Service
 | Task | Status |

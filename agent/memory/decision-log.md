@@ -174,3 +174,10 @@
 - Reason: Nâng cao độ an toàn và tin cậy cho thao tác quản trị khi đổi mật khẩu cho người dùng, loại bỏ hoàn toàn rủi ro gõ nhầm mật khẩu của quản trị viên do không có đối chiếu.
 - Impact: Biểu mẫu hiển thị thêm trường nhập liệu xác nhận mật khẩu có kiểm tra trực quan thời gian thực. Nút "Lưu thay đổi" sẽ bị khóa (disabled) cho tới khi cả hai trường mật khẩu được nhập khớp nhau và tuân thủ đúng định dạng độ phức tạp mật khẩu.
 - Constraint: Không ảnh hưởng tới cơ chế API backend do giá trị payload gửi đi vẫn là chuỗi mật khẩu đã kiểm duyệt chuẩn xác.
+
+## [2026-05-21] E03 Premium Visual Redesign for User Profile Screen
+
+- Decision: Thiết kế lại toàn bộ giao diện Profile người dùng (`profile.component.html` và `.scss`) theo cấu trúc dashboard 2 cột cao cấp, kết hợp hiệu ứng radial glowing, avatar halo viền gradient, danh sách metadata chi tiết có icon thông tin động, bộ chọn preset avatar dạng grid tròn có thanh trượt cuộn, và tab đổi biểu mẫu kiểu dáng filter chip vàng/hổ phách đặc trưng.
+- Reason: Giao diện Profile cũ thiết kế đơn giản, thô sơ và sử dụng các biến CSS không tồn tại, lệch chuẩn so với bộ nhận diện tối ưu và cực kỳ thẩm mỹ của eProcure Enterprise.
+- Impact: Trải nghiệm người dùng được nâng tầm tối đa với các hiệu ứng micro-animations mượt mà khi đổi tab và chọn avatar. Toàn bộ các trường readonly được hiển thị trực quan riêng biệt tránh nhầm lẫn, và đảm bảo tương thích 100% với cơ chế OnPush và i18n đa ngôn ngữ của hệ thống.
+- Constraint: Không làm thay đổi logic xử lý reactive forms của Component TypeScript hiện có, giúp bảo toàn tính toàn vẹn nghiệp vụ.

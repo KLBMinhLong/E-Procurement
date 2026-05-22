@@ -1,220 +1,264 @@
-<div class="profile-container">
-  <!-- Breadcrumb -->
-  <ep-breadcrumb></ep-breadcrumb>
+<section class="profile-page" aria-labelledby="profile-heading">
+  <ep-breadcrumb />
 
-  <!-- Header -->
-  <header class="profile-header">
-    <div class="header-content">
-      <div class="avatar-preview-large">
-        <ep-avatar 
-          [name]="user()?.fullName || 'User'" 
-          [imageUrl]="selectedAvatarUrl()"
-          class="large-avatar">
-        </ep-avatar>
-      </div>
-      <div class="user-meta">
-        <h1>{{ user()?.fullName }}</h1>
-        <p class="subtitle">{{ 'profile.subtitle' | translate }}</p>
-        <div class="badges">
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'profile.title' | translate }}</span>
+      <h1 id="profile-heading" class="page-header__title">{{ 'profile.subtitle' | translate }}</h1>
+    </div>
+  </div>
+
+  <!-- ── Main Grid ────────────────────────────────────────────────── -->
+  <div class="profile-grid">
+    <!-- Left Column: User Summary Card -->
+    <aside class="profile-sidebar">
+      <div class="profile-card profile-card--summary animate-fade-in">
+        <!-- Glow accent circle background -->
+        <div class="profile-card__glow"></div>
+
+        <!-- Avatar preview and details -->
+        <div class="profile-card__avatar-section">
+          <div class="profile-card__avatar-container">
+            <ep-avatar 
+              [name]="user()?.fullName || 'User'" 
+              [imageUrl]="selectedAvatarUrl()"
+              class="profile-card__avatar">
+            </ep-avatar>
+          </div>
+          <h2 class="profile-card__name">{{ user()?.fullName }}</h2>
+          <span class="profile-card__username">@{{ user()?.username }}</span>
+        </div>
+
+        <!-- Roles List -->
+        <div class="profile-card__roles">
           @for (role of user()?.roles; track role) {
-            <span class="role-badge">{{ role }}</span>
+            <span class="role-pill">{{ role }}</span>
+          } @empty {
+            <span class="role-pill role-pill--none">--</span>
           }
-          <span class="dept-badge">
-            <ep-icon name="network" [size]="14"></ep-icon>
-            {{ user()?.department?.name || ('profile.info.department' | translate) }}
-          </span>
+        </div>
+
+        <!-- Metadata / Details List -->
+        <div class="profile-card__meta-list">
+          <div class="meta-item">
+            <div class="meta-item__icon-box">
+              <ep-icon name="user" [size]="16"></ep-icon>
+            </div>
+            <div class="meta-item__info">
+              <span class="meta-item__label">{{ 'profile.info.employeeCode' | translate }}</span>
+              <span class="meta-item__value font-mono">{{ user()?.employeeCode || '--' }}</span>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-item__icon-box">
+              <ep-icon name="network" [size]="16"></ep-icon>
+            </div>
+            <div class="meta-item__info">
+              <span class="meta-item__label">{{ 'profile.info.department' | translate }}</span>
+              <span class="meta-item__value">{{ user()?.department?.name || ('user.noDepartment' | translate) }}</span>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-item__icon-box">
+              <ep-icon name="shield" [size]="16"></ep-icon>
+            </div>
+            <div class="meta-item__info">
+              <span class="meta-item__label">{{ 'profile.info.twoFactor' | translate }}</span>
+              <span class="meta-item__value" [class.meta-item__value--success]="user()?.twoFactorEnabled">
+                {{ (user()?.twoFactorEnabled ? 'profile.info.twoFactorEnabled' : 'profile.info.twoFactorDisabled') | translate }}
+              </span>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-item__icon-box">
+              <ep-icon name="history" [size]="16"></ep-icon>
+            </div>
+            <div class="meta-item__info">
+              <span class="meta-item__label">{{ 'profile.info.lastLogin' | translate }}</span>
+              <span class="meta-item__value font-mono">
+                {{ user()?.lastLoginAt ? (user()?.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : ('profile.info.neverLoggedIn' | translate) }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </header>
+    </aside>
 
-  <!-- Main Grid -->
-  <div class="profile-grid">
-    <!-- Tabs Switcher -->
-    <div class="profile-nav-card">
-      <nav class="profile-nav">
-        <button 
+    <!-- Right Column: Tabs and Forms -->
+    <main class="profile-main">
+      <!-- Custom tabs designed as gorgeous filter chips -->
+      <div class="profile-tabs animate-fade-in">
+        <button
           type="button"
-          class="nav-tab" 
-          [class.active]="activeTab() === 'info'"
+          class="filter-chip"
+          [class.filter-chip--active]="activeTab() === 'info'"
           (click)="setTab('info')">
-          <ep-icon name="user" [size]="18"></ep-icon>
+          <ep-icon name="user" [size]="14"></ep-icon>
           <span>{{ 'profile.tabs.info' | translate }}</span>
         </button>
-        <button 
+        <button
           type="button"
-          class="nav-tab" 
-          [class.active]="activeTab() === 'password'"
+          class="filter-chip"
+          [class.filter-chip--active]="activeTab() === 'password'"
           (click)="setTab('password')">
-          <ep-icon name="lock" [size]="18"></ep-icon>
+          <ep-icon name="lock" [size]="14"></ep-icon>
           <span>{{ 'profile.tabs.password' | translate }}</span>
         </button>
-      </nav>
-
-      <!-- Account Summary Info Box -->
-      <div class="account-summary-box">
-        <h3>{{ 'profile.info.roles' | translate }}</h3>
-        <div class="summary-details">
-          <div class="summary-row">
-            <span class="label">{{ 'profile.info.employeeCode' | translate }}</span>
-            <span class="val">{{ user()?.employeeCode }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="label">{{ 'profile.info.username' | translate }}</span>
-            <span class="val">{{ user()?.username }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="label">{{ 'profile.info.twoFactor' | translate }}</span>
-            <span class="val" [class.enabled]="user()?.twoFactorEnabled">
-              {{ (user()?.twoFactorEnabled ? 'profile.info.twoFactorEnabled' : 'profile.info.twoFactorDisabled') | translate }}
-            </span>
-          </div>
-          <div class="summary-row">
-            <span class="label">{{ 'profile.info.lastLogin' | translate }}</span>
-            <span class="val font-mono">
-              {{ user()?.lastLoginAt ? (user()?.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : ('profile.info.neverLoggedIn' | translate) }}
-            </span>
-          </div>
-        </div>
       </div>
-    </div>
 
-    <!-- Active Tab Content Area -->
-    <div class="profile-content-card">
-      @if (activeTab() === 'info') {
-        <div class="tab-content" id="info-tab">
-          <form [formGroup]="profileForm" (ngSubmit)="submitProfile()">
-            <h2>{{ 'profile.tabs.info' | translate }}</h2>
-            
-            <div class="form-grid">
-              <!-- Avatar Selection Column -->
-              <div class="avatar-selector-section">
-                <label class="section-label">{{ 'profile.avatar.title' | translate }}</label>
-                <p class="section-desc">{{ 'profile.avatar.description' | translate }}</p>
-                
-                <!-- Preset Grid -->
-                <div class="preset-avatar-grid">
-                  @for (preset of presetAvatars; track preset.url) {
-                    <button 
-                      type="button" 
-                      class="preset-avatar-btn" 
-                      [class.selected]="selectedAvatarUrl() === preset.url && !isCustomAvatar()"
-                      (click)="selectPresetAvatar(preset.url)">
-                      <img [src]="preset.url" [alt]="preset.name" />
-                    </button>
+      <!-- Main card for tab contents -->
+      <div class="profile-card profile-card--form animate-fade-in-up">
+        @if (activeTab() === 'info') {
+          <div class="tab-pane">
+            <form [formGroup]="profileForm" (ngSubmit)="submitProfile()">
+              <div class="tab-pane__header">
+                <h2 class="tab-pane__title">{{ 'profile.tabs.info' | translate }}</h2>
+                <p class="tab-pane__description">{{ 'profile.subtitle' | translate }}</p>
+              </div>
+
+              <!-- Two column split within form: Left for Avatars, Right for Form fields -->
+              <div class="form-grid-layout">
+                <!-- Avatar selection column -->
+                <div class="avatar-selector">
+                  <span class="avatar-selector__title">{{ 'profile.avatar.title' | translate }}</span>
+                  <p class="avatar-selector__desc">{{ 'profile.avatar.description' | translate }}</p>
+
+                  <div class="preset-scroll-container">
+                    <div class="preset-avatar-grid">
+                      @for (preset of presetAvatars; track preset.url) {
+                        <button 
+                          type="button" 
+                          class="preset-avatar-item" 
+                          [class.preset-avatar-item--selected]="selectedAvatarUrl() === preset.url && !isCustomAvatar()"
+                          [title]="preset.name"
+                          (click)="selectPresetAvatar(preset.url)">
+                          <img [src]="preset.url" [alt]="preset.name" />
+                          <div class="preset-avatar-item__check">
+                            <ep-icon name="check" [size]="12"></ep-icon>
+                          </div>
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="custom-url-checkbox">
+                    <label class="custom-chk-label">
+                      <input 
+                        type="checkbox" 
+                        [checked]="isCustomAvatar()" 
+                        (change)="isCustomAvatar() ? selectPresetAvatar(presetAvatars[0].url) : enableCustomAvatar()" />
+                      <span class="custom-chk-text">Sử dụng link ảnh tự chọn (Custom URL)</span>
+                    </label>
+                  </div>
+
+                  @if (isCustomAvatar()) {
+                    <div class="custom-url-input-wrapper animate-slide-down">
+                      <ep-form-field
+                        [label]="'Custom URL'"
+                        [error]="null">
+                        <input 
+                          type="url" 
+                          formControlName="customAvatarUrl" 
+                          placeholder="https://example.com/avatar.png"
+                          (input)="onCustomAvatarUrlChange($event)" />
+                      </ep-form-field>
+                    </div>
                   }
                 </div>
 
-                <!-- Custom Avatar Input -->
-                <div class="custom-avatar-toggle">
-                  <label class="custom-chk">
-                    <input 
-                      type="checkbox" 
-                      [checked]="isCustomAvatar()" 
-                      (change)="isCustomAvatar() ? selectPresetAvatar(presetAvatars[0].url) : enableCustomAvatar()" />
-                    <span>Sử dụng link ảnh tự chọn (Custom URL)</span>
-                  </label>
+                <!-- Text form fields column -->
+                <div class="fields-grid">
+                  <!-- Full Name -->
+                  <ep-form-field 
+                    [label]="'profile.info.fullName' | translate" 
+                    [error]="profileForm.get('fullName')?.touched && profileForm.get('fullName')?.errors ? 'Thông tin này là bắt buộc' : null">
+                    <input type="text" formControlName="fullName" required placeholder="Họ và tên đầy đủ" />
+                  </ep-form-field>
+
+                  <!-- Phone -->
+                  <ep-form-field 
+                    [label]="'profile.info.phone' | translate" 
+                    [error]="profileForm.get('phone')?.touched && profileForm.get('phone')?.errors ? 'Độ dài tối đa 30 ký tự' : null">
+                    <input type="tel" formControlName="phone" placeholder="Số điện thoại liên hệ" />
+                  </ep-form-field>
+
+                  <!-- Readonly username -->
+                  <ep-form-field [label]="'profile.info.username' | translate">
+                    <input type="text" [value]="user()?.username" readonly class="readonly-input" />
+                  </ep-form-field>
+
+                  <!-- Readonly email -->
+                  <ep-form-field [label]="'profile.info.email' | translate">
+                    <input type="email" [value]="user()?.email" readonly class="readonly-input" />
+                  </ep-form-field>
                 </div>
-
-                @if (isCustomAvatar()) {
-                  <div class="custom-avatar-input-wrapper animate-slide-down">
-                    <ep-form-field
-                      [label]="'Custom URL'"
-                      [error]="null">
-                      <input 
-                        type="url" 
-                        formControlName="customAvatarUrl" 
-                        placeholder="https://example.com/avatar.png"
-                        (input)="onCustomAvatarUrlChange($event)" />
-                    </ep-form-field>
-                  </div>
-                }
               </div>
 
-              <!-- Fields Column -->
-              <div class="fields-section">
-                <!-- Full Name -->
+              <!-- Form actions -->
+              <div class="form-actions-bar">
+                <ep-button 
+                  type="submit" 
+                  variant="primary" 
+                  [loading]="isSubmittingProfile()"
+                  [disabled]="profileForm.invalid || isSubmittingProfile()">
+                  <ep-icon name="save" [size]="16"></ep-icon>
+                  <span>{{ 'action.submit' | translate }}</span>
+                </ep-button>
+              </div>
+            </form>
+          </div>
+        }
+
+        @if (activeTab() === 'password') {
+          <div class="tab-pane">
+            <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()">
+              <div class="tab-pane__header">
+                <h2 class="tab-pane__title">{{ 'profile.password.title' | translate }}</h2>
+                <p class="tab-pane__description">{{ 'profile.password.description' | translate }}</p>
+              </div>
+
+              <div class="password-fields-container">
+                <!-- Old Password -->
                 <ep-form-field 
-                  [label]="'profile.info.fullName' | translate" 
-                  [error]="profileForm.get('fullName')?.touched && profileForm.get('fullName')?.errors ? 'Thông tin này là bắt buộc' : null">
-                  <input type="text" formControlName="fullName" required />
+                  [label]="'profile.password.oldPassword' | translate" 
+                  [error]="passwordForm.get('oldPassword')?.touched && passwordForm.get('oldPassword')?.errors ? 'Mật khẩu hiện tại là bắt buộc' : null">
+                  <input type="password" formControlName="oldPassword" required placeholder="••••••••" />
                 </ep-form-field>
 
-                <!-- Phone -->
+                <!-- New Password -->
                 <ep-form-field 
-                  [label]="'profile.info.phone' | translate" 
-                  [error]="profileForm.get('phone')?.touched && profileForm.get('phone')?.errors ? 'Độ dài tối đa 30 ký tự' : null">
-                  <input type="tel" formControlName="phone" />
+                  [label]="'profile.password.newPassword' | translate" 
+                  [error]="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.errors ? 'Mật khẩu mới tối thiểu 8 ký tự' : null">
+                  <input type="password" formControlName="newPassword" required placeholder="••••••••" />
                 </ep-form-field>
 
-                <!-- Readonly username -->
-                <ep-form-field [label]="'profile.info.username' | translate">
-                  <input type="text" [value]="user()?.username" readonly class="readonly-input" />
-                </ep-form-field>
-
-                <!-- Readonly email -->
-                <ep-form-field [label]="'profile.info.email' | translate">
-                  <input type="email" [value]="user()?.email" readonly class="readonly-input" />
+                <!-- Confirm Password -->
+                <ep-form-field 
+                  [label]="'profile.password.confirmPassword' | translate" 
+                  [error]="passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.errors ? (passwordForm.get('confirmPassword')?.hasError('mismatch') ? 'profile.password.mismatch' : 'Nhập lại mật khẩu mới tối thiểu 8 ký tự') : null">
+                  <input type="password" formControlName="confirmPassword" required placeholder="••••••••" />
                 </ep-form-field>
               </div>
-            </div>
 
-            <div class="form-actions">
-              <ep-button 
-                type="submit" 
-                variant="primary" 
-                [loading]="isSubmittingProfile()"
-                [disabled]="profileForm.invalid || isSubmittingProfile()">
-                <ep-icon name="save" [size]="16"></ep-icon>
-                <span>{{ 'action.submit' | translate }}</span>
-              </ep-button>
-            </div>
-          </form>
-        </div>
-      }
-
-      @if (activeTab() === 'password') {
-        <div class="tab-content" id="password-tab">
-          <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()">
-            <h2>{{ 'profile.password.title' | translate }}</h2>
-            <p class="section-desc">{{ 'profile.password.description' | translate }}</p>
-
-            <div class="password-fields">
-              <!-- Old Password -->
-              <ep-form-field 
-                [label]="'profile.password.oldPassword' | translate" 
-                [error]="passwordForm.get('oldPassword')?.touched && passwordForm.get('oldPassword')?.errors ? 'Mật khẩu hiện tại là bắt buộc' : null">
-                <input type="password" formControlName="oldPassword" required />
-              </ep-form-field>
-
-              <!-- New Password -->
-              <ep-form-field 
-                [label]="'profile.password.newPassword' | translate" 
-                [error]="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.errors ? 'Mật khẩu mới tối thiểu 8 ký tự' : null">
-                <input type="password" formControlName="newPassword" required />
-              </ep-form-field>
-
-              <!-- Confirm Password -->
-              <ep-form-field 
-                [label]="'profile.password.confirmPassword' | translate" 
-                [error]="passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.errors ? (passwordForm.get('confirmPassword')?.hasError('mismatch') ? 'profile.password.mismatch' : 'Nhập lại mật khẩu mới tối thiểu 8 ký tự') : null">
-                <input type="password" formControlName="confirmPassword" required />
-              </ep-form-field>
-            </div>
-
-            <div class="form-actions">
-              <ep-button 
-                type="submit" 
-                variant="primary" 
-                [loading]="isSubmittingPassword()"
-                [disabled]="passwordForm.invalid || isSubmittingPassword()">
-                <ep-icon name="lock" [size]="16"></ep-icon>
-                <span>{{ 'profile.password.submit' | translate }}</span>
-              </ep-button>
-            </div>
-          </form>
-        </div>
-      }
-    </div>
+              <!-- Form actions -->
+              <div class="form-actions-bar">
+                <ep-button 
+                  type="submit" 
+                  variant="primary" 
+                  [loading]="isSubmittingPassword()"
+                  [disabled]="passwordForm.invalid || isSubmittingPassword()">
+                  <ep-icon name="lock" [size]="16"></ep-icon>
+                  <span>{{ 'profile.password.submit' | translate }}</span>
+                </ep-button>
+              </div>
+            </form>
+          </div>
+        }
+      </div>
+    </main>
   </div>
-</div>
+</section>
