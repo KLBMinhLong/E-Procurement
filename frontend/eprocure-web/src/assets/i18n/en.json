@@ -522,15 +522,69 @@
     "rbac": {
       "eyebrow": "Role Based Access Control",
       "title": "Permissions Matrix",
+      "subtitle": "Manage role access across every business module from one place.",
+      "stat": {
+        "roles": "Roles",
+        "rolesHint": "Active access profiles",
+        "permissions": "Permissions",
+        "permissionsHint": "Unique permission codes",
+        "modules": "Modules",
+        "modulesHint": "Business capability groups",
+        "coverage": "Coverage",
+        "coverageHint": "{{count}} of {{total}} permissions assigned"
+      },
+      "filter": {
+        "searchPlaceholder": "Search permissions, module, or code...",
+        "moduleLabel": "Module",
+        "allModules": "All modules",
+        "focusRoleLabel": "Focus role",
+        "allRoles": "All roles",
+        "assignedOnly": "Show assigned only",
+        "reset": "Reset filters"
+      },
+      "roles": {
+        "selectorTitle": "Visible roles",
+        "searchPlaceholder": "Search role name or code...",
+        "showAll": "Show all",
+        "clearAll": "Hide all",
+        "showFocused": "Show focused",
+        "empty": "No roles match your search."
+      },
+      "summary": "Showing {{shown}} of {{total}} permissions across {{modules}} modules - {{visibleRoles}}/{{totalRoles}} roles visible",
+      "focusedRole": "Focused on {{role}}",
+      "module": {
+        "label": "{{module}} module",
+        "count": "{{count}} permissions"
+      },
+      "role": {
+        "assigned": "Assigned"
+      },
+      "table": {
+        "caption": "Role and permission matrix"
+      },
       "col": {
         "permission": "Permission / Module"
       },
+      "legend": {
+        "active": "Permission granted",
+        "inactive": "Permission not granted",
+        "pending": "Updating permission"
+      },
+      "toggle": "Toggle {{permission}} for role {{role}}",
       "toast": {
         "updateSuccess": "Role permissions successfully updated."
       },
       "empty": {
         "title": "No roles found",
         "message": "Role mapping could not be loaded."
+      },
+      "emptyVisible": {
+        "title": "No roles selected",
+        "message": "Select at least one role to display the matrix."
+      },
+      "emptyFiltered": {
+        "title": "No permissions match the filters",
+        "message": "Try clearing filters or selecting another role/module."
       }
     },
     "org": {

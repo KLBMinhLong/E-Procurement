@@ -51,5 +51,3 @@ proxy_set_header X-Department-ID $auth_department_id;
 proxy_set_header X-Username $auth_username;
 proxy_set_header X-Full-Name $auth_full_name;
 proxy_set_header X-Permissions $auth_permissions;
-proxy_set_header X-Api-Key "${PR_INTERNAL_API_KEY}";
-

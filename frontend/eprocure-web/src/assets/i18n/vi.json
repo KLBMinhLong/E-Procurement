@@ -522,15 +522,69 @@
     "rbac": {
       "eyebrow": "Kiểm soát truy cập (RBAC)",
       "title": "Ma trận phân quyền",
+      "subtitle": "Quản lý quyền truy cập theo vai trò cho toàn bộ hệ thống.",
+      "stat": {
+        "roles": "Vai trò",
+        "rolesHint": "Hồ sơ truy cập đang áp dụng",
+        "permissions": "Quyền hạn",
+        "permissionsHint": "Mã quyền duy nhất",
+        "modules": "Module",
+        "modulesHint": "Nhóm chức năng nghiệp vụ",
+        "coverage": "Mức phủ quyền",
+        "coverageHint": "{{count}} / {{total}} quyền đã được gán"
+      },
+      "filter": {
+        "searchPlaceholder": "Tìm quyền, module hoặc mã...",
+        "moduleLabel": "Module",
+        "allModules": "Tất cả module",
+        "focusRoleLabel": "Tập trung vai trò",
+        "allRoles": "Tất cả vai trò",
+        "assignedOnly": "Chỉ hiển thị quyền đã gán",
+        "reset": "Đặt lại bộ lọc"
+      },
+      "roles": {
+        "selectorTitle": "Vai trò hiển thị",
+        "searchPlaceholder": "Tìm vai trò theo tên hoặc mã...",
+        "showAll": "Hiện tất cả",
+        "clearAll": "Ẩn tất cả",
+        "showFocused": "Hiện vai trò đang chọn",
+        "empty": "Không có vai trò phù hợp với tìm kiếm."
+      },
+      "summary": "Đang hiển thị {{shown}} / {{total}} quyền thuộc {{modules}} module - {{visibleRoles}}/{{totalRoles}} vai trò hiển thị",
+      "focusedRole": "Đang tập trung: {{role}}",
+      "module": {
+        "label": "Module {{module}}",
+        "count": "{{count}} quyền"
+      },
+      "role": {
+        "assigned": "Đã gán"
+      },
+      "table": {
+        "caption": "Ma trận phân quyền theo vai trò"
+      },
       "col": {
         "permission": "Quyền hạn / Chức năng"
       },
+      "legend": {
+        "active": "Đã cấp quyền",
+        "inactive": "Chưa cấp quyền",
+        "pending": "Đang cập nhật"
+      },
+      "toggle": "Bật/tắt {{permission}} cho vai trò {{role}}",
       "toast": {
         "updateSuccess": "Đã cập nhật phân quyền vai trò thành công."
       },
       "empty": {
         "title": "Không tìm thấy vai trò",
         "message": "Không thể tải danh sách vai trò hệ thống."
+      },
+      "emptyVisible": {
+        "title": "Chưa chọn vai trò hiển thị",
+        "message": "Vui lòng chọn ít nhất một vai trò để xem ma trận."
+      },
+      "emptyFiltered": {
+        "title": "Không có quyền phù hợp với bộ lọc",
+        "message": "Hãy thử xóa bộ lọc hoặc chọn vai trò/module khác."
       }
     },
     "org": {

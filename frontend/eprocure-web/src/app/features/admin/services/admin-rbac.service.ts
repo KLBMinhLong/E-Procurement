@@ -58,7 +58,7 @@ export class AdminRbacService {
   updateRolePermissions(roleCode: string, permissionCodes: string[]): Observable<ApiResponse<void>> {
     return this.http.put<ApiResponse<void>>(
       `${this.baseUrl}/roles/${roleCode}/permissions`,
-      { permissionCodes },
+      { permissions: permissionCodes },
       {
         withCredentials: true,
         headers: { 'Idempotency-Key': crypto.randomUUID() }
