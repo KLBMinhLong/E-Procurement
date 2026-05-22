@@ -25,6 +25,7 @@ import com.eprocure.iam.common.api.RequestIdUtil;
 import com.eprocure.iam.common.exception.BusinessException;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.eprocure.iam.common.security.UserPrincipal;
+import com.eprocure.iam.common.util.IpAddressUtil;
 import com.eprocure.iam.common.util.LogMaskingUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -343,9 +344,6 @@ public class AuthController {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader("X-Forwarded-For"))
-                .map(value -> value.split(",", 2)[0].trim())
-                .filter(value -> !value.isBlank())
-                .orElseGet(request::getRemoteAddr);
+        return IpAddressUtil.getClientIp(request);
     }
 }
