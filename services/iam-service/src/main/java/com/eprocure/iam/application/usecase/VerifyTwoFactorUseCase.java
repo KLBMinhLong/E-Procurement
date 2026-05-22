@@ -15,9 +15,14 @@ import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.common.util.LogMaskingUtil;
 import com.eprocure.iam.domain.model.User;
 import com.eprocure.iam.domain.repository.UserRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +37,7 @@ public class VerifyTwoFactorUseCase {
     private final TwoFactorChallengeService challengeService;
     private final SessionService sessionService;
     private final UserViewAssembler userViewAssembler;
+    private final ObjectMapper objectMapper;
 
     public VerifyTwoFactorUseCase(
             UserRepository userRepository,
@@ -40,7 +46,8 @@ public class VerifyTwoFactorUseCase {
             TotpSecretCipher totpSecretCipher,
             TwoFactorChallengeService challengeService,
             SessionService sessionService,
-            UserViewAssembler userViewAssembler) {
+            UserViewAssembler userViewAssembler,
+            @Qualifier("domainObjectMapper") ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.idempotencyGuard = idempotencyGuard;
         this.totpService = totpService;
@@ -48,6 +55,7 @@ public class VerifyTwoFactorUseCase {
         this.challengeService = challengeService;
         this.sessionService = sessionService;
         this.userViewAssembler = userViewAssembler;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -62,9 +70,32 @@ public class VerifyTwoFactorUseCase {
         String encryptedSecret = user.getTwoFactorSecretEncrypted()
                 .filter(secret -> user.isTwoFactorEnabled())
                 .orElseThrow(() -> new BusinessException(ErrorCode.IAM_006));
-        if (!totpService.verifyCode(totpSecretCipher.decrypt(encryptedSecret), command.code())) {
+
+        boolean verified = false;
+        boolean isBackupCode = command.code().contains("-");
+        if (isBackupCode) {
+            String backupCodeHash = totpService.hashBackupCode(command.code());
+            if (user.getTwoFactorBackupCodesHash().isPresent()) {
+                String json = user.getTwoFactorBackupCodesHash().get();
+                try {
+                    List<String> hashes = new ArrayList<>(objectMapper.readValue(json, new TypeReference<List<String>>() {}));
+                    if (hashes.remove(backupCodeHash)) {
+                        verified = true;
+                        userRepository.updateBackupCodes(user.getId(), hashes, user.getId());
+                        log.info("[ACTION] Backup code verified and consumed for userId={}", LogMaskingUtil.maskId(user.getId()));
+                    }
+                } catch (Exception exception) {
+                    log.error("Failed to parse backup codes for user id={}", user.getId(), exception);
+                }
+            }
+        } else {
+            verified = totpService.verifyCode(totpSecretCipher.decrypt(encryptedSecret), command.code());
+        }
+
+        if (!verified) {
             throw new BusinessException(ErrorCode.IAM_006);
         }
+
         CreatedSession createdSession = sessionService.issueFor(user, command.clientContext());
         userRepository.updateLastLoginAt(user.getId(), Instant.now());
         challengeService.evict(command.challengeToken());
@@ -72,3 +103,4 @@ public class VerifyTwoFactorUseCase {
         return new TwoFactorVerificationResult(userViewAssembler.toSummary(user), createdSession.rawToken());
     }
 }
+

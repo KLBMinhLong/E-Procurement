@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal, effect } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -38,12 +38,20 @@ export class ProfileComponent {
 
   readonly user = this.authService.currentUser;
 
-  // Tabs state: 'info' | 'password'
-  readonly activeTab = signal<'info' | 'password'>('info');
+  // Tabs state: 'info' | 'password' | 'security'
+  readonly activeTab = signal<'info' | 'password' | 'security'>('info');
 
   // Loading states
   readonly isSubmittingProfile = signal(false);
   readonly isSubmittingPassword = signal(false);
+  readonly isEnabling2FA = signal(false);
+  readonly isConfirming2FA = signal(false);
+  readonly isDisabling2FA = signal(false);
+
+  // 2FA Setup state
+  readonly twoFactorSetupData = signal<{ secret: string; qrCodeUrl: string; manualEntryKey: string } | null>(null);
+  readonly otpCodeControl = this.fb.control('', [Validators.required, Validators.pattern(/^\d{6}$/)]);
+  readonly backupCodes = signal<string[]>([]);
 
   // Selected avatar state
   readonly selectedAvatarUrl = signal<string | null>(null);
@@ -70,11 +78,69 @@ export class ProfileComponent {
 
   readonly passwordForm = this.fb.nonNullable.group({
     oldPassword: ['', [Validators.required, Validators.maxLength(100)]],
-    newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
+    newPassword: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.maxLength(128),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^])[A-Za-z\d@$!%*?&#^]{8,128}$/)
+      ]
+    ],
     confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]]
+  }, {
+    validators: (control: AbstractControl): ValidationErrors | null => {
+      const oldPassword = control.get('oldPassword');
+      const password = control.get('newPassword');
+      const confirmPassword = control.get('confirmPassword');
+      
+      let hasError = false;
+
+      // Check if new password is same as old password
+      if (oldPassword && password && oldPassword.value && password.value) {
+        if (oldPassword.value === password.value) {
+          password.setErrors({ sameAsOld: true });
+          hasError = true;
+        } else {
+          const newErrors = password.errors;
+          if (newErrors && newErrors['sameAsOld']) {
+            delete newErrors['sameAsOld'];
+            password.setErrors(Object.keys(newErrors).length ? newErrors : null);
+          }
+        }
+      }
+
+      // Check if confirm password matches new password
+      if (password && confirmPassword) {
+        if (password.value !== confirmPassword.value) {
+          confirmPassword.setErrors({ mismatch: true });
+          hasError = true;
+        } else {
+          const confirmErrors = confirmPassword.errors;
+          if (confirmErrors && confirmErrors['mismatch']) {
+            delete confirmErrors['mismatch'];
+            confirmPassword.setErrors(Object.keys(confirmErrors).length ? confirmErrors : null);
+          }
+        }
+      }
+      return hasError ? { formInvalid: true } : null;
+    }
   });
 
+  // Real-time password requirement indicators
+  readonly newPasswordVal = signal('');
+  readonly hasMinLength = computed(() => this.newPasswordVal().length >= 8);
+  readonly hasUppercase = computed(() => /[A-Z]/.test(this.newPasswordVal()));
+  readonly hasLowercase = computed(() => /[a-z]/.test(this.newPasswordVal()));
+  readonly hasNumber = computed(() => /\d/.test(this.newPasswordVal()));
+  readonly hasSpecialChar = computed(() => /[@$!%*?&#^]/.test(this.newPasswordVal()));
+
   constructor() {
+    // Listen to new password changes for real-time validation feedback
+    this.passwordForm.get('newPassword')?.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(val => this.newPasswordVal.set(val || ''));
+
     // Reactively update form and avatar selection when user signal changes
     effect(() => {
       const currentUserValue = this.user();
@@ -103,8 +169,11 @@ export class ProfileComponent {
     }, { allowSignalWrites: true });
   }
 
-  setTab(tab: 'info' | 'password'): void {
+  setTab(tab: 'info' | 'password' | 'security'): void {
     this.activeTab.set(tab);
+    this.twoFactorSetupData.set(null);
+    this.otpCodeControl.reset();
+    this.backupCodes.set([]);
   }
 
   selectPresetAvatar(url: string): void {
@@ -185,8 +254,112 @@ export class ProfileComponent {
         this.passwordForm.reset();
       },
       error: (err: HttpErrorResponse) => {
-        this.toastService.error(err.error?.message || 'error.generic');
+        if (err.error?.code === 'IAM_001') {
+          this.toastService.errorKey('error.oldPasswordIncorrect');
+        } else {
+          this.toastService.error(err.error?.message || 'error.generic');
+        }
       }
     });
+  }
+
+  startEnable2FA(): void {
+    this.isEnabling2FA.set(true);
+    this.authService.enableTwoFactor()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isEnabling2FA.set(false))
+      )
+      .subscribe({
+        next: (res) => {
+          this.twoFactorSetupData.set(res.data);
+          this.otpCodeControl.reset();
+          this.backupCodes.set([]);
+          this.toastService.successKey('profile.security.2fa.setupStarted');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toastService.error(err.error?.message || 'error.generic');
+        }
+      });
+  }
+
+  confirm2FA(): void {
+    if (this.otpCodeControl.invalid) {
+      this.otpCodeControl.markAsTouched();
+      return;
+    }
+    const code = this.otpCodeControl.value || '';
+    this.isConfirming2FA.set(true);
+    this.authService.confirmTwoFactor(code)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isConfirming2FA.set(false))
+      )
+      .subscribe({
+        next: (res) => {
+          this.backupCodes.set(res.data.backupCodes || []);
+          this.twoFactorSetupData.set(null);
+          this.otpCodeControl.reset();
+          this.toastService.successKey('profile.security.2fa.confirmSuccess');
+          this.authService.hydrateUserContext().subscribe();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toastService.error(err.error?.message || 'error.generic');
+        }
+      });
+  }
+
+  cancelSetup(): void {
+    this.twoFactorSetupData.set(null);
+    this.otpCodeControl.reset();
+    this.backupCodes.set([]);
+  }
+
+  disable2FA(): void {
+    if (!confirm('Bạn có chắc chắn muốn tắt xác thực 2FA không? Quá trình này sẽ làm giảm tính bảo mật của tài khoản.')) {
+      return;
+    }
+    this.isDisabling2FA.set(true);
+    this.authService.disableTwoFactor()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isDisabling2FA.set(false))
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.successKey('profile.security.2fa.disableSuccess');
+          this.twoFactorSetupData.set(null);
+          this.otpCodeControl.reset();
+          this.backupCodes.set([]);
+          this.authService.hydrateUserContext().subscribe();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toastService.error(err.error?.message || 'error.generic');
+        }
+      });
+  }
+
+  encodeURIComponent(val: string): string {
+    return encodeURIComponent(val);
+  }
+
+  copyBackupCodes(): void {
+    const text = this.backupCodes().join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      this.toastService.success('Đã sao chép danh sách mã dự phòng vào Clipboard.');
+    });
+  }
+
+  downloadBackupCodes(): void {
+    const text = `DANH SÁCH MÃ DỰ PHÒNG XÁC THỰC 2FA (E-PROCUREMENT)\nNgày tạo: ${new Date().toLocaleString()}\nTài khoản: ${this.user()?.username}\n\nHãy lưu trữ các mã này ở nơi an toàn. Mỗi mã chỉ có thể sử dụng một lần:\n\n${this.backupCodes().join('\n')}\n`;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `eprocure-2fa-backup-codes-${this.user()?.username}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 }

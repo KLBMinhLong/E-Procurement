@@ -42,12 +42,16 @@ public interface UserRepository {
 
     void linkGoogleOauthId(UUID userId, String googleOauthId, UUID actorId);
 
-    void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId);
+    default void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId) {}
 
-    void confirmTwoFactor(
+    default void confirmTwoFactor(
             UUID userId,
             String encryptedSecret,
             List<String> backupCodeHashes,
             Instant confirmedAt,
-            UUID actorId);
+            UUID actorId) {}
+
+    default void disableTwoFactor(UUID userId, UUID actorId) {}
+
+    default void updateBackupCodes(UUID userId, List<String> backupCodeHashes, UUID actorId) {}
 }

@@ -4,6 +4,7 @@
   },
   "action": {
     "cancel": "Hủy",
+    "confirm": "Xác nhận",
     "create": "Tạo mới",
     "processing": "Đang xử lý",
     "refresh": "Tải lại",
@@ -45,7 +46,13 @@
       "submit": "Đăng nhập",
       "title": "Đăng nhập hệ thống mua sắm",
       "username": "Tên đăng nhập hoặc email",
-      "validation": "Vui lòng nhập đủ thông tin đăng nhập."
+      "validation": "Vui lòng nhập đủ thông tin đăng nhập.",
+      "twoFactorTitle": "Xác thực 2 lớp (2FA)",
+      "twoFactorDesc": "Vui lòng nhập mã OTP gồm 6 chữ số từ ứng dụng xác thực hoặc mã dự phòng của bạn để tiếp tục.",
+      "twoFactorCode": "Mã xác thực (OTP) hoặc Mã dự phòng",
+      "twoFactorVerify": "Xác nhận",
+      "twoFactorBack": "Quay lại đăng nhập",
+      "twoFactorInvalid": "Mã OTP hoặc mã dự phòng không chính xác. Vui lòng thử lại."
     },
     "logout": "Đăng xuất"
   },
@@ -96,6 +103,7 @@
       "title": "Không đủ quyền truy cập"
     },
     "generic": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "oldPasswordIncorrect": "Mật khẩu cũ không chính xác.",
     "encryptionKeyExpired": "Khóa mã hóa đã thay đổi. Vui lòng thử lại.",
     "notFound": {
       "message": "Đường dẫn không tồn tại hoặc đã được di chuyển.",
@@ -502,7 +510,34 @@
     "subtitle": "Xem và cập nhật thông tin cá nhân, ảnh đại diện và mật khẩu của bạn",
     "tabs": {
       "info": "Thông tin chi tiết",
-      "password": "Đổi mật khẩu"
+      "password": "Đổi mật khẩu",
+      "security": "Bảo mật & 2FA"
+    },
+    "security": {
+      "title": "Cài đặt bảo mật & 2FA",
+      "description": "Quản lý xác thực 2 lớp và bảo mật tài khoản nâng cao để bảo vệ tài khoản khỏi truy cập trái phép",
+      "2fa": {
+        "statusLabel": "Phương thức xác thực",
+        "enabled": "Đã bật xác thực 2 lớp (2FA)",
+        "disabled": "Chưa bật xác thực 2 lớp (2FA)",
+        "enabledDesc": "Tài khoản của bạn đang được bảo vệ bằng mật khẩu và mã OTP 2FA.",
+        "disabledDesc": "Xác thực 2 lớp bổ sung thêm một lớp bảo mật bằng cách yêu cầu mã OTP khi đăng nhập.",
+        "enableBtn": "Kích hoạt 2FA",
+        "disableBtn": "Vô hiệu hóa 2FA",
+        "setupTitle": "Thiết lập xác thực 2 lớp",
+        "step1Title": "Quét mã QR",
+        "step1Desc": "Mở ứng dụng xác thực (Google Authenticator, Microsoft Authenticator, v.v.) và quét mã QR bên dưới, hoặc nhập mã khóa bằng tay.",
+        "manualKey": "Khóa thiết lập (nhập tay nếu không quét được QR):",
+        "step2Title": "Nhập mã xác nhận",
+        "step2Desc": "Nhập mã gồm 6 chữ số hiển thị trên ứng dụng xác thực của bạn để hoàn tất thiết lập.",
+        "otpLabel": "Mã xác thực 6 số (OTP)",
+        "otpInvalid": "Mã OTP phải có đúng 6 chữ số.",
+        "setupStarted": "Đã bắt đầu thiết lập 2FA. Vui lòng quét mã QR.",
+        "confirmSuccess": "Kích hoạt xác thực 2 lớp thành công! Vui lòng lưu các mã dự phòng.",
+        "disableSuccess": "Đã tắt xác thực hai lớp (2FA) thành công.",
+        "backupTitle": "Danh sách mã dự phòng",
+        "backupDesc": "Lưu các mã dự phòng này ở nơi an toàn. Mỗi mã chỉ dùng được một lần nếu bạn mất thiết bị xác thực."
+      }
     },
     "info": {
       "employeeCode": "Mã nhân viên",
@@ -527,8 +562,17 @@
       "confirmPassword": "Nhập lại mật khẩu mới",
       "submit": "Đổi mật khẩu",
       "mismatch": "Mật khẩu nhập lại không khớp.",
-      "success": "Đổi mật khẩu thành công. Các phiên đăng nhập khác của bạn đã được đăng xuất.",
-      "validation": "Vui lòng điền đầy đủ và đúng định dạng mật khẩu."
+      "sameAsOld": "Mật khẩu mới không được trùng với mật khẩu hiện tại.",
+      "validation": "Vui lòng điền đầy đủ và đúng định dạng mật khẩu.",
+      "requirements": {
+        "title": "Yêu cầu bảo mật mật khẩu:",
+        "minLength": "Tối thiểu 8 ký tự",
+        "uppercase": "Có ít nhất 1 chữ hoa (A-Z)",
+        "lowercase": "Có ít nhất 1 chữ thường (a-z)",
+        "number": "Có ít nhất 1 chữ số (0-9)",
+        "specialChar": "Có ít nhất 1 ký tự đặc biệt (@$!%*?&#^)"
+      },
+      "success": "Đổi mật khẩu thành công."
     },
     "avatar": {
       "title": "Ảnh đại diện",

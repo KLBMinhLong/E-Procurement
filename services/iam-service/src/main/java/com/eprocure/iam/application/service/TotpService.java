@@ -117,7 +117,7 @@ public class TotpService {
         return code.toString();
     }
 
-    private String hashBackupCode(String code) {
+    public String hashBackupCode(String code) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             String normalized = code.trim().toUpperCase(Locale.ROOT);
@@ -126,6 +126,7 @@ public class TotpService {
             throw new IllegalStateException("SHA-256 is not available", exception);
         }
     }
+
 
     private String encodeBase32(byte[] bytes) {
         StringBuilder result = new StringBuilder((bytes.length * 8 + 4) / 5);

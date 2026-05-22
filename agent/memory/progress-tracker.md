@@ -122,7 +122,8 @@
 | Error interceptor | ✅ |
 | WebSocket service | ✅ |
 | Permission guard + directive | ✅ |
-| Rewrite User Profile UI Screen (Personal details, avatar selector, password change) | ✅ |
+| Rewrite User Profile UI Screen (Personal details, avatar selector, password change checklist, 2FA toggle setup) | ✅ |
+| Unit tests / compilation validation | ✅ |
 
 ### E04: Purchase Request Service
 | Task | Status |

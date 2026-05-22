@@ -9,64 +9,104 @@
       </span>
     </header>
 
-    <div class="login__copy">
-      <p>{{ 'auth.login.eyebrow' | translate }}</p>
-      <h1>{{ 'auth.login.title' | translate }}</h1>
-    </div>
+    @if (!requiresTwoFactor()) {
+      <div class="login__copy">
+        <p>{{ 'auth.login.eyebrow' | translate }}</p>
+        <h1>{{ 'auth.login.title' | translate }}</h1>
+      </div>
 
-    <form class="login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <ep-form-field [label]="'auth.login.username' | translate">
-        <input
-          type="text"
-          formControlName="username"
-          autocomplete="username"
-          spellcheck="false"
-          inputmode="email" />
-      </ep-form-field>
-
-      <ep-form-field [label]="'auth.login.password' | translate">
-        <span class="login__password-control">
+      <form class="login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <ep-form-field [label]="'auth.login.username' | translate">
           <input
-            [type]="showPassword() ? 'text' : 'password'"
-            formControlName="password"
-            autocomplete="current-password" />
-          <button
-            class="login__password-toggle"
-            type="button"
-            [attr.aria-label]="(showPassword() ? 'auth.login.hidePassword' : 'auth.login.showPassword') | translate"
-            (click)="togglePasswordVisibility()">
-            <ep-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18"></ep-icon>
-          </button>
-        </span>
-      </ep-form-field>
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            spellcheck="false"
+            inputmode="email" />
+        </ep-form-field>
 
-      <a class="login__forgot" routerLink="/forgot-password">
-        {{ 'auth.login.forgotPassword' | translate }}
-      </a>
+        <ep-form-field [label]="'auth.login.password' | translate">
+          <span class="login__password-control">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password" />
+            <button
+              class="login__password-toggle"
+              type="button"
+              [attr.aria-label]="(showPassword() ? 'auth.login.hidePassword' : 'auth.login.showPassword') | translate"
+              (click)="togglePasswordVisibility()">
+              <ep-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18"></ep-icon>
+            </button>
+          </span>
+        </ep-form-field>
 
-      @if (errorKey(); as key) {
-        <p class="login__error" [class.login__error--locked]="key === 'auth.login.accountLocked'">
-          @if (key === 'auth.login.accountLocked') {
-            <ep-icon name="lock" [size]="16"></ep-icon>
-          }
-          {{ key | translate }}
-        </p>
-      }
+        <a class="login__forgot" routerLink="/forgot-password">
+          {{ 'auth.login.forgotPassword' | translate }}
+        </a>
 
-      <div class="login__actions">
-        <ep-button type="submit" icon="log-in" [loading]="isSubmitting()" [disabled]="isSubmitting()">
-          {{ 'auth.login.submit' | translate }}
-        </ep-button>
+        @if (errorKey(); as key) {
+          <p class="login__error" [class.login__error--locked]="key === 'auth.login.accountLocked'">
+            @if (key === 'auth.login.accountLocked') {
+              <ep-icon name="lock" [size]="16"></ep-icon>
+            }
+            {{ key | translate }}
+          </p>
+        }
+
+        <div class="login__actions">
+          <ep-button type="submit" icon="log-in" [loading]="isSubmitting()" [disabled]="isSubmitting()">
+            {{ 'auth.login.submit' | translate }}
+          </ep-button>
+        </div>
+
+        <div class="login__divider" aria-hidden="true">
+          <span>{{ 'auth.login.or' | translate }}</span>
+        </div>
+
+        <button class="login__google" type="button" (click)="loginWithGoogle()">
+          <span class="login__google-mark" aria-hidden="true">G</span>
+          <span>{{ 'auth.login.google' | translate }}</span>
+        </button>
+      </form>
+    } @else {
+      <div class="login__copy">
+        <p>{{ 'auth.login.eyebrow' | translate }}</p>
+        <h1>{{ 'auth.login.twoFactorTitle' | translate }}</h1>
+        <p class="login__desc">{{ 'auth.login.twoFactorDesc' | translate }}</p>
       </div>
 
-      <div class="login__divider" aria-hidden="true">
-        <span>{{ 'auth.login.or' | translate }}</span>
-      </div>
+      <form class="login__form" [formGroup]="otpForm" (ngSubmit)="submit()" novalidate>
+        <ep-form-field [label]="'auth.login.twoFactorCode' | translate">
+          <input
+            type="text"
+            formControlName="code"
+            maxlength="9"
+            placeholder="000000 / XXXX-XXXX"
+            autocomplete="one-time-code"
+            spellcheck="false"
+            autofocus />
+        </ep-form-field>
 
-      <button class="login__google" type="button" (click)="loginWithGoogle()">
-        <span class="login__google-mark" aria-hidden="true">G</span>
-        <span>{{ 'auth.login.google' | translate }}</span>
-      </button>
-    </form>
+
+        @if (errorKey(); as key) {
+          <p class="login__error">
+            <ep-icon name="shield-alert" [size]="16"></ep-icon>
+            {{ key | translate }}
+          </p>
+        }
+
+        <div class="login__actions login__actions--2fa">
+          <ep-button type="submit" icon="shield-check" [loading]="isSubmitting()" [disabled]="isSubmitting()">
+            {{ 'auth.login.twoFactorVerify' | translate }}
+          </ep-button>
+          
+          <ep-button type="button" variant="secondary" icon="arrow-left" [disabled]="isSubmitting()" (click)="cancelTwoFactor()">
+            {{ 'auth.login.twoFactorBack' | translate }}
+          </ep-button>
+        </div>
+      </form>
+    }
+
   </section>
 </main>

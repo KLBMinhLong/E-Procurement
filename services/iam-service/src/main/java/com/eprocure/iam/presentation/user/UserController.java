@@ -24,8 +24,10 @@ import com.eprocure.iam.application.usecase.ListUsersUseCase;
 import com.eprocure.iam.application.usecase.UpdateUserUseCase;
 import com.eprocure.iam.application.usecase.UpdateMyProfileUseCase;
 import com.eprocure.iam.application.usecase.ChangeMyPasswordUseCase;
+import com.eprocure.iam.application.usecase.DisableTwoFactorUseCase;
 import com.eprocure.iam.application.port.in.UpdateMyProfileCommand;
 import com.eprocure.iam.application.port.in.ChangeMyPasswordCommand;
+import com.eprocure.iam.application.port.in.DisableTwoFactorCommand;
 import com.eprocure.iam.common.api.ApiResponse;
 import com.eprocure.iam.common.api.RequestIdUtil;
 import com.eprocure.iam.common.security.UserPrincipal;
@@ -67,6 +69,7 @@ public class UserController {
     private final AssignUserRolesUseCase assignUserRolesUseCase;
     private final EnableTwoFactorUseCase enableTwoFactorUseCase;
     private final ConfirmTwoFactorUseCase confirmTwoFactorUseCase;
+    private final DisableTwoFactorUseCase disableTwoFactorUseCase;
     private final AdminResetPasswordUseCase adminResetPasswordUseCase;
     private final UpdateMyProfileUseCase updateMyProfileUseCase;
     private final ChangeMyPasswordUseCase changeMyPasswordUseCase;
@@ -81,6 +84,7 @@ public class UserController {
             AssignUserRolesUseCase assignUserRolesUseCase,
             EnableTwoFactorUseCase enableTwoFactorUseCase,
             ConfirmTwoFactorUseCase confirmTwoFactorUseCase,
+            DisableTwoFactorUseCase disableTwoFactorUseCase,
             AdminResetPasswordUseCase adminResetPasswordUseCase,
             UpdateMyProfileUseCase updateMyProfileUseCase,
             ChangeMyPasswordUseCase changeMyPasswordUseCase) {
@@ -93,6 +97,7 @@ public class UserController {
         this.assignUserRolesUseCase = assignUserRolesUseCase;
         this.enableTwoFactorUseCase = enableTwoFactorUseCase;
         this.confirmTwoFactorUseCase = confirmTwoFactorUseCase;
+        this.disableTwoFactorUseCase = disableTwoFactorUseCase;
         this.adminResetPasswordUseCase = adminResetPasswordUseCase;
         this.updateMyProfileUseCase = updateMyProfileUseCase;
         this.changeMyPasswordUseCase = changeMyPasswordUseCase;
@@ -164,6 +169,20 @@ public class UserController {
                 new ConfirmTwoFactorCommand(principal.getId(), body.code()),
                 idempotencyKey);
         return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
+    }
+
+    @PutMapping("/me/two-factor/disable")
+    @PreAuthorize("hasAuthority('IAM_PROFILE_READ')")
+    public ResponseEntity<ApiResponse<Void>> disableTwoFactor(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] PUT /api/v1/users/me/two-factor/disable | userId={}",
+                LogMaskingUtil.maskId(principal.getId()));
+        disableTwoFactorUseCase.execute(
+                new DisableTwoFactorCommand(principal.getId()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(null, RequestIdUtil.resolve(request)));
     }
 
     @GetMapping

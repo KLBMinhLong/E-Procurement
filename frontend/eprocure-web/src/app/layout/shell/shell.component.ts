@@ -42,6 +42,7 @@ export class ShellComponent {
   readonly user = this.authService.currentUser;
   readonly isHydrating = this.authService.isHydrating;
   readonly toastMessages = this.toastService.messages;
+  readonly currentYear = new Date().getFullYear();
 
   readonly navItems = computed<NavigationItem[]>(() => [
     { icon: 'layout-dashboard', labelKey: 'nav.dashboard', route: '/dashboard' },

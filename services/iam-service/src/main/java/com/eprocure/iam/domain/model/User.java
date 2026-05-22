@@ -22,10 +22,12 @@ public class User {
     private String twoFactorSecretEncrypted;
     private String twoFactorPendingSecretEncrypted;
     private Instant twoFactorConfirmedAt;
+    private String twoFactorBackupCodesHash;
     private Instant lastLoginAt;
     private Instant createdAt;
 
     private User() {
+
     }
 
     private User(
@@ -170,9 +172,14 @@ public class User {
         return Optional.ofNullable(twoFactorConfirmedAt);
     }
 
+    public Optional<String> getTwoFactorBackupCodesHash() {
+        return Optional.ofNullable(twoFactorBackupCodesHash).filter(value -> !value.isBlank());
+    }
+
     public Optional<Instant> getLastLoginAt() {
         return Optional.ofNullable(lastLoginAt);
     }
+
 
     public Instant getCreatedAt() {
         return createdAt;

@@ -17,6 +17,10 @@ export class ToastService {
     this.push('success', message, true);
   }
 
+  success(message: string): void {
+    this.push('success', message, false);
+  }
+
   warningKey(message: string): void {
     this.push('warning', message, true);
   }

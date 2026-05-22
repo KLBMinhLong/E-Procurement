@@ -47,3 +47,24 @@ export interface ChangePasswordRequest {
   confirmPassword: string;
 }
 
+export interface LoginResponse {
+  userId: string;
+  fullName: string;
+  avatarUrl: string | null;
+  requiresTwoFactor: boolean;
+}
+
+export interface UserSummaryView {
+  id: string;
+  employeeCode: string;
+  username: string;
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
+  department: any | null;
+  status: string;
+  phone: string | null;
+  roles: string[];
+  createdAt: string;
+}
+

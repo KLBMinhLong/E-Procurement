@@ -108,6 +108,14 @@
           <ep-icon name="lock" [size]="14"></ep-icon>
           <span>{{ 'profile.tabs.password' | translate }}</span>
         </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.filter-chip--active]="activeTab() === 'security'"
+          (click)="setTab('security')">
+          <ep-icon name="shield" [size]="14"></ep-icon>
+          <span>{{ 'profile.tabs.security' | translate }}</span>
+        </button>
       </div>
 
       <!-- Main card for tab contents -->
@@ -230,16 +238,45 @@
                 </ep-form-field>
 
                 <!-- New Password -->
-                <ep-form-field 
-                  [label]="'profile.password.newPassword' | translate" 
-                  [error]="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.errors ? 'Mật khẩu mới tối thiểu 8 ký tự' : null">
-                  <input type="password" formControlName="newPassword" required placeholder="••••••••" />
-                </ep-form-field>
+                <div class="password-field-wrapper">
+                  <ep-form-field 
+                    [label]="'profile.password.newPassword' | translate" 
+                    [error]="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.hasError('required') ? ('admin.users.validation.required' | translate) : (passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.hasError('sameAsOld') ? ('profile.password.sameAsOld' | translate) : (passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.invalid ? ('profile.password.validation' | translate) : null))">
+                    <input type="password" formControlName="newPassword" required placeholder="••••••••" />
+                  </ep-form-field>
+
+                  <!-- Real-time Password Strength / Requirements checklist -->
+                  <div class="password-requirements" [class.password-requirements--active]="newPasswordVal().length > 0">
+                    <span class="requirements-title">{{ 'profile.password.requirements.title' | translate }}</span>
+                    <ul class="requirements-list">
+                      <li class="requirement-item" [class.requirement-item--met]="hasMinLength()">
+                        <ep-icon [name]="hasMinLength() ? 'check' : 'circle-alert'" [size]="14"></ep-icon>
+                        <span>{{ 'profile.password.requirements.minLength' | translate }}</span>
+                      </li>
+                      <li class="requirement-item" [class.requirement-item--met]="hasUppercase()">
+                        <ep-icon [name]="hasUppercase() ? 'check' : 'circle-alert'" [size]="14"></ep-icon>
+                        <span>{{ 'profile.password.requirements.uppercase' | translate }}</span>
+                      </li>
+                      <li class="requirement-item" [class.requirement-item--met]="hasLowercase()">
+                        <ep-icon [name]="hasLowercase() ? 'check' : 'circle-alert'" [size]="14"></ep-icon>
+                        <span>{{ 'profile.password.requirements.lowercase' | translate }}</span>
+                      </li>
+                      <li class="requirement-item" [class.requirement-item--met]="hasNumber()">
+                        <ep-icon [name]="hasNumber() ? 'check' : 'circle-alert'" [size]="14"></ep-icon>
+                        <span>{{ 'profile.password.requirements.number' | translate }}</span>
+                      </li>
+                      <li class="requirement-item" [class.requirement-item--met]="hasSpecialChar()">
+                        <ep-icon [name]="hasSpecialChar() ? 'check' : 'circle-alert'" [size]="14"></ep-icon>
+                        <span>{{ 'profile.password.requirements.specialChar' | translate }}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
 
                 <!-- Confirm Password -->
                 <ep-form-field 
                   [label]="'profile.password.confirmPassword' | translate" 
-                  [error]="passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.errors ? (passwordForm.get('confirmPassword')?.hasError('mismatch') ? 'profile.password.mismatch' : 'Nhập lại mật khẩu mới tối thiểu 8 ký tự') : null">
+                  [error]="passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.errors ? (passwordForm.get('confirmPassword')?.hasError('required') ? ('admin.users.validation.required' | translate) : (passwordForm.get('confirmPassword')?.hasError('mismatch') ? ('profile.password.mismatch' | translate) : ('admin.users.validation.passwordMinLength' | translate))) : null">
                   <input type="password" formControlName="confirmPassword" required placeholder="••••••••" />
                 </ep-form-field>
               </div>
@@ -256,6 +293,159 @@
                 </ep-button>
               </div>
             </form>
+          </div>
+        }
+
+        @if (activeTab() === 'security') {
+          <div class="tab-pane tab-pane--security">
+            <div class="tab-pane__header">
+              <h2 class="tab-pane__title">{{ 'profile.security.title' | translate }}</h2>
+              <p class="tab-pane__description">{{ 'profile.security.description' | translate }}</p>
+            </div>
+
+            <div class="security-content">
+              <!-- Status Header Card -->
+              <div class="security-status-card" [class.security-status-card--enabled]="user()?.twoFactorEnabled">
+                <div class="status-icon-box">
+                  <ep-icon [name]="user()?.twoFactorEnabled ? 'shield' : 'shield-alert'" [size]="28"></ep-icon>
+                </div>
+                <div class="status-info">
+                  <span class="status-label">{{ 'profile.security.2fa.statusLabel' | translate }}</span>
+                  <h3 class="status-title">
+                    {{ (user()?.twoFactorEnabled ? 'profile.security.2fa.enabled' : 'profile.security.2fa.disabled') | translate }}
+                  </h3>
+                  <p class="status-description">
+                    {{ (user()?.twoFactorEnabled ? 'profile.security.2fa.enabledDesc' : 'profile.security.2fa.disabledDesc') | translate }}
+                  </p>
+                </div>
+                <div class="status-action">
+                  @if (user()?.twoFactorEnabled) {
+                    <ep-button 
+                      variant="danger" 
+                      [loading]="isDisabling2FA()" 
+                      [disabled]="isDisabling2FA()" 
+                      (click)="disable2FA()">
+                      <ep-icon name="shield-off" [size]="16"></ep-icon>
+                      <span>{{ 'profile.security.2fa.disableBtn' | translate }}</span>
+                    </ep-button>
+                  } @else if (!twoFactorSetupData()) {
+                    <ep-button 
+                      variant="primary" 
+                      [loading]="isEnabling2FA()" 
+                      [disabled]="isEnabling2FA()" 
+                      (click)="startEnable2FA()">
+                      <ep-icon name="shield" [size]="16"></ep-icon>
+                      <span>{{ 'profile.security.2fa.enableBtn' | translate }}</span>
+                    </ep-button>
+                  }
+                </div>
+              </div>
+
+              <!-- Setup flow if setup initiated but not confirmed yet -->
+              @if (twoFactorSetupData()) {
+                <div class="security-setup-flow animate-fade-in-up">
+                  <div class="setup-divider"></div>
+                  
+                  <h3 class="setup-heading">{{ 'profile.security.2fa.setupTitle' | translate }}</h3>
+                  
+                  <div class="setup-steps-grid">
+                    <!-- Step 1: Scan QR Code -->
+                    <div class="setup-step">
+                      <div class="step-number">1</div>
+                      <h4 class="step-title">{{ 'profile.security.2fa.step1Title' | translate }}</h4>
+                      <p class="step-desc">{{ 'profile.security.2fa.step1Desc' | translate }}</p>
+                      
+                      <!-- QR Code Image -->
+                      <div class="qr-code-wrapper">
+                        <img 
+                          [src]="'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(twoFactorSetupData()?.qrCodeUrl || '')" 
+                          alt="QR Code" 
+                          class="qr-code-img" />
+                      </div>
+                      
+                      <div class="manual-key-box">
+                        <span class="manual-key-label">{{ 'profile.security.2fa.manualKey' | translate }}</span>
+                        <div class="manual-key-value-wrapper">
+                          <code class="manual-key-value">{{ twoFactorSetupData()?.manualEntryKey }}</code>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 2: Confirm OTP -->
+                    <div class="setup-step">
+                      <div class="step-number">2</div>
+                      <h4 class="step-title">{{ 'profile.security.2fa.step2Title' | translate }}</h4>
+                      <p class="step-desc">{{ 'profile.security.2fa.step2Desc' | translate }}</p>
+                      
+                      <div class="otp-input-wrapper">
+                        <ep-form-field 
+                          [label]="'profile.security.2fa.otpLabel' | translate" 
+                          [error]="otpCodeControl.touched && otpCodeControl.errors ? ('profile.security.2fa.otpInvalid' | translate) : null">
+                          <input 
+                            type="text" 
+                            [formControl]="otpCodeControl" 
+                            maxLength="6" 
+                            placeholder="000000" 
+                            class="otp-input" />
+                        </ep-form-field>
+                      </div>
+
+                      <div class="setup-actions">
+                        <ep-button 
+                          variant="secondary" 
+                          (click)="cancelSetup()">
+                          <span>{{ 'action.cancel' | translate }}</span>
+                        </ep-button>
+                        <ep-button 
+                          variant="primary" 
+                          [loading]="isConfirming2FA()" 
+                          [disabled]="otpCodeControl.invalid || isConfirming2FA()" 
+                          (click)="confirm2FA()">
+                          <ep-icon name="check" [size]="16"></ep-icon>
+                          <span>{{ 'action.confirm' | translate }}</span>
+                        </ep-button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Backup codes display after successful verification -->
+              @if (backupCodes().length > 0) {
+                <div class="security-backup-codes animate-fade-in-up">
+                  <div class="setup-divider"></div>
+                  
+                  <div class="backup-header">
+                    <div class="backup-icon">
+                      <ep-icon name="key" [size]="20"></ep-icon>
+                    </div>
+                    <div class="backup-title-box">
+                      <h3 class="backup-heading">{{ 'profile.security.2fa.backupTitle' | translate }}</h3>
+                      <p class="backup-desc">{{ 'profile.security.2fa.backupDesc' | translate }}</p>
+                    </div>
+                  </div>
+
+                  <div class="backup-grid">
+                    @for (code of backupCodes(); track code) {
+                      <div class="backup-code-item">
+                        <span class="backup-code-text">{{ code }}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="backup-actions">
+                    <button type="button" class="backup-action-btn" (click)="copyBackupCodes()">
+                      <ep-icon name="copy" [size]="14"></ep-icon>
+                      <span>Sao chép mã dự phòng</span>
+                    </button>
+                    <button type="button" class="backup-action-btn" (click)="downloadBackupCodes()">
+                      <ep-icon name="download" [size]="14"></ep-icon>
+                      <span>Tải về file văn bản</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         }
       </div>

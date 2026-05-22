@@ -43,10 +43,17 @@ export class LoginComponent implements OnInit {
   readonly isSubmitting = signal(false);
   readonly errorKey = signal<string | null>(null);
   readonly showPassword = signal(false);
+  readonly requiresTwoFactor = signal(false);
+
   readonly form = this.formBuilder.nonNullable.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
     password: ['', [Validators.required]]
   });
+
+  readonly otpForm = this.formBuilder.nonNullable.group({
+    code: ['', [Validators.required, Validators.pattern(/^(?:\d{6}|[A-Za-z2-9]{4}-[A-Za-z2-9]{4})$/)]]
+  });
+
 
   ngOnInit(): void {
     // Check if redirected here because account was locked (423 Locked)
@@ -57,6 +64,11 @@ export class LoginComponent implements OnInit {
   }
 
   submit(): void {
+    if (this.requiresTwoFactor()) {
+      this.verifyOtp();
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.errorKey.set('auth.login.validation');
@@ -76,7 +88,15 @@ export class LoginComponent implements OnInit {
         })
       )
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: (response) => {
+          if (response.data.requiresTwoFactor) {
+            this.requiresTwoFactor.set(true);
+            this.errorKey.set(null);
+            this.otpForm.reset();
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
+        },
         error: (err: HttpErrorResponse) => {
           const body = err.error as ApiErrorResponse | undefined;
           const code = body?.code;
@@ -87,6 +107,41 @@ export class LoginComponent implements OnInit {
           }
         }
       });
+  }
+
+  verifyOtp(): void {
+    if (this.otpForm.invalid) {
+      this.otpForm.markAllAsTouched();
+      this.errorKey.set('profile.security.2fa.otpInvalid');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.errorKey.set(null);
+    this.setMotionOverride(true);
+
+    this.authService.verifyTwoFactor(this.otpForm.getRawValue().code)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.isSubmitting.set(false);
+          this.setMotionOverride(false);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.errorKey.set('auth.login.twoFactorInvalid');
+        }
+      });
+  }
+
+  cancelTwoFactor(): void {
+    this.requiresTwoFactor.set(false);
+    this.errorKey.set(null);
+    this.otpForm.reset();
   }
 
   togglePasswordVisibility(): void {
