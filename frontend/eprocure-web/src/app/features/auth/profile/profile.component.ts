@@ -12,6 +12,7 @@ import { EpButtonComponent } from '../../../shared/components/ep-button/ep-butto
 import { EpFormFieldComponent } from '../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpIconComponent } from '../../../shared/components/ep-icon/ep-icon.component';
 import { EpAvatarComponent } from '../../../shared/components/ep-avatar/ep-avatar.component';
+import { EpModalComponent } from '../../../shared/components/ep-modal/ep-modal.component';
 
 @Component({
   selector: 'ep-profile',
@@ -24,7 +25,8 @@ import { EpAvatarComponent } from '../../../shared/components/ep-avatar/ep-avata
     EpButtonComponent,
     EpFormFieldComponent,
     EpIconComponent,
-    EpAvatarComponent
+    EpAvatarComponent,
+    EpModalComponent
   ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
@@ -49,6 +51,7 @@ export class ProfileComponent {
   readonly isDisabling2FA = signal(false);
 
   // 2FA Setup state
+  readonly showDisable2faConfirm = signal(false);
   readonly twoFactorSetupData = signal<{ secret: string; qrCodeUrl: string; manualEntryKey: string } | null>(null);
   readonly otpCodeControl = this.fb.control('', [Validators.required, Validators.pattern(/^\d{6}$/)]);
   readonly backupCodes = signal<string[]>([]);
@@ -316,9 +319,11 @@ export class ProfileComponent {
   }
 
   disable2FA(): void {
-    if (!confirm('Bạn có chắc chắn muốn tắt xác thực 2FA không? Quá trình này sẽ làm giảm tính bảo mật của tài khoản.')) {
-      return;
-    }
+    this.showDisable2faConfirm.set(true);
+  }
+
+  confirmDisable2FA(): void {
+    this.showDisable2faConfirm.set(false);
     this.isDisabling2FA.set(true);
     this.authService.disableTwoFactor()
       .pipe(

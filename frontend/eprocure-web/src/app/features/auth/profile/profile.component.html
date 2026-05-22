@@ -452,3 +452,34 @@
     </main>
   </div>
 </section>
+
+<ep-modal
+  [open]="showDisable2faConfirm()"
+  [title]="'profile.security.2fa.disableConfirmTitle' | translate"
+  (close)="showDisable2faConfirm.set(false)">
+  <div class="confirm-dialog">
+    <div class="confirm-dialog__content">
+      <div class="confirm-dialog__icon-box">
+        <ep-icon name="shield-alert" [size]="24"></ep-icon>
+      </div>
+      <p class="confirm-dialog__message">
+        {{ 'profile.security.2fa.disableConfirmMessage' | translate }}
+      </p>
+    </div>
+    
+    <div class="confirm-dialog__actions">
+      <ep-button
+        variant="ghost"
+        (click)="showDisable2faConfirm.set(false)">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button
+        variant="danger"
+        [loading]="isDisabling2FA()"
+        (click)="confirmDisable2FA()">
+        <ep-icon name="shield-off" [size]="16"></ep-icon>
+        <span>{{ 'profile.security.2fa.disableBtn' | translate }}</span>
+      </ep-button>
+    </div>
+  </div>
+</ep-modal>

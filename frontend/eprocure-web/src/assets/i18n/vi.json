@@ -524,6 +524,8 @@
         "disabledDesc": "Xác thực 2 lớp bổ sung thêm một lớp bảo mật bằng cách yêu cầu mã OTP khi đăng nhập.",
         "enableBtn": "Kích hoạt 2FA",
         "disableBtn": "Vô hiệu hóa 2FA",
+        "disableConfirmTitle": "Xác nhận tắt 2FA",
+        "disableConfirmMessage": "Bạn có chắc chắn muốn tắt xác thực 2FA không? Quá trình này sẽ làm giảm tính bảo mật của tài khoản của bạn.",
         "setupTitle": "Thiết lập xác thực 2 lớp",
         "step1Title": "Quét mã QR",
         "step1Desc": "Mở ứng dụng xác thực (Google Authenticator, Microsoft Authenticator, v.v.) và quét mã QR bên dưới, hoặc nhập mã khóa bằng tay.",

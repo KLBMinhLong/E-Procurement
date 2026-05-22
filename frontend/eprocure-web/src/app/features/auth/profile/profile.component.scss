@@ -992,3 +992,42 @@
   }
 }
 
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  padding: var(--spacing-4) 0;
+
+  &__content {
+    display: flex;
+    gap: var(--spacing-4);
+    align-items: flex-start;
+  }
+
+  &__icon-box {
+    background-color: var(--color-danger-subtle);
+    color: var(--color-danger);
+    padding: var(--spacing-3);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__message {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-3);
+    border-top: var(--border-subtle);
+    padding-top: var(--spacing-5);
+  }
+}
