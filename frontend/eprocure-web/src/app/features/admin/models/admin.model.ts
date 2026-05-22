@@ -54,6 +54,14 @@ export interface AdminRole {
   name: string;
   description: string | null;
   isSystem: boolean;
+  permissions?: string[];
+}
+
+export interface CreateRolePayload {
+  code: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
 }
 
 export interface AdminPermission {

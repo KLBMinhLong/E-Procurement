@@ -16,6 +16,14 @@ export const adminRoutes: Routes = [
     title: 'route.admin.users'
   },
   {
+    path: 'roles',
+    loadComponent: () =>
+      import('./pages/role-management/role-management.component').then((m) => m.RoleManagementComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['ADMIN_ROLE_MANAGE'] },
+    title: 'route.admin.roles'
+  },
+  {
     path: 'rbac',
     loadComponent: () =>
       import('./pages/rbac/rbac.component').then((m) => m.RbacComponent),
@@ -32,3 +40,4 @@ export const adminRoutes: Routes = [
     title: 'route.admin.orgChart'
   }
 ];
+

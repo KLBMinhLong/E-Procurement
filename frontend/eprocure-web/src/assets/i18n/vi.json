@@ -125,6 +125,7 @@
   "nav": {
     "admin": "Quản trị",
     "adminUsers": "Danh mục người dùng",
+    "adminRoles": "Quản lý vai trò",
     "adminRbac": "Ma trận phân quyền",
     "adminOrgChart": "Sơ đồ phòng ban",
     "approvals": "Phê duyệt",
@@ -139,6 +140,7 @@
   },
   "route": {
     "admin": "Quản trị",
+    "admin.roles": "Quản lý vai trò",
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
     "procurement": "Mua sắm",
@@ -451,6 +453,53 @@
         "loading": "Đang tải danh sách vai trò..."
       },
       "totalItems": "người dùng"
+    },
+    "roles": {
+      "eyebrow": "Quản lý truy cập",
+      "title": "Quản lý vai trò",
+      "action": {
+        "create": "Thêm vai trò",
+        "viewAll": "Xem tất cả"
+      },
+      "filter": {
+        "placeholder": "Tìm vai trò theo tên, mã, hoặc mô tả..."
+      },
+      "badge": {
+        "system": "Hệ thống",
+        "custom": "Tùy chỉnh"
+      },
+      "field": {
+        "code": "Mã vai trò",
+        "codePlaceholder": "VD: PROCUREMENT_LEAD (Chữ hoa và gạch dưới)",
+        "name": "Tên vai trò",
+        "namePlaceholder": "VD: Trưởng nhóm mua sắm",
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Mô tả ngắn gọn mục đích của vai trò (tùy chọn)"
+      },
+      "modal": {
+        "titleCreate": "Tạo vai trò mới",
+        "sectionBasic": "Thông tin cơ bản",
+        "sectionPermissions": "Gán quyền hạn",
+        "searchPermissions": "Lọc quyền theo tên hoặc module..."
+      },
+      "detail": {
+        "type": "Loại",
+        "permissionsTitle": "Quyền hạn được gán",
+        "noPermissions": "Vai trò này chưa có quyền hạn nào.",
+        "more": "thêm"
+      },
+      "validation": {
+        "required": "Thông tin này là bắt buộc",
+        "codePattern": "Phải bắt đầu bằng chữ hoa, chỉ chấp nhận chữ hoa, số và gạch dưới"
+      },
+      "toast": {
+        "createSuccess": "Đã tạo vai trò mới thành công."
+      },
+      "empty": {
+        "title": "Không tìm thấy vai trò",
+        "message": "Không có vai trò nào phù hợp với tìm kiếm."
+      },
+      "totalItems": "vai trò"
     },
     "rbac": {
       "eyebrow": "Kiểm soát truy cập (RBAC)",

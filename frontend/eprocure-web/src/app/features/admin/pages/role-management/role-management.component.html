@@ -1,0 +1,348 @@
+<section class="role-management-page" aria-labelledby="role-management-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.roles.eyebrow' | translate }}</span>
+      <h1 id="role-management-heading" class="page-header__title">{{ 'admin.roles.title' | translate }}</h1>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        id="btn-refresh-roles"
+        variant="secondary"
+        icon="refresh-cw"
+        [disabled]="isLoading()"
+        (click)="loadData()">
+        {{ 'action.refresh' | translate }}
+      </ep-button>
+      <ep-button
+        id="btn-create-role"
+        variant="primary"
+        icon="plus"
+        (click)="openCreateModal()">
+        {{ 'admin.roles.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <!-- ── Search Bar ───────────────────────────────────────────────── -->
+  <div class="role-search-bar">
+    <div class="role-search-input-wrapper">
+      <ep-icon name="search" [size]="16"></ep-icon>
+      <input
+        id="role-search"
+        type="text"
+        class="role-search-input"
+        [placeholder]="'admin.roles.filter.placeholder' | translate"
+        [value]="searchQuery()"
+        (input)="onSearchChange($any($event.target).value)" />
+    </div>
+    <div class="role-count-badge">
+      <ep-icon name="shield" [size]="14"></ep-icon>
+      <span>{{ filteredRoles().length }} {{ 'admin.roles.totalItems' | translate }}</span>
+    </div>
+  </div>
+
+  <!-- ── Content ──────────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <ep-skeleton [rows]="6" />
+  } @else if (filteredRoles().length === 0) {
+    <ep-empty-state
+      icon="shield-off"
+      [title]="'admin.roles.empty.title' | translate"
+      [message]="'admin.roles.empty.message' | translate" />
+  } @else {
+    <div class="role-grid">
+      @for (role of filteredRoles(); track role.code) {
+        <article
+          class="role-card"
+          [class.role-card--system]="role.isSystem"
+          [class.role-card--expanded]="isExpanded(role.code)">
+
+          <!-- Card Header -->
+          <div class="role-card__header" (click)="toggleExpand(role.code)">
+            <div class="role-card__icon-wrapper" [class.role-card__icon-wrapper--system]="role.isSystem">
+              <ep-icon [name]="role.isSystem ? 'shield-check' : 'shield'" [size]="20"></ep-icon>
+            </div>
+            <div class="role-card__info">
+              <div class="role-card__title-row">
+                <h3 class="role-card__name">{{ role.name }}</h3>
+                @if (role.isSystem) {
+                  <span class="role-card__system-tag">
+                    <ep-icon name="lock" [size]="10"></ep-icon>
+                    {{ 'admin.roles.badge.system' | translate }}
+                  </span>
+                } @else {
+                  <span class="role-card__custom-tag">
+                    {{ 'admin.roles.badge.custom' | translate }}
+                  </span>
+                }
+              </div>
+              <span class="role-card__code mono">{{ role.code }}</span>
+            </div>
+            <div class="role-card__meta">
+              <div class="role-card__perm-count">
+                <ep-icon name="key" [size]="14"></ep-icon>
+                <span>{{ getRolePermissionCount(role.code) }}</span>
+              </div>
+              <ep-icon
+                class="role-card__chevron"
+                [class.role-card__chevron--open]="isExpanded(role.code)"
+                name="chevron-down"
+                [size]="16">
+              </ep-icon>
+            </div>
+          </div>
+
+          <!-- Card Description -->
+          @if (role.description) {
+            <p class="role-card__description">{{ role.description }}</p>
+          }
+
+          <!-- Expanded Detail -->
+          @if (isExpanded(role.code)) {
+            <div class="role-card__detail">
+              <div class="role-card__detail-header">
+                <h4>{{ 'admin.roles.detail.permissionsTitle' | translate }}</h4>
+                <ep-button
+                  variant="ghost"
+                  size="sm"
+                  icon="external-link"
+                  (click)="openViewModal(role); $event.stopPropagation()">
+                  {{ 'admin.roles.action.viewAll' | translate }}
+                </ep-button>
+              </div>
+
+              @if (getRolePermissionCount(role.code) === 0) {
+                <div class="role-card__no-perms">
+                  <ep-icon name="info" [size]="14"></ep-icon>
+                  <span>{{ 'admin.roles.detail.noPermissions' | translate }}</span>
+                </div>
+              } @else {
+                <div class="role-card__perm-tags">
+                  @for (permCode of getRolePermissionCodes(role.code).slice(0, 12); track permCode) {
+                    <span class="perm-tag" [title]="getPermissionName(permCode)">
+                      <span class="perm-tag__module">{{ getPermissionModule(permCode) }}</span>
+                      <span class="perm-tag__code">{{ permCode }}</span>
+                    </span>
+                  }
+                  @if (getRolePermissionCount(role.code) > 12) {
+                    <span class="perm-tag perm-tag--more">
+                      +{{ getRolePermissionCount(role.code) - 12 }} {{ 'admin.roles.detail.more' | translate }}
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>
+
+<!-- ── Create Role Modal ─────────────────────────────────────────── -->
+<ep-modal
+  [open]="isModalOpen() && modalMode() === 'create'"
+  [title]="'admin.roles.modal.titleCreate' | translate"
+  (close)="closeModal()">
+  <div class="role-form">
+    <!-- Basic Info Section -->
+    <div class="role-form__section">
+      <h3 class="role-form__section-title">
+        <ep-icon name="info" [size]="16"></ep-icon>
+        {{ 'admin.roles.modal.sectionBasic' | translate }}
+      </h3>
+      <div class="role-form__grid">
+        <ep-form-field
+          [label]="('admin.roles.field.code' | translate) || 'Role Code'"
+          [error]="formCodeError() ? (formCodeError()! | translate) : null">
+          <input
+            type="text"
+            id="role-code"
+            [placeholder]="'admin.roles.field.codePlaceholder' | translate"
+            [ngModel]="formCode()"
+            (ngModelChange)="formCode.set($event)"
+            [ngModelOptions]="{standalone: true}" />
+        </ep-form-field>
+
+        <ep-form-field [label]="('admin.roles.field.name' | translate) || 'Role Name'">
+          <input
+            type="text"
+            id="role-name"
+            [placeholder]="'admin.roles.field.namePlaceholder' | translate"
+            [ngModel]="formName()"
+            (ngModelChange)="formName.set($event)"
+            [ngModelOptions]="{standalone: true}" />
+        </ep-form-field>
+      </div>
+
+      <ep-form-field [label]="('admin.roles.field.description' | translate) || 'Description'">
+        <textarea
+          id="role-description"
+          rows="2"
+          [placeholder]="'admin.roles.field.descriptionPlaceholder' | translate"
+          [ngModel]="formDescription()"
+          (ngModelChange)="formDescription.set($event)"
+          [ngModelOptions]="{standalone: true}">
+        </textarea>
+      </ep-form-field>
+    </div>
+
+    <!-- Permissions Section -->
+    <div class="role-form__section">
+      <div class="role-form__section-title-row">
+        <h3 class="role-form__section-title">
+          <ep-icon name="key" [size]="16"></ep-icon>
+          {{ 'admin.roles.modal.sectionPermissions' | translate }}
+        </h3>
+        <span class="role-form__perm-counter">
+          {{ formSelectedCount() }} / {{ totalPermissionsCount() }}
+        </span>
+      </div>
+
+      <!-- Permission Search -->
+      <div class="role-form__perm-search">
+        <ep-icon name="search" [size]="14"></ep-icon>
+        <input
+          type="text"
+          [placeholder]="'admin.roles.modal.searchPermissions' | translate"
+          [ngModel]="permissionSearch()"
+          (ngModelChange)="onPermissionSearchChange($event)"
+          [ngModelOptions]="{standalone: true}" />
+      </div>
+
+      <div class="role-form__perm-modules">
+        @for (modName of modulesList(); track modName) {
+          <div class="perm-module">
+            <div class="perm-module__header" (click)="toggleModuleAll(modName)">
+              <label class="perm-module__checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="isModuleAllSelected(modName)"
+                  [indeterminate]="isModulePartialSelected(modName)"
+                  (click)="$event.stopPropagation(); toggleModuleAll(modName)" />
+                <span class="perm-module__name">{{ modName }}</span>
+              </label>
+            </div>
+            <div class="perm-module__items">
+              @for (perm of filteredPermissionsByModule().get(modName); track perm.code) {
+                <label
+                  class="perm-item"
+                  [class.perm-item--selected]="isFormPermissionSelected(perm.code)">
+                  <input
+                    type="checkbox"
+                    [checked]="isFormPermissionSelected(perm.code)"
+                    (change)="toggleFormPermission(perm.code)" />
+                  <div class="perm-item__info">
+                    <span class="perm-item__code mono">{{ perm.code }}</span>
+                    <span class="perm-item__name">{{ perm.name }}</span>
+                  </div>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="role-form__actions">
+      <ep-button variant="secondary" (click)="closeModal()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button
+        variant="primary"
+        type="submit"
+        icon="plus"
+        [loading]="isSubmitting()"
+        [disabled]="!isFormValid() || isSubmitting()">
+        {{ 'admin.roles.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+</ep-modal>
+
+<!-- ── View Role Modal ───────────────────────────────────────────── -->
+<ep-modal
+  [open]="isModalOpen() && modalMode() === 'view'"
+  [title]="selectedRole()?.name ?? ''"
+  (close)="closeModal()">
+  @if (selectedRole(); as role) {
+    <div class="role-view">
+      <!-- Role Meta -->
+      <div class="role-view__meta">
+        <div class="role-view__meta-item">
+          <span class="role-view__label">{{ 'admin.roles.field.code' | translate }}</span>
+          <span class="role-view__value mono">{{ role.code }}</span>
+        </div>
+        <div class="role-view__meta-item">
+          <span class="role-view__label">{{ 'admin.roles.detail.type' | translate }}</span>
+          @if (role.isSystem) {
+            <span class="role-card__system-tag">
+              <ep-icon name="lock" [size]="10"></ep-icon>
+              {{ 'admin.roles.badge.system' | translate }}
+            </span>
+          } @else {
+            <span class="role-card__custom-tag">
+              {{ 'admin.roles.badge.custom' | translate }}
+            </span>
+          }
+        </div>
+      </div>
+      @if (role.description) {
+        <p class="role-view__description">{{ role.description }}</p>
+      }
+
+      <!-- Permission search in view -->
+      <div class="role-view__perm-header">
+        <h3>
+          <ep-icon name="key" [size]="16"></ep-icon>
+          {{ 'admin.roles.detail.permissionsTitle' | translate }}
+          <span class="role-view__perm-count">({{ selectedRolePermissions().length }})</span>
+        </h3>
+        <div class="role-form__perm-search">
+          <ep-icon name="search" [size]="14"></ep-icon>
+          <input
+            type="text"
+            [placeholder]="'admin.roles.modal.searchPermissions' | translate"
+            [ngModel]="permissionSearch()"
+            (ngModelChange)="onPermissionSearchChange($event)"
+            [ngModelOptions]="{standalone: true}" />
+        </div>
+      </div>
+
+      <div class="role-view__modules">
+        @for (modName of modulesList(); track modName) {
+          @if (hasModulePermissions(modName)) {
+            <div class="view-module">
+              <div class="view-module__header">
+                <span class="view-module__name">{{ modName }}</span>
+              </div>
+              <div class="view-module__items">
+                @for (perm of filteredPermissionsByModule().get(modName); track perm.code) {
+                  <div
+                    class="view-perm-item"
+                    [class.view-perm-item--active]="isViewPermissionActive(perm.code)">
+                    <div class="view-perm-item__indicator">
+                      @if (isViewPermissionActive(perm.code)) {
+                        <ep-icon name="check-circle" [size]="14"></ep-icon>
+                      } @else {
+                        <ep-icon name="circle" [size]="14"></ep-icon>
+                      }
+                    </div>
+                    <div class="view-perm-item__info">
+                      <span class="view-perm-item__code mono">{{ perm.code }}</span>
+                      <span class="view-perm-item__name">{{ perm.name }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</ep-modal>

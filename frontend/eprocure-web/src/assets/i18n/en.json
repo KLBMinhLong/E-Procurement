@@ -125,6 +125,7 @@
   "nav": {
     "admin": "Admin",
     "adminUsers": "User Directory",
+    "adminRoles": "Role Manager",
     "adminRbac": "Permissions Matrix",
     "adminOrgChart": "Department Chart",
     "approvals": "Approvals",
@@ -139,6 +140,7 @@
   },
   "route": {
     "admin": "Admin",
+    "admin.roles": "Role Manager",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "procurement": "Procurement",
@@ -451,6 +453,53 @@
         "loading": "Loading available system roles..."
       },
       "totalItems": "users"
+    },
+    "roles": {
+      "eyebrow": "Access Management",
+      "title": "Role Manager",
+      "action": {
+        "create": "New Role",
+        "viewAll": "View All"
+      },
+      "filter": {
+        "placeholder": "Search role by name, code, or description..."
+      },
+      "badge": {
+        "system": "System",
+        "custom": "Custom"
+      },
+      "field": {
+        "code": "Role Code",
+        "codePlaceholder": "E.g., PROCUREMENT_LEAD (Uppercase + underscore)",
+        "name": "Role Name",
+        "namePlaceholder": "E.g., Procurement Lead",
+        "description": "Description",
+        "descriptionPlaceholder": "Brief description of the role purpose (optional)"
+      },
+      "modal": {
+        "titleCreate": "Create New Role",
+        "sectionBasic": "Basic Information",
+        "sectionPermissions": "Assign Permissions",
+        "searchPermissions": "Filter permissions by name or module..."
+      },
+      "detail": {
+        "type": "Type",
+        "permissionsTitle": "Assigned Permissions",
+        "noPermissions": "No permissions assigned to this role.",
+        "more": "more"
+      },
+      "validation": {
+        "required": "This field is mandatory",
+        "codePattern": "Must start with an uppercase letter, only uppercase letters, numbers, and underscores allowed"
+      },
+      "toast": {
+        "createSuccess": "Role successfully created."
+      },
+      "empty": {
+        "title": "No roles found",
+        "message": "No roles match your search criteria."
+      },
+      "totalItems": "roles"
     },
     "rbac": {
       "eyebrow": "Role Based Access Control",
