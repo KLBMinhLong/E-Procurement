@@ -62,10 +62,18 @@
 | architecture-map.md | ✅ | Service relationships, data flow |
 | coding-patterns.md | ✅ | Code templates tái sử dụng |
 | decision-log.md | ✅ | Quyết định kỹ thuật đã chốt |
+| domain-glossary.md | ✅ | Thuật ngữ nghiệp vụ VI/EN, permission/status/event vocabulary |
 | error-history.md | ✅ | Lịch sử lỗi và cách xử lý |
 | progress-tracker.md | ✅ | File này |
 | project-context.md | ✅ | Master context |
 | tech-stack.md | ✅ | Versions, config patterns |
+
+## CODEX PERSONALIZATION (.codex/)
+| File | Status | Ghi chú |
+|---|---|---|
+| CODEX_CONTEXT.md | ✅ | Bootstrap ngắn cho Codex: source-of-truth, snapshot, task bootstrap, commands |
+| config.toml | ✅ | Runtime local config |
+| skills/ui-ux-pro-max | ✅ | Skill UI/UX cục bộ cho frontend/design task |
 
 ## EPICS — CODE
 

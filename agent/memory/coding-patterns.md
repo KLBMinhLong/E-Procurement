@@ -1,7 +1,7 @@
 # coding-patterns.md
 ## eProcure Enterprise — Code Patterns Tái Sử Dụng
 
-> Copy-paste patterns đã được verify theo CODING_RULES.  
+> Copy-paste patterns đã được verify theo `.cursor/rules/coding.mdc`.
 > Dùng làm template khi tạo class mới — KHÔNG tự nghĩ lại từ đầu.
 
 ---

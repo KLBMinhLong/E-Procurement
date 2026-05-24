@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-24] Codex project personalization baseline
+
+- Decision: Add `.codex/CODEX_CONTEXT.md` as the concise Codex bootstrap file, add the missing `agent/memory/domain-glossary.md`, and align `AGENTS.md` with the actual `.cursor/rules/*.mdc` filenames.
+- Reason: Future Codex runs need a short, reliable entrypoint after `AGENTS.md` and must not fail context loading because a referenced glossary/rule file is missing or renamed.
+- Impact: Agents can load project context faster, route tasks by layer, use the correct command matrix, and follow the same terminology/status/permission/event vocabulary.
+- Constraint: `AGENTS.md` remains the master orchestration source; `.codex/CODEX_CONTEXT.md` is a compact working profile, not a replacement for domain docs, ADRs, or OpenAPI specs.
+
 ## [2026-05-17] E01 local infrastructure baseline
 
 - Decision: Tạo Docker Compose nền ở chế độ infra-only gồm PostgreSQL, Redis, Kafka (KRaft), Kafka topic init, Keycloak realm import, NGINX gateway skeleton và monitoring profile Prometheus/Grafana/Loki/Tempo.
