@@ -12,8 +12,11 @@ public class ApprovalStepDbEntity {
     private UUID approverId;
     private UUID delegateId;
     private String status;
+    private String action;
+    private String comment;
     private Instant slaDeadline;
     private Instant assignedAt;
+    private Instant actedAt;
     private String camundaTaskId;
     private UUID createdBy;
 
@@ -81,6 +84,22 @@ public class ApprovalStepDbEntity {
         this.status = status;
     }
 
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
     public Instant getSlaDeadline() {
         return slaDeadline;
     }
@@ -95,6 +114,14 @@ public class ApprovalStepDbEntity {
 
     public void setAssignedAt(Instant assignedAt) {
         this.assignedAt = assignedAt;
+    }
+
+    public Instant getActedAt() {
+        return actedAt;
+    }
+
+    public void setActedAt(Instant actedAt) {
+        this.actedAt = actedAt;
     }
 
     public String getCamundaTaskId() {

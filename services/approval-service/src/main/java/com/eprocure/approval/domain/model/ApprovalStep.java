@@ -13,10 +13,13 @@ public class ApprovalStep {
     private final String approverRole;
     private final UUID approverId;
     private final UUID delegateId;
-    private final ApprovalStepStatus status;
+    private ApprovalStepStatus status;
+    private ApprovalAction action;
+    private String comment;
     private final Instant slaDeadline;
     private final Instant assignedAt;
-    private final String camundaTaskId;
+    private Instant actedAt;
+    private String camundaTaskId;
 
     private ApprovalStep(
             UUID id,
@@ -27,8 +30,11 @@ public class ApprovalStep {
             UUID approverId,
             UUID delegateId,
             ApprovalStepStatus status,
+            ApprovalAction action,
+            String comment,
             Instant slaDeadline,
             Instant assignedAt,
+            Instant actedAt,
             String camundaTaskId) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.processId = Objects.requireNonNull(processId, "processId must not be null");
@@ -44,8 +50,11 @@ public class ApprovalStep {
         this.approverId = Objects.requireNonNull(approverId, "approverId must not be null");
         this.delegateId = delegateId;
         this.status = Objects.requireNonNull(status, "status must not be null");
+        this.action = action;
+        this.comment = normalizeOptional(comment);
         this.slaDeadline = Objects.requireNonNull(slaDeadline, "slaDeadline must not be null");
         this.assignedAt = Objects.requireNonNull(assignedAt, "assignedAt must not be null");
+        this.actedAt = actedAt;
         this.camundaTaskId = camundaTaskId == null || camundaTaskId.isBlank() ? null : camundaTaskId.trim();
     }
 
@@ -66,9 +75,71 @@ public class ApprovalStep {
                 approverId,
                 null,
                 ApprovalStepStatus.PENDING,
+                null,
+                null,
                 slaDeadline,
                 assignedAt,
+                null,
                 null);
+    }
+
+    public static ApprovalStep restore(
+            UUID id,
+            UUID processId,
+            int stepIndex,
+            ApprovalStepType stepType,
+            String approverRole,
+            UUID approverId,
+            UUID delegateId,
+            ApprovalStepStatus status,
+            ApprovalAction action,
+            String comment,
+            Instant slaDeadline,
+            Instant assignedAt,
+            Instant actedAt,
+            String camundaTaskId) {
+        return new ApprovalStep(
+                id,
+                processId,
+                stepIndex,
+                stepType,
+                approverRole,
+                approverId,
+                delegateId,
+                status,
+                action,
+                comment,
+                slaDeadline,
+                assignedAt,
+                actedAt,
+                camundaTaskId);
+    }
+
+    public void approve(String comment, Instant actedAt) {
+        complete(ApprovalStepStatus.APPROVED, ApprovalAction.APPROVE, comment, actedAt);
+    }
+
+    public void reject(String comment, Instant actedAt) {
+        complete(ApprovalStepStatus.REJECTED, ApprovalAction.REJECT, comment, actedAt);
+    }
+
+    public void requestChanges(String comment, Instant actedAt) {
+        complete(ApprovalStepStatus.REJECTED, ApprovalAction.REQUEST_CHANGES, comment, actedAt);
+    }
+
+    public void forward(String reason, Instant actedAt) {
+        complete(ApprovalStepStatus.FORWARDED, ApprovalAction.FORWARD, reason, actedAt);
+    }
+
+    public void skip(Instant actedAt) {
+        if (status == ApprovalStepStatus.PENDING) {
+            this.status = ApprovalStepStatus.SKIPPED;
+            this.actedAt = Objects.requireNonNull(actedAt, "actedAt must not be null");
+        }
+    }
+
+    public void assignCamundaTaskId(String camundaTaskId) {
+        this.camundaTaskId = camundaTaskId == null || camundaTaskId.isBlank() ? null : camundaTaskId.trim();
     }
 
     public UUID getId() {
@@ -103,6 +174,14 @@ public class ApprovalStep {
         return status;
     }
 
+    public Optional<ApprovalAction> getAction() {
+        return Optional.ofNullable(action);
+    }
+
+    public Optional<String> getComment() {
+        return Optional.ofNullable(comment);
+    }
+
     public Instant getSlaDeadline() {
         return slaDeadline;
     }
@@ -111,7 +190,29 @@ public class ApprovalStep {
         return assignedAt;
     }
 
+    public Optional<Instant> getActedAt() {
+        return Optional.ofNullable(actedAt);
+    }
+
     public Optional<String> getCamundaTaskId() {
         return Optional.ofNullable(camundaTaskId);
+    }
+
+    boolean isAssignedTo(UUID actorId) {
+        return approverId.equals(actorId) || actorId.equals(delegateId);
+    }
+
+    private void complete(ApprovalStepStatus status, ApprovalAction action, String comment, Instant actedAt) {
+        if (this.status != ApprovalStepStatus.PENDING) {
+            throw new IllegalStateException("approval step has already been processed");
+        }
+        this.status = Objects.requireNonNull(status, "status must not be null");
+        this.action = Objects.requireNonNull(action, "action must not be null");
+        this.comment = normalizeOptional(comment);
+        this.actedAt = Objects.requireNonNull(actedAt, "actedAt must not be null");
+    }
+
+    private static String normalizeOptional(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

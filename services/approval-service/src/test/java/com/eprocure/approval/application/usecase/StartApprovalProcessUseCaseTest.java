@@ -19,6 +19,7 @@ import com.eprocure.approval.domain.model.ApprovalProcess;
 import com.eprocure.approval.domain.model.ApprovalProcessStatus;
 import com.eprocure.approval.domain.model.ApprovalRule;
 import com.eprocure.approval.domain.model.ApprovalRuleType;
+import com.eprocure.approval.domain.model.ApprovalStep;
 import com.eprocure.approval.domain.model.ApprovalStepStatus;
 import com.eprocure.approval.domain.model.ApprovalStepTemplate;
 import com.eprocure.approval.domain.model.ApprovalStepType;
@@ -33,6 +34,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -343,6 +345,28 @@ class StartApprovalProcessUseCaseTest {
         public void save(ApprovalProcess process) {
             savedProcess = process;
         }
+
+        @Override
+        public Optional<ApprovalProcess> findRunningByStepId(UUID stepId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<ApprovalProcess> findRunningByCamundaTaskId(String camundaTaskId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void updateProcessRuntime(ApprovalProcess process) {
+        }
+
+        @Override
+        public void updateStep(ApprovalStep step) {
+        }
+
+        @Override
+        public void insertStep(ApprovalStep step) {
+        }
     }
 
     private static final class FakeApprovalWorkflowPort implements ApprovalWorkflowPort {
@@ -375,6 +399,18 @@ class StartApprovalProcessUseCaseTest {
         @Override
         public void markPendingApproval(MarkPendingApprovalCommand command) {
             commands.add(command);
+        }
+
+        @Override
+        public void markApproved(ApprovalResultCommand command) {
+        }
+
+        @Override
+        public void markRejected(ApprovalResultCommand command) {
+        }
+
+        @Override
+        public void markChangesRequested(ApprovalResultCommand command) {
         }
     }
 }

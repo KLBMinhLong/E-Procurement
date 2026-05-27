@@ -1,6 +1,7 @@
 package com.eprocure.approval.infrastructure.pr;
 
 import com.eprocure.approval.application.port.out.PurchaseRequestStatusPort;
+import com.eprocure.approval.application.port.out.PurchaseRequestStatusPort.ApprovalResultCommand;
 import com.eprocure.approval.common.exception.BusinessException;
 import com.eprocure.approval.common.exception.ErrorCode;
 import com.eprocure.approval.common.util.LogMaskingUtil;
@@ -65,8 +66,62 @@ public class PurchaseRequestStatusAdapter implements PurchaseRequestStatusPort {
         }
     }
 
+    @Override
+    public void markApproved(ApprovalResultCommand command) {
+        sendApprovalResult("/internal/purchase-requests/{id}/approved", command, "MarkPrApproved");
+    }
+
+    @Override
+    public void markRejected(ApprovalResultCommand command) {
+        sendApprovalResult("/internal/purchase-requests/{id}/rejected", command, "MarkPrRejected");
+    }
+
+    @Override
+    public void markChangesRequested(ApprovalResultCommand command) {
+        sendApprovalResult("/internal/purchase-requests/{id}/changes-requested", command, "MarkPrChangesRequested");
+    }
+
+    private void sendApprovalResult(String path, ApprovalResultCommand command, String actionName) {
+        if (internalApiKey.isBlank()) {
+            log.error("[ACTION] Step {} | prId={} | result=missing_api_key",
+                    actionName,
+                    LogMaskingUtil.maskId(command.purchaseRequestId()));
+            throw new BusinessException(ErrorCode.SYS_001);
+        }
+        try {
+            purchaseRequestRestClient.patch()
+                    .uri(path, command.purchaseRequestId())
+                    .header(INTERNAL_API_KEY_HEADER, internalApiKey)
+                    .header(IDEMPOTENCY_KEY_HEADER, command.idempotencyKey())
+                    .body(new ApprovalResultRequest(command.approvalProcessId(), command.comment()))
+                    .retrieve()
+                    .toBodilessEntity();
+            log.info("[ACTION] Step {} | prId={} | approvalProcessId={} | result=success",
+                    actionName,
+                    LogMaskingUtil.maskId(command.purchaseRequestId()),
+                    LogMaskingUtil.maskId(command.approvalProcessId()));
+        } catch (RestClientResponseException exception) {
+            log.warn("[ACTION] Step {} | prId={} | status={}",
+                    actionName,
+                    LogMaskingUtil.maskId(command.purchaseRequestId()),
+                    exception.getStatusCode().value());
+            throw new BusinessException(ErrorCode.SYS_001);
+        } catch (RestClientException exception) {
+            log.error("[EXCEPTION][SYS_001] PR approval result callback failed | action={} | prId={} | error={}",
+                    actionName,
+                    LogMaskingUtil.maskId(command.purchaseRequestId()),
+                    exception.getMessage());
+            throw new BusinessException(ErrorCode.SYS_001);
+        }
+    }
+
     private record MarkPendingApprovalRequest(
             @NotNull UUID approvalProcessId,
             @NotBlank String camundaProcessInstanceId) {
+    }
+
+    private record ApprovalResultRequest(
+            @NotNull UUID approvalProcessId,
+            String comment) {
     }
 }

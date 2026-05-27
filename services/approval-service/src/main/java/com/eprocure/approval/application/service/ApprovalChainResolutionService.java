@@ -76,13 +76,13 @@ public class ApprovalChainResolutionService {
 
         boolean onlyRequesterCandidates = candidates.stream().allMatch(candidate -> requesterId.equals(candidate.id()));
         if (onlyRequesterCandidates) {
-            throw new BusinessException(ErrorCode.APR_004);
+            throw new BusinessException(ErrorCode.APR_001);
         }
 
         return candidates.stream()
                 .filter(candidate -> !requesterId.equals(candidate.id()))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.APR_004));
+                .orElseThrow(() -> new BusinessException(ErrorCode.APR_001));
     }
 
     private ApproverView toView(ApproverCandidate candidate) {

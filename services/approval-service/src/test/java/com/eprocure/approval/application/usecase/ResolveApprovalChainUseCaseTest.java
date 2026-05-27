@@ -77,7 +77,7 @@ class ResolveApprovalChainUseCaseTest {
     }
 
     @Test
-    void should_throw_apr_004_when_only_requester_can_approve() {
+    void should_throw_apr_001_when_only_requester_can_approve() {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
                 "MANAGER", List.of(candidate(REQUESTER_ID, "requester")),
                 "FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
@@ -86,7 +86,7 @@ class ResolveApprovalChainUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(defaultCommand()))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.APR_004);
+                .isEqualTo(ErrorCode.APR_001);
     }
 
     @Test
