@@ -367,6 +367,30 @@ class StartApprovalProcessUseCaseTest {
         @Override
         public void insertStep(ApprovalStep step) {
         }
+
+        @Override
+        public List<com.eprocure.approval.domain.repository.PendingTaskProjection> findPendingTasks(
+                UUID approverId,
+                String priority,
+                String entityType,
+                java.math.BigDecimal minAmount,
+                Boolean isOverdue,
+                String orderByColumn,
+                String sortDirection,
+                int offset,
+                int limit) {
+            return List.of();
+        }
+
+        @Override
+        public long countPendingTasks(
+                UUID approverId,
+                String priority,
+                String entityType,
+                java.math.BigDecimal minAmount,
+                Boolean isOverdue) {
+            return 0;
+        }
     }
 
     private static final class FakeApprovalWorkflowPort implements ApprovalWorkflowPort {

@@ -183,4 +183,32 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
             throw new IllegalStateException("Cannot deserialize approval process snapshot", exception);
         }
     }
+
+    @Override
+    public java.util.List<com.eprocure.approval.domain.repository.PendingTaskProjection> findPendingTasks(
+            UUID userId,
+            String priority,
+            String entityType,
+            java.math.BigDecimal minAmount,
+            Boolean isOverdue,
+            String orderByColumn,
+            String sortDirection,
+            int offset,
+            int limit) {
+        log.debug("[REPO] findPendingTasks approval_processes | userId={} | priority={} | entityType={} | minAmount={} | isOverdue={}",
+                userId, priority, entityType, minAmount, isOverdue);
+        return mapper.findPendingTasks(userId, priority, entityType, minAmount, isOverdue, orderByColumn, sortDirection, offset, limit);
+    }
+
+    @Override
+    public long countPendingTasks(
+            UUID userId,
+            String priority,
+            String entityType,
+            java.math.BigDecimal minAmount,
+            Boolean isOverdue) {
+        log.debug("[REPO] countPendingTasks approval_processes | userId={} | priority={} | entityType={} | minAmount={} | isOverdue={}",
+                userId, priority, entityType, minAmount, isOverdue);
+        return mapper.countPendingTasks(userId, priority, entityType, minAmount, isOverdue);
+    }
 }
