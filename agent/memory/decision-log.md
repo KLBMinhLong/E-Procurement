@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-27] E05 SLA business-hours calculation
+
+- Decision: Add `SlaDeadlineCalculator` and `BusinessHoursCalendar` to calculate approval deadlines from resolved step SLA hours.
+- Reason: Approval tasks need deterministic `slaDeadline` values before process persistence, inbox sorting, warning flags, and Camunda timer escalation can be implemented.
+- Impact: Normal/urgent PR deadlines advance only through configured business hours `08:00-17:30` on `MON-FRI`; emergency PR deadlines use continuous 24/7 hours. Resolved approval-chain steps now include `slaDeadline`.
+- Constraint: Holiday calendars, persisted SLA breach timers, warning events, and escalation target resolution remain later E05 slices.
+
 ## [2026-05-27] E05 Approval chain resolution
 
 - Decision: Add `ResolveApprovalChainUseCase` in approval-service with `OrgApproverPort`, IAM REST adapter, and an IAM internal `/internal/org/approvers` endpoint protected by `X-Internal-Api-Key`.

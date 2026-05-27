@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.approval.application.port.in.ResolveApprovalChainCommand;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
+import com.eprocure.approval.application.service.BusinessHoursCalendar;
 import com.eprocure.approval.application.service.ResolvedApprovalChainView;
+import com.eprocure.approval.application.service.SlaDeadlineCalculator;
 import com.eprocure.approval.common.exception.BusinessException;
 import com.eprocure.approval.common.exception.ErrorCode;
 import com.eprocure.approval.domain.model.ApprovalCondition;
@@ -16,6 +18,9 @@ import com.eprocure.approval.domain.model.ApprovalStepType;
 import com.eprocure.approval.domain.model.PurchaseRequestPriority;
 import com.eprocure.approval.domain.model.vo.Money;
 import com.eprocure.approval.domain.repository.ApprovalRuleRepository;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +34,7 @@ class ResolveApprovalChainUseCaseTest {
     private static final UUID REQUESTER_ID = UUID.fromString("30000000-0000-0000-0000-000000000001");
     private static final UUID MANAGER_ID = UUID.fromString("30000000-0000-0000-0000-000000000002");
     private static final UUID FINANCE_ID = UUID.fromString("30000000-0000-0000-0000-000000000003");
+    private static final Instant MONDAY_08_VN = Instant.parse("2026-06-01T01:00:00Z");
 
     @Test
     void should_resolve_chain_when_rule_steps_have_approvers() {
@@ -46,6 +52,11 @@ class ResolveApprovalChainUseCaseTest {
         assertThat(result.steps())
                 .extracting(step -> step.approver().id())
                 .containsExactly(MANAGER_ID, FINANCE_ID);
+        assertThat(result.steps())
+                .extracting(ResolvedApprovalChainView.ResolvedApprovalStepView::slaDeadline)
+                .containsExactly(
+                        Instant.parse("2026-06-03T06:00:00Z"),
+                        Instant.parse("2026-06-08T01:30:00Z"));
         assertThat(orgApproverPort.queries)
                 .extracting(OrgApproverPort.ResolveApproverQuery::requesterId)
                 .containsOnly(REQUESTER_ID);
@@ -92,7 +103,10 @@ class ResolveApprovalChainUseCaseTest {
     private ResolveApprovalChainUseCase newUseCase(FakeOrgApproverPort orgApproverPort) {
         return new ResolveApprovalChainUseCase(
                 new SelectApprovalRuleUseCase(new StubApprovalRuleRepository(List.of(defaultRule()))),
-                orgApproverPort);
+                orgApproverPort,
+                new SlaDeadlineCalculator(
+                        BusinessHoursCalendar.from("Asia/Ho_Chi_Minh", "08:00", "17:30", "MON,TUE,WED,THU,FRI"),
+                        Clock.fixed(MONDAY_08_VN, ZoneOffset.UTC)));
     }
 
     private ResolveApprovalChainCommand defaultCommand() {
