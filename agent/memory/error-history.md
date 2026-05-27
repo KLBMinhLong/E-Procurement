@@ -1,5 +1,17 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-27] Bug: IAM logs showed colors but blank trace/span context
+
+- Root cause: IAM Docker image did not run the OpenTelemetry Java agent, and Log4j2 pattern read `traceId`/`spanId` MDC keys while OTel Java agent log correlation exposes `trace_id`/`span_id`.
+- Fix: Copy `infra/otel/opentelemetry-javaagent.jar` into IAM/PR Docker images, add `-javaagent:/app/agents/opentelemetry-javaagent.jar`, configure OTLP trace export env vars in Docker Compose, and update Log4j2 patterns to print `trace=%X{trace_id} span=%X{span_id}`.
+- Prevention: For every Spring service, observability requires both the Java agent at runtime and Log4j2 MDC keys aligned with OTel standard `trace_id` and `span_id`.
+
+## [2026-05-27] Bug: Tempo restarted and Grafana trace UI returned 500/502
+
+- Root cause: Tempo ran with `mem_limit: 128m` and `cpus: 0.10`; local compaction/query/ingest exceeded that limit, Docker killed the container with OOM exit 137, and Java services timed out exporting spans to `tempo:4317`.
+- Fix: Increase Tempo local monitoring budget to `cpus: 0.25`, `mem_limit: 512m`, add reservations, and add `/ready` healthcheck so Grafana/OTel stability is visible in `docker compose ps`.
+- Prevention: Tempo needs a larger budget than lightweight sidecars when trace ingestion and Grafana Explore are enabled; do not cap it at 128M in the monitoring profile.
+
 ## [2026-05-18] Bug: Fresh Docker recreate failed after Keycloak provider merge
 
 - Root cause: IAM Docker build copied only `services/iam-service/pom.xml`, while the root Maven reactor now references `infra/keycloak/eprocure-keycloak-provider`.

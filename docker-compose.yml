@@ -217,6 +217,13 @@ services:
       SERVICE_NAME: iam-service
       SERVER_PORT: 8081
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: iam-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
       IAM_DB_HOST: postgres
       IAM_DB_PORT: 5432
       IAM_DB_NAME: db_iam
@@ -278,6 +285,13 @@ services:
       SERVICE_NAME: purchase-request-service
       SERVER_PORT: 8082
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: purchase-request-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
       PR_DB_HOST: postgres
       PR_DB_PORT: 5432
       PR_DB_NAME: db_procurement
@@ -459,13 +473,22 @@ services:
       - tempo-data:/tmp/tempo
     networks:
       - eprocure-net
-    cpus: 0.10
-    mem_limit: 128m
+    cpus: 0.25
+    mem_limit: 512m
     deploy:
       resources:
         limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
           cpus: "0.10"
           memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3200/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     logging: *default-logging
 
 networks:

@@ -4,8 +4,8 @@
     <Properties>
         <Property name="SERVICE_NAME">purchase-request-service</Property>
         <Property name="LOG_DIR">./logs</Property>
-        <Property name="CONSOLE_PATTERN">%highlight{%d{yyyy-MM-dd HH:mm:ss.SSS}}{FATAL=red, ERROR=red, WARN=yellow, INFO=white, DEBUG=cyan} %highlight{[%-5level]}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=cyan} [%style{%X{traceId}}{blue}/%style{%X{spanId}}{blue}] [${SERVICE_NAME}] [%style{%t}{bright,black}] %cyan{%-40.40c{1.}} - %msg%n</Property>
-        <Property name="FILE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%X{traceId}/%X{spanId}] [${SERVICE_NAME}] [%t] %-40.40c{1.} - %msg%n</Property>
+        <Property name="CONSOLE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight{[%-5level]}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=cyan} [trace=%style{%X{trace_id}}{cyan} span=%style{%X{span_id}}{cyan}] [${SERVICE_NAME}] [%t] %style{%-40.40c{1.}}{magenta} - %msg%n</Property>
+        <Property name="FILE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [trace=%X{trace_id} span=%X{span_id}] [${SERVICE_NAME}] [%t] %-40.40c{1.} - %msg%n</Property>
     </Properties>
 
     <Appenders>
