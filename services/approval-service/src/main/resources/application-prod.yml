@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${APPROVAL_DB_HOST}:${APPROVAL_DB_PORT:5432}/${APPROVAL_DB_NAME}
+    username: ${APPROVAL_DB_USER}
+    password: ${APPROVAL_DB_PASS}
+    hikari:
+      minimum-idle: ${APPROVAL_DB_POOL_MIN:2}
+      maximum-pool-size: ${APPROVAL_DB_POOL_MAX:10}
+      connection-init-sql: SET search_path TO ${APPROVAL_DB_SCHEMA:approval}
+  flyway:
+    schemas: ${APPROVAL_DB_SCHEMA:approval}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: approval-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "com.eprocure.*"
+
+camunda:
+  bpm:
+    database:
+      schema-update: false
+    history-level: full
+    metrics:
+      enabled: false
+
+eprocure:
+  internal:
+    api-key: ${APPROVAL_INTERNAL_API_KEY}

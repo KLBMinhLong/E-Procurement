@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-27] E05 Approval Engine foundation
+
+- Decision: Scaffold `approval-service` as a Maven reactor module with Spring Boot 3.2, Camunda BPMN starter `7.21.0`, PostgreSQL schema `approval`, baseline approval rule migrations, and initial BPMN files for standard and emergency PR approval.
+- Reason: E05 is the next MVP slice after E13-A; it needs a buildable service boundary, persisted rule matrix, and deployable BPMN resources before Kafka consumption, approver resolution, inbox, and action endpoints are added.
+- Impact: Docker Compose can build/run `approval-service` on port `8083`; `SelectApprovalRuleUseCase` selects primary value/emergency/default rules and appends matching category rules such as software/SaaS or CAPEX.
+- Constraint: This slice does not yet start Camunda process instances from `PrSubmittedEvent`, resolve approvers from IAM, or expose inbox/action APIs.
+
 ## [2026-05-24] Codex project personalization baseline
 
 - Decision: Add `.codex/CODEX_CONTEXT.md` as the concise Codex bootstrap file, add the missing `agent/memory/domain-glossary.md`, and align `AGENTS.md` with the actual `.cursor/rules/*.mdc` filenames.

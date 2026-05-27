@@ -282,7 +282,7 @@ paths:
                             description: Snapshot của PR/Invoice tại thời điểm duyệt (JSON tùy entity)
 
   /approvals/tasks/{taskId}/approve:
-    post:
+    patch:
       tags: [Tasks]
       summary: Phê duyệt task
       operationId: approveTask
@@ -339,7 +339,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /approvals/tasks/{taskId}/reject:
-    post:
+    patch:
       tags: [Tasks]
       summary: Từ chối task
       operationId: rejectTask
@@ -378,7 +378,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /approvals/tasks/{taskId}/request-changes:
-    post:
+    patch:
       tags: [Tasks]
       summary: Yêu cầu bổ sung thông tin
       operationId: requestChanges
@@ -414,7 +414,7 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
 
   /approvals/tasks/{taskId}/forward:
-    post:
+    patch:
       tags: [Tasks]
       summary: Chuyển task cho người khác xem xét
       operationId: forwardTask
