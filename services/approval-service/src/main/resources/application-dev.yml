@@ -29,3 +29,7 @@ spring:
 eprocure:
   internal:
     api-key: ${APPROVAL_INTERNAL_API_KEY:change-me-internal-api-key}
+  integration:
+    iam:
+      base-url: ${IAM_SERVICE_URL:http://iam-service:8081}
+      internal-api-key: ${IAM_INTERNAL_API_KEY:change-me-internal-api-key}

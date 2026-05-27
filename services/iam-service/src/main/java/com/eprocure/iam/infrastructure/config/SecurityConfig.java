@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
                         .requestMatchers("/internal/keycloak/**").permitAll()
+                        .requestMatchers("/internal/org/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/public-key").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/google").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/google/callback").permitAll()
