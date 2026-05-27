@@ -34,3 +34,6 @@ eprocure:
     iam:
       base-url: ${IAM_SERVICE_URL:http://iam-service:8081}
       internal-api-key: ${IAM_INTERNAL_API_KEY:change-me-internal-api-key}
+    pr:
+      base-url: ${PR_SERVICE_URL:http://pr-service:8082}
+      internal-api-key: ${PR_INTERNAL_API_KEY:change-me-internal-api-key}

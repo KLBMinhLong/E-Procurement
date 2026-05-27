@@ -14,6 +14,7 @@ tags:
   - name: Purchase Requests
   - name: Catalog
   - name: Attachments
+  - name: Internal Purchase Requests
 
 security:
   - cookieAuth: []
@@ -24,6 +25,10 @@ components:
       type: apiKey
       in: cookie
       name: ep_session
+    internalApiKey:
+      type: apiKey
+      in: header
+      name: X-Internal-Api-Key
 
   parameters:
     IdempotencyKey:
@@ -119,6 +124,35 @@ components:
         - CONVERTED_TO_PO
         - CANCELLED
         - CLOSED
+
+    MarkPendingApprovalRequest:
+      type: object
+      required: [approvalProcessId, camundaProcessInstanceId]
+      properties:
+        approvalProcessId:
+          type: string
+          format: uuid
+        camundaProcessInstanceId:
+          type: string
+          example: camunda-approval-001
+
+    MarkedPendingApprovalView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        prNumber:
+          type: string
+          example: PR-2026-05-00001
+        status:
+          $ref: '#/components/schemas/PrStatus'
+        approvalProcessId:
+          type: string
+          format: uuid
+        camundaProcessInstanceId:
+          type: string
+          example: camunda-approval-001
 
     BudgetCheckResult:
       type: object
@@ -368,6 +402,56 @@ components:
         isActive:       { type: boolean }
 
 paths:
+  /internal/purchase-requests/{id}/pending-approval:
+    patch:
+      tags: [Internal Purchase Requests]
+      summary: Đánh dấu PR đang chờ phê duyệt sau khi Approval Engine khởi tạo process
+      operationId: markPurchaseRequestPendingApproval
+      description: Endpoint nội bộ cho approval-service. Bắt buộc `X-Internal-Api-Key` và `Idempotency-Key`.
+      servers:
+        - url: https://{host}
+          variables:
+            host:
+              default: pr-service.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkPendingApprovalRequest'
+      responses:
+        '200':
+          description: PR đã chuyển hoặc đã ở trạng thái PENDING_APPROVAL
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MarkedPendingApprovalView'
+        '403':
+          description: Internal API key không hợp lệ (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: PR không ở trạng thái SUBMITTED/PENDING_APPROVAL (PR_003)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ── Purchase Requests ─────────────────────────────────────────
   /purchase-requests:
     get:

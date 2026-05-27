@@ -5,6 +5,8 @@ import com.eprocure.approval.application.port.in.StartApprovalProcessCommand;
 import com.eprocure.approval.application.port.out.ApprovalStepAssignedEventPublisher;
 import com.eprocure.approval.application.port.out.ApprovalWorkflowPort;
 import com.eprocure.approval.application.port.out.ApprovalWorkflowPort.StartWorkflowCommand;
+import com.eprocure.approval.application.port.out.PurchaseRequestStatusPort;
+import com.eprocure.approval.application.port.out.PurchaseRequestStatusPort.MarkPendingApprovalCommand;
 import com.eprocure.approval.application.service.ApprovalChainResolutionService;
 import com.eprocure.approval.application.service.ResolvedApprovalChainView;
 import com.eprocure.approval.application.service.StartApprovalProcessResult;
@@ -40,6 +42,7 @@ public class StartApprovalProcessUseCase {
     private final ApprovalChainResolutionService approvalChainResolutionService;
     private final ApprovalWorkflowPort approvalWorkflowPort;
     private final ApprovalStepAssignedEventPublisher stepAssignedEventPublisher;
+    private final PurchaseRequestStatusPort purchaseRequestStatusPort;
     private final Clock clock;
 
     public StartApprovalProcessUseCase(
@@ -48,12 +51,14 @@ public class StartApprovalProcessUseCase {
             ApprovalChainResolutionService approvalChainResolutionService,
             ApprovalWorkflowPort approvalWorkflowPort,
             ApprovalStepAssignedEventPublisher stepAssignedEventPublisher,
+            PurchaseRequestStatusPort purchaseRequestStatusPort,
             Clock clock) {
         this.eventProcessingLogRepository = eventProcessingLogRepository;
         this.approvalProcessRepository = approvalProcessRepository;
         this.approvalChainResolutionService = approvalChainResolutionService;
         this.approvalWorkflowPort = approvalWorkflowPort;
         this.stepAssignedEventPublisher = stepAssignedEventPublisher;
+        this.purchaseRequestStatusPort = purchaseRequestStatusPort;
         this.clock = clock;
     }
 
@@ -118,6 +123,10 @@ public class StartApprovalProcessUseCase {
                 HANDLER_NAME);
 
         StartedApprovalProcessView view = toView(process, chain.primaryRuleName());
+        purchaseRequestStatusPort.markPendingApproval(new MarkPendingApprovalCommand(
+                command.purchaseRequestId(),
+                process.getId(),
+                process.getCamundaProcessInstanceId()));
         publishInitialStepAssignments(view, command.traceId());
 
         log.info("[ACTION] Complete StartApprovalProcess | eventId={} | processId={} | camundaProcessInstanceId={}",
