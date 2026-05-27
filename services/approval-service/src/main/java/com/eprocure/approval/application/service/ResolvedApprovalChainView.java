@@ -1,6 +1,7 @@
 package com.eprocure.approval.application.service;
 
 import com.eprocure.approval.domain.model.ApprovalStepType;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +24,7 @@ public record ResolvedApprovalChainView(
             String approverRole,
             ApprovalStepType stepType,
             int slaHours,
+            Instant slaDeadline,
             boolean required,
             ApproverView approver) {
     }

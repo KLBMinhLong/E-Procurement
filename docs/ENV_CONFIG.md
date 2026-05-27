@@ -200,6 +200,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 |---|---|---|---|
 | `SLA_WARNING_AHEAD_HOURS` | `4` | `4` | Gửi cảnh báo trước SLA bao nhiêu giờ |
 | `SLA_CHECK_INTERVAL_MINUTES` | `15` | `15` | Tần suất check SLA (Camunda timer) |
+| `SLA_ZONE_ID` | `Asia/Ho_Chi_Minh` | `Asia/Ho_Chi_Minh` | Timezone dùng khi cộng giờ làm việc |
 | `BUSINESS_HOURS_START` | `08:00` | `08:00` | Giờ bắt đầu làm việc |
 | `BUSINESS_HOURS_END` | `17:30` | `17:30` | Giờ kết thúc làm việc |
 | `BUSINESS_DAYS` | `MON,TUE,WED,THU,FRI` | `MON,TUE,WED,THU,FRI` | Ngày làm việc |

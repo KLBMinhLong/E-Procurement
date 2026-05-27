@@ -62,3 +62,8 @@ eprocure:
       internal-api-key: ${IAM_INTERNAL_API_KEY:}
   approval:
     default-currency: ${APPROVAL_DEFAULT_CURRENCY:VND}
+    sla:
+      zone-id: ${SLA_ZONE_ID:Asia/Ho_Chi_Minh}
+      business-hours-start: ${BUSINESS_HOURS_START:08:00}
+      business-hours-end: ${BUSINESS_HOURS_END:17:30}
+      business-days: ${BUSINESS_DAYS:MON,TUE,WED,THU,FRI}

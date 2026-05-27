@@ -9,9 +9,11 @@ import com.eprocure.approval.application.service.ResolvedApprovalChainView;
 import com.eprocure.approval.application.service.ResolvedApprovalChainView.ApproverView;
 import com.eprocure.approval.application.service.ResolvedApprovalChainView.ResolvedApprovalStepView;
 import com.eprocure.approval.application.service.SelectedApprovalRuleView;
+import com.eprocure.approval.application.service.SlaDeadlineCalculator;
 import com.eprocure.approval.common.exception.BusinessException;
 import com.eprocure.approval.common.exception.ErrorCode;
 import com.eprocure.approval.common.util.LogMaskingUtil;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,12 +28,15 @@ public class ResolveApprovalChainUseCase {
 
     private final SelectApprovalRuleUseCase selectApprovalRuleUseCase;
     private final OrgApproverPort orgApproverPort;
+    private final SlaDeadlineCalculator slaDeadlineCalculator;
 
     public ResolveApprovalChainUseCase(
             SelectApprovalRuleUseCase selectApprovalRuleUseCase,
-            OrgApproverPort orgApproverPort) {
+            OrgApproverPort orgApproverPort,
+            SlaDeadlineCalculator slaDeadlineCalculator) {
         this.selectApprovalRuleUseCase = selectApprovalRuleUseCase;
         this.orgApproverPort = orgApproverPort;
+        this.slaDeadlineCalculator = slaDeadlineCalculator;
     }
 
     @Transactional(readOnly = true)
@@ -49,6 +54,7 @@ public class ResolveApprovalChainUseCase {
                 command.priority()));
 
         List<ResolvedApprovalStepView> steps = new ArrayList<>();
+        Instant assignedAt = slaDeadlineCalculator.now();
         for (SelectedApprovalRuleView.StepView step : selectedRule.steps()) {
             ApproverCandidate approver = resolveStepApprover(step, command.departmentId(), command.requesterId());
             steps.add(new ResolvedApprovalStepView(
@@ -58,6 +64,7 @@ public class ResolveApprovalChainUseCase {
                     step.approverRole(),
                     step.stepType(),
                     step.slaHours(),
+                    slaDeadlineCalculator.calculateDeadline(assignedAt, step.slaHours(), command.priority()),
                     step.required(),
                     toView(approver)));
         }
