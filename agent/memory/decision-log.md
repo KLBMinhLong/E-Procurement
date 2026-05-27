@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-27] E05 Kafka event wiring for approval start
+
+- Decision: Wire approval-service to consume `procurement.pr.submitted` as JSON, start approval processes from the consumed event, and publish initial `approval.step.assigned` events after process creation.
+- Reason: E05-UC-001 requires the PR submitted event to create the approval process and notify downstream notification-service about assigned first-wave approval tasks.
+- Impact: `PrSubmittedEvent` now carries `title` and `categories` so approval rules can evaluate category add-ons. Docker Compose runs PR/Approval with Kafka integration enabled by default, while local profiles can keep fallback logging enabled when Kafka is unavailable.
+- Constraint: PR status callback to `PENDING_APPROVAL`, approval action result producers, and durable outbox retry for failed Kafka publish remain later slices.
+
 ## [2026-05-27] E05 Start approval process from PR submitted event
 
 - Decision: Add `StartApprovalProcessUseCase` to idempotently consume PR submitted event data, resolve the approval chain, start the matching Camunda BPMN process, and persist `approval_processes` plus initial `approval_steps`.

@@ -3,6 +3,7 @@ package com.eprocure.approval.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.eprocure.approval.application.port.in.StartApprovalProcessCommand;
+import com.eprocure.approval.application.port.out.ApprovalStepAssignedEventPublisher;
 import com.eprocure.approval.application.port.out.ApprovalWorkflowPort;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
 import com.eprocure.approval.application.service.ApprovalChainResolutionService;
@@ -10,6 +11,7 @@ import com.eprocure.approval.application.service.ApprovalRuleSelectionService;
 import com.eprocure.approval.application.service.BusinessHoursCalendar;
 import com.eprocure.approval.application.service.SlaDeadlineCalculator;
 import com.eprocure.approval.application.service.StartApprovalProcessResult;
+import com.eprocure.approval.domain.event.ApprovalStepAssignedEvent;
 import com.eprocure.approval.domain.model.ApprovalCondition;
 import com.eprocure.approval.domain.model.ApprovalEntityType;
 import com.eprocure.approval.domain.model.ApprovalProcess;
@@ -50,7 +52,8 @@ class StartApprovalProcessUseCaseTest {
         FakeEventProcessingLogRepository eventLogRepository = new FakeEventProcessingLogRepository(false);
         FakeApprovalProcessRepository processRepository = new FakeApprovalProcessRepository(false);
         FakeApprovalWorkflowPort workflowPort = new FakeApprovalWorkflowPort("camunda-001");
-        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort);
+        FakeApprovalStepAssignedEventPublisher eventPublisher = new FakeApprovalStepAssignedEventPublisher();
+        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort, eventPublisher);
 
         StartApprovalProcessResult result = useCase.execute(defaultCommand(PurchaseRequestPriority.NORMAL));
 
@@ -83,6 +86,11 @@ class StartApprovalProcessUseCaseTest {
                 .containsEntry("approvalStepCount", 2)
                 .containsEntry("priority", "NORMAL");
         assertThat(eventLogRepository.operations).containsExactly("exists", "processed");
+        assertThat(eventPublisher.events).hasSize(1);
+        assertThat(eventPublisher.events.get(0).traceId()).isEqualTo(TRACE_ID);
+        assertThat(eventPublisher.events.get(0).payload().approverId()).isEqualTo(MANAGER_ID);
+        assertThat(eventPublisher.events.get(0).payload().stepIndex()).isEqualTo(1);
+        assertThat(eventPublisher.events.get(0).payload().priority()).isEqualTo(PurchaseRequestPriority.NORMAL);
     }
 
     @Test
@@ -90,7 +98,8 @@ class StartApprovalProcessUseCaseTest {
         FakeEventProcessingLogRepository eventLogRepository = new FakeEventProcessingLogRepository(true);
         FakeApprovalProcessRepository processRepository = new FakeApprovalProcessRepository(false);
         FakeApprovalWorkflowPort workflowPort = new FakeApprovalWorkflowPort("camunda-001");
-        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort);
+        FakeApprovalStepAssignedEventPublisher eventPublisher = new FakeApprovalStepAssignedEventPublisher();
+        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort, eventPublisher);
 
         StartApprovalProcessResult result = useCase.execute(defaultCommand(PurchaseRequestPriority.NORMAL));
 
@@ -98,6 +107,7 @@ class StartApprovalProcessUseCaseTest {
         assertThat(result.process()).isEmpty();
         assertThat(processRepository.savedProcess).isNull();
         assertThat(workflowPort.startedCommands).isEmpty();
+        assertThat(eventPublisher.events).isEmpty();
         assertThat(eventLogRepository.operations).containsExactly("exists");
     }
 
@@ -106,7 +116,8 @@ class StartApprovalProcessUseCaseTest {
         FakeEventProcessingLogRepository eventLogRepository = new FakeEventProcessingLogRepository(false);
         FakeApprovalProcessRepository processRepository = new FakeApprovalProcessRepository(true);
         FakeApprovalWorkflowPort workflowPort = new FakeApprovalWorkflowPort("camunda-001");
-        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort);
+        FakeApprovalStepAssignedEventPublisher eventPublisher = new FakeApprovalStepAssignedEventPublisher();
+        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort, eventPublisher);
 
         StartApprovalProcessResult result = useCase.execute(defaultCommand(PurchaseRequestPriority.NORMAL));
 
@@ -114,6 +125,7 @@ class StartApprovalProcessUseCaseTest {
         assertThat(result.process()).isEmpty();
         assertThat(processRepository.savedProcess).isNull();
         assertThat(workflowPort.startedCommands).isEmpty();
+        assertThat(eventPublisher.events).isEmpty();
         assertThat(eventLogRepository.operations).containsExactly("exists", "skipped");
         assertThat(eventLogRepository.lastEventId).isEqualTo("evt-pr-submitted-001");
     }
@@ -123,7 +135,8 @@ class StartApprovalProcessUseCaseTest {
         FakeEventProcessingLogRepository eventLogRepository = new FakeEventProcessingLogRepository(false);
         FakeApprovalProcessRepository processRepository = new FakeApprovalProcessRepository(false);
         FakeApprovalWorkflowPort workflowPort = new FakeApprovalWorkflowPort("camunda-emergency-001");
-        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort);
+        FakeApprovalStepAssignedEventPublisher eventPublisher = new FakeApprovalStepAssignedEventPublisher();
+        StartApprovalProcessUseCase useCase = newUseCase(eventLogRepository, processRepository, workflowPort, eventPublisher);
 
         StartApprovalProcessResult result = useCase.execute(defaultCommand(PurchaseRequestPriority.EMERGENCY));
 
@@ -139,12 +152,16 @@ class StartApprovalProcessUseCaseTest {
         assertThat(processRepository.savedProcess.getSteps())
                 .extracting(step -> step.getApproverId())
                 .containsExactly(MANAGER_ID, DIRECTOR_ID, POST_AUDIT_ID);
+        assertThat(eventPublisher.events)
+                .extracting(event -> event.payload().approverId())
+                .containsExactly(MANAGER_ID, DIRECTOR_ID);
     }
 
     private StartApprovalProcessUseCase newUseCase(
             FakeEventProcessingLogRepository eventLogRepository,
             FakeApprovalProcessRepository processRepository,
-            FakeApprovalWorkflowPort workflowPort) {
+            FakeApprovalWorkflowPort workflowPort,
+            FakeApprovalStepAssignedEventPublisher eventPublisher) {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
                 "MANAGER", List.of(candidate(MANAGER_ID, "manager")),
                 "FINANCE", List.of(candidate(FINANCE_ID, "finance")),
@@ -161,6 +178,7 @@ class StartApprovalProcessUseCaseTest {
                 processRepository,
                 approvalChainResolutionService,
                 workflowPort,
+                eventPublisher,
                 Clock.fixed(MONDAY_08_VN, ZoneOffset.UTC));
     }
 
@@ -305,6 +323,15 @@ class StartApprovalProcessUseCaseTest {
         public StartedWorkflow start(StartWorkflowCommand command) {
             startedCommands.add(command);
             return new StartedWorkflow(processInstanceId);
+        }
+    }
+
+    private static final class FakeApprovalStepAssignedEventPublisher implements ApprovalStepAssignedEventPublisher {
+        private final List<ApprovalStepAssignedEvent> events = new ArrayList<>();
+
+        @Override
+        public void publish(ApprovalStepAssignedEvent event) {
+            events.add(event);
         }
     }
 }

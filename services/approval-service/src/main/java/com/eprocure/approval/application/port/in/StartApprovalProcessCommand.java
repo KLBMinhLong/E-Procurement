@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public record StartApprovalProcessCommand(
         String eventId,
@@ -34,7 +35,7 @@ public record StartApprovalProcessCommand(
         totalAmount = Objects.requireNonNull(totalAmount, "totalAmount must not be null");
         priority = Objects.requireNonNull(priority, "priority must not be null");
         categories = categories == null ? Set.of() : Set.copyOf(categories);
-        entitySnapshot = entitySnapshot == null ? Map.of() : Map.copyOf(entitySnapshot);
+        entitySnapshot = copySnapshot(entitySnapshot);
     }
 
     private static String requireText(String value, String fieldName) {
@@ -42,5 +43,14 @@ public record StartApprovalProcessCommand(
             throw new IllegalArgumentException(fieldName + " must not be blank");
         }
         return value.trim();
+    }
+
+    private static Map<String, Object> copySnapshot(Map<String, Object> value) {
+        if (value == null || value.isEmpty()) {
+            return Map.of();
+        }
+        return value.entrySet().stream()
+                .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

@@ -23,10 +23,8 @@ spring:
     consumer:
       group-id: approval-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       auto-offset-reset: earliest
-      properties:
-        spring.json.trusted.packages: "com.eprocure.*"
 
 camunda:
   bpm:
@@ -39,6 +37,9 @@ camunda:
 eprocure:
   internal:
     api-key: ${APPROVAL_INTERNAL_API_KEY}
+  approval:
+    integration:
+      fallback-enabled: false
   integration:
     iam:
       base-url: ${IAM_SERVICE_URL}
