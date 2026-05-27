@@ -84,7 +84,7 @@ class PrSubmittedEventConsumerTest {
         private StartApprovalProcessCommand command;
 
         private CapturingStartApprovalProcessUseCase() {
-            super(null, null, null, null, null, Clock.systemUTC());
+            super(null, null, null, null, null, null, Clock.systemUTC());
         }
 
         @Override

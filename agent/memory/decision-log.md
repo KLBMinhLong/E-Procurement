@@ -1,11 +1,18 @@
 # Decision Log
 
+## [2026-05-27] E05 PR pending approval status callback
+
+- Decision: Approval-service now calls PR service internal API to move a submitted PR to `PENDING_APPROVAL` after the approval process is persisted.
+- Reason: E05-UC-001 needs the submit-to-approval path to reflect the business state in PR service, not only create approval records.
+- Impact: PR service exposes `PATCH /internal/purchase-requests/{id}/pending-approval` guarded by `X-Internal-Api-Key` and `Idempotency-Key`; approval-service uses the approval process id as the idempotency key and shares `PR_INTERNAL_API_KEY`.
+- Constraint: Final PR status callbacks for approved/rejected/changes-requested decisions and durable retry/outbox for cross-service callback failures remain later slices.
+
 ## [2026-05-27] E05 Kafka event wiring for approval start
 
 - Decision: Wire approval-service to consume `procurement.pr.submitted` as JSON, start approval processes from the consumed event, and publish initial `approval.step.assigned` events after process creation.
 - Reason: E05-UC-001 requires the PR submitted event to create the approval process and notify downstream notification-service about assigned first-wave approval tasks.
 - Impact: `PrSubmittedEvent` now carries `title` and `categories` so approval rules can evaluate category add-ons. Docker Compose runs PR/Approval with Kafka integration enabled by default, while local profiles can keep fallback logging enabled when Kafka is unavailable.
-- Constraint: PR status callback to `PENDING_APPROVAL`, approval action result producers, and durable outbox retry for failed Kafka publish remain later slices.
+- Constraint: Approval action result producers and durable outbox retry for failed Kafka publish remain later slices.
 
 ## [2026-05-27] E05 Start approval process from PR submitted event
 

@@ -22,6 +22,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/internal/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(gatewayAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

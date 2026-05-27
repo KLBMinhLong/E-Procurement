@@ -147,7 +147,7 @@
 | File attachment upload | ✅ |
 | Catalog API | ✅ |
 | Kafka event publishing | ✅ |
-| Unit tests (domain + CreatePR + SubmitPR + UpdatePR + CancelPR) | ✅ | 31 tests pass |
+| Unit tests (domain + CreatePR + SubmitPR + UpdatePR + CancelPR + pending approval callback) | ✅ | 35 tests pass |
 | Frontend: PR list page | ✅ |
 | Frontend: PR create form | ✅ |
 | Frontend: PR detail page | ✅ |
@@ -172,6 +172,7 @@
 | SLA calculation (business hours) | ✅ |
 | Start approval process (idempotent event handling + Camunda start + process/step persistence) | ✅ |
 | Kafka PR submitted consumer + approval.step.assigned publisher | ✅ |
+| PR status callback to PENDING_APPROVAL | ✅ |
 | Approve/Reject/RequestChanges/Forward actions | ⬜ |
 | SLA timer + escalation | ⬜ |
 | Delegation awareness | ⬜ |

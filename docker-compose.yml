@@ -306,6 +306,7 @@ services:
       PR_ATTACHMENT_MAX_SIZE_MB: ${PR_ATTACHMENT_MAX_SIZE_MB:-20}
       PR_EMERGENCY_MONTHLY_LIMIT: ${PR_EMERGENCY_MONTHLY_LIMIT:-3}
       PR_INTEGRATION_FALLBACK_ENABLED: ${PR_INTEGRATION_FALLBACK_ENABLED:-false}
+      PR_INTERNAL_API_KEY: ${PR_INTERNAL_API_KEY:-change-me-internal-api-key}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "${PR_SERVICE_PORT:-8082}:8082"
@@ -368,6 +369,8 @@ services:
       APPROVAL_INTERNAL_API_KEY: ${APPROVAL_INTERNAL_API_KEY:-change-me-internal-api-key}
       IAM_SERVICE_URL: http://iam-service:8081
       IAM_INTERNAL_API_KEY: ${IAM_INTERNAL_API_KEY:-change-me-internal-api-key}
+      PR_SERVICE_URL: http://pr-service:8082
+      PR_INTERNAL_API_KEY: ${PR_INTERNAL_API_KEY:-change-me-internal-api-key}
     ports:
       - "${APPROVAL_SERVICE_PORT:-8083}:8083"
     networks:

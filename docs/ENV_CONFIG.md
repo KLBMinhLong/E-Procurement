@@ -54,7 +54,8 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `RATE_LIMIT_UPLOAD_RPM` | `10` | `10` | Upload/phút/user |
 | `RATE_LIMIT_INTERSERVICE_RPM` | `1000` | `1000` | Inter-service/phút/service |
 | `IAM_SERVICE_URL` | `http://iam-service:8081` | `http://iam-service:8081` | IAM endpoint để verify token |
-| `PR_SERVICE_URL` | `http://pr-service:8082` | `http://pr-service:8082` | |
+| `PR_SERVICE_URL` | `http://pr-service:8082` | `http://pr-service:8082` | PR endpoint nội bộ/gateway upstream |
+| `PR_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho PR internal endpoints |
 | `APPROVAL_SERVICE_URL` | `http://approval-service:8083` | `http://approval-service:8083` | |
 | `FINANCE_SERVICE_URL` | `http://finance-service:8084` | `http://finance-service:8084` | |
 | `INVENTORY_SERVICE_URL` | `http://inventory-service:8085` | `http://inventory-service:8085` | |
@@ -197,7 +198,13 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `IAM_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho `/internal/org/approvers` |
 | `APPROVAL_INTEGRATION_FALLBACK_ENABLED` | `false` trong Docker Compose, `true` local mặc định | `false` | `false` để consume/publish Kafka; `true` tắt consumer và chỉ log `approval.step.assigned` |
 
-### 6.4 SLA & Escalation
+### 6.4 PR Integration
+| Biến | Dev | Prod | Mô tả |
+|---|---|---|---|
+| `PR_SERVICE_URL` | `http://pr-service:8082` | `https://pr.eprocure.internal` | Approval-service gọi PR internal API để cập nhật trạng thái PR |
+| `PR_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho `/internal/purchase-requests/*` |
+
+### 6.5 SLA & Escalation
 | Biến | Dev | Prod | Mô tả |
 |---|---|---|---|
 | `SLA_WARNING_AHEAD_HOURS` | `4` | `4` | Gửi cảnh báo trước SLA bao nhiêu giờ |
