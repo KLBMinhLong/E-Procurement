@@ -170,6 +170,7 @@
 | ApprovalRule engine (select rule by conditions) | ✅ |
 | Approval chain resolution (từ org chart) | ✅ |
 | SLA calculation (business hours) | ✅ |
+| Start approval process (idempotent event handling + Camunda start + process/step persistence) | ✅ |
 | Approve/Reject/RequestChanges/Forward actions | ⬜ |
 | SLA timer + escalation | ⬜ |
 | Delegation awareness | ⬜ |
@@ -177,7 +178,7 @@
 | Admin: CRUD approval rules | ⬜ |
 | Frontend: Approval inbox | ⬜ |
 | Frontend: Task detail + actions | ⬜ |
-| Unit tests (rule selection foundation + BPMN diagram metadata + chain/SLA resolution) | ✅ | 16 tests pass |
+| Unit tests (rule selection foundation + BPMN diagram metadata + chain/SLA resolution + process start) | ✅ | 20 tests pass |
 
 ### E06–E15: (Xem PROJECT_BRIEF.md)
 | Epic | Status |

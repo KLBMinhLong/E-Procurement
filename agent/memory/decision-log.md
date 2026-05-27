@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-27] E05 Start approval process from PR submitted event
+
+- Decision: Add `StartApprovalProcessUseCase` to idempotently consume PR submitted event data, resolve the approval chain, start the matching Camunda BPMN process, and persist `approval_processes` plus initial `approval_steps`.
+- Reason: The approval engine needs a durable process boundary before inbox queries, action APIs, SLA timers, and PR status callbacks can be implemented.
+- Impact: Standard PRs start `pr-approval-process`; emergency PRs start `emergency-approval`. Duplicate event IDs are skipped, and a second RUNNING process for the same purchase request is marked skipped through `event_processing_log`.
+- Constraint: Kafka listener wiring, `approval.step.assigned` publishing, PR status callback, delegation substitution, task inbox, and approve/reject/request-changes/forward actions remain later E05 slices.
+
 ## [2026-05-27] E05 SLA business-hours calculation
 
 - Decision: Add `SlaDeadlineCalculator` and `BusinessHoursCalendar` to calculate approval deadlines from resolved step SLA hours.

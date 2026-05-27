@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.approval.application.port.in.SelectApprovalRuleQuery;
+import com.eprocure.approval.application.service.ApprovalRuleSelectionService;
 import com.eprocure.approval.application.service.SelectedApprovalRuleView;
 import com.eprocure.approval.common.exception.BusinessException;
 import com.eprocure.approval.common.exception.ErrorCode;
@@ -29,7 +30,7 @@ class SelectApprovalRuleUseCaseTest {
     @DisplayName("Chọn rule value đúng tại biên 20M")
     void should_select_twenty_to_fifty_rule_when_amount_is_exactly_twenty_million() {
         // Given
-        SelectApprovalRuleUseCase useCase = new SelectApprovalRuleUseCase(new StubApprovalRuleRepository(defaultRules()));
+        SelectApprovalRuleUseCase useCase = newUseCase(defaultRules());
 
         // When
         SelectedApprovalRuleView result = useCase.execute(new SelectApprovalRuleQuery(
@@ -50,7 +51,7 @@ class SelectApprovalRuleUseCaseTest {
     @DisplayName("Rule emergency ưu tiên hơn rule value")
     void should_select_emergency_rule_when_priority_is_emergency() {
         // Given
-        SelectApprovalRuleUseCase useCase = new SelectApprovalRuleUseCase(new StubApprovalRuleRepository(defaultRules()));
+        SelectApprovalRuleUseCase useCase = newUseCase(defaultRules());
 
         // When
         SelectedApprovalRuleView result = useCase.execute(new SelectApprovalRuleQuery(
@@ -71,7 +72,7 @@ class SelectApprovalRuleUseCaseTest {
     @DisplayName("Rule category được cộng thêm vào chain chính")
     void should_append_additive_category_steps_when_category_rule_matches() {
         // Given
-        SelectApprovalRuleUseCase useCase = new SelectApprovalRuleUseCase(new StubApprovalRuleRepository(defaultRules()));
+        SelectApprovalRuleUseCase useCase = newUseCase(defaultRules());
 
         // When
         SelectedApprovalRuleView result = useCase.execute(new SelectApprovalRuleQuery(
@@ -93,7 +94,7 @@ class SelectApprovalRuleUseCaseTest {
     @DisplayName("Ném APR_001 khi không có rule chính nào match")
     void should_throw_apr_001_when_no_primary_rule_matches() {
         // Given
-        SelectApprovalRuleUseCase useCase = new SelectApprovalRuleUseCase(new StubApprovalRuleRepository(List.of(categorySoftwareRule())));
+        SelectApprovalRuleUseCase useCase = newUseCase(List.of(categorySoftwareRule()));
 
         // When/Then
         assertThatThrownBy(() -> useCase.execute(new SelectApprovalRuleQuery(
@@ -112,6 +113,10 @@ class SelectApprovalRuleUseCaseTest {
                 categorySoftwareRule(),
                 value20To50Rule(),
                 value5To20Rule());
+    }
+
+    private SelectApprovalRuleUseCase newUseCase(List<ApprovalRule> rules) {
+        return new SelectApprovalRuleUseCase(new ApprovalRuleSelectionService(new StubApprovalRuleRepository(rules)));
     }
 
     private ApprovalRule emergencyRule() {
