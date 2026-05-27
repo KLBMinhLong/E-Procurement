@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-27] E05 Backend Approval Inbox, Counts & Task Detail API
+
+- Decision: Implement `/api/v1/approval/inbox`, `/api/v1/approval/inbox/count`, and `/api/v1/approval/tasks/{taskId}` endpoints in approval-service, resolved through custom MyBatis projections and UserResolverPort Feign integrations.
+- Reason: User interfaces require high-performance, paginated inbox querying with multi-criteria dynamic filtering, dashboard priority counters, and detailed historic process steps for active workflows.
+- Impact: Secure, permission-code protected REST APIs allow actors to search tasks by type, amount range, priority, overdue status, and sorted SLA deadlines. The usecase caches resolved employee profiles in memory to prevent N+1 remote user details calls.
+- Constraint: Real-time SSE / WebSocket notifications and the Angular visual inbox screen are separate slices.
+
 ## [2026-05-27] E05 PR pending approval status callback
 
 - Decision: Approval-service now calls PR service internal API to move a submitted PR to `PENDING_APPROVAL` after the approval process is persisted.

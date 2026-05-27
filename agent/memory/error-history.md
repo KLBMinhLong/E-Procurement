@@ -1,5 +1,17 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-27] Bug: Compilation failure due to custom Java Record accessor and PageMeta builder constraints
+
+- Root cause:
+  1. Defining custom methods in a Java record that match component names but return different types (e.g., custom `priority()` returning `Optional<String>` instead of `String` component type) violates Java record compilation rules.
+  2. Direct call to `PageMeta` multi-param constructor failed because the signature requires multiple boolean flags (`isFirst`, `isLast`) rather than just pagination bounds.
+  3. Adding new interface methods (`findPendingTasks`, `countPendingTasks`) to `ApprovalProcessRepository` broke compiler compatibility in unit tests due to missing overrides in `FakeApprovalProcessRepository`.
+- Fix:
+  1. Renamed custom accessor methods to `*Opt()` (e.g. `priorityOpt()`).
+  2. Invoked static builder `PageMeta.of(...)` which dynamically computes metadata.
+  3. Added stub implementations to test-level mock repositories.
+- Prevention: Ensure Java records only override accessors with matching type signatures, use static factory methods for complex object initialization, and maintain test mock implementation alignment during interface expansions.
+
 ## [2026-05-27] Bug: Camunda Desktop Modeler could not display approval BPMN files
 
 - Root cause: The BPMN resources contained executable process definitions only and did not include BPMN Diagram Interchange metadata (`bpmndi:BPMNDiagram`, `BPMNPlane`, `BPMNShape`, `BPMNEdge`). Camunda Engine can parse process XML without DI, but Camunda Desktop Modeler requires DI coordinates to render an editable diagram.
