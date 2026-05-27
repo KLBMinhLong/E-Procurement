@@ -39,3 +39,7 @@ camunda:
 eprocure:
   internal:
     api-key: ${APPROVAL_INTERNAL_API_KEY}
+  integration:
+    iam:
+      base-url: ${IAM_SERVICE_URL}
+      internal-api-key: ${IAM_INTERNAL_API_KEY}

@@ -102,7 +102,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `KEYCLOAK_ADMIN_PASS` | `admin` | `***SENSITIVE***` | Admin password |
 | `IAM_PROVIDER_BASE_URL` | `http://iam-service:8081` | `http://iam-service:8081` | Base URL Keycloak provider dùng để gọi IAM internal API; truyền qua env vào realm import |
 | `IAM_PROVIDER_TIMEOUT_SECONDS` | `3` | `3` | HTTP timeout cho Keycloak provider khi gọi IAM internal API |
-| `IAM_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key giữa Keycloak provider và IAM internal endpoints |
+| `IAM_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key giữa Keycloak provider/approval-service và IAM internal endpoints |
 
 ### 4.4 Encryption (RSA)
 | Biến | Dev | Prod | Mô tả |
@@ -188,6 +188,12 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `CAMUNDA_ADMIN_USER` | `admin` | `***SENSITIVE***` | Camunda admin user |
 | `CAMUNDA_ADMIN_PASS` | `admin` | `***SENSITIVE***` | |
 | `CAMUNDA_HISTORY_TTL` | `P180D` | `P365D` | ISO8601 duration — TTL history |
+
+### 6.3 IAM Integration
+| Biến | Dev | Prod | Mô tả |
+|---|---|---|---|
+| `IAM_SERVICE_URL` | `http://iam-service:8081` | `https://iam.eprocure.internal` | Approval-service gọi IAM internal API để resolve approver |
+| `IAM_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho `/internal/org/approvers` |
 
 ### 6.3 SLA & Escalation
 | Biến | Dev | Prod | Mô tả |

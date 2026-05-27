@@ -168,16 +168,16 @@
 | Spring Boot + Camunda setup | ✅ |
 | BPMN files (pr-approval-process.bpmn, emergency.bpmn) | ✅ |
 | ApprovalRule engine (select rule by conditions) | ✅ |
-| Approval chain resolution (từ org chart) | ⬜ |
+| Approval chain resolution (từ org chart) | ✅ |
 | SLA calculation (business hours) | ⬜ |
 | Approve/Reject/RequestChanges/Forward actions | ⬜ |
 | SLA timer + escalation | ⬜ |
 | Delegation awareness | ⬜ |
-| Conflict of interest check | ⬜ |
+| Conflict of interest check | ✅ |
 | Admin: CRUD approval rules | ⬜ |
 | Frontend: Approval inbox | ⬜ |
 | Frontend: Task detail + actions | ⬜ |
-| Unit tests (rule selection foundation + BPMN diagram metadata) | ✅ | 8 tests pass |
+| Unit tests (rule selection foundation + BPMN diagram metadata + chain resolution) | ✅ | 12 tests pass |
 
 ### E06–E15: (Xem PROJECT_BRIEF.md)
 | Epic | Status |

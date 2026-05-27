@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-27] E05 Approval chain resolution
+
+- Decision: Add `ResolveApprovalChainUseCase` in approval-service with `OrgApproverPort`, IAM REST adapter, and an IAM internal `/internal/org/approvers` endpoint protected by `X-Internal-Api-Key`.
+- Reason: Approval Engine consumes PR submitted events without a browser session, so it needs a service-to-service approver resolver while preserving the public permission-code protected `/api/v1/org/approvers` contract for user-facing calls.
+- Impact: Approval chain resolution now selects the matching approval rule, calls IAM for candidates per approver role, excludes requester candidates, and returns `APR_002` for no approver or `APR_004` for unresolved SoD conflicts.
+- Constraint: This slice resolves the chain only; Camunda process start, persisted approval_process/approval_steps records, delegation substitution, and inbox/action APIs remain separate E05 slices.
+
 ## [2026-05-27] E05 Approval Engine foundation
 
 - Decision: Scaffold `approval-service` as a Maven reactor module with Spring Boot 3.2, Camunda BPMN starter `7.21.0`, PostgreSQL schema `approval`, baseline approval rule migrations, and initial BPMN files for standard and emergency PR approval.
