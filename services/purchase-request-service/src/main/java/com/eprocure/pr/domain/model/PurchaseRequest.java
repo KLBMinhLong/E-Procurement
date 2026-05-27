@@ -12,7 +12,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class PurchaseRequest {
     private static final int MIN_JUSTIFICATION_LENGTH = 50;
@@ -160,7 +162,15 @@ public class PurchaseRequest {
         this.submittedAt = Objects.requireNonNull(submittedAt, "submittedAt must not be null");
         this.updatedAt = submittedAt;
         this.updatedBy = actorId;
-        domainEvents.add(new PrSubmittedEvent(id, prNumber, requesterId, departmentId, priority, totalAmount));
+        domainEvents.add(new PrSubmittedEvent(
+                id,
+                prNumber,
+                title,
+                requesterId,
+                departmentId,
+                priority,
+                totalAmount,
+                submittedCategories()));
     }
 
     public void markPendingApproval(Instant updatedAt) {
@@ -257,6 +267,12 @@ public class PurchaseRequest {
 
     public List<PrLineItem> getLineItems() {
         return Collections.unmodifiableList(lineItems);
+    }
+
+    private Set<String> submittedCategories() {
+        return lineItems.stream()
+                .map(PrLineItem::getCategoryCode)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     public Money getTotalAmount() {

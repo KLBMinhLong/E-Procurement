@@ -4,6 +4,7 @@ import com.eprocure.pr.domain.model.PrPriority;
 import com.eprocure.pr.domain.model.vo.Money;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 public record PrSubmittedEvent(
@@ -18,10 +19,12 @@ public record PrSubmittedEvent(
     public PrSubmittedEvent(
             UUID purchaseRequestId,
             String prNumber,
+            String title,
             UUID requesterId,
             UUID departmentId,
             PrPriority priority,
-            Money totalAmount) {
+            Money totalAmount,
+            Set<String> categories) {
         this(
                 UUID.randomUUID().toString(),
                 "PURCHASE_REQUEST_SUBMITTED",
@@ -29,7 +32,7 @@ public record PrSubmittedEvent(
                 "purchase-request-service",
                 Instant.now(),
                 UUID.randomUUID(),
-                new Payload(purchaseRequestId, prNumber, requesterId, departmentId, priority, totalAmount));
+                new Payload(purchaseRequestId, prNumber, title, requesterId, departmentId, priority, totalAmount, categories));
     }
 
     public PrSubmittedEvent {
@@ -45,17 +48,21 @@ public record PrSubmittedEvent(
     public record Payload(
             UUID purchaseRequestId,
             String prNumber,
+            String title,
             UUID requesterId,
             UUID departmentId,
             PrPriority priority,
-            Money totalAmount) {
+            Money totalAmount,
+            Set<String> categories) {
         public Payload {
             Objects.requireNonNull(purchaseRequestId, "purchaseRequestId must not be null");
             Objects.requireNonNull(prNumber, "prNumber must not be null");
+            Objects.requireNonNull(title, "title must not be null");
             Objects.requireNonNull(requesterId, "requesterId must not be null");
             Objects.requireNonNull(departmentId, "departmentId must not be null");
             Objects.requireNonNull(priority, "priority must not be null");
             Objects.requireNonNull(totalAmount, "totalAmount must not be null");
+            categories = categories == null ? Set.of() : Set.copyOf(categories);
         }
     }
 }

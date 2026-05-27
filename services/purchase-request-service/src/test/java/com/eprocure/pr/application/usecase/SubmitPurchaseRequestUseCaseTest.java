@@ -81,6 +81,8 @@ class SubmitPurchaseRequestUseCaseTest {
         assertThat(purchaseRequest.getBudgetCheck()).contains(budgetCheckPort.result);
         assertThat(purchaseRequest.getInventoryCheck()).contains(InventoryCheckResult.empty());
         assertThat(eventPublisher.events).hasSize(1);
+        assertThat(eventPublisher.events.get(0).payload().title()).isEqualTo("Mua laptop Dell XPS 15 cho team phat trien");
+        assertThat(eventPublisher.events.get(0).payload().categories()).containsExactly("IT_HARDWARE");
         assertThat(idempotencyService.savedResponse).isEqualTo(result.view());
     }
 

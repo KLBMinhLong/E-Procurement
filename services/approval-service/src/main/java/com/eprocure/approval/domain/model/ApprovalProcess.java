@@ -80,7 +80,7 @@ public class ApprovalProcess {
         List<ApprovalStep> steps = chain.steps().stream()
                 .map(step -> ApprovalStep.pending(
                         processId,
-                        step.sequence(),
+                        step.sourceStepIndex(),
                         step.stepType(),
                         step.approverRole(),
                         step.approver().id(),

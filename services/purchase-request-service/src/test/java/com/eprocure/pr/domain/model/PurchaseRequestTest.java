@@ -77,7 +77,12 @@ class PurchaseRequestTest {
         assertThat(purchaseRequest.pullDomainEvents())
                 .hasSize(1)
                 .first()
-                .isInstanceOf(PrSubmittedEvent.class);
+                .isInstanceOf(PrSubmittedEvent.class)
+                .satisfies(event -> {
+                    PrSubmittedEvent submittedEvent = (PrSubmittedEvent) event;
+                    assertThat(submittedEvent.payload().title()).isEqualTo("Mua laptop Dell XPS 15 cho team phat trien");
+                    assertThat(submittedEvent.payload().categories()).containsExactly("IT_HARDWARE");
+                });
     }
 
     @Test

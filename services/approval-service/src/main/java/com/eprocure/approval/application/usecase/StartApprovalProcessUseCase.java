@@ -2,6 +2,7 @@ package com.eprocure.approval.application.usecase;
 
 import com.eprocure.approval.application.port.in.ResolveApprovalChainCommand;
 import com.eprocure.approval.application.port.in.StartApprovalProcessCommand;
+import com.eprocure.approval.application.port.out.ApprovalStepAssignedEventPublisher;
 import com.eprocure.approval.application.port.out.ApprovalWorkflowPort;
 import com.eprocure.approval.application.port.out.ApprovalWorkflowPort.StartWorkflowCommand;
 import com.eprocure.approval.application.service.ApprovalChainResolutionService;
@@ -10,6 +11,8 @@ import com.eprocure.approval.application.service.StartApprovalProcessResult;
 import com.eprocure.approval.application.service.StartedApprovalProcessView;
 import com.eprocure.approval.application.service.StartedApprovalProcessView.StartedApprovalStepView;
 import com.eprocure.approval.common.util.LogMaskingUtil;
+import com.eprocure.approval.domain.event.ApprovalStepAssignedEvent;
+import com.eprocure.approval.domain.event.ApprovalStepAssignedEvent.Payload;
 import com.eprocure.approval.domain.model.ApprovalEntityType;
 import com.eprocure.approval.domain.model.ApprovalProcess;
 import com.eprocure.approval.domain.model.PurchaseRequestPriority;
@@ -19,6 +22,7 @@ import java.time.Clock;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
@@ -35,6 +39,7 @@ public class StartApprovalProcessUseCase {
     private final ApprovalProcessRepository approvalProcessRepository;
     private final ApprovalChainResolutionService approvalChainResolutionService;
     private final ApprovalWorkflowPort approvalWorkflowPort;
+    private final ApprovalStepAssignedEventPublisher stepAssignedEventPublisher;
     private final Clock clock;
 
     public StartApprovalProcessUseCase(
@@ -42,11 +47,13 @@ public class StartApprovalProcessUseCase {
             ApprovalProcessRepository approvalProcessRepository,
             ApprovalChainResolutionService approvalChainResolutionService,
             ApprovalWorkflowPort approvalWorkflowPort,
+            ApprovalStepAssignedEventPublisher stepAssignedEventPublisher,
             Clock clock) {
         this.eventProcessingLogRepository = eventProcessingLogRepository;
         this.approvalProcessRepository = approvalProcessRepository;
         this.approvalChainResolutionService = approvalChainResolutionService;
         this.approvalWorkflowPort = approvalWorkflowPort;
+        this.stepAssignedEventPublisher = stepAssignedEventPublisher;
         this.clock = clock;
     }
 
@@ -110,11 +117,14 @@ public class StartApprovalProcessUseCase {
                 command.offsetValue(),
                 HANDLER_NAME);
 
+        StartedApprovalProcessView view = toView(process, chain.primaryRuleName());
+        publishInitialStepAssignments(view, command.traceId());
+
         log.info("[ACTION] Complete StartApprovalProcess | eventId={} | processId={} | camundaProcessInstanceId={}",
                 command.eventId(),
                 LogMaskingUtil.maskId(process.getId()),
                 workflow.processInstanceId());
-        return StartApprovalProcessResult.started(toView(process, chain.primaryRuleName()));
+        return StartApprovalProcessResult.started(view);
     }
 
     private String processDefinitionKey(PurchaseRequestPriority priority) {
@@ -152,11 +162,33 @@ public class StartApprovalProcessUseCase {
         return builder.append("ApproverId").toString();
     }
 
+    private void publishInitialStepAssignments(StartedApprovalProcessView process, UUID traceId) {
+        process.steps().stream()
+                .filter(step -> step.sequence() == process.currentStepIndex())
+                .map(step -> ApprovalStepAssignedEvent.create(
+                        traceId,
+                        clock.instant(),
+                        new Payload(
+                                process.processId(),
+                                step.stepId(),
+                                process.purchaseRequestId(),
+                                process.prNumber(),
+                                process.priority(),
+                                step.sequence(),
+                                step.stepType(),
+                                step.approverRole(),
+                                step.approverId(),
+                                step.assignedAt(),
+                                step.slaDeadline())))
+                .forEach(stepAssignedEventPublisher::publish);
+    }
+
     private StartedApprovalProcessView toView(ApprovalProcess process, String primaryRuleName) {
         return new StartedApprovalProcessView(
                 process.getId(),
                 process.getEntityId(),
                 process.getEntityNumber(),
+                process.getPriority(),
                 process.getStatus(),
                 process.getCurrentStepIndex(),
                 process.getCamundaProcessInstanceId(),
