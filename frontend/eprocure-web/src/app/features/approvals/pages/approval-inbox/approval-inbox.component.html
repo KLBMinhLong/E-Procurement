@@ -1,0 +1,202 @@
+<section class="approval-inbox-page" aria-labelledby="approval-inbox-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'approvals.inbox.eyebrow' | translate }}</span>
+      <h1 id="approval-inbox-heading" class="page-header__title">{{ 'approvals.inbox.title' | translate }}</h1>
+    </div>
+  </div>
+
+  <!-- ── Stats Panel ──────────────────────────────────────────────── -->
+  <div class="stats-grid">
+    <ep-stat-card
+      icon="inbox"
+      [title]="'approvals.inbox.stat.total' | translate"
+      [value]="counts().total.toString()"
+      [hint]="'approvals.inbox.stat.hint' | translate">
+    </ep-stat-card>
+    <ep-stat-card
+      icon="clock"
+      class="stat-card--overdue"
+      [title]="'approvals.inbox.stat.overdue' | translate"
+      [value]="counts().overdue.toString()"
+      [hint]="'approvals.inbox.stat.hint' | translate">
+    </ep-stat-card>
+    <ep-stat-card
+      icon="shield-alert"
+      class="stat-card--emergency"
+      [title]="'approvals.inbox.stat.emergency' | translate"
+      [value]="counts().emergency.toString()"
+      [hint]="'approvals.inbox.stat.hint' | translate">
+    </ep-stat-card>
+  </div>
+
+  <!-- ── Toolbar & Filters ────────────────────────────────────────── -->
+  <div class="inbox-toolbar">
+    <div class="inbox-toolbar__search">
+      <ep-filter-bar
+        id="inbox-search"
+        placeholderKey="approvals.inbox.filter.placeholder"
+        [value]="searchQuery()"
+        (valueChange)="onSearchChange($event)"
+        (refresh)="loadData()">
+      </ep-filter-bar>
+    </div>
+
+    <div class="inbox-toolbar__filters">
+      <!-- Entity Type Filter -->
+      <div class="filter-chip-group">
+        <button
+          id="filter-type-all"
+          class="filter-chip"
+          [class.filter-chip--active]="activeEntityType() === ''"
+          (click)="onEntityTypeChange('')">
+          {{ 'approvals.inbox.filter.allTypes' | translate }}
+        </button>
+        @for (t of entityTypes; track t) {
+          <button
+            [id]="'filter-type-' + t"
+            class="filter-chip"
+            [class.filter-chip--active]="activeEntityType() === t"
+            (click)="onEntityTypeChange(t)">
+            {{ ('pr.list.eyebrow' | translate) }}
+          </button>
+        }
+      </div>
+
+      <!-- Priority Filter -->
+      <div class="filter-chip-group">
+        <button
+          id="filter-priority-all"
+          class="filter-chip"
+          [class.filter-chip--active]="activePriority() === ''"
+          (click)="onPriorityChange('')">
+          {{ 'approvals.inbox.filter.allPriority' | translate }}
+        </button>
+        @for (p of priorities; track p) {
+          <button
+            [id]="'filter-priority-' + p"
+            class="filter-chip"
+            [class.filter-chip--active]="activePriority() === p"
+            (click)="onPriorityChange(p)">
+            {{ ('pr.priority.' + p) | translate }}
+          </button>
+        }
+      </div>
+
+      <!-- Overdue Filter Toggle -->
+      <div class="filter-chip-group">
+        <button
+          id="filter-overdue-toggle"
+          class="filter-chip filter-chip--overdue"
+          [class.filter-chip--active]="overdueOnly()"
+          (click)="onOverdueToggle()">
+          {{ 'approvals.inbox.filter.overdueOnly' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Table & Content ──────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="inbox"
+      [title]="'approvals.inbox.empty.title' | translate"
+      [message]="'approvals.inbox.empty.message' | translate" />
+  } @else {
+    <div class="inbox-table-wrapper">
+      <table class="inbox-table" role="grid" aria-labelledby="approval-inbox-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'approvals.inbox.col.number' | translate }}</th>
+            <th scope="col">{{ 'approvals.inbox.col.title' | translate }}</th>
+            <th scope="col">{{ 'approvals.inbox.col.priority' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'approvals.inbox.col.amount' | translate }}</th>
+            <th scope="col">{{ 'approvals.inbox.col.requester' | translate }}</th>
+            <th scope="col" class="sla-col">{{ 'approvals.inbox.col.deadline' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'approvals.inbox.col.assignedAt' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (task of items(); track task.taskId) {
+            <tr
+              [id]="'inbox-row-' + task.taskId"
+              class="inbox-table__row"
+              [class.inbox-table__row--overdue]="task.sla.isOverdue"
+              role="button"
+              tabindex="0"
+              (click)="onRowClick({ id: task.taskId })"
+              (keydown.enter)="onRowClick({ id: task.taskId })">
+
+              <td class="inbox-table__number">
+                <span class="mono">{{ task.entityNumber }}</span>
+              </td>
+
+              <td class="inbox-table__title">
+                <span class="inbox-table__title-text">{{ task.entityTitle }}</span>
+              </td>
+
+              <td>
+                <ep-badge
+                  [tone]="priorityTone[task.priority] || 'neutral'"
+                  [labelKey]="task.priority ? 'pr.priority.' + task.priority : null" />
+              </td>
+
+              <td class="align-right">
+                <ep-amount [value]="task.totalAmount?.amount" [currency]="task.totalAmount?.currency || 'VND'" />
+              </td>
+
+              <td class="inbox-table__requester">
+                <span class="inbox-table__requester-name">{{ task.requester?.fullName }}</span>
+                <span class="inbox-table__requester-dept">{{ task.requester?.department || ('user.noDepartment' | translate) }}</span>
+              </td>
+
+              <td class="sla-col">
+                <ep-sla-bar [assignedAt]="task.assignedAt" [deadline]="task.sla.deadlineAt" />
+              </td>
+
+              <td class="align-right inbox-table__date">
+                {{ formatDate(task.assignedAt) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (meta(); as m) {
+      <div class="inbox-pagination">
+        <span class="inbox-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: m.page, total: m.totalPages } }}
+          &nbsp;·&nbsp;
+          {{ m.totalElements }} {{ 'approvals.inbox.totalItems' | translate }}
+        </span>
+        <div class="inbox-pagination__controls">
+          <ep-button
+            id="btn-prev-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="m.isFirst"
+            (click)="onPageChange({ page: m.page - 1, size: m.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="m.isLast"
+            (click)="onPageChange({ page: m.page + 1, size: m.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+</section>

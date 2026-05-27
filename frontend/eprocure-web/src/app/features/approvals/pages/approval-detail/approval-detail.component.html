@@ -1,0 +1,375 @@
+<section class="approval-detail-page" aria-labelledby="approval-detail-heading">
+  <ep-breadcrumb />
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="12" />
+  } @else if (!task()) {
+    <ep-empty-state
+      icon="circle-alert"
+      [title]="'Tác vụ không tồn tại'"
+      [message]="'Không tìm thấy chi tiết cho tác vụ phê duyệt này.'" />
+  } @else {
+    <!-- ── Page Header & Actions ────────────────────────────────────── -->
+    <header class="detail-header">
+      <div class="detail-header__meta">
+        <ep-button variant="ghost" size="sm" icon="arrow-left" (click)="goBack()">
+          {{ 'auth.forgotPassword.backToLogin' | translate }}
+        </ep-button>
+        <div class="detail-header__title-row">
+          <h1 id="approval-detail-heading" class="detail-header__title">
+            {{ task()?.entityNumber }}
+          </h1>
+          <ep-badge
+            [tone]="priorityTone[task()?.priority || ''] || 'neutral'"
+            [labelKey]="task()?.priority ? 'pr.priority.' + task()?.priority : null" />
+        </div>
+      </div>
+
+      <div class="detail-header__actions">
+        <!-- Forward Action -->
+        <ep-button
+          variant="secondary"
+          icon="user-cog"
+          (click)="openModal('forward')">
+          Chuyển tiếp
+        </ep-button>
+        <!-- Request Changes Action -->
+        <ep-button
+          variant="secondary"
+          icon="clipboard-list"
+          (click)="openModal('changes')">
+          {{ 'approval.action.requestChanges' | translate }}
+        </ep-button>
+        <!-- Reject Action -->
+        <ep-button
+          variant="danger"
+          icon="x"
+          (click)="openModal('reject')">
+          {{ 'approval.action.reject' | translate }}
+        </ep-button>
+        <!-- Approve Action -->
+        <ep-button
+          variant="primary"
+          icon="check"
+          (click)="openModal('approve')">
+          {{ 'approval.action.approve' | translate }}
+        </ep-button>
+      </div>
+    </header>
+
+    <!-- ── Main Grid Layout ─────────────────────────────────────────── -->
+    <div class="detail-grid">
+      <!-- Left Main Column -->
+      <main class="detail-main">
+        <!-- Basic Info Card -->
+        <div class="card basic-info">
+          <h2 class="card__title">Thông tin yêu cầu</h2>
+          <div class="basic-info__subject">
+            <label>Tiêu đề</label>
+            <strong>{{ task()?.entityTitle }}</strong>
+          </div>
+
+          <div class="basic-info__meta-grid">
+            <div>
+              <label>Loại yêu cầu</label>
+              <span>{{ 'pr.list.eyebrow' | translate }}</span>
+            </div>
+            <div>
+              <label>Tổng giá trị</label>
+              <ep-amount [value]="task()?.totalAmount?.amount" [currency]="task()?.totalAmount?.currency || 'VND'" />
+            </div>
+            <div>
+              <label>Trạng thái thực tế</label>
+              <ep-badge tone="info" [labelKey]="'pr.status.' + entityPayload()?.status" />
+            </div>
+            <div>
+              <label>Cần hàng trước ngày</label>
+              <span>{{ formatDate(entityPayload()?.needByDate) }}</span>
+            </div>
+          </div>
+
+          <div class="basic-info__text-block">
+            <label>{{ 'pr.detail.label.justification' | translate }}</label>
+            <p>{{ entityPayload()?.justification }}</p>
+          </div>
+
+          @if (entityPayload()?.urgencyReason) {
+            <div class="basic-info__text-block basic-info__text-block--warning">
+              <label>{{ 'pr.detail.label.urgencyReason' | translate }}</label>
+              <p>{{ entityPayload()?.urgencyReason }}</p>
+            </div>
+          }
+        </div>
+
+        <!-- Line Items Card -->
+        <div class="card line-items">
+          <h2 class="card__title">{{ 'pr.detail.section.lineItems' | translate }}</h2>
+          <div class="table-responsive">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">STT</th>
+                  <th>{{ 'pr.create.lineItem.itemName' | translate }}</th>
+                  <th>{{ 'pr.create.lineItem.category' | translate }}</th>
+                  <th class="align-right">{{ 'pr.create.lineItem.quantity' | translate }}</th>
+                  <th>{{ 'pr.create.lineItem.unit' | translate }}</th>
+                  <th class="align-right">{{ 'pr.create.lineItem.unitPrice' | translate }}</th>
+                  <th class="align-right">{{ 'pr.create.lineItem.total' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of entityPayload()?.lineItems; track item.id; let index = $index) {
+                  <tr>
+                    <td>{{ index + 1 }}</td>
+                    <td class="item-name">
+                      {{ item.itemName }}
+                      @if (item.fromCatalog) {
+                        <span class="catalog-badge">Catalog</span>
+                      }
+                    </td>
+                    <td>{{ item.category?.name }}</td>
+                    <td class="align-right">{{ item.quantity }}</td>
+                    <td>{{ item.unit }}</td>
+                    <td class="align-right">
+                      <ep-amount [value]="item.unitPrice" [currency]="task()?.totalAmount?.currency || 'VND'" />
+                    </td>
+                    <td class="align-right bold">
+                      <ep-amount [value]="item.totalPrice" [currency]="task()?.totalAmount?.currency || 'VND'" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Attachments Card -->
+        @if (entityPayload()?.attachments?.length) {
+          <div class="card attachments">
+            <h2 class="card__title">{{ 'pr.detail.section.attachments' | translate }}</h2>
+            <ul class="attachment-list">
+              @for (file of entityPayload()?.attachments; track file.id) {
+                <li class="attachment-item">
+                  <div class="attachment-item__info">
+                    <ep-icon name="paperclip" [size]="16"></ep-icon>
+                    <span>{{ file.fileName }}</span>
+                    <span class="file-size">({{ (file.fileSize / 1024 / 1024).toFixed(2) }} MB)</span>
+                  </div>
+                  <a [href]="file.fileUrl" target="_blank" class="download-link">
+                    <ep-icon name="download" [size]="16"></ep-icon>
+                    Tải về
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </main>
+
+      <!-- Right Sidebar Column -->
+      <aside class="detail-sidebar">
+        <!-- Requester Profile Card -->
+        <div class="card sidebar-card requester-card">
+          <h2 class="card__title">Người yêu cầu</h2>
+          <div class="requester-profile">
+            <ep-avatar [name]="task()?.requester?.fullName || ''" />
+            <div class="requester-profile__details">
+              <strong>{{ task()?.requester?.fullName }}</strong>
+              <span>{{ task()?.requester?.department }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLA Card -->
+        <div class="card sidebar-card sla-card">
+          <h2 class="card__title">Hạn xử lý phê duyệt</h2>
+          <div class="sla-container">
+            <ep-sla-bar [assignedAt]="task()?.assignedAt || ''" [deadline]="task()?.sla?.deadlineAt || ''" />
+            <div class="sla-dates">
+              <div>
+                <label>Ngày giao</label>
+                <span>{{ formatDate(task()?.assignedAt) }}</span>
+              </div>
+              <div>
+                <label>Hạn xử lý</label>
+                <span>{{ formatDate(task()?.sla?.deadlineAt) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline Workflow Process Card -->
+        <div class="card sidebar-card process-card">
+          <h2 class="card__title">Quy trình phê duyệt</h2>
+          <div class="timeline">
+            @for (step of process()?.steps; track step.stepIndex; let last = $last) {
+              <div class="timeline-item" [class.timeline-item--active]="step.status === 'PENDING'">
+                <!-- Visual line connectors -->
+                <div class="timeline-indicator">
+                  <div class="timeline-dot" [class]="'timeline-dot--' + step.status.toLowerCase()"></div>
+                  @if (!last) {
+                    <div class="timeline-line"></div>
+                  }
+                </div>
+
+                <div class="timeline-content">
+                  <div class="timeline-content__header">
+                    <strong>Bước {{ step.stepIndex + 1 }}: {{ step.approverRole }}</strong>
+                    <ep-badge
+                      [tone]="statusTone[step.status] || 'neutral'"
+                      [labelKey]="'status.' + step.status" />
+                  </div>
+                  <div class="timeline-content__body">
+                    @if (step.approver?.fullName) {
+                      <div class="timeline-approver">
+                        <ep-icon name="user" [size]="12"></ep-icon>
+                        <span>{{ step.approver.fullName }}</span>
+                      </div>
+                    }
+
+                    @if (step.comment) {
+                      <blockquote class="timeline-comment">
+                        "{{ step.comment }}"
+                      </blockquote>
+                    }
+
+                    @if (step.actedAt) {
+                      <time class="timeline-time">
+                        {{ formatDate(step.actedAt) }}
+                      </time>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ── Action Modals ────────────────────────────────────────────── -->
+    <!-- Approve Modal -->
+    <ep-modal
+      [open]="activeModal() === 'approve'"
+      title="Phê duyệt yêu cầu"
+      (close)="closeModal()">
+      <div class="modal-form">
+        <p class="modal-instruction">Bạn chuẩn bị phê duyệt yêu cầu này. Nhập ý kiến phản hồi (tùy chọn) bên dưới.</p>
+        <ep-form-field label="Ý kiến phê duyệt">
+          <textarea
+            class="ep-input text-area"
+            rows="3"
+            placeholder="Nhập ý kiến phê duyệt..."
+            [(ngModel)]="modalComment">
+          </textarea>
+        </ep-form-field>
+        <div class="modal-actions">
+          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
+          <ep-button variant="primary" [loading]="isSubmitting()" (click)="submitAction()">Phê duyệt</ep-button>
+        </div>
+      </div>
+    </ep-modal>
+
+    <!-- Reject Modal -->
+    <ep-modal
+      [open]="activeModal() === 'reject'"
+      title="Từ chối yêu cầu"
+      (close)="closeModal()">
+      <div class="modal-form">
+        <p class="modal-instruction text-danger">Từ chối yêu cầu sẽ kết thúc quy trình phê duyệt này. Vui lòng nhập lý do từ chối (bắt buộc).</p>
+        <ep-form-field label="Lý do từ chối">
+          <textarea
+            class="ep-input text-area"
+            rows="3"
+            required
+            placeholder="Nhập lý do từ chối..."
+            [(ngModel)]="modalComment">
+          </textarea>
+        </ep-form-field>
+        <div class="modal-actions">
+          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
+          <ep-button
+            variant="danger"
+            [loading]="isSubmitting()"
+            [disabled]="!modalComment().trim()"
+            (click)="submitAction()">
+            Từ chối
+          </ep-button>
+        </div>
+      </div>
+    </ep-modal>
+
+    <!-- Request Changes Modal -->
+    <ep-modal
+      [open]="activeModal() === 'changes'"
+      title="Yêu cầu bổ sung thông tin"
+      (close)="closeModal()">
+      <div class="modal-form">
+        <p class="modal-instruction text-warning">Yêu cầu này sẽ được gửi ngược lại cho người tạo để bổ sung thông tin theo phản hồi của bạn. Vui lòng mô tả rõ nội dung cần bổ sung (bắt buộc).</p>
+        <ep-form-field label="Phản hồi cần bổ sung">
+          <textarea
+            class="ep-input text-area"
+            rows="3"
+            required
+            placeholder="Nhập nội dung yêu cầu bổ sung..."
+            [(ngModel)]="modalComment">
+          </textarea>
+        </ep-form-field>
+        <div class="modal-actions">
+          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
+          <ep-button
+            variant="primary"
+            [loading]="isSubmitting()"
+            [disabled]="!modalComment().trim()"
+            (click)="submitAction()">
+            Gửi yêu cầu
+          </ep-button>
+        </div>
+      </div>
+    </ep-modal>
+
+    <!-- Forward Modal -->
+    <ep-modal
+      [open]="activeModal() === 'forward'"
+      title="Chuyển tiếp phê duyệt"
+      (close)="closeModal()">
+      <div class="modal-form">
+        <p class="modal-instruction">Ủy quyền hoặc chuyển giao tác vụ phê duyệt này cho một thành viên khác chịu trách nhiệm.</p>
+        
+        <ep-form-field label="Người nhận chuyển tiếp">
+          <select
+            class="ep-input select-box"
+            required
+            [(ngModel)]="selectedForwardUser">
+            <option value="" disabled selected>Chọn người dùng...</option>
+            @for (user of users(); track user.id) {
+              <option [value]="user.id">
+                {{ user.fullName }} ({{ user.email }}) - {{ user.departmentName || 'Không phòng ban' }}
+              </option>
+            }
+          </select>
+        </ep-form-field>
+
+        <ep-form-field label="Ghi chú chuyển tiếp (tùy chọn)">
+          <textarea
+            class="ep-input text-area"
+            rows="3"
+            placeholder="Nhập lý do chuyển tiếp..."
+            [(ngModel)]="modalComment">
+          </textarea>
+        </ep-form-field>
+
+        <div class="modal-actions">
+          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
+          <ep-button
+            variant="primary"
+            [loading]="isSubmitting()"
+            [disabled]="!selectedForwardUser()"
+            (click)="submitAction()">
+            Chuyển tiếp
+          </ep-button>
+        </div>
+      </div>
+    </ep-modal>
+  }
+</section>

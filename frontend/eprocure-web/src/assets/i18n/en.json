@@ -704,5 +704,45 @@
       "description": "Select your preferred avatar from the list below",
       "select": "Set as Profile Picture"
     }
+  },
+  "route": {
+    "approvals": {
+      "inbox": "Approval Inbox",
+      "detail": "Approval Detail"
+    }
+  },
+  "approvals": {
+    "inbox": {
+      "eyebrow": "Business Approvals",
+      "title": "Approval Inbox",
+      "stat": {
+        "total": "Pending Approvals",
+        "overdue": "Overdue",
+        "emergency": "Critical",
+        "hint": "Need Action"
+      },
+      "filter": {
+        "placeholder": "Search request code, title...",
+        "allStatus": "All Statuses",
+        "allPriority": "All Priorities",
+        "allTypes": "All Request Types",
+        "overdueOnly": "Overdue Only"
+      },
+      "empty": {
+        "title": "Inbox is empty",
+        "message": "Excellent! No tasks are awaiting your approval right now."
+      },
+      "col": {
+        "number": "Request Code",
+        "title": "Title",
+        "priority": "Priority",
+        "type": "Type",
+        "amount": "Amount",
+        "requester": "Requester",
+        "assignedAt": "Assigned At",
+        "deadline": "Deadline"
+      },
+      "totalItems": "tasks"
+    }
   }
 }

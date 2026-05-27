@@ -48,10 +48,10 @@ export const routes: Routes = [
       },
       {
         path: 'approvals',
-        title: 'route.approvals',
         canActivate: [permissionGuard],
         data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
-        loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+        loadChildren: () =>
+          import('./features/approvals/approvals.routes').then((m) => m.approvalsRoutes)
       },
       {
         path: 'admin',

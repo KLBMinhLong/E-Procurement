@@ -704,5 +704,45 @@
       "description": "Nhấp chọn ảnh đại diện mong muốn từ danh sách",
       "select": "Chọn làm ảnh đại diện"
     }
+  },
+  "route": {
+    "approvals": {
+      "inbox": "Hộp thư phê duyệt",
+      "detail": "Chi tiết phê duyệt"
+    }
+  },
+  "approvals": {
+    "inbox": {
+      "eyebrow": "Phê duyệt nghiệp vụ",
+      "title": "Hộp thư phê duyệt",
+      "stat": {
+        "total": "Cần phê duyệt",
+        "overdue": "Bị quá hạn",
+        "emergency": "Nghiêm trọng",
+        "hint": "Cần xử lý"
+      },
+      "filter": {
+        "placeholder": "Tìm mã yêu cầu, tiêu đề...",
+        "allStatus": "Tất cả trạng thái",
+        "allPriority": "Tất cả độ ưu tiên",
+        "allTypes": "Tất cả loại yêu cầu",
+        "overdueOnly": "Chỉ quá hạn"
+      },
+      "empty": {
+        "title": "Hộp thư trống",
+        "message": "Tuyệt vời! Không có nhiệm vụ nào cần bạn phê duyệt lúc này."
+      },
+      "col": {
+        "number": "Mã yêu cầu",
+        "title": "Tiêu đề",
+        "priority": "Mức độ",
+        "type": "Loại",
+        "amount": "Giá trị",
+        "requester": "Người yêu cầu",
+        "assignedAt": "Ngày giao",
+        "deadline": "Hạn chót"
+      },
+      "totalItems": "nhiệm vụ"
+    }
   }
 }
