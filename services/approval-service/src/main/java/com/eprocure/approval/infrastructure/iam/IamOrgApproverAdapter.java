@@ -16,11 +16,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import com.eprocure.approval.application.port.out.UserResolverPort;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
 
 @Component
-public class IamOrgApproverAdapter implements OrgApproverPort {
+public class IamOrgApproverAdapter implements OrgApproverPort, UserResolverPort {
     private static final Logger log = LogManager.getLogger(IamOrgApproverAdapter.class);
     private static final String INTERNAL_API_KEY_HEADER = "X-Internal-Api-Key";
 
@@ -103,5 +104,44 @@ public class IamOrgApproverAdapter implements OrgApproverPort {
     }
 
     private record IamDepartmentResponse(UUID id) {
+    }
+
+    @Override
+    public Optional<UserSummary> getUserById(UUID userId) {
+        if (internalApiKey.isBlank()) {
+            log.error("[ACTION] Step ResolveUserFromIam | userId={} | result=missing_api_key", LogMaskingUtil.maskId(userId));
+            return Optional.empty();
+        }
+        try {
+            ApiResponse<IamUserDetailResponse> response = iamRestClient.get()
+                    .uri(uriBuilder -> uriBuilder.path("/internal/org/users/{userId}").build(userId))
+                    .header(INTERNAL_API_KEY_HEADER, internalApiKey)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+
+            if (response == null || !response.success() || response.data() == null) {
+                log.warn("[ACTION] Step ResolveUserFromIam | userId={} | result=empty", LogMaskingUtil.maskId(userId));
+                return Optional.empty();
+            }
+
+            IamUserDetailResponse data = response.data();
+            String deptName = data.department() != null ? data.department().name() : null;
+            return Optional.of(new UserSummary(data.id(), data.fullName(), deptName));
+        } catch (Exception exception) {
+            log.error("[EXCEPTION] IAM user resolution failed | userId={} | error={}",
+                    LogMaskingUtil.maskId(userId),
+                    exception.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private record IamUserDetailResponse(
+            UUID id,
+            String fullName,
+            IamDepartmentDetailResponse department) {
+    }
+
+    private record IamDepartmentDetailResponse(UUID id, String code, String name) {
     }
 }

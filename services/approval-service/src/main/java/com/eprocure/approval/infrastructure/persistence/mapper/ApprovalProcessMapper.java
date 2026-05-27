@@ -196,4 +196,22 @@ public interface ApprovalProcessMapper {
               AND is_deleted = FALSE
             """)
     void updateStep(@Param("entity") ApprovalStepDbEntity entity);
+
+    java.util.List<com.eprocure.approval.domain.repository.PendingTaskProjection> findPendingTasks(
+            @Param("userId") UUID userId,
+            @Param("priority") String priority,
+            @Param("entityType") String entityType,
+            @Param("minAmount") java.math.BigDecimal minAmount,
+            @Param("isOverdue") Boolean isOverdue,
+            @Param("orderByColumn") String orderByColumn,
+            @Param("sortDirection") String sortDirection,
+            @Param("offset") int offset,
+            @Param("limit") int limit);
+
+    long countPendingTasks(
+            @Param("userId") UUID userId,
+            @Param("priority") String priority,
+            @Param("entityType") String entityType,
+            @Param("minAmount") java.math.BigDecimal minAmount,
+            @Param("isOverdue") Boolean isOverdue);
 }

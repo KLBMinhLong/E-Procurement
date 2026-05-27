@@ -27,12 +27,15 @@ public class InternalOrganizationController {
 
     private final InternalApiKeyGuard internalApiKeyGuard;
     private final ResolveApproversUseCase resolveApproversUseCase;
+    private final com.eprocure.iam.application.usecase.GetUserByIdUseCase getUserByIdUseCase;
 
     public InternalOrganizationController(
             InternalApiKeyGuard internalApiKeyGuard,
-            ResolveApproversUseCase resolveApproversUseCase) {
+            ResolveApproversUseCase resolveApproversUseCase,
+            com.eprocure.iam.application.usecase.GetUserByIdUseCase getUserByIdUseCase) {
         this.internalApiKeyGuard = internalApiKeyGuard;
         this.resolveApproversUseCase = resolveApproversUseCase;
+        this.getUserByIdUseCase = getUserByIdUseCase;
     }
 
     @GetMapping("/approvers")
@@ -49,6 +52,18 @@ public class InternalOrganizationController {
                 LogMaskingUtil.maskId(requesterId));
         return ResponseEntity.ok(ApiResponse.success(
                 resolveApproversUseCase.execute(new ResolveApproversQuery(roleCode, departmentId, requesterId)),
+                RequestIdUtil.resolve(request)));
+    }
+
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<com.eprocure.iam.application.service.UserDetailView>> getUserById(
+            @RequestHeader(INTERNAL_API_KEY_HEADER) String internalApiKey,
+            @PathVariable UUID userId,
+            HttpServletRequest request) {
+        internalApiKeyGuard.verify(internalApiKey);
+        log.info("[CONTROLLER] GET /internal/org/users/{} | userId=internal", LogMaskingUtil.maskId(userId));
+        return ResponseEntity.ok(ApiResponse.success(
+                getUserByIdUseCase.execute(userId),
                 RequestIdUtil.resolve(request)));
     }
 }

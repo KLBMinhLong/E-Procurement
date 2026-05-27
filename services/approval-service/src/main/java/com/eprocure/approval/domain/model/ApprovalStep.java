@@ -198,7 +198,7 @@ public class ApprovalStep {
         return Optional.ofNullable(camundaTaskId);
     }
 
-    boolean isAssignedTo(UUID actorId) {
+    public boolean isAssignedTo(UUID actorId) {
         return approverId.equals(actorId) || actorId.equals(delegateId);
     }
 

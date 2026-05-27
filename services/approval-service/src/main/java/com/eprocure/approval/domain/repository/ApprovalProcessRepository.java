@@ -20,4 +20,22 @@ public interface ApprovalProcessRepository {
     void updateStep(ApprovalStep step);
 
     void insertStep(ApprovalStep step);
+
+    java.util.List<PendingTaskProjection> findPendingTasks(
+            UUID userId,
+            String priority,
+            String entityType,
+            java.math.BigDecimal minAmount,
+            Boolean isOverdue,
+            String orderByColumn,
+            String sortDirection,
+            int offset,
+            int limit);
+
+    long countPendingTasks(
+            UUID userId,
+            String priority,
+            String entityType,
+            java.math.BigDecimal minAmount,
+            Boolean isOverdue);
 }

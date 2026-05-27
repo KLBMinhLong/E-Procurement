@@ -32,9 +32,26 @@ public class ApprovalTaskController {
     private static final Logger log = LogManager.getLogger(ApprovalTaskController.class);
 
     private final ApprovalTaskActionUseCase approvalTaskActionUseCase;
+    private final com.eprocure.approval.application.usecase.GetTaskDetailUseCase getTaskDetailUseCase;
 
-    public ApprovalTaskController(ApprovalTaskActionUseCase approvalTaskActionUseCase) {
+    public ApprovalTaskController(
+            ApprovalTaskActionUseCase approvalTaskActionUseCase,
+            com.eprocure.approval.application.usecase.GetTaskDetailUseCase getTaskDetailUseCase) {
         this.approvalTaskActionUseCase = approvalTaskActionUseCase;
+        this.getTaskDetailUseCase = getTaskDetailUseCase;
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/{taskId}")
+    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
+    public ResponseEntity<ApiResponse<com.eprocure.approval.application.service.ApprovalTaskDetail>> getTaskDetail(
+            @PathVariable String taskId,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] GET /api/v1/approvals/tasks/{} | userId={}",
+                taskId,
+                LogMaskingUtil.maskId(principal.getId()));
+        com.eprocure.approval.application.service.ApprovalTaskDetail result = getTaskDetailUseCase.execute(taskId, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(result, RequestIdUtil.resolve(request)));
     }
 
     @PatchMapping("/{taskId}/approve")

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.approval.infrastructure.persistence.mapper.ApprovalProcessMapper">
+
+    <select id="findPendingTasks" resultType="com.eprocure.approval.domain.repository.PendingTaskProjection">
+        SELECT
+            s.camunda_task_id AS camundaTaskId,
+            p.id AS processId,
+            p.entity_type AS entityType,
+            p.entity_id AS entityId,
+            p.entity_number AS entityNumber,
+            p.entity_title AS entityTitle,
+            p.requester_id AS requesterId,
+            p.requester_department_id AS requesterDepartmentId,
+            p.total_amount AS totalAmount,
+            p.currency AS currency,
+            p.priority AS priority,
+            s.step_index AS stepIndex,
+            s.step_type AS stepType,
+            s.sla_deadline AS slaDeadline,
+            s.approver_id AS approverId,
+            s.delegate_id AS delegateId,
+            s.assigned_at AS assignedAt
+        FROM approval.approval_processes p
+        JOIN approval.approval_steps s ON s.process_id = p.id
+        WHERE p.status = 'RUNNING'
+          AND p.is_deleted = FALSE
+          AND s.status = 'PENDING'
+          AND s.is_deleted = FALSE
+          AND (s.approver_id = #{userId} OR s.delegate_id = #{userId})
+          <if test="priority != null and priority != ''">
+              AND p.priority = #{priority}
+          </if>
+          <if test="entityType != null and entityType != ''">
+              AND p.entity_type = #{entityType}
+          </if>
+          <if test="minAmount != null">
+              AND p.total_amount >= #{minAmount}
+          </if>
+          <if test="isOverdue != null">
+              <choose>
+                  <when test="isOverdue">
+                      AND NOW() > s.sla_deadline
+                  </when>
+                  <otherwise>
+                      AND s.sla_deadline >= NOW()
+                  </otherwise>
+              </choose>
+          </if>
+        ORDER BY
+        <choose>
+            <when test="orderByColumn == 'slaDeadline'">s.sla_deadline</when>
+            <when test="orderByColumn == 'assignedAt'">s.assigned_at</when>
+            <when test="orderByColumn == 'totalAmount'">p.total_amount</when>
+            <otherwise>s.sla_deadline</otherwise>
+        </choose>
+        <choose>
+            <when test="sortDirection != null and sortDirection.equalsIgnoreCase('desc')">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPendingTasks" resultType="long">
+        SELECT COUNT(*)
+        FROM approval.approval_processes p
+        JOIN approval.approval_steps s ON s.process_id = p.id
+        WHERE p.status = 'RUNNING'
+          AND p.is_deleted = FALSE
+          AND s.status = 'PENDING'
+          AND s.is_deleted = FALSE
+          AND (s.approver_id = #{userId} OR s.delegate_id = #{userId})
+          <if test="priority != null and priority != ''">
+              AND p.priority = #{priority}
+          </if>
+          <if test="entityType != null and entityType != ''">
+              AND p.entity_type = #{entityType}
+          </if>
+          <if test="minAmount != null">
+              AND p.total_amount >= #{minAmount}
+          </if>
+          <if test="isOverdue != null">
+              <choose>
+                  <when test="isOverdue">
+                      AND NOW() > s.sla_deadline
+                  </when>
+                  <otherwise>
+                      AND s.sla_deadline >= NOW()
+                  </otherwise>
+              </choose>
+          </if>
+    </select>
+
+</mapper>
