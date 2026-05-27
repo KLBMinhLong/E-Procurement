@@ -289,7 +289,8 @@ services:
       OTEL_SERVICE_NAME: purchase-request-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      OTEL_TRACES_EXPORTER: otlp
+      # OTEL_TRACES_EXPORTER: otlp
+      OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
@@ -351,7 +352,8 @@ services:
       OTEL_SERVICE_NAME: approval-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      OTEL_TRACES_EXPORTER: otlp
+      # OTEL_TRACES_EXPORTER: otlp
+      OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
