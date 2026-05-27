@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_PrApproval"
+                  targetNamespace="https://eprocure.internal/bpmn/approval">
+  <bpmn:process id="pr-approval-process" name="Quy trình phê duyệt yêu cầu mua sắm" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_PrSubmitted" name="PR đã gửi duyệt">
+      <bpmn:outgoing>Flow_Start_To_ApprovalTask</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_ApprovePr" name="Duyệt yêu cầu mua sắm" camunda:assignee="${approverId}">
+      <bpmn:incoming>Flow_Start_To_ApprovalTask</bpmn:incoming>
+      <bpmn:outgoing>Flow_ApprovalTask_To_Decision</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_ApprovalDecision" name="Kết quả duyệt">
+      <bpmn:incoming>Flow_ApprovalTask_To_Decision</bpmn:incoming>
+      <bpmn:outgoing>Flow_Decision_To_Approved</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Decision_To_Rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:endEvent id="EndEvent_PrApproved" name="PR được duyệt">
+      <bpmn:incoming>Flow_Decision_To_Approved</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndEvent_PrRejected" name="PR bị từ chối">
+      <bpmn:incoming>Flow_Decision_To_Rejected</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_Start_To_ApprovalTask" sourceRef="StartEvent_PrSubmitted" targetRef="Task_ApprovePr"/>
+    <bpmn:sequenceFlow id="Flow_ApprovalTask_To_Decision" sourceRef="Task_ApprovePr" targetRef="Gateway_ApprovalDecision"/>
+    <bpmn:sequenceFlow id="Flow_Decision_To_Approved" name="Đồng ý" sourceRef="Gateway_ApprovalDecision" targetRef="EndEvent_PrApproved">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_Decision_To_Rejected" name="Từ chối" sourceRef="Gateway_ApprovalDecision" targetRef="EndEvent_PrRejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_PrApproval" name="Sơ đồ phê duyệt PR">
+    <bpmndi:BPMNPlane id="BPMNPlane_PrApproval" bpmnElement="pr-approval-process">
+      <bpmndi:BPMNShape id="Shape_StartEvent_PrSubmitted" bpmnElement="StartEvent_PrSubmitted">
+        <dc:Bounds x="160" y="180" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="141" y="223" width="74" height="28"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_ApprovePr" bpmnElement="Task_ApprovePr">
+        <dc:Bounds x="260" y="158" width="160" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gateway_ApprovalDecision" bpmnElement="Gateway_ApprovalDecision" isMarkerVisible="true">
+        <dc:Bounds x="490" y="173" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="480" y="228" width="70" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_EndEvent_PrApproved" bpmnElement="EndEvent_PrApproved">
+        <dc:Bounds x="650" y="100" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="635" y="143" width="66" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_EndEvent_PrRejected" bpmnElement="EndEvent_PrRejected">
+        <dc:Bounds x="650" y="260" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="637" y="303" width="63" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_Start_To_ApprovalTask" bpmnElement="Flow_Start_To_ApprovalTask">
+        <di:waypoint x="196" y="198"/>
+        <di:waypoint x="260" y="198"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_ApprovalTask_To_Decision" bpmnElement="Flow_ApprovalTask_To_Decision">
+        <di:waypoint x="420" y="198"/>
+        <di:waypoint x="490" y="198"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_Decision_To_Approved" bpmnElement="Flow_Decision_To_Approved">
+        <di:waypoint x="515" y="173"/>
+        <di:waypoint x="515" y="118"/>
+        <di:waypoint x="650" y="118"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="532" y="99" width="45" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_Decision_To_Rejected" bpmnElement="Flow_Decision_To_Rejected">
+        <di:waypoint x="515" y="223"/>
+        <di:waypoint x="515" y="278"/>
+        <di:waypoint x="650" y="278"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="533" y="282" width="45" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

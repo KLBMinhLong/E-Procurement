@@ -1,5 +1,11 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-27] Bug: Camunda Desktop Modeler could not display approval BPMN files
+
+- Root cause: The BPMN resources contained executable process definitions only and did not include BPMN Diagram Interchange metadata (`bpmndi:BPMNDiagram`, `BPMNPlane`, `BPMNShape`, `BPMNEdge`). Camunda Engine can parse process XML without DI, but Camunda Desktop Modeler requires DI coordinates to render an editable diagram.
+- Fix: Add full BPMN DI metadata and Vietnamese display names to `pr-approval-process.bpmn` and `emergency-approval.bpmn`, while keeping stable executable process ids for deployment.
+- Prevention: Add `BpmnDiagramResourceTest` so every BPMN resource must parse with Camunda BPMN model API and include diagram, plane, shape, and edge metadata before it is accepted.
+
 ## [2026-05-27] Bug: IAM logs showed colors but blank trace/span context
 
 - Root cause: IAM Docker image did not run the OpenTelemetry Java agent, and Log4j2 pattern read `traceId`/`spanId` MDC keys while OTel Java agent log correlation exposes `trace_id`/`span_id`.

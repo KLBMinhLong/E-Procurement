@@ -165,9 +165,9 @@
 ### E05: Approval Engine
 | Task | Status |
 |---|---|
-| Spring Boot + Camunda setup | ⬜ |
-| BPMN files (pr-approval-process.bpmn, emergency.bpmn) | ⬜ |
-| ApprovalRule engine (select rule by conditions) | ⬜ |
+| Spring Boot + Camunda setup | ✅ |
+| BPMN files (pr-approval-process.bpmn, emergency.bpmn) | ✅ |
+| ApprovalRule engine (select rule by conditions) | ✅ |
 | Approval chain resolution (từ org chart) | ⬜ |
 | SLA calculation (business hours) | ⬜ |
 | Approve/Reject/RequestChanges/Forward actions | ⬜ |
@@ -177,6 +177,7 @@
 | Admin: CRUD approval rules | ⬜ |
 | Frontend: Approval inbox | ⬜ |
 | Frontend: Task detail + actions | ⬜ |
+| Unit tests (rule selection foundation + BPMN diagram metadata) | ✅ | 8 tests pass |
 
 ### E06–E15: (Xem PROJECT_BRIEF.md)
 | Epic | Status |

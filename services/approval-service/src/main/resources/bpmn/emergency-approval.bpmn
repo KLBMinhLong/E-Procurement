@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="Definitions_EmergencyApproval"
+                  targetNamespace="https://eprocure.internal/bpmn/approval">
+  <bpmn:process id="emergency-approval" name="Quy trình phê duyệt mua sắm khẩn cấp" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_EmergencyPrSubmitted" name="PR khẩn cấp đã gửi">
+      <bpmn:outgoing>Flow_Start_To_ParallelFork</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:parallelGateway id="Gateway_EmergencyFork" name="Duyệt song song">
+      <bpmn:incoming>Flow_Start_To_ParallelFork</bpmn:incoming>
+      <bpmn:outgoing>Flow_Fork_To_ManagerTask</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Fork_To_DirectorTask</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:userTask id="Task_ManagerEmergencyApproval" name="Trưởng phòng duyệt khẩn cấp" camunda:assignee="${managerApproverId}">
+      <bpmn:incoming>Flow_Fork_To_ManagerTask</bpmn:incoming>
+      <bpmn:outgoing>Flow_ManagerTask_To_Join</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Task_DirectorEmergencyApproval" name="Giám đốc duyệt khẩn cấp" camunda:assignee="${directorApproverId}">
+      <bpmn:incoming>Flow_Fork_To_DirectorTask</bpmn:incoming>
+      <bpmn:outgoing>Flow_DirectorTask_To_Join</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:parallelGateway id="Gateway_EmergencyJoin" name="Hoàn tất duyệt song song">
+      <bpmn:incoming>Flow_ManagerTask_To_Join</bpmn:incoming>
+      <bpmn:incoming>Flow_DirectorTask_To_Join</bpmn:incoming>
+      <bpmn:outgoing>Flow_Join_To_PostAudit</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:userTask id="Task_PostAudit" name="Hậu kiểm mua sắm khẩn cấp" camunda:assignee="${postAuditApproverId}">
+      <bpmn:incoming>Flow_Join_To_PostAudit</bpmn:incoming>
+      <bpmn:outgoing>Flow_PostAudit_To_End</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="EndEvent_EmergencyComplete" name="Hoàn tất phê duyệt khẩn cấp">
+      <bpmn:incoming>Flow_PostAudit_To_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_Start_To_ParallelFork" sourceRef="StartEvent_EmergencyPrSubmitted" targetRef="Gateway_EmergencyFork"/>
+    <bpmn:sequenceFlow id="Flow_Fork_To_ManagerTask" sourceRef="Gateway_EmergencyFork" targetRef="Task_ManagerEmergencyApproval"/>
+    <bpmn:sequenceFlow id="Flow_Fork_To_DirectorTask" sourceRef="Gateway_EmergencyFork" targetRef="Task_DirectorEmergencyApproval"/>
+    <bpmn:sequenceFlow id="Flow_ManagerTask_To_Join" sourceRef="Task_ManagerEmergencyApproval" targetRef="Gateway_EmergencyJoin"/>
+    <bpmn:sequenceFlow id="Flow_DirectorTask_To_Join" sourceRef="Task_DirectorEmergencyApproval" targetRef="Gateway_EmergencyJoin"/>
+    <bpmn:sequenceFlow id="Flow_Join_To_PostAudit" sourceRef="Gateway_EmergencyJoin" targetRef="Task_PostAudit"/>
+    <bpmn:sequenceFlow id="Flow_PostAudit_To_End" sourceRef="Task_PostAudit" targetRef="EndEvent_EmergencyComplete"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_EmergencyApproval" name="Sơ đồ phê duyệt PR khẩn cấp">
+    <bpmndi:BPMNPlane id="BPMNPlane_EmergencyApproval" bpmnElement="emergency-approval">
+      <bpmndi:BPMNShape id="Shape_StartEvent_EmergencyPrSubmitted" bpmnElement="StartEvent_EmergencyPrSubmitted">
+        <dc:Bounds x="130" y="205" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="111" y="248" width="75" height="28"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gateway_EmergencyFork" bpmnElement="Gateway_EmergencyFork">
+        <dc:Bounds x="230" y="198" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="216" y="253" width="78" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_ManagerEmergencyApproval" bpmnElement="Task_ManagerEmergencyApproval">
+        <dc:Bounds x="350" y="105" width="170" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_DirectorEmergencyApproval" bpmnElement="Task_DirectorEmergencyApproval">
+        <dc:Bounds x="350" y="285" width="170" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gateway_EmergencyJoin" bpmnElement="Gateway_EmergencyJoin">
+        <dc:Bounds x="600" y="198" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="577" y="253" width="96" height="28"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_PostAudit" bpmnElement="Task_PostAudit">
+        <dc:Bounds x="720" y="183" width="170" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_EndEvent_EmergencyComplete" bpmnElement="EndEvent_EmergencyComplete">
+        <dc:Bounds x="960" y="205" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="932" y="248" width="92" height="28"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_Start_To_ParallelFork" bpmnElement="Flow_Start_To_ParallelFork">
+        <di:waypoint x="166" y="223"/>
+        <di:waypoint x="230" y="223"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_Fork_To_ManagerTask" bpmnElement="Flow_Fork_To_ManagerTask">
+        <di:waypoint x="255" y="198"/>
+        <di:waypoint x="255" y="145"/>
+        <di:waypoint x="350" y="145"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_Fork_To_DirectorTask" bpmnElement="Flow_Fork_To_DirectorTask">
+        <di:waypoint x="255" y="248"/>
+        <di:waypoint x="255" y="325"/>
+        <di:waypoint x="350" y="325"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_ManagerTask_To_Join" bpmnElement="Flow_ManagerTask_To_Join">
+        <di:waypoint x="520" y="145"/>
+        <di:waypoint x="625" y="145"/>
+        <di:waypoint x="625" y="198"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_DirectorTask_To_Join" bpmnElement="Flow_DirectorTask_To_Join">
+        <di:waypoint x="520" y="325"/>
+        <di:waypoint x="625" y="325"/>
+        <di:waypoint x="625" y="248"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_Join_To_PostAudit" bpmnElement="Flow_Join_To_PostAudit">
+        <di:waypoint x="650" y="223"/>
+        <di:waypoint x="720" y="223"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_PostAudit_To_End" bpmnElement="Flow_PostAudit_To_End">
+        <di:waypoint x="890" y="223"/>
+        <di:waypoint x="960" y="223"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

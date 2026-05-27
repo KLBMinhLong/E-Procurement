@@ -25,7 +25,8 @@ Hiện trạng triển khai:
 - Frontend: Angular 21 standalone app tại `frontend/eprocure-web`.
 - Infra: Docker Compose có PostgreSQL 15, Redis 7, Kafka KRaft, Keycloak, NGINX gateway, Prometheus, Grafana, Loki, Tempo.
 - Epics xong chính: E01 infra, E02 IAM phần lớn, E03 UI shell/design system, E04 PR service, E13-A Admin Portal UI.
-- Epic chưa làm chính: E05 Approval Engine, E06-E12, phần còn lại E13, E14, E15.
+- Epic đang làm chính: E05 Approval Engine foundation (`approval-service`, Camunda starter, BPMN files, baseline rule selector).
+- Epic chưa làm chính: phần còn lại E05, E06-E12, phần còn lại E13, E14, E15.
 
 ## Non-Negotiable Invariants
 

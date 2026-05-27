@@ -332,6 +332,64 @@ services:
       start_period: 75s
     logging: *default-logging
 
+  approval-service:
+    build:
+      context: .
+      dockerfile: services/approval-service/Dockerfile
+    container_name: eprocure-approval-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: approval-service
+      SERVER_PORT: 8083
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: approval-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
+      APPROVAL_DB_HOST: postgres
+      APPROVAL_DB_PORT: 5432
+      APPROVAL_DB_NAME: db_procurement
+      APPROVAL_DB_SCHEMA: approval
+      APPROVAL_DB_USER: ${APPROVAL_DB_USER:-approval_user}
+      APPROVAL_DB_PASS: ${APPROVAL_DB_PASS:-approval_pass_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASS: ${REDIS_PASS:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      APPROVAL_INTERNAL_API_KEY: ${APPROVAL_INTERNAL_API_KEY:-change-me-internal-api-key}
+    ports:
+      - "${APPROVAL_SERVICE_PORT:-8083}:8083"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    cpus: 0.50
+    mem_limit: 768m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+        reservations:
+          cpus: "0.10"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8083/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+    logging: *default-logging
+
   nginx-gateway:
     image: nginx:1.25-alpine
     container_name: eprocure-nginx-gateway

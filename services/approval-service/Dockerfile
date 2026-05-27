@@ -6,10 +6,10 @@ COPY services/iam-service/pom.xml services/iam-service/pom.xml
 COPY services/purchase-request-service/pom.xml services/purchase-request-service/pom.xml
 COPY services/approval-service/pom.xml services/approval-service/pom.xml
 COPY infra/keycloak/eprocure-keycloak-provider/pom.xml infra/keycloak/eprocure-keycloak-provider/pom.xml
-RUN mvn -pl services/iam-service -am dependency:go-offline
+RUN mvn -pl services/approval-service -am dependency:go-offline
 
-COPY services/iam-service services/iam-service
-RUN mvn -pl services/iam-service -am package -DskipTests
+COPY services/approval-service services/approval-service
+RUN mvn -pl services/approval-service -am package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 
@@ -17,15 +17,15 @@ RUN addgroup -S app && adduser -S app -G app && mkdir -p /app/logs /app/agents &
 WORKDIR /app
 
 ENV TZ=Asia/Ho_Chi_Minh
-ENV JAVA_OPTS="-Xms128m -Xmx384m -javaagent:/app/agents/opentelemetry-javaagent.jar"
+ENV JAVA_OPTS="-Xms128m -Xmx576m -javaagent:/app/agents/opentelemetry-javaagent.jar"
 
 COPY infra/otel/opentelemetry-javaagent.jar /app/agents/opentelemetry-javaagent.jar
-COPY --from=builder /workspace/services/iam-service/target/iam-service-*.jar /app/app.jar
+COPY --from=builder /workspace/services/approval-service/target/approval-service-*.jar /app/app.jar
 RUN chown -R app:app /app
 
-EXPOSE 8081
-HEALTHCHECK --interval=30s --timeout=5s --start-period=75s --retries=5 \
-  CMD wget -q --spider http://127.0.0.1:8081/actuator/health || exit 1
+EXPOSE 8083
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
+  CMD wget -q --spider http://127.0.0.1:8083/actuator/health || exit 1
 
 USER app
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

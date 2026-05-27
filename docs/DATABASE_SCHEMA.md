@@ -444,7 +444,12 @@ CREATE TABLE approval.approval_rule_steps (
     step_type       VARCHAR(20)     NOT NULL DEFAULT 'SEQUENTIAL',
     sla_hours       SMALLINT        NOT NULL,               -- Giờ làm việc
     is_required     BOOLEAN         NOT NULL DEFAULT TRUE,
-    UNIQUE (rule_id, step_index)
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by      UUID            NOT NULL,
+    is_deleted      BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMPTZ,
+    deleted_by      UUID
 );
 ```
 
@@ -455,16 +460,31 @@ CREATE TABLE approval.approval_processes (
     id                          UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     entity_type                 VARCHAR(50)     NOT NULL,   -- 'PURCHASE_REQUEST','INVOICE'
     entity_id                   UUID            NOT NULL,
+    entity_number               VARCHAR(50)     NOT NULL,
+    entity_title                VARCHAR(500)    NOT NULL,
+    requester_id                UUID            NOT NULL,
+    requester_department_id     UUID            NOT NULL,
+    total_amount                NUMERIC(19,4)   NOT NULL,
+    currency                    VARCHAR(3)      NOT NULL DEFAULT 'VND',
+    priority                    VARCHAR(20)     NOT NULL,
     camunda_process_instance_id VARCHAR(100)    UNIQUE,
     status                      VARCHAR(30)     NOT NULL DEFAULT 'RUNNING',
     current_step_index          SMALLINT        NOT NULL DEFAULT 1,
+    entity_snapshot             JSONB,
     started_at                  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     completed_at                TIMESTAMPTZ,
+    created_at                  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at                  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by                  UUID            NOT NULL,
+    is_deleted                  BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at                  TIMESTAMPTZ,
+    deleted_by                  UUID,
     
-    CONSTRAINT chk_ap_status CHECK (status IN ('RUNNING','COMPLETED','CANCELLED'))
+    CONSTRAINT chk_ap_status CHECK (status IN ('RUNNING','COMPLETED','CANCELLED')),
+    CONSTRAINT chk_ap_priority CHECK (priority IN ('NORMAL','URGENT','EMERGENCY'))
 );
-CREATE INDEX idx_ap_entity ON approval.approval_processes(entity_type, entity_id);
-CREATE INDEX idx_ap_status ON approval.approval_processes(status) WHERE status = 'RUNNING';
+CREATE INDEX idx_ap_entity ON approval.approval_processes(entity_type, entity_id) WHERE is_deleted = FALSE;
+CREATE INDEX idx_ap_status ON approval.approval_processes(status) WHERE status = 'RUNNING' AND is_deleted = FALSE;
 ```
 
 ### 4.4 approval_steps
@@ -489,15 +509,39 @@ CREATE TABLE approval.approval_steps (
     reminder_1_sent     BOOLEAN         NOT NULL DEFAULT FALSE,
     reminder_2_sent     BOOLEAN         NOT NULL DEFAULT FALSE,
     camunda_task_id     VARCHAR(100),
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by          UUID            NOT NULL,
+    is_deleted          BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at          TIMESTAMPTZ,
+    deleted_by          UUID,
     
     CONSTRAINT chk_step_status CHECK (status IN ('PENDING','APPROVED','REJECTED','ESCALATED','SKIPPED','FORWARDED')),
-    CONSTRAINT chk_step_action CHECK (action IN ('APPROVE','REJECT','REQUEST_CHANGES','FORWARD') OR action IS NULL),
-    UNIQUE (process_id, step_index, approver_id)
+    CONSTRAINT chk_step_action CHECK (action IN ('APPROVE','REJECT','REQUEST_CHANGES','FORWARD') OR action IS NULL)
 );
 
-CREATE INDEX idx_ap_steps_approver ON approval.approval_steps(approver_id, status) WHERE status = 'PENDING';
-CREATE INDEX idx_ap_steps_sla ON approval.approval_steps(sla_deadline) WHERE status = 'PENDING';
-CREATE INDEX idx_ap_steps_process ON approval.approval_steps(process_id);
+CREATE INDEX idx_ap_steps_approver ON approval.approval_steps(approver_id, status) WHERE status = 'PENDING' AND is_deleted = FALSE;
+CREATE INDEX idx_ap_steps_sla ON approval.approval_steps(sla_deadline) WHERE status = 'PENDING' AND is_deleted = FALSE;
+CREATE INDEX idx_ap_steps_process ON approval.approval_steps(process_id) WHERE is_deleted = FALSE;
+```
+
+### 4.5 event_processing_log
+
+```sql
+CREATE TABLE approval.event_processing_log (
+    event_id        VARCHAR(100)    PRIMARY KEY,
+    topic           VARCHAR(150)    NOT NULL,
+    partition_id    INTEGER,
+    offset_value    BIGINT,
+    processed_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    handler_name    VARCHAR(150)    NOT NULL,
+    status          VARCHAR(20)     NOT NULL DEFAULT 'PROCESSED',
+    error_code      VARCHAR(50),
+    error_message   TEXT,
+
+    CONSTRAINT chk_event_processing_status CHECK (status IN ('PROCESSED','FAILED','SKIPPED'))
+);
+CREATE INDEX idx_event_processing_processed ON approval.event_processing_log(processed_at DESC);
 ```
 
 ---
