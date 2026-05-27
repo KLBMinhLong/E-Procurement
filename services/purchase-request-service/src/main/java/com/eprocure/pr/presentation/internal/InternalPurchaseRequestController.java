@@ -1,12 +1,16 @@
 package com.eprocure.pr.presentation.internal;
 
+import com.eprocure.pr.application.port.in.ApplyPurchaseRequestApprovalResultCommand;
 import com.eprocure.pr.application.port.in.MarkPurchaseRequestPendingApprovalCommand;
+import com.eprocure.pr.application.service.AppliedApprovalResultView;
 import com.eprocure.pr.application.service.InternalApiKeyGuard;
 import com.eprocure.pr.application.service.MarkedPendingApprovalView;
+import com.eprocure.pr.application.usecase.ApplyPurchaseRequestApprovalResultUseCase;
 import com.eprocure.pr.application.usecase.MarkPurchaseRequestPendingApprovalUseCase;
 import com.eprocure.pr.common.api.ApiResponse;
 import com.eprocure.pr.common.api.RequestIdUtil;
 import com.eprocure.pr.common.util.LogMaskingUtil;
+import com.eprocure.pr.domain.model.PrStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -28,12 +32,15 @@ public class InternalPurchaseRequestController {
 
     private final InternalApiKeyGuard internalApiKeyGuard;
     private final MarkPurchaseRequestPendingApprovalUseCase markPendingApprovalUseCase;
+    private final ApplyPurchaseRequestApprovalResultUseCase applyApprovalResultUseCase;
 
     public InternalPurchaseRequestController(
             InternalApiKeyGuard internalApiKeyGuard,
-            MarkPurchaseRequestPendingApprovalUseCase markPendingApprovalUseCase) {
+            MarkPurchaseRequestPendingApprovalUseCase markPendingApprovalUseCase,
+            ApplyPurchaseRequestApprovalResultUseCase applyApprovalResultUseCase) {
         this.internalApiKeyGuard = internalApiKeyGuard;
         this.markPendingApprovalUseCase = markPendingApprovalUseCase;
+        this.applyApprovalResultUseCase = applyApprovalResultUseCase;
     }
 
     @PatchMapping("/{id}/pending-approval")
@@ -51,6 +58,57 @@ public class InternalPurchaseRequestController {
                         id,
                         body.approvalProcessId(),
                         body.camundaProcessInstanceId()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
+    }
+
+    @PatchMapping("/{id}/approved")
+    public ResponseEntity<ApiResponse<AppliedApprovalResultView>> markApproved(
+            @PathVariable UUID id,
+            @Valid @RequestBody ApprovalResultRequest body,
+            @RequestHeader(value = INTERNAL_API_KEY_HEADER, required = false) String internalApiKey,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            HttpServletRequest request) {
+        return applyApprovalResult(id, body, PrStatus.APPROVED, internalApiKey, idempotencyKey, request);
+    }
+
+    @PatchMapping("/{id}/rejected")
+    public ResponseEntity<ApiResponse<AppliedApprovalResultView>> markRejected(
+            @PathVariable UUID id,
+            @Valid @RequestBody ApprovalResultRequest body,
+            @RequestHeader(value = INTERNAL_API_KEY_HEADER, required = false) String internalApiKey,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            HttpServletRequest request) {
+        return applyApprovalResult(id, body, PrStatus.REJECTED, internalApiKey, idempotencyKey, request);
+    }
+
+    @PatchMapping("/{id}/changes-requested")
+    public ResponseEntity<ApiResponse<AppliedApprovalResultView>> markChangesRequested(
+            @PathVariable UUID id,
+            @Valid @RequestBody ApprovalResultRequest body,
+            @RequestHeader(value = INTERNAL_API_KEY_HEADER, required = false) String internalApiKey,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            HttpServletRequest request) {
+        return applyApprovalResult(id, body, PrStatus.CHANGES_REQUESTED, internalApiKey, idempotencyKey, request);
+    }
+
+    private ResponseEntity<ApiResponse<AppliedApprovalResultView>> applyApprovalResult(
+            UUID id,
+            ApprovalResultRequest body,
+            PrStatus targetStatus,
+            String internalApiKey,
+            String idempotencyKey,
+            HttpServletRequest request) {
+        internalApiKeyGuard.verify(internalApiKey);
+        log.info("[CONTROLLER] PATCH /internal/purchase-requests/{}/{} | userId=internal",
+                LogMaskingUtil.maskId(id),
+                targetStatus);
+        AppliedApprovalResultView view = applyApprovalResultUseCase.execute(
+                new ApplyPurchaseRequestApprovalResultCommand(
+                        id,
+                        body.approvalProcessId(),
+                        targetStatus,
+                        body.comment()),
                 idempotencyKey);
         return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
     }

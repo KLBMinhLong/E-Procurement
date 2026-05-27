@@ -26,4 +26,11 @@ public final class LogMaskingUtil {
         }
         return "***";
     }
+
+    public static String maskToken(String token) {
+        if (token == null || token.isBlank()) {
+            return "***";
+        }
+        return token.length() <= 8 ? "****" : token.substring(0, 8) + "...";
+    }
 }

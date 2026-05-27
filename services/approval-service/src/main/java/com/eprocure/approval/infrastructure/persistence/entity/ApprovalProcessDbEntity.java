@@ -20,6 +20,7 @@ public class ApprovalProcessDbEntity {
     private int currentStepIndex;
     private String entitySnapshotJson;
     private Instant startedAt;
+    private Instant completedAt;
     private UUID createdBy;
 
     public UUID getId() {
@@ -140,6 +141,14 @@ public class ApprovalProcessDbEntity {
 
     public void setStartedAt(Instant startedAt) {
         this.startedAt = startedAt;
+    }
+
+    public Instant getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(Instant completedAt) {
+        this.completedAt = completedAt;
     }
 
     public UUID getCreatedBy() {

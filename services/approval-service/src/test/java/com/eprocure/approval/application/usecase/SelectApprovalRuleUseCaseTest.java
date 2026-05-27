@@ -104,7 +104,7 @@ class SelectApprovalRuleUseCaseTest {
                 Set.of("SAAS"),
                 PurchaseRequestPriority.NORMAL)))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(exception -> assertThat(((BusinessException) exception).getErrorCode()).isEqualTo(ErrorCode.APR_001));
+                .satisfies(exception -> assertThat(((BusinessException) exception).getErrorCode()).isEqualTo(ErrorCode.APR_007));
     }
 
     private List<ApprovalRule> defaultRules() {

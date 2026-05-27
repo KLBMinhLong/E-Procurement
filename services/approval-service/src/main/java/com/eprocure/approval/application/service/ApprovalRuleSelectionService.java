@@ -31,7 +31,7 @@ public class ApprovalRuleSelectionService {
         ApprovalRule primaryRule = matchingRules.stream()
                 .filter(rule -> !rule.isAdditive())
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.APR_001));
+                .orElseThrow(() -> new BusinessException(ErrorCode.APR_007));
 
         List<ApprovalRule> appliedRules = new ArrayList<>();
         appliedRules.add(primaryRule);
