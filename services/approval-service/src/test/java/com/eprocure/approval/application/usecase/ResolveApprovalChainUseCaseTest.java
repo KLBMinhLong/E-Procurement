@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.approval.application.port.in.ResolveApprovalChainCommand;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
+import com.eprocure.approval.application.service.ApprovalChainResolutionService;
+import com.eprocure.approval.application.service.ApprovalRuleSelectionService;
 import com.eprocure.approval.application.service.BusinessHoursCalendar;
 import com.eprocure.approval.application.service.ResolvedApprovalChainView;
 import com.eprocure.approval.application.service.SlaDeadlineCalculator;
@@ -101,12 +103,12 @@ class ResolveApprovalChainUseCaseTest {
     }
 
     private ResolveApprovalChainUseCase newUseCase(FakeOrgApproverPort orgApproverPort) {
-        return new ResolveApprovalChainUseCase(
-                new SelectApprovalRuleUseCase(new StubApprovalRuleRepository(List.of(defaultRule()))),
+        return new ResolveApprovalChainUseCase(new ApprovalChainResolutionService(
+                new ApprovalRuleSelectionService(new StubApprovalRuleRepository(List.of(defaultRule()))),
                 orgApproverPort,
                 new SlaDeadlineCalculator(
                         BusinessHoursCalendar.from("Asia/Ho_Chi_Minh", "08:00", "17:30", "MON,TUE,WED,THU,FRI"),
-                        Clock.fixed(MONDAY_08_VN, ZoneOffset.UTC)));
+                        Clock.fixed(MONDAY_08_VN, ZoneOffset.UTC))));
     }
 
     private ResolveApprovalChainCommand defaultCommand() {
