@@ -7,10 +7,13 @@ import { ToastService } from '../services/toast.service';
 import { EncryptionService } from './encryption.service';
 import { BYPASS_ERROR_INTERCEPTOR_TOKEN } from './http-context-tokens';
 
+import { AuthService } from '../auth/auth.service';
+
 export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const router = inject(Router);
   const toast = inject(ToastService);
   const encryptionService = inject(EncryptionService);
+  const authService = inject(AuthService);
   const bypassErrorInterceptor = request.context.get(BYPASS_ERROR_INTERCEPTOR_TOKEN);
 
   return next(request).pipe(
@@ -22,8 +25,14 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
 
       const body = error.error as ApiErrorResponse | undefined;
       const code = body?.code;
-
-      if (error.status === 401 || code === 'IAM_003' || code === 'IAM_005') {
+      const isPasswordChange = request.url.includes('/users/me/password');
+ 
+      if (error.status === 423 || code === 'IAM_002') {
+        // Account bị khóa → đá về trang login với thông báo riêng
+        authService.clearSession();
+        router.navigate(['/login'], { queryParams: { reason: 'locked' } });
+      } else if ((error.status === 401 || code === 'IAM_003') && !isPasswordChange) {
+        authService.clearSession();
         router.navigate(['/login']);
       } else if (error.status === 403 || code === 'IAM_004') {
         router.navigate(['/forbidden']);
@@ -32,6 +41,8 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
       } else if (code === 'SYS_003') {
         encryptionService.clearPublicKeyCache();
         toast.error('error.encryptionKeyExpired');
+      } else if (isPasswordChange) {
+        // Let profile.component.ts handle the toast for password change
       } else {
         toast.error(body?.message ?? 'error.generic');
       }

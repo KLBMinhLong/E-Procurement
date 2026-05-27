@@ -293,6 +293,8 @@ KHÔNG BAO GIỜ LOG: password, token, secret, key, encryptedPayload
 ❌ System.out.println() hoặc e.printStackTrace()
 ❌ Hardcode màu trong Angular SCSS
 ❌ Hardcode text trong Angular template (dùng | translate)
+❌ Tự ý mở Chrome/Trình duyệt để test UI trừ khi người dùng yêu cầu trực tiếp
+   ✅ Chỉ chạy test UI thủ công/mở browser khi được yêu cầu rõ ràng
 ```
 
 ---

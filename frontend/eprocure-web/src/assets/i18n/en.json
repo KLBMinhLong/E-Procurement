@@ -4,8 +4,12 @@
   },
   "action": {
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "create": "Create",
-    "processing": "Processing"
+    "processing": "Processing",
+    "refresh": "Refresh",
+    "submit": "Save Changes",
+    "delete": "Delete"
   },
   "app": {
     "name": "eProcure",
@@ -32,6 +36,7 @@
     },
     "login": {
       "eyebrow": "Secure IAM",
+      "accountLocked": "Your account has been locked. Please contact your administrator.",
       "failed": "Login failed. Check your credentials.",
       "forgotPassword": "Forgot password?",
       "google": "Sign in with Google",
@@ -42,7 +47,15 @@
       "submit": "Sign in",
       "title": "Sign in to procurement",
       "username": "Username or email",
-      "validation": "Enter your login information."
+      "validation": "Enter your login information.",
+      "twoFactorTitle": "Two-Factor Authentication (2FA)",
+      "twoFactorDesc": "Please enter the 6-digit OTP code from your authenticator app or your backup code to continue.",
+      "twoFactorCode": "Verification Code (OTP) or Backup Code",
+      "twoFactorVerify": "Verify",
+      "twoFactorBack": "Back to login",
+      "twoFactorInvalid": "Invalid OTP or backup code. Please try again.",
+      "googleUserNotFound": "This Google account is not associated with any system user. Please contact your Administrator.",
+      "googleFailed": "Google login failed. Please try again or use your password credentials."
     },
     "logout": "Sign out"
   },
@@ -93,6 +106,7 @@
       "title": "Permission required"
     },
     "generic": "Something went wrong. Try again.",
+    "oldPasswordIncorrect": "Incorrect old password.",
     "encryptionKeyExpired": "The encryption key changed. Try again.",
     "notFound": {
       "message": "This route does not exist or has moved.",
@@ -111,6 +125,10 @@
   },
   "nav": {
     "admin": "Admin",
+    "adminUsers": "User Directory",
+    "adminRoles": "Role Manager",
+    "adminRbac": "Permissions Matrix",
+    "adminOrgChart": "Department Chart",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "openMenu": "Open menu",
@@ -123,9 +141,11 @@
   },
   "route": {
     "admin": "Admin",
+    "admin.roles": "Role Manager",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "procurement": "Procurement",
+    "profile": "Personal Profile",
     "uiShowcase": "UI library",
     "pr.create": "Create Request",
     "pr.detail": "Request Details"
@@ -342,6 +362,347 @@
       "PASS": "Pass",
       "WARNING": "Warning",
       "FAIL": "Budget Exceeded"
+    }
+  },
+  "admin": {
+    "users": {
+      "eyebrow": "User Management",
+      "title": "User Directory",
+      "action": {
+        "create": "New User",
+        "edit": "Edit User",
+        "lock": "Lock Account",
+        "unlock": "Unlock Account",
+        "resetPassword": "Reset Password"
+      },
+      "filter": {
+        "placeholder": "Search user by name, email, username...",
+        "allDepts": "All Departments",
+        "allStatus": "All Statuses"
+      },
+      "empty": {
+        "title": "No users found",
+        "message": "No user accounts match your current filters."
+      },
+      "col": {
+        "fullName": "Full Name",
+        "employeeCode": "Emp Code",
+        "username": "Username",
+        "email": "Email",
+        "dept": "Department",
+        "roles": "Roles",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "LOCKED": "Locked",
+        "PENDING_VERIFY": "Pending Verify"
+      },
+      "modal": {
+        "titleCreate": "Add New User",
+        "titleEdit": "Edit User Details"
+      },
+      "resetPasswordModal": {
+        "title": "Reset Password",
+        "newPassword": "New Password",
+        "newPasswordPlaceholder": "Enter new password (min 8 characters)",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter new password to confirm"
+      },
+      "field": {
+        "employeeCode": "Employee Code",
+        "employeeCodePlaceholder": "E.g. NV001",
+        "username": "Username",
+        "usernamePlaceholder": "Enter username (min 3 characters)",
+        "email": "Email Address",
+        "emailPlaceholder": "E.g., employee@company.com",
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "Enter user's full name",
+        "phone": "Phone Number",
+        "phonePlaceholder": "Enter phone number (optional)",
+        "dept": "Department",
+        "selectDeptPlaceholder": "Select organizational department",
+        "roles": "Assigned System Roles"
+      },
+      "validation": {
+        "required": "This field is mandatory",
+        "email": "Enter a valid email address",
+        "usernameMinLength": "Username must be at least 3 characters",
+        "usernamePattern": "Only lowercase, numbers, dots, hyphens, and underscores allowed",
+        "passwordMinLength": "Password must be at least 8 characters",
+        "passwordPattern": "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character",
+        "passwordMismatch": "Passwords do not match"
+      },
+      "toast": {
+        "lockSuccess": "User account successfully locked.",
+        "unlockSuccess": "User account successfully unlocked.",
+        "createSuccess": "User account successfully created.",
+        "updateSuccess": "User account details successfully updated.",
+        "resetPasswordSuccess": "User password successfully reset.",
+        "selfLockError": "You cannot lock or change the status of your own account."
+      },
+      "statusDialog": {
+        "title": "Confirm Status Change",
+        "lockMessage": "Are you sure you want to lock the account of {{name}}? The user will not be able to log in.",
+        "unlockMessage": "Are you sure you want to unlock the account of {{name}}?",
+        "reasonLabel": "Lock Reason (optional)",
+        "reasonPlaceholder": "Enter reason for locking..."
+      },
+      "roles": {
+        "loading": "Loading available system roles..."
+      },
+      "totalItems": "users"
+    },
+    "roles": {
+      "eyebrow": "Access Management",
+      "title": "Role Manager",
+      "action": {
+        "create": "New Role",
+        "edit": "Edit Details",
+        "save": "Save Changes",
+        "viewAll": "View All",
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
+        "expandAll": "Expand All",
+        "collapseAll": "Collapse All",
+        "viewDetails": "View Details",
+        "editPermissions": "Edit Permissions"
+      },
+      "filter": {
+        "placeholder": "Search role by name, code, or description..."
+      },
+      "badge": {
+        "system": "System",
+        "custom": "Custom",
+        "systemLocked": "System Locked"
+      },
+      "field": {
+        "code": "Role Code",
+        "codePlaceholder": "E.g., PROCUREMENT_LEAD (Uppercase + underscore)",
+        "name": "Role Name",
+        "namePlaceholder": "E.g., Procurement Lead",
+        "description": "Description",
+        "descriptionPlaceholder": "Brief description of the role purpose (optional)"
+      },
+      "modal": {
+        "titleCreate": "Create New Role",
+        "titleEdit": "Edit Role Details",
+        "sectionBasic": "Basic Information",
+        "sectionPermissions": "Assign Permissions",
+        "searchPermissions": "Filter permissions by name or module..."
+      },
+      "detail": {
+        "type": "Type",
+        "permissionsTitle": "Assigned Permissions",
+        "noPermissions": "No permissions assigned to this role.",
+        "more": "more",
+        "permissions": "permissions",
+        "noDescription": "(No description provided for this role)"
+      },
+      "tooltip": {
+        "systemLocked": "Default system role, modification is restricted"
+      },
+      "validation": {
+        "required": "This field is mandatory",
+        "codePattern": "Must start with an uppercase letter, only uppercase letters, numbers, and underscores allowed"
+      },
+      "toast": {
+        "createSuccess": "Role successfully created.",
+        "updateSuccess": "Role permissions successfully updated.",
+        "updateDetailsSuccess": "Role details successfully updated."
+      },
+      "empty": {
+        "title": "No roles found",
+        "message": "No roles match your search criteria."
+      },
+      "totalItems": "roles"
+    },
+    "rbac": {
+      "eyebrow": "Role Based Access Control",
+      "title": "Permissions Matrix",
+      "subtitle": "Manage role access across every business module from one place.",
+      "stat": {
+        "roles": "Roles",
+        "rolesHint": "Active access profiles",
+        "permissions": "Permissions",
+        "permissionsHint": "Unique permission codes",
+        "modules": "Modules",
+        "modulesHint": "Business capability groups",
+        "coverage": "Coverage",
+        "coverageHint": "{{count}} of {{total}} permissions assigned"
+      },
+      "filter": {
+        "searchPlaceholder": "Search permissions, module, or code...",
+        "moduleLabel": "Module",
+        "allModules": "All modules",
+        "focusRoleLabel": "Focus role",
+        "allRoles": "All roles",
+        "assignedOnly": "Show assigned only",
+        "reset": "Reset filters"
+      },
+      "roles": {
+        "selectorTitle": "Visible roles",
+        "searchPlaceholder": "Search role name or code...",
+        "showAll": "Show all",
+        "clearAll": "Hide all",
+        "showFocused": "Show focused",
+        "empty": "No roles match your search."
+      },
+      "summary": "Showing {{shown}} of {{total}} permissions across {{modules}} modules - {{visibleRoles}}/{{totalRoles}} roles visible",
+      "focusedRole": "Focused on {{role}}",
+      "module": {
+        "label": "{{module}} module",
+        "count": "{{count}} permissions"
+      },
+      "role": {
+        "assigned": "Assigned"
+      },
+      "table": {
+        "caption": "Role and permission matrix"
+      },
+      "col": {
+        "permission": "Permission / Module"
+      },
+      "legend": {
+        "active": "Permission granted",
+        "inactive": "Permission not granted",
+        "pending": "Updating permission"
+      },
+      "toggle": "Toggle {{permission}} for role {{role}}",
+      "toast": {
+        "updateSuccess": "Role permissions successfully updated."
+      },
+      "empty": {
+        "title": "No roles found",
+        "message": "Role mapping could not be loaded."
+      },
+      "emptyVisible": {
+        "title": "No roles selected",
+        "message": "Select at least one role to display the matrix."
+      },
+      "emptyFiltered": {
+        "title": "No permissions match the filters",
+        "message": "Try clearing filters or selecting another role/module."
+      }
+    },
+    "org": {
+      "eyebrow": "Organization Structure",
+      "title": "Department Chart",
+      "action": {
+        "create": "New Department",
+        "addSubDept": "Add Sub-department"
+      },
+      "col": {
+        "deptName": "Department Name",
+        "deptCode": "Code",
+        "manager": "Manager",
+        "actions": "Actions"
+      },
+      "modal": {
+        "titleCreate": "Add New Department",
+        "titleEdit": "Edit Department Details"
+      },
+      "field": {
+        "code": "Department Code",
+        "codePlaceholder": "E.g., TECH_DEPT (Uppercase and numbers)",
+        "name": "Department Name",
+        "namePlaceholder": "E.g., Technology Division",
+        "parentCode": "Parent Department",
+        "selectParentPlaceholder": "None (Root department)",
+        "manager": "Department Manager",
+        "selectManagerPlaceholder": "Select department manager"
+      },
+      "validation": {
+        "required": "This field is mandatory",
+        "pattern": "Only uppercase letters, numbers, and underscores allowed"
+      },
+      "toast": {
+        "createSuccess": "Department successfully created.",
+        "updateSuccess": "Department details successfully updated."
+      },
+      "empty": {
+        "title": "No departments found",
+        "message": "Organizational tree chart could not be loaded."
+      }
+    }
+  },
+  "profile": {
+    "title": "Personal Profile",
+    "subtitle": "View and update your personal information, avatar, and password",
+    "tabs": {
+      "info": "Profile Details",
+      "password": "Change Password",
+      "security": "Security & 2FA"
+    },
+    "security": {
+      "title": "Security & 2FA Settings",
+      "description": "Manage two-factor authentication and advanced account security features to keep your account safe",
+      "2fa": {
+        "statusLabel": "Authentication Method",
+        "enabled": "Two-Factor Authentication (2FA) is Enabled",
+        "disabled": "Two-Factor Authentication (2FA) is Disabled",
+        "enabledDesc": "Your account is secured with a password and 2FA OTP codes.",
+        "disabledDesc": "Two-factor authentication adds an extra layer of security by requiring an OTP code during login.",
+        "enableBtn": "Enable 2FA",
+        "disableBtn": "Disable 2FA",
+        "disableConfirmTitle": "Confirm Disable 2FA",
+        "disableConfirmMessage": "Are you sure you want to disable 2FA? This will reduce the security level of your account.",
+        "setupTitle": "Set Up Two-Factor Authentication",
+        "step1Title": "Scan QR Code",
+        "step1Desc": "Open your authenticator app (Google Authenticator, Microsoft Authenticator, etc.) and scan the QR code below, or manually enter the setup key.",
+        "manualKey": "Setup Key (enter manually if you cannot scan the QR):",
+        "step2Title": "Enter Verification Code",
+        "step2Desc": "Enter the 6-digit verification code shown in your authenticator app to complete setup.",
+        "otpLabel": "6-Digit Verification Code (OTP)",
+        "otpInvalid": "Verification code must be exactly 6 digits.",
+        "setupStarted": "2FA setup initiated. Please scan the QR code.",
+        "confirmSuccess": "Two-factor authentication successfully enabled! Please secure your backup codes.",
+        "disableSuccess": "Two-factor authentication (2FA) successfully disabled.",
+        "backupTitle": "Emergency Backup Codes",
+        "backupDesc": "Store these backup codes in a safe place. Each code can only be used once if you lose access to your authenticator device."
+      }
+    },
+    "info": {
+      "employeeCode": "Employee Code",
+      "username": "Username",
+      "fullName": "Full Name",
+      "email": "Work Email",
+      "phone": "Phone Number",
+      "department": "Department",
+      "roles": "System Roles",
+      "twoFactor": "Two-Factor Authentication (2FA)",
+      "twoFactorEnabled": "Enabled",
+      "twoFactorDisabled": "Disabled",
+      "lastLogin": "Last Login At",
+      "neverLoggedIn": "Never logged in",
+      "updateProfileSuccess": "Profile updated successfully."
+    },
+    "password": {
+      "title": "Change Password",
+      "description": "For your security, please choose a strong password with at least 8 characters.",
+      "oldPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Change Password",
+      "mismatch": "Passwords do not match.",
+      "sameAsOld": "New password cannot be the same as your current password.",
+      "validation": "Please fill out all fields with valid password formats.",
+      "requirements": {
+        "title": "Password security requirements:",
+        "minLength": "At least 8 characters",
+        "uppercase": "At least 1 uppercase letter (A-Z)",
+        "lowercase": "At least 1 lowercase letter (a-z)",
+        "number": "At least 1 number (0-9)",
+        "specialChar": "At least 1 special character (@$!%*?&#^)"
+      },
+      "success": "Password changed successfully."
+    },
+    "avatar": {
+      "title": "Profile Picture",
+      "description": "Select your preferred avatar from the list below",
+      "select": "Set as Profile Picture"
     }
   }
 }

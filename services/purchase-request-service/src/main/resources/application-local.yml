@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${PR_DB_HOST:localhost}:${PR_DB_PORT:5432}/${PR_DB_NAME:db_procurement}
+    username: ${PR_DB_USER:pr_user}
+    password: ${PR_DB_PASS:pr_pass_dev}
+    hikari:
+      connection-init-sql: SET search_path TO ${PR_DB_SCHEMA:pr}
+  flyway:
+    schemas: ${PR_DB_SCHEMA:pr}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eprocure:
+  internal:
+    api-key: ${PR_INTERNAL_API_KEY:change-me-internal-api-key}
+  pr:
+    integration:
+      fallback-enabled: ${PR_INTEGRATION_FALLBACK_ENABLED:true}

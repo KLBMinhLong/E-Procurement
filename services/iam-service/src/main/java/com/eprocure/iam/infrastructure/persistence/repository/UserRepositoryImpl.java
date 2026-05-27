@@ -132,6 +132,17 @@ public class UserRepositoryImpl implements UserRepository {
         userMapper.confirmTwoFactor(userId, encryptedSecret, toJson(backupCodeHashes), confirmedAt, actorId);
     }
 
+    @Override
+    public void disableTwoFactor(UUID userId, UUID actorId) {
+        userMapper.disableTwoFactor(userId, actorId);
+    }
+
+    @Override
+    public void updateBackupCodes(UUID userId, List<String> backupCodeHashes, UUID actorId) {
+        userMapper.updateBackupCodes(userId, toJson(backupCodeHashes), actorId);
+    }
+
+
     private User toDomain(UserDbEntity entity) {
         return objectMapper.convertValue(entity, User.class);
     }

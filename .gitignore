@@ -28,5 +28,7 @@ dist/
 docker-compose.override.yml
 
 # Codex
-.codex
+.codex/*
+!.codex/
+!.codex/CODEX_CONTEXT.md
 .codex-runtime

@@ -17,5 +17,7 @@ public interface RoleRepository {
 
     void save(Role role, Set<String> permissionCodes, UUID actorId);
 
+    void update(Role role, UUID actorId);
+
     void replacePermissions(String roleCode, Set<String> permissionCodes, UUID actorId);
 }

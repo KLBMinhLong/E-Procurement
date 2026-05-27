@@ -1,0 +1,64 @@
+<section class="role-management-page" aria-labelledby="role-management-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.roles.eyebrow' | translate }}</span>
+      <h1 id="role-management-heading" class="page-header__title">{{ 'admin.roles.title' | translate }}</h1>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        id="btn-refresh-roles"
+        variant="secondary"
+        icon="refresh-cw"
+        [disabled]="isLoading()"
+        (click)="loadData()">
+        {{ 'action.refresh' | translate }}
+      </ep-button>
+      <ep-button
+        id="btn-create-role"
+        variant="primary"
+        icon="plus"
+        (click)="openCreateModal()">
+        {{ 'admin.roles.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <!-- ── Search Bar ───────────────────────────────────────────────── -->
+  <div class="role-search-bar">
+    <div class="role-search-input-wrapper">
+      <ep-icon name="search" [size]="16"></ep-icon>
+      <input
+        id="role-search"
+        type="text"
+        class="role-search-input"
+        [placeholder]="'admin.roles.filter.placeholder' | translate"
+        [value]="searchQuery()"
+        (input)="onSearchChange($any($event.target).value)" />
+    </div>
+    <div class="role-count-badge">
+      <ep-icon name="shield" [size]="14"></ep-icon>
+      <span>{{ filteredRoles().length }} {{ 'admin.roles.totalItems' | translate }}</span>
+    </div>
+  </div>
+
+  <!-- ── Content ──────────────────────────────────────────────────── -->
+  <ep-admin-role-list
+    [items]="filteredRoles()"
+    [rolePermissionsMap]="rolePermissionsMap()"
+    [permissions]="permissions()"
+    [isLoading]="isLoading()"
+    (editRole)="openEditModal($event)"
+    (deleteRole)="onDeleteRole($event)" />
+</section>
+
+<!-- ── Create / Edit Role Modal ────────────────────────────────────── -->
+<ep-admin-role-form-modal
+  [isOpen]="isFormOpen()"
+  [role]="selectedRole()"
+  [isSubmitting]="isSubmitting()"
+  (closeForm)="closeFormModal()"
+  (submitForm)="submitRoleForm($event)" />
+

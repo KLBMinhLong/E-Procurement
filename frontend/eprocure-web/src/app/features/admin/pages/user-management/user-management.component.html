@@ -1,0 +1,130 @@
+<section class="admin-users-page" aria-labelledby="admin-users-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.users.eyebrow' | translate }}</span>
+      <h1 id="admin-users-heading" class="page-header__title">{{ 'admin.users.title' | translate }}</h1>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        id="btn-create-user"
+        variant="primary"
+        icon="plus"
+        (click)="openCreateModal()">
+        {{ 'admin.users.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <!-- ── Toolbar & Filters ────────────────────────────────────────── -->
+  <div class="admin-toolbar">
+    <div class="admin-toolbar__row">
+      <ep-filter-bar
+        id="user-search"
+        placeholderKey="admin.users.filter.placeholder"
+        [value]="searchQuery()"
+        (valueChange)="onSearchChange($event)"
+        (refresh)="loadData()">
+      </ep-filter-bar>
+
+      <!-- Department Filter Dropdown -->
+      <div class="admin-toolbar__select-wrapper">
+        <label for="filter-dept" class="sr-only">{{ 'admin.users.filter.dept' | translate }}</label>
+        <select
+          id="filter-dept"
+          class="admin-select"
+          [value]="selectedDepartmentId()"
+          (change)="onDepartmentChange($event)">
+          <option value="">{{ 'admin.users.filter.allDepts' | translate }}</option>
+          @for (dept of departments(); track dept.id) {
+            <option [value]="dept.id">{{ dept.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Status filter chips -->
+    <div class="admin-toolbar__filters">
+      <div class="filter-chip-group">
+        <button
+          id="filter-status-all"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === ''"
+          (click)="onStatusChange('')">
+          {{ 'admin.users.filter.allStatus' | translate }}
+        </button>
+        <button
+          id="filter-status-active"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'ACTIVE'"
+          (click)="onStatusChange('ACTIVE')">
+          {{ 'admin.users.status.ACTIVE' | translate }}
+        </button>
+        <button
+          id="filter-status-inactive"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'INACTIVE'"
+          (click)="onStatusChange('INACTIVE')">
+          {{ 'admin.users.status.INACTIVE' | translate }}
+        </button>
+        <button
+          id="filter-status-locked"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'LOCKED'"
+          (click)="onStatusChange('LOCKED')">
+          {{ 'admin.users.status.LOCKED' | translate }}
+        </button>
+        <button
+          id="filter-status-pending"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === 'PENDING_VERIFY'"
+          (click)="onStatusChange('PENDING_VERIFY')">
+          {{ 'admin.users.status.PENDING_VERIFY' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Grid Content ────────────────────────────────────────── -->
+  <ep-admin-user-list
+    [items]="items()"
+    [meta]="meta()"
+    [isLoading]="isLoading()"
+    [isStatusMutating]="isStatusMutating()"
+    (pageChange)="onPageChange($event)"
+    (requestEdit)="openEditModal($event)"
+    (requestResetPassword)="openResetPasswordModal($event)"
+    (requestToggleStatus)="requestToggleStatus($event)">
+  </ep-admin-user-list>
+</section>
+
+<!-- ── User Form Modal ─────────────────────────────────────────── -->
+<ep-admin-user-form-modal
+  [isOpen]="isModalOpen()"
+  [mode]="modalMode()"
+  [user]="selectedUser()"
+  [departments]="departments()"
+  [roles]="roles()"
+  [isSubmitting]="isSubmitting()"
+  (closeModal)="closeModal()"
+  (submitForm)="onSubmitUserForm($event)">
+</ep-admin-user-form-modal>
+
+<!-- ── Status Confirm Dialog ──────────────────────────────────── -->
+<ep-admin-user-status-dialog
+  [isOpen]="isStatusDialogOpen()"
+  [user]="statusDialogUser()"
+  (closeDialog)="closeStatusDialog()"
+  (confirmToggle)="confirmToggleStatus($event)">
+</ep-admin-user-status-dialog>
+
+<!-- ── Reset Password Modal ────────────────────────────────────── -->
+<ep-admin-user-reset-password-modal
+  [isOpen]="isResetPasswordModalOpen()"
+  [user]="resetPasswordUser()"
+  [isSubmitting]="isResetPasswordSubmitting()"
+  (closeModal)="closeResetPasswordModal()"
+  (submitForm)="onResetPasswordSubmit($event)">
+</ep-admin-user-reset-password-modal>

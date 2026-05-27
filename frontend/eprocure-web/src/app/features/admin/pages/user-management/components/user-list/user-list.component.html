@@ -1,0 +1,133 @@
+@if (isLoading) {
+  <ep-skeleton [rows]="8" />
+} @else if (items.length === 0) {
+  <ep-empty-state
+    icon="users"
+    [title]="'admin.users.empty.title' | translate"
+    [message]="'admin.users.empty.message' | translate" />
+} @else {
+  <div class="users-table-wrapper">
+    <table class="users-table" role="grid" aria-labelledby="admin-users-heading">
+      <thead>
+        <tr>
+          <th scope="col" class="col-user">{{ 'admin.users.col.fullName' | translate }}</th>
+          <th scope="col" class="col-code">{{ 'admin.users.col.employeeCode' | translate }}</th>
+          <th scope="col" class="col-email">{{ 'admin.users.col.email' | translate }}</th>
+          <th scope="col" class="col-dept">{{ 'admin.users.col.dept' | translate }}</th>
+          <th scope="col" class="col-roles">{{ 'admin.users.col.roles' | translate }}</th>
+          <th scope="col" class="col-status">{{ 'admin.users.col.status' | translate }}</th>
+          <th scope="col" class="col-actions">{{ 'admin.users.col.actions' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of items; track user.id) {
+          <tr [id]="'user-row-' + user.id" class="users-table__row">
+            <td class="col-user">
+              <div class="user-cell">
+                <ep-avatar [name]="user.fullName" />
+                <div class="user-cell__info">
+                  <span class="user-cell__name">{{ user.fullName }}</span>
+                  <span class="user-cell__username">{{ user.username }}</span>
+                </div>
+              </div>
+            </td>
+
+            <td class="col-code">
+              <span class="code-badge">{{ user.employeeCode || '--' }}</span>
+            </td>
+
+            <td class="col-email">
+              <span class="email-text">{{ user.email }}</span>
+              @if (user.phone) {
+                <span class="phone-text">{{ user.phone }}</span>
+              }
+            </td>
+
+            <td class="col-dept">
+              {{ user.departmentName || '--' }}
+            </td>
+
+            <td class="col-roles">
+              <div class="roles-badges">
+                @for (role of user.roles; track role) {
+                  <span class="role-pill">{{ role }}</span>
+                } @empty {
+                  <span class="role-pill role-pill--none">--</span>
+                }
+              </div>
+            </td>
+
+            <td class="col-status">
+              <ep-badge
+                [tone]="statusTone[user.status] || 'neutral'"
+                [labelKey]="'admin.users.status.' + user.status" />
+            </td>
+
+            <td class="col-actions">
+              <div class="actions-group">
+                <ep-button
+                  [id]="'btn-edit-user-' + user.id"
+                  variant="ghost"
+                  size="sm"
+                  icon="pencil"
+                  [ariaLabel]="'admin.users.action.edit' | translate"
+                  (click)="requestEdit.emit(user)">
+                </ep-button>
+
+                <ep-button
+                  [id]="'btn-reset-password-' + user.id"
+                  variant="ghost"
+                  size="sm"
+                  icon="key-round"
+                  [ariaLabel]="'admin.users.action.resetPassword' | translate"
+                  (click)="requestResetPassword.emit(user)">
+                </ep-button>
+
+                <ep-button
+                  [id]="'btn-toggle-status-' + user.id"
+                  [variant]="user.status === 'ACTIVE' ? 'danger' : 'secondary'"
+                  size="sm"
+                  [icon]="isStatusMutating === user.id ? null : 'lock'"
+                  [loading]="isStatusMutating === user.id"
+                  [ariaLabel]="(user.status === 'ACTIVE' ? 'admin.users.action.lock' : 'admin.users.action.unlock') | translate"
+                  (click)="requestToggleStatus.emit(user)">
+                </ep-button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  @if (meta; as m) {
+    <div class="users-pagination">
+      <span class="users-pagination__summary">
+        {{ 'shared.table.pageSummary' | translate: { page: m.page, total: m.totalPages } }}
+        &nbsp;·&nbsp;
+        {{ m.totalElements }} {{ 'admin.users.totalItems' | translate }}
+      </span>
+      <div class="users-pagination__controls">
+        <ep-button
+          id="btn-prev-page"
+          variant="ghost"
+          size="sm"
+          icon="chevron-left"
+          [disabled]="m.isFirst"
+          (click)="pageChange.emit({ page: m.page - 1, size: m.size })">
+          {{ 'shared.table.previous' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-next-page"
+          variant="ghost"
+          size="sm"
+          icon="chevron-right"
+          [disabled]="m.isLast"
+          (click)="pageChange.emit({ page: m.page + 1, size: m.size })">
+          {{ 'shared.table.next' | translate }}
+        </ep-button>
+      </div>
+    </div>
+  }
+}

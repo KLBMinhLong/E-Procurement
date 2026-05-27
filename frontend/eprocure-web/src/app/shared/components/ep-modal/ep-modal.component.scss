@@ -16,6 +16,12 @@
   box-shadow: var(--shadow-3);
   max-width: var(--modal-max-width);
   width: 100%;
+  
+  // Constrain modal vertically within screen height gracefully
+  max-height: calc(100vh - var(--spacing-8));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 header {
@@ -24,6 +30,7 @@ header {
   display: flex;
   justify-content: space-between;
   padding: var(--spacing-4);
+  flex-shrink: 0;
 }
 
 h2 {
@@ -34,4 +41,6 @@ h2 {
 
 .ep-modal__body {
   padding: var(--spacing-4);
+  flex: 1;
+  overflow-y: auto;
 }

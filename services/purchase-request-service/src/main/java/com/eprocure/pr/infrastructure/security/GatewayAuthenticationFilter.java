@@ -1,6 +1,7 @@
 package com.eprocure.pr.infrastructure.security;
 
 import com.eprocure.pr.common.security.UserPrincipal;
+import com.eprocure.pr.common.util.IpAddressUtil;
 import com.eprocure.pr.common.util.LogMaskingUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -44,7 +45,7 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         if (requiresApiKey() && !expectedApiKey.equals(request.getHeader(API_KEY_HEADER))) {
             log.warn("[APIKEY] Invalid | ip={} | path={}",
-                    LogMaskingUtil.maskClientIp(request.getRemoteAddr()),
+                    LogMaskingUtil.maskClientIp(IpAddressUtil.getClientIp(request)),
                     request.getRequestURI());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return;

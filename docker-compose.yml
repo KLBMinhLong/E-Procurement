@@ -186,6 +186,8 @@ services:
         condition: service_healthy
     networks:
       - eprocure-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     cpus: 0.25
     mem_limit: 512m
     deploy:
@@ -215,6 +217,14 @@ services:
       SERVICE_NAME: iam-service
       SERVER_PORT: 8081
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: iam-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      # OTEL_TRACES_EXPORTER: otlp (if you want to export traces to tempo)
+      OTEL_TRACES_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
       IAM_DB_HOST: postgres
       IAM_DB_PORT: 5432
       IAM_DB_NAME: db_iam
@@ -227,8 +237,8 @@ services:
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-eprocure}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-eprocure-iam}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?Set KEYCLOAK_CLIENT_SECRET in .env}
-      IAM_INTERNAL_API_KEY: ${IAM_INTERNAL_API_KEY:?Set IAM_INTERNAL_API_KEY in .env}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      IAM_INTERNAL_API_KEY: ${IAM_INTERNAL_API_KEY}
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-8}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       COOKIE_SAMESITE: ${COOKIE_SAMESITE:-Strict}
@@ -276,6 +286,13 @@ services:
       SERVICE_NAME: purchase-request-service
       SERVER_PORT: 8082
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: purchase-request-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
       PR_DB_HOST: postgres
       PR_DB_PORT: 5432
       PR_DB_NAME: db_procurement
@@ -323,6 +340,7 @@ services:
       <<: *common-env
       IAM_SERVICE_URL: ${IAM_SERVICE_URL:-http://iam-service:8081}
       PR_SERVICE_URL: ${PR_SERVICE_URL:-http://pr-service:8082}
+      PR_INTERNAL_API_KEY: ${PR_INTERNAL_API_KEY:-change-me-internal-api-key}
       APPROVAL_SERVICE_URL: ${APPROVAL_SERVICE_URL:-http://approval-service:8083}
       FINANCE_SERVICE_URL: ${FINANCE_SERVICE_URL:-http://finance-service:8084}
       INVENTORY_SERVICE_URL: ${INVENTORY_SERVICE_URL:-http://inventory-service:8085}
@@ -339,6 +357,8 @@ services:
       - ./infra/nginx/templates/proxy-protected.template:/etc/nginx/templates/proxy-protected.template:ro
     networks:
       - eprocure-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     cpus: 0.10
     mem_limit: 64m
     deploy:
@@ -454,13 +474,22 @@ services:
       - tempo-data:/tmp/tempo
     networks:
       - eprocure-net
-    cpus: 0.10
-    mem_limit: 128m
+    cpus: 0.25
+    mem_limit: 512m
     deploy:
       resources:
         limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
           cpus: "0.10"
           memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3200/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     logging: *default-logging
 
 networks:

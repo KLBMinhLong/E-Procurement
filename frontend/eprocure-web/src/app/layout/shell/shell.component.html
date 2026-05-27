@@ -1,6 +1,6 @@
 <a class="skip-link" href="#main-content">{{ 'accessibility.skipToContent' | translate }}</a>
 
-<div class="shell" [class.shell--open]="isSidebarOpen()">
+<div class="shell" [class.shell--open]="isSidebarOpen()" [class.shell--collapsed]="isSidebarCollapsed()">
   <aside class="shell__sidebar" [attr.aria-label]="'nav.primary' | translate">
     <a class="shell__brand" routerLink="/dashboard" (click)="closeSidebar()">
       <span class="shell__brand-mark">
@@ -13,17 +13,36 @@
     </a>
 
     <nav class="shell__nav">
+      @if (isHydrating()) {
+      @for (_ of [1, 2, 3, 4]; track $index) {
+      <span class="shell__nav-skeleton"></span>
+      }
+      } @else {
       @for (item of navItems(); track item.route) {
-        <a
-          [routerLink]="item.route"
-          routerLinkActive="is-active"
-          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
-          (click)="closeSidebar()">
-          <ep-icon [name]="item.icon" [size]="18"></ep-icon>
-          <span>{{ item.labelKey | translate }}</span>
-        </a>
+      <a [routerLink]="item.route" routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }" (click)="closeSidebar()">
+        <ep-icon [name]="item.icon" [size]="18"></ep-icon>
+        <span>{{ item.labelKey | translate }}</span>
+      </a>
+      }
       }
     </nav>
+
+    @if (user(); as currentUser) {
+    <a class="shell__sidebar-footer" routerLink="/profile" routerLinkActive="is-active" (click)="closeSidebar()">
+      <div class="shell__sidebar-user">
+        <ep-avatar [name]="currentUser.fullName" [imageUrl]="currentUser.avatarUrl"></ep-avatar>
+        <div class="shell__sidebar-user-info">
+          <span class="shell__sidebar-user-name">{{ currentUser.fullName }}</span>
+          <span class="shell__sidebar-user-role">{{ currentUser.department?.name ?? ('user.noDepartment' | translate)
+            }}</span>
+        </div>
+      </div>
+      <div class="shell__sidebar-profile-link">
+        <ep-icon name="chevron-right" [size]="16"></ep-icon>
+      </div>
+    </a>
+    }
   </aside>
 
   <div class="shell__backdrop" (click)="closeSidebar()" aria-hidden="true"></div>
@@ -43,16 +62,17 @@
           <ep-icon name="bell"></ep-icon>
         </ep-button>
         @if (user(); as currentUser) {
-          <div class="shell__user">
-            <ep-avatar [name]="currentUser.fullName" [imageUrl]="currentUser.avatarUrl"></ep-avatar>
-            <span>
-              <strong>{{ currentUser.fullName }}</strong>
-              <small>{{ currentUser.department?.name ?? ('user.noDepartment' | translate) }}</small>
-            </span>
-          </div>
+        <div class="shell__user" routerLink="/profile" style="cursor: pointer;">
+          <ep-avatar [name]="currentUser.fullName" [imageUrl]="currentUser.avatarUrl"></ep-avatar>
+          <span>
+            <strong>{{ currentUser.fullName }}</strong>
+            <small>{{ currentUser.department?.name ?? ('user.noDepartment' | translate) }}</small>
+          </span>
+        </div>
         }
-        <ep-button variant="ghost" [ariaLabel]="'auth.logout' | translate" (click)="logout()">
+        <ep-button variant="ghost" class="shell__logout" [ariaLabel]="'auth.logout' | translate" (click)="logout()">
           <ep-icon name="log-out"></ep-icon>
+          <span class="shell__logout-text">{{ 'auth.logout' | translate }}</span>
         </ep-button>
       </div>
     </header>
@@ -60,22 +80,36 @@
     <main id="main-content" class="shell__main" tabindex="-1">
       <router-outlet></router-outlet>
     </main>
+
+    <footer class="shell__footer">
+      <div class="shell__footer-content">
+        <span class="shell__footer-copyright">
+          &copy; {{ currentYear }} <strong>{{ 'app.name' | translate }}</strong>. All rights reserved.
+        </span>
+        <div class="shell__footer-links">
+          <a routerLink="/ui-showcase" class="shell__footer-link">{{ 'uiShowcase' | translate }}</a>
+          <span class="shell__footer-divider">|</span>
+          <span class="shell__footer-tagline">{{ 'app.tagline' | translate }}</span>
+        </div>
+      </div>
+    </footer>
   </section>
 
   <div class="toast-stack" aria-live="polite">
     @for (message of toastMessages(); track message.id) {
-      <article class="toast" [class.toast--warning]="message.kind === 'warning'" [class.toast--error]="message.kind === 'error'">
-        <span>
-          @if (message.isTranslationKey) {
-            {{ message.message | translate }}
-          } @else {
-            {{ message.message }}
-          }
-        </span>
-        <button type="button" [attr.aria-label]="'shared.toast.dismiss' | translate" (click)="dismissToast(message.id)">
-          <ep-icon name="x" [size]="14"></ep-icon>
-        </button>
-      </article>
+    <article class="toast" [class.toast--warning]="message.kind === 'warning'"
+      [class.toast--error]="message.kind === 'error'">
+      <span>
+        @if (message.isTranslationKey) {
+        {{ message.message | translate }}
+        } @else {
+        {{ message.message }}
+        }
+      </span>
+      <button type="button" [attr.aria-label]="'shared.toast.dismiss' | translate" (click)="dismissToast(message.id)">
+        <ep-icon name="x" [size]="14"></ep-icon>
+      </button>
+    </article>
     }
   </div>
 </div>

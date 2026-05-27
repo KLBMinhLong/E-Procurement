@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-24] Codex project personalization baseline
+
+- Decision: Add `.codex/CODEX_CONTEXT.md` as the concise Codex bootstrap file, add the missing `agent/memory/domain-glossary.md`, and align `AGENTS.md` with the actual `.cursor/rules/*.mdc` filenames.
+- Reason: Future Codex runs need a short, reliable entrypoint after `AGENTS.md` and must not fail context loading because a referenced glossary/rule file is missing or renamed.
+- Impact: Agents can load project context faster, route tasks by layer, use the correct command matrix, and follow the same terminology/status/permission/event vocabulary.
+- Constraint: `AGENTS.md` remains the master orchestration source; `.codex/CODEX_CONTEXT.md` is a compact working profile, not a replacement for domain docs, ADRs, or OpenAPI specs.
+
 ## [2026-05-17] E01 local infrastructure baseline
 
 - Decision: Tạo Docker Compose nền ở chế độ infra-only gồm PostgreSQL, Redis, Kafka (KRaft), Kafka topic init, Keycloak realm import, NGINX gateway skeleton và monitoring profile Prometheus/Grafana/Loki/Tempo.
@@ -146,3 +153,48 @@
 - Reason: After Create and Submit, Update and Cancel complete the requester's workflow. GetPR list/detail are required before the frontend can render the PR module.
 - Impact: `updateWithLineItems()` replaces line items atomically (soft-delete old + insert new); `findByFilter()`/`countByFilter()` delegate to an XML mapper with dynamic WHERE clause and whitelist ORDER BY. ViewScope (OWN/DEPARTMENT/ALL) is resolved from the principal's granted authorities in the controller. `ApiResponse.ok()` and `successWithMeta()` factory methods added. 26 tests pass.
 - Constraint: File attachment upload, catalog API, Kafka real transport, and PR frontend pages remain deferred to subsequent E04 slices.
+
+## [2026-05-20] E13-A Admin Portal (User, RBAC, Org Chart UI) Priority Shift
+
+- Decision: Tách phần giao diện Admin quản lý người dùng, phân quyền RBAC và Sơ đồ tổ chức (Org Tree) lên trước và gom nhóm thành Epic E13-A để triển khai ngay.
+- Reason: Việc xây dựng giao diện Admin cho phép thiết lập và quản lý dữ liệu nhân sự, vai trò, phòng ban trực quan trên trình duyệt trước khi triển khai hệ thống phê duyệt Approval Engine (E05) - vốn phụ thuộc trực tiếp vào cấu trúc sơ đồ tổ chức (Org Chart) và ma trận phân quyền để phê duyệt.
+- Impact: Toàn bộ module Admin frontend bao gồm User CRUD, Role-Permission Matrix, và Org Chart UI sẽ được xây dựng trước Epic E05. Các API nghiệp vụ từ IAM Service (E02) đã hoàn thiện sẽ được gọi trực tiếp.
+- Constraint: Các chức năng quản trị cấu hình rules phê duyệt nâng cao (Approval rules) và quản lý catalog danh mục hệ thống vẫn sẽ được giữ lại trong Epic E13 gốc để triển khai sau cùng với các tính năng tương ứng.
+
+## [2026-05-21] E13-A Admin User Form Modal Vertical Layout Optimization
+
+- Decision: Tối ưu hóa layout modal "Thêm/Sửa tài khoản mới" (`user-form-modal`) để chống tràn dọc màn hình (vertical overflow) bằng cách giới hạn max-height của modal panel theo viewport, cố định phần Header và Footer (form actions), và tạo vùng nội dung scroll mượt (.user-form__body). Đồng thời mở rộng chiều rộng của modal trên desktop (`max-width: 48rem`) để tạo layout 2 cột thoáng đãng.
+- Reason: Form thêm tài khoản chứa nhiều trường thông tin và lưới danh sách roles lớn, dẫn tới tràn dọc vượt quá chiều cao màn hình ở các độ phân giải thấp hoặc zoom cao, làm ẩn các nút Lưu/Hủy (Action buttons).
+- Impact: Giao diện modal trên desktop hiển thị lưới 2 cột chuyên nghiệp, giảm chiều cao cần thiết. Toàn bộ các trường input và thẻ chọn role scroll trơn tru bên trong body của form, trong khi tiêu đề và nút thao tác chính luôn cố định và có thể thao tác ngay lập tức, cải thiện đáng kể trải nghiệm người dùng (UX).
+- Constraint: Đã cấu hình độc lập qua custom CSS variables của CSS system, không gây ảnh hưởng tới cấu trúc chung của các modal khác trong hệ thống.
+
+## [2026-05-21] E13-A Resolve Missing action.submit Translation Key
+
+- Decision: Bổ sung translation key `submit` vào đối tượng `action` trong hai tệp ngôn ngữ `vi.json` (Việt) và `en.json` (Anh) lần lượt là "Lưu thay đổi" và "Save Changes".
+- Reason: Các nút bấm trong modal Sửa tài khoản, Đổi mật khẩu và Sửa phòng ban bị lỗi hiển thị thô chữ `action.submit` thay vì dịch sang tiếng Việt hoặc tiếng Anh do thiếu key dịch tương ứng trong tệp cấu hình i18n.
+- Impact: Toàn bộ nút lưu/gửi trong các modal quản lý hệ thống Admin hiển thị đúng ngôn ngữ bản địa chuyên nghiệp, khắc phục hoàn toàn lỗi giao diện thô i18n.
+- Constraint: Đảm bảo độ nhất quán toàn bộ i18n cho frontend.
+
+## [2026-05-21] E13-A Add Confirm Password Field to Reset Password Modal
+
+- Decision: Bổ sung trường "Nhập lại mật khẩu" (`confirmPassword`) vào biểu mẫu đặt lại mật khẩu (`user-reset-password-modal`) và triển khai bộ kiểm duyệt Reactive Form chéo (`passwordMatchValidator`) để đảm bảo tính trùng khớp.
+- Reason: Nâng cao độ an toàn và tin cậy cho thao tác quản trị khi đổi mật khẩu cho người dùng, loại bỏ hoàn toàn rủi ro gõ nhầm mật khẩu của quản trị viên do không có đối chiếu.
+- Impact: Biểu mẫu hiển thị thêm trường nhập liệu xác nhận mật khẩu có kiểm tra trực quan thời gian thực. Nút "Lưu thay đổi" sẽ bị khóa (disabled) cho tới khi cả hai trường mật khẩu được nhập khớp nhau và tuân thủ đúng định dạng độ phức tạp mật khẩu.
+- Constraint: Không ảnh hưởng tới cơ chế API backend do giá trị payload gửi đi vẫn là chuỗi mật khẩu đã kiểm duyệt chuẩn xác.
+
+## [2026-05-21] E03 Premium Visual Redesign for User Profile Screen
+
+- Decision: Thiết kế lại toàn bộ giao diện Profile người dùng (`profile.component.html` và `.scss`) theo cấu trúc dashboard 2 cột cao cấp, kết hợp hiệu ứng radial glowing, avatar halo viền gradient, danh sách metadata chi tiết có icon thông tin động, bộ chọn preset avatar dạng grid tròn có thanh trượt cuộn, và tab đổi biểu mẫu kiểu dáng filter chip vàng/hổ phách đặc trưng.
+- Reason: Giao diện Profile cũ thiết kế đơn giản, thô sơ và sử dụng các biến CSS không tồn tại, lệch chuẩn so với bộ nhận diện tối ưu và cực kỳ thẩm mỹ của eProcure Enterprise.
+- Impact: Trải nghiệm người dùng được nâng tầm tối đa với các hiệu ứng micro-animations mượt mà khi đổi tab và chọn avatar. Toàn bộ các trường readonly được hiển thị trực quan riêng biệt tránh nhầm lẫn, và đảm bảo tương thích 100% với cơ chế OnPush và i18n đa ngôn ngữ của hệ thống.
+- Constraint: Không làm thay đổi logic xử lý reactive forms của Component TypeScript hiện có, giúp bảo toàn tính toàn vẹn nghiệp vụ.
+
+## [2026-05-22] E02 Google OAuth Callback Redirect Flow Redesign
+
+- Decision: Thay thế việc trả về phản hồi JSON thô (`ApiResponse<LoginResponse>` hoặc `BusinessException`) trực tiếp trên trình duyệt của người dùng tại endpoint Callback Google OAuth `/api/v1/auth/oauth/google/callback` bằng cơ chế chuyển hướng HTTP 302 về trang frontend (`http://localhost:4200/login`) kèm theo các tham số truy vấn thích hợp (`error`, `requiresTwoFactor`).
+- Reason: Khi người dùng nhấp vào "Đăng nhập Google", trình duyệt thực hiện điều hướng toàn trang thay vì yêu cầu AJAX/HTTP. Việc trả về chuỗi JSON thô khi đăng nhập lỗi (ví dụ lỗi `IAM_030` - User not found) hoặc khi đăng nhập thành công nhưng yêu cầu 2FA sẽ hiển thị trang trắng chứa chuỗi JSON thô cực kỳ thiếu chuyên nghiệp (unprofessional) và gây ngắt quãng trải nghiệm của người dùng.
+- Impact:
+  1. **Success Flow (Không bật 2FA)**: Backend tự động thiết lập Cookie Session và chuyển hướng trình duyệt về trang chủ `/` (Dashboard). Hệ thống tự động xác thực thông qua Cookie an toàn.
+  2. **Success Flow (Có bật 2FA)**: Backend thiết lập Cookie 2FA Temporary Challenge và chuyển hướng trình duyệt về `/login?requiresTwoFactor=true`. Giao diện đăng nhập frontend tự động bắt tham số và hiển thị biểu mẫu nhập mã OTP/Mã dự phòng cao cấp để hoàn tất xác thực.
+  3. **Failure Flow (Tài khoản chưa được liên kết - `IAM_030` hoặc lỗi khác)**: Backend chuyển hướng trình duyệt về `/login?error=IAM_030`. Giao diện đăng nhập frontend hiển thị thông báo lỗi thân thiện được nội địa hóa chi tiết (i18n): *"Tài khoản Google này chưa được liên kết với bất kỳ người dùng nào trên hệ thống..."*, giúp người dùng hiểu chính xác vấn đề.
+- Constraint: Duy trì hoàn hảo cấu trúc bảo mật Cookie Secure/SameSite của eProcure Enterprise mà không cần can thiệp hay thay đổi cấu hình API Gateway hoặc cơ chế xác thực hiện có.

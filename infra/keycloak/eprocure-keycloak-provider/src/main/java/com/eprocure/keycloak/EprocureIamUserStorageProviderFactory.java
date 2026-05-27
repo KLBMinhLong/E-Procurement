@@ -22,12 +22,21 @@ public final class EprocureIamUserStorageProviderFactory
 
     @Override
     public EprocureIamUserStorageProvider create(KeycloakSession session, ComponentModel model) {
-        String iamBaseUrl = requiredConfig(model, CFG_IAM_BASE_URL, ENV_IAM_PROVIDER_BASE_URL);
-        String internalApiKey = configValue(model, CFG_INTERNAL_API_KEY, env(ENV_IAM_INTERNAL_API_KEY, ""));
-        long timeoutSeconds = parsePositiveLong(configValue(
-                model,
-                CFG_TIMEOUT_SECONDS,
-                env(ENV_IAM_PROVIDER_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS)));
+        // Environment variables ALWAYS take priority over component config (DB).
+        // This allows switching between local/Docker by only changing .env
+        // and restarting Keycloak — no DB updates needed.
+        String iamBaseUrl = envFirst(ENV_IAM_PROVIDER_BASE_URL,
+                model, CFG_IAM_BASE_URL, null);
+        if (iamBaseUrl == null || iamBaseUrl.isBlank()) {
+            throw new IllegalStateException(CFG_IAM_BASE_URL
+                    + " must be configured through " + ENV_IAM_PROVIDER_BASE_URL
+                    + " environment variable or component config");
+        }
+        String internalApiKey = envFirst(ENV_IAM_INTERNAL_API_KEY,
+                model, CFG_INTERNAL_API_KEY, "");
+        long timeoutSeconds = parsePositiveLong(
+                envFirst(ENV_IAM_PROVIDER_TIMEOUT_SECONDS,
+                        model, CFG_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
         EprocureIamClient client = new EprocureIamClient(
                 iamBaseUrl,
                 internalApiKey,
@@ -50,19 +59,22 @@ public final class EprocureIamUserStorageProviderFactory
         ProviderConfigProperty iamBaseUrl = new ProviderConfigProperty(
                 CFG_IAM_BASE_URL,
                 "IAM base URL",
-                "Base URL for IAM internal Keycloak provider APIs.",
+                "Base URL for IAM internal Keycloak provider APIs. "
+                        + "Environment variable " + ENV_IAM_PROVIDER_BASE_URL + " always takes priority.",
                 ProviderConfigProperty.STRING_TYPE,
                 env(ENV_IAM_PROVIDER_BASE_URL, ""));
         ProviderConfigProperty internalApiKey = new ProviderConfigProperty(
                 CFG_INTERNAL_API_KEY,
                 "Internal API key",
-                "Shared API key sent to IAM internal endpoints. Prefer environment variable IAM_INTERNAL_API_KEY.",
+                "Shared API key sent to IAM internal endpoints. "
+                        + "Environment variable " + ENV_IAM_INTERNAL_API_KEY + " always takes priority.",
                 ProviderConfigProperty.PASSWORD,
                 "");
         ProviderConfigProperty timeoutSeconds = new ProviderConfigProperty(
                 CFG_TIMEOUT_SECONDS,
                 "Timeout seconds",
-                "HTTP timeout for IAM internal API calls.",
+                "HTTP timeout for IAM internal API calls. "
+                        + "Environment variable " + ENV_IAM_PROVIDER_TIMEOUT_SECONDS + " always takes priority.",
                 ProviderConfigProperty.STRING_TYPE,
                 env(ENV_IAM_PROVIDER_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
         return List.of(iamBaseUrl, internalApiKey, timeoutSeconds);
@@ -80,17 +92,22 @@ public final class EprocureIamUserStorageProviderFactory
     public void close() {
     }
 
-    private String configValue(ComponentModel model, String key, String fallback) {
-        String value = resolveEnvPlaceholder(model.getConfig().getFirst(key));
-        return value == null || value.isBlank() ? fallback : value;
-    }
-
-    private String requiredConfig(ComponentModel model, String key, String envKey) {
-        String value = configValue(model, key, env(envKey, ""));
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException(key + " must be configured through component config or " + envKey);
+    /**
+     * Resolves config with env-var-first priority:
+     *   1. Environment variable (always wins if set)
+     *   2. Component model config from DB
+     *   3. Fallback default
+     */
+    private String envFirst(String envKey, ComponentModel model, String configKey, String fallback) {
+        String envValue = env(envKey, null);
+        if (envValue != null && !envValue.isBlank()) {
+            return envValue;
         }
-        return value;
+        String modelValue = resolveEnvPlaceholder(model.getConfig().getFirst(configKey));
+        if (modelValue != null && !modelValue.isBlank()) {
+            return modelValue;
+        }
+        return fallback;
     }
 
     private String env(String key, String fallback) {

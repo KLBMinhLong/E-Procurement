@@ -45,6 +45,11 @@ agent/memory/                      ← Bộ nhớ ngữ cảnh (đọc khi bắt
   decision-log.md                  → Decisions được ghi lại khi làm
   error-history.md                 → Bugs và cách fix đã gặp
 
+.codex/                            ← Cá nhân hoá Codex cho workspace này
+  CODEX_CONTEXT.md                 → Bootstrap ngắn, source-of-truth order, command matrix
+  config.toml                      → Cấu hình runtime local của Codex
+  skills/                          → Skill cục bộ dùng riêng cho repo
+
 agent/knowledge/                   ← Kiến thức chuyên sâu (tra cứu khi cần)
   api-authentication.md            → Token flow, cookie, Keycloak
   api-conventions.md               → REST conventions, response format
@@ -75,16 +80,15 @@ agent/knowledge/                   ← Kiến thức chuyên sâu (tra cứu khi
 agent/skills/                      ← Kỹ năng thực thi (dùng khi code)
   SK-01 đến SK-30                  → Xem README.md trong skills/
 
-.cursor/rules/                     ← Rules luôn áp dụng (Cursor tự đọc)
-  CODING_RULES.mdc
-  SECURITY_RULES.mdc
-  LOG_RULES.mdc
-  ERROR_CODE_RULES.mdc
-  GIT_WORKFLOW_RULES.mdc
-  DOCKER_RESOURCE_RULES.mdc
-  DATABASE_RULES.mdc
-  TESTING_RULES.mdc
-  ANGULAR_RULES.mdc
+.cursor/rules/                     ← Rules luôn áp dụng (Cursor tự đọc; agent khác đọc thủ công khi liên quan)
+  coding.mdc                       → Clean Arch, Controller, UseCase, Repository, MyBatis, frontend basics
+  angular-frontend.mdc             → Angular component/template/SCSS/i18n rules
+  database.mdc                     → PostgreSQL, Flyway, schema, index rules
+  docker-resource.mdc              → Dockerfile, compose, resource budget
+  error-codes.mdc                  → Error code enum, exception hierarchy, API error envelope
+  git-workflow.mdc                 → Branch, commit, PR, Jenkins rules
+  logging.mdc                      → Log4j2, masking, layer prefixes
+  testing.mdc                      → JUnit, Postman/Newman, JMeter, coverage
 
 docs/                              ← Tài liệu nghiệp vụ và kỹ thuật
   PROJECT_BRIEF.md
@@ -543,7 +547,7 @@ Checklist tối thiểu:
 Bước 1: Đọc docs/DATABASE_SCHEMA.md → Lấy version cuối cùng
 Bước 2: Xác định V{N+1} tiếp theo
 Bước 3: Dùng template từ coding-patterns.md mục 9
-Bước 4: Đặt file: src/main/resources/db/migration/V{N}}__{description}.sql
+Bước 4: Đặt file: src/main/resources/db/migration/V{N}__{description}.sql
 Bước 5: Kiểm tra:
   - Có SCHEMA IF NOT EXISTS không?
   - Tiền dùng NUMERIC(19,4)?

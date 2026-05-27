@@ -1,0 +1,61 @@
+// ── Status dialog ────────────────────────────────────────────────
+.status-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  padding: var(--spacing-4) 0;
+
+  &__message {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  &__reason {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  &__label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  &__textarea {
+    resize: vertical;
+    min-height: 4rem;
+  }
+}
+
+.form-input {
+  width: 100%;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: var(--border-subtle);
+  border-radius: var(--radius-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:focus {
+    border-color: var(--color-accent);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  border-top: var(--border-subtle);
+  padding-top: var(--spacing-5);
+}

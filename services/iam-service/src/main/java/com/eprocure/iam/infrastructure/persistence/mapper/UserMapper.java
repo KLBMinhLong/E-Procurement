@@ -19,7 +19,7 @@ public interface UserMapper {
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
                    department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
                    two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
-                   last_login_at, created_at
+                   two_factor_backup_codes_hash, last_login_at, created_at
             FROM iam.users
             WHERE is_deleted = FALSE
               AND id = #{id}
@@ -30,7 +30,7 @@ public interface UserMapper {
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
                    department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
                    two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
-                   last_login_at, created_at
+                   two_factor_backup_codes_hash, last_login_at, created_at
             FROM iam.users
             WHERE is_deleted = FALSE
               AND (LOWER(username) = LOWER(#{login}) OR LOWER(email) = LOWER(#{login}))
@@ -42,7 +42,7 @@ public interface UserMapper {
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
                    department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
                    two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
-                   last_login_at, created_at
+                   two_factor_backup_codes_hash, last_login_at, created_at
             FROM iam.users
             WHERE is_deleted = FALSE
               AND (
@@ -61,13 +61,14 @@ public interface UserMapper {
             SELECT id, employee_code, username, email, full_name, phone, avatar_url,
                    department_id, org_node_id, keycloak_username, google_oauth_id, status, two_factor_enabled,
                    two_factor_secret_encrypted, two_factor_pending_secret_encrypted, two_factor_confirmed_at,
-                   last_login_at, created_at
+                   two_factor_backup_codes_hash, last_login_at, created_at
             FROM iam.users
             WHERE is_deleted = FALSE
               AND google_oauth_id = #{googleOauthId}
             LIMIT 1
             """)
     UserDbEntity findByGoogleOauthId(@Param("googleOauthId") String googleOauthId);
+
 
     @Select("""
             SELECT password_hash
@@ -124,6 +125,7 @@ public interface UserMapper {
             UPDATE iam.users
             SET full_name = #{entity.fullName},
                 phone = #{entity.phone},
+                avatar_url = #{entity.avatarUrl},
                 department_id = #{entity.departmentId},
                 org_node_id = #{entity.orgNodeId},
                 updated_by = #{actorId}
@@ -229,4 +231,32 @@ public interface UserMapper {
             @Param("backupCodesHashJson") String backupCodesHashJson,
             @Param("confirmedAt") Instant confirmedAt,
             @Param("actorId") UUID actorId);
+
+    @Update("""
+            UPDATE iam.users
+            SET two_factor_secret_encrypted = NULL,
+                two_factor_pending_secret_encrypted = NULL,
+                two_factor_enabled = FALSE,
+                two_factor_confirmed_at = NULL,
+                two_factor_backup_codes_hash = NULL,
+                updated_by = #{actorId}
+            WHERE id = #{userId}
+              AND is_deleted = FALSE
+            """)
+    void disableTwoFactor(
+            @Param("userId") UUID userId,
+            @Param("actorId") UUID actorId);
+
+    @Update("""
+            UPDATE iam.users
+            SET two_factor_backup_codes_hash = CAST(#{backupCodesHashJson} AS JSONB),
+                updated_by = #{actorId}
+            WHERE id = #{userId}
+              AND is_deleted = FALSE
+            """)
+    void updateBackupCodes(
+            @Param("userId") UUID userId,
+            @Param("backupCodesHashJson") String backupCodesHashJson,
+            @Param("actorId") UUID actorId);
 }
+

@@ -2,7 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
-import { ForgotPasswordRequest, LoginRequest, PublicKeyResponse, UserContext } from '../models/user-context.model';
+import { ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, PublicKeyResponse, UserContext, LoginResponse, UserSummaryView } from '../models/user-context.model';
 import { ApiService } from '../http/api.service';
 import { API_BASE_URL } from '../http/api-tokens';
 import { EncryptionService } from '../http/encryption.service';
@@ -18,14 +18,55 @@ export class AuthService {
 
   readonly currentUser = signal<UserContext | null>(null);
   readonly isHydrating = signal(false);
+  readonly isFullyHydrated = signal(false);
 
   loadPublicKey(): Observable<ApiResponse<PublicKeyResponse>> {
     return this.api.get<PublicKeyResponse>('/auth/public-key');
   }
 
-  login(request: LoginRequest): Observable<ApiResponse<UserContext>> {
-    return this.api.post<UserContext>('/auth/login', request).pipe(
-      tap((response) => this.currentUser.set(response.data))
+  login(request: LoginRequest): Observable<ApiResponse<LoginResponse>> {
+    this.isFullyHydrated.set(false);
+    return this.api.post<LoginResponse>('/auth/login', request).pipe(
+      tap((response) => {
+        if (!response.data.requiresTwoFactor) {
+          // Temporarily set a dummy UserContext until authGuard hydrates it
+          this.currentUser.set({
+            id: response.data.userId,
+            fullName: response.data.fullName,
+            avatarUrl: response.data.avatarUrl,
+            employeeCode: '',
+            username: request.username,
+            email: '',
+            phone: null,
+            department: null,
+            roles: [],
+            permissions: [],
+            twoFactorEnabled: false,
+            lastLoginAt: null
+          });
+        }
+      })
+    );
+  }
+
+  verifyTwoFactor(code: string): Observable<ApiResponse<UserSummaryView>> {
+    return this.api.post<UserSummaryView>('/auth/two-factor/verify', { code }).pipe(
+      tap((response) => {
+        this.currentUser.set({
+          id: response.data.id,
+          fullName: response.data.fullName,
+          avatarUrl: response.data.avatarUrl,
+          employeeCode: response.data.employeeCode,
+          username: response.data.username,
+          email: response.data.email,
+          phone: response.data.phone,
+          department: response.data.department,
+          roles: response.data.roles,
+          permissions: [],
+          twoFactorEnabled: true,
+          lastLoginAt: null
+        });
+      })
     );
   }
 
@@ -39,13 +80,25 @@ export class AuthService {
         next: (response) => {
           this.currentUser.set(response.data);
           this.isHydrating.set(false);
+          this.isFullyHydrated.set(true);
         },
         error: () => {
           this.currentUser.set(null);
           this.isHydrating.set(false);
+          this.isFullyHydrated.set(false);
         }
       })
     );
+  }
+
+  updateProfile(request: { fullName: string; phone: string; avatarUrl: string | null }): Observable<ApiResponse<UserContext>> {
+    return this.api.put<UserContext>('/users/me', request).pipe(
+      tap((response) => this.currentUser.set(response.data))
+    );
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<ApiResponse<null>> {
+    return this.api.put<null>('/users/me/password', request);
   }
 
   logout(): Observable<ApiResponse<null>> {
@@ -58,12 +111,25 @@ export class AuthService {
     return this.api.post<null>('/auth/forgot-password', request);
   }
 
+  enableTwoFactor(): Observable<ApiResponse<{ secret: string; qrCodeUrl: string; manualEntryKey: string }>> {
+    return this.api.put<{ secret: string; qrCodeUrl: string; manualEntryKey: string }>('/users/me/two-factor/enable', {});
+  }
+
+  confirmTwoFactor(code: string): Observable<ApiResponse<{ backupCodes: string[] }>> {
+    return this.api.put<{ backupCodes: string[] }>('/users/me/two-factor/confirm', { code });
+  }
+
+  disableTwoFactor(): Observable<ApiResponse<null>> {
+    return this.api.put<null>('/users/me/two-factor/disable', {});
+  }
+
   googleLoginUrl(): string {
     return `${this.apiBaseUrl}/auth/oauth/google`;
   }
 
   clearSession(): void {
     this.currentUser.set(null);
+    this.isFullyHydrated.set(false);
   }
 
   refreshPublicKey(): Promise<PublicKeyResponse> {

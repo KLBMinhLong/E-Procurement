@@ -1,0 +1,293 @@
+<section class="admin-rbac-page" aria-labelledby="admin-rbac-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.rbac.eyebrow' | translate }}</span>
+      <h1 id="admin-rbac-heading" class="page-header__title">{{ 'admin.rbac.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'admin.rbac.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        id="btn-refresh-matrix"
+        variant="secondary"
+        icon="refresh-cw"
+        [disabled]="isLoading()"
+        (click)="loadMatrixData()">
+        {{ 'action.refresh' | translate }}
+      </ep-button>
+    </div>
+  </header>
+
+  <!-- ── Overview ─────────────────────────────────────────────────── -->
+  <div class="rbac-overview">
+    <ep-stat-card
+      icon="users"
+      [title]="'admin.rbac.stat.roles' | translate"
+      [value]="roles().length.toString()"
+      [hint]="'admin.rbac.stat.rolesHint' | translate"></ep-stat-card>
+    <ep-stat-card
+      icon="shield"
+      [title]="'admin.rbac.stat.permissions' | translate"
+      [value]="totalPermissions().toString()"
+      [hint]="'admin.rbac.stat.permissionsHint' | translate"></ep-stat-card>
+    <ep-stat-card
+      icon="layers"
+      [title]="'admin.rbac.stat.modules' | translate"
+      [value]="allModules().length.toString()"
+      [hint]="'admin.rbac.stat.modulesHint' | translate"></ep-stat-card>
+    <ep-stat-card
+      icon="check-circle-2"
+      [title]="'admin.rbac.stat.coverage' | translate"
+      [value]="assignedCoverage() + '%'"
+      [hint]="'admin.rbac.stat.coverageHint' | translate: { count: assignedPermissionCount(), total: totalPermissions() }"></ep-stat-card>
+  </div>
+
+  <!-- ── Toolbar ──────────────────────────────────────────────────── -->
+  <div class="rbac-toolbar">
+    <label class="rbac-search">
+      <ep-icon name="search" [size]="18"></ep-icon>
+      <input
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearchChange($event)"
+        [placeholder]="'admin.rbac.filter.searchPlaceholder' | translate"
+        autocomplete="off"
+        spellcheck="false" />
+    </label>
+
+    <div class="rbac-toolbar__filters">
+      <label class="rbac-select">
+        <span class="rbac-select__label">{{ 'admin.rbac.filter.moduleLabel' | translate }}</span>
+        <select [value]="selectedModule()" (change)="selectedModule.set($any($event.target).value)">
+          <option value="all">{{ 'admin.rbac.filter.allModules' | translate }}</option>
+          @for (module of allModules(); track module) {
+            <option [value]="module">{{ module }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="rbac-select">
+        <span class="rbac-select__label">{{ 'admin.rbac.filter.focusRoleLabel' | translate }}</span>
+        <select [value]="focusRole()" (change)="focusRole.set($any($event.target).value)">
+          <option value="all">{{ 'admin.rbac.filter.allRoles' | translate }}</option>
+          @for (role of roles(); track role.code) {
+            <option [value]="role.code">{{ role.name }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="rbac-toggle">
+        <input
+          type="checkbox"
+          [checked]="assignedOnly()"
+          (change)="assignedOnly.set($any($event.target).checked)" />
+        <span>{{ 'admin.rbac.filter.assignedOnly' | translate }}</span>
+      </label>
+
+      <details class="rbac-role-picker">
+        <summary>
+          <span class="rbac-role-picker__title">{{ 'admin.rbac.roles.selectorTitle' | translate }}</span>
+          <span class="rbac-role-picker__count">{{ visibleRolesCount() }}/{{ roles().length }}</span>
+        </summary>
+        <div class="rbac-role-picker__content">
+          <label class="rbac-role-search">
+            <ep-icon name="search" [size]="16"></ep-icon>
+            <input
+              type="search"
+              [value]="roleSearchQuery()"
+              (input)="onRoleSearchChange($event)"
+              [placeholder]="'admin.rbac.roles.searchPlaceholder' | translate"
+              autocomplete="off"
+              spellcheck="false" />
+          </label>
+
+          <div class="rbac-role-actions">
+            <ep-button variant="secondary" size="sm" icon="check" (click)="showAllRoles()">
+              {{ 'admin.rbac.roles.showAll' | translate }}
+            </ep-button>
+            <ep-button variant="secondary" size="sm" icon="x" (click)="hideAllRoles()">
+              {{ 'admin.rbac.roles.clearAll' | translate }}
+            </ep-button>
+            <ep-button
+              variant="secondary"
+              size="sm"
+              icon="pin"
+              [disabled]="focusRole() === 'all'"
+              (click)="showFocusedRole()">
+              {{ 'admin.rbac.roles.showFocused' | translate }}
+            </ep-button>
+          </div>
+
+          <div class="rbac-role-list">
+            @if (filteredRoleOptions().length === 0) {
+              <p class="rbac-role-empty">{{ 'admin.rbac.roles.empty' | translate }}</p>
+            } @else {
+              @for (role of filteredRoleOptions(); track role.code) {
+                <label class="rbac-role-option">
+                  <input
+                    type="checkbox"
+                    [checked]="isRoleVisible(role.code)"
+                    (change)="toggleRoleVisibility(role.code)" />
+                  <span class="rbac-role-option__name">{{ role.name }}</span>
+                  <span class="rbac-role-option__code mono">{{ role.code }}</span>
+                </label>
+              }
+            }
+          </div>
+        </div>
+      </details>
+
+      <ep-button variant="ghost" size="sm" icon="rotate-ccw" (click)="resetFilters()">
+        {{ 'admin.rbac.filter.reset' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <!-- ── Summary ──────────────────────────────────────────────────── -->
+  <div class="rbac-summary" role="status" aria-live="polite">
+    <div class="rbac-summary__text">
+      {{
+        'admin.rbac.summary'
+          | translate: {
+              shown: filteredPermissionsCount(),
+              total: totalPermissions(),
+              modules: modulesList().length,
+              visibleRoles: visibleRolesCount(),
+              totalRoles: roles().length
+            }
+      }}
+    </div>
+    @if (focusedRoleName()) {
+      <div class="rbac-summary__focus">
+        <ep-icon name="pin" [size]="14"></ep-icon>
+        <span>{{ 'admin.rbac.focusedRole' | translate: { role: focusedRoleName() } }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- ── Matrix Grid Content ──────────────────────────────────────── -->
+  @if (isLoading()) {
+    <ep-skeleton [rows]="10" />
+  } @else if (roles().length === 0 || permissions().length === 0) {
+    <ep-empty-state
+      icon="shield"
+      [title]="'admin.rbac.empty.title' | translate"
+      [message]="'admin.rbac.empty.message' | translate" />
+  } @else if (visibleRolesCount() === 0) {
+    <ep-empty-state
+      icon="users"
+      [title]="'admin.rbac.emptyVisible.title' | translate"
+      [message]="'admin.rbac.emptyVisible.message' | translate" />
+  } @else if (filteredPermissionsCount() === 0) {
+    <ep-empty-state
+      icon="filter"
+      [title]="'admin.rbac.emptyFiltered.title' | translate"
+      [message]="'admin.rbac.emptyFiltered.message' | translate" />
+  } @else {
+    <div class="matrix-card">
+      <div class="matrix-table-wrapper">
+        <table class="matrix-table" role="grid" aria-labelledby="admin-rbac-heading">
+          <caption class="sr-only">{{ 'admin.rbac.table.caption' | translate }}</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="permission-th">
+                {{ 'admin.rbac.col.permission' | translate }}
+              </th>
+              @for (role of visibleRoles(); track role.code) {
+                <th scope="col" class="role-th" [class.role-th--focused]="isRoleFocused(role.code)">
+                  <div class="role-th-content">
+                    <span class="role-name">{{ role.name }}</span>
+                    <span class="role-code mono">{{ role.code }}</span>
+                    <span class="role-meta">
+                      <span class="role-assigned">{{ getRoleAssignedCount(role.code) }}</span>
+                      <span class="role-assigned-label">{{ 'admin.rbac.role.assigned' | translate }}</span>
+                    </span>
+                  </div>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (modName of modulesList(); track modName) {
+              <!-- Module Section Header Row -->
+              <tr class="module-header-row">
+                <td [attr.colspan]="visibleRolesCount() + 1" class="module-header-cell">
+                  <div class="module-header">
+                    <span class="module-title-badge">
+                      {{ 'admin.rbac.module.label' | translate: { module: modName } }}
+                    </span>
+                    <span class="module-count">
+                      {{
+                        'admin.rbac.module.count'
+                          | translate: { count: permissionsByModule().get(modName)?.length ?? 0 }
+                      }}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Permissions of this module -->
+              @for (perm of permissionsByModule().get(modName) ?? []; track perm.code) {
+                <tr class="matrix-row" [class.matrix-row--focused]="isPermissionInFocus(perm.code)">
+                  <td class="permission-cell">
+                    <div class="permission-info">
+                      <div class="permission-header">
+                        <span class="permission-code mono">{{ perm.code }}</span>
+                        <span class="permission-name">{{ perm.name }}</span>
+                      </div>
+                      @if (perm.description) {
+                        <p class="permission-desc">{{ perm.description }}</p>
+                      }
+                    </div>
+                  </td>
+
+                  @for (role of visibleRoles(); track role.code) {
+                    <td class="checkbox-cell" [class.checkbox-cell--focused]="isRoleFocused(role.code)">
+                      <label class="matrix-switch-label" [class.matrix-switch-label--disabled]="isToggling(role.code, perm.code)">
+                        <input
+                          type="checkbox"
+                          [checked]="hasPermission(role.code, perm.code)"
+                          [disabled]="isToggling(role.code, perm.code)"
+                          (change)="togglePermission(role.code, perm.code)"
+                          [attr.aria-label]="'admin.rbac.toggle' | translate: { permission: perm.code, role: role.name }"
+                          class="sr-only" />
+
+                        <div
+                          class="matrix-switch"
+                          [class.matrix-switch--active]="hasPermission(role.code, perm.code)"
+                          [class.matrix-switch--loading]="isToggling(role.code, perm.code)">
+                          @if (isToggling(role.code, perm.code)) {
+                            <div class="spinner-circle"></div>
+                          } @else {
+                            <div class="matrix-switch__handle"></div>
+                          }
+                        </div>
+                      </label>
+                    </td>
+                  }
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rbac-legend">
+        <div class="rbac-legend__item">
+          <span class="legend-dot legend-dot--active"></span>
+          <span>{{ 'admin.rbac.legend.active' | translate }}</span>
+        </div>
+        <div class="rbac-legend__item">
+          <span class="legend-dot legend-dot--inactive"></span>
+          <span>{{ 'admin.rbac.legend.inactive' | translate }}</span>
+        </div>
+        <div class="rbac-legend__item">
+          <span class="legend-dot legend-dot--pending"></span>
+          <span>{{ 'admin.rbac.legend.pending' | translate }}</span>
+        </div>
+      </div>
+    </div>
+  }
+</section>

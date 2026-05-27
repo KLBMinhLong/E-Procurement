@@ -1,0 +1,102 @@
+.role-management-page {
+  padding: var(--spacing-lg, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 24px);
+
+  // ── Page Header ──────────────────────────────────────────────────
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    &__meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    &__eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--color-primary, #63b3ed);
+      font-weight: 700;
+    }
+
+    &__title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary, #ffffff);
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    &__actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  // ── Search Bar ───────────────────────────────────────────────────
+  .role-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .role-search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-card, #1e293b);
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 10px;
+    padding: 0 14px;
+    flex: 1;
+    min-width: 220px;
+    max-width: 400px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus-within {
+      border-color: var(--color-primary, #3b82f6);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    ep-icon {
+      color: var(--text-muted, #64748b);
+      flex-shrink: 0;
+    }
+  }
+
+  .role-search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary, #ffffff);
+    font-size: 14px;
+    padding: 10px 0;
+    width: 100%;
+
+    &::placeholder {
+      color: var(--text-muted, #64748b);
+    }
+  }
+
+  .role-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-primary, #3b82f6);
+    white-space: nowrap;
+  }
+}

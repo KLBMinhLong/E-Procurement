@@ -4,8 +4,12 @@
   },
   "action": {
     "cancel": "Hủy",
+    "confirm": "Xác nhận",
     "create": "Tạo mới",
-    "processing": "Đang xử lý"
+    "processing": "Đang xử lý",
+    "refresh": "Tải lại",
+    "submit": "Lưu thay đổi",
+    "delete": "Xóa"
   },
   "app": {
     "name": "eProcure",
@@ -32,6 +36,7 @@
     },
     "login": {
       "eyebrow": "IAM bảo mật",
+      "accountLocked": "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.",
       "failed": "Không thể đăng nhập. Vui lòng kiểm tra thông tin.",
       "forgotPassword": "Quên mật khẩu?",
       "google": "Đăng nhập với Google",
@@ -42,7 +47,15 @@
       "submit": "Đăng nhập",
       "title": "Đăng nhập hệ thống mua sắm",
       "username": "Tên đăng nhập hoặc email",
-      "validation": "Vui lòng nhập đủ thông tin đăng nhập."
+      "validation": "Vui lòng nhập đủ thông tin đăng nhập.",
+      "twoFactorTitle": "Xác thực 2 lớp (2FA)",
+      "twoFactorDesc": "Vui lòng nhập mã OTP gồm 6 chữ số từ ứng dụng xác thực hoặc mã dự phòng của bạn để tiếp tục.",
+      "twoFactorCode": "Mã xác thực (OTP) hoặc Mã dự phòng",
+      "twoFactorVerify": "Xác nhận",
+      "twoFactorBack": "Quay lại đăng nhập",
+      "twoFactorInvalid": "Mã OTP hoặc mã dự phòng không chính xác. Vui lòng thử lại.",
+      "googleUserNotFound": "Tài khoản Google này chưa được liên kết với bất kỳ người dùng nào trên hệ thống. Vui lòng liên hệ Quản trị viên để đăng ký.",
+      "googleFailed": "Đăng nhập Google thất bại. Vui lòng thử lại hoặc sử dụng tài khoản/mật khẩu."
     },
     "logout": "Đăng xuất"
   },
@@ -93,6 +106,7 @@
       "title": "Không đủ quyền truy cập"
     },
     "generic": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "oldPasswordIncorrect": "Mật khẩu cũ không chính xác.",
     "encryptionKeyExpired": "Khóa mã hóa đã thay đổi. Vui lòng thử lại.",
     "notFound": {
       "message": "Đường dẫn không tồn tại hoặc đã được di chuyển.",
@@ -111,6 +125,10 @@
   },
   "nav": {
     "admin": "Quản trị",
+    "adminUsers": "Danh mục người dùng",
+    "adminRoles": "Quản lý vai trò",
+    "adminRbac": "Ma trận phân quyền",
+    "adminOrgChart": "Sơ đồ phòng ban",
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
     "openMenu": "Mở menu",
@@ -123,9 +141,11 @@
   },
   "route": {
     "admin": "Quản trị",
+    "admin.roles": "Quản lý vai trò",
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
     "procurement": "Mua sắm",
+    "profile": "Thông tin cá nhân",
     "uiShowcase": "Thư viện giao diện",
     "pr.create": "Tạo yêu cầu",
     "pr.detail": "Chi tiết yêu cầu"
@@ -342,6 +362,347 @@
       "PASS": "Đạt",
       "WARNING": "Cảnh báo",
       "FAIL": "Vượt ngân sách"
+    }
+  },
+  "admin": {
+    "users": {
+      "eyebrow": "Quản lý tài khoản",
+      "title": "Danh sách người dùng",
+      "action": {
+        "create": "Thêm người dùng",
+        "edit": "Sửa người dùng",
+        "lock": "Khóa tài khoản",
+        "unlock": "Mở khóa tài khoản",
+        "resetPassword": "Đặt lại mật khẩu"
+      },
+      "filter": {
+        "placeholder": "Tìm họ tên, email, tên đăng nhập...",
+        "allDepts": "Tất cả phòng ban",
+        "allStatus": "Tất cả trạng thái"
+      },
+      "empty": {
+        "title": "Không tìm thấy người dùng",
+        "message": "Không có tài khoản nào phù hợp với bộ lọc hiện tại."
+      },
+      "col": {
+        "fullName": "Họ và tên",
+        "employeeCode": "Mã NV",
+        "username": "Tên đăng nhập",
+        "email": "Email liên hệ",
+        "dept": "Phòng ban",
+        "roles": "Vai trò",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
+      "status": {
+        "ACTIVE": "Hoạt động",
+        "INACTIVE": "Tạm dừng",
+        "LOCKED": "Đang khóa",
+        "PENDING_VERIFY": "Chờ xác minh"
+      },
+      "modal": {
+        "titleCreate": "Thêm tài khoản mới",
+        "titleEdit": "Cập nhật tài khoản"
+      },
+      "resetPasswordModal": {
+        "title": "Đặt lại mật khẩu",
+        "newPassword": "Mật khẩu mới",
+        "newPasswordPlaceholder": "Nhập mật khẩu mới (ít nhất 8 ký tự)",
+        "confirmPassword": "Nhập lại mật khẩu",
+        "confirmPasswordPlaceholder": "Nhập lại mật khẩu mới để xác nhận"
+      },
+      "field": {
+        "employeeCode": "Mã nhân viên",
+        "employeeCodePlaceholder": "VD: NV001",
+        "username": "Tên đăng nhập",
+        "usernamePlaceholder": "Nhập tên đăng nhập (tối thiểu 3 ký tự)",
+        "email": "Địa chỉ Email",
+        "emailPlaceholder": "VD: employee@company.com",
+        "fullName": "Họ và tên",
+        "fullNamePlaceholder": "Nhập họ và tên đầy đủ",
+        "phone": "Số điện thoại",
+        "phonePlaceholder": "Nhập số điện thoại (tùy chọn)",
+        "dept": "Bộ phận / Phòng ban",
+        "selectDeptPlaceholder": "Lựa chọn bộ phận phòng ban trực thuộc",
+        "roles": "Vai trò hệ thống được cấp"
+      },
+      "validation": {
+        "required": "Thông tin này là bắt buộc",
+        "email": "Địa chỉ email không hợp lệ",
+        "usernameMinLength": "Tên đăng nhập phải chứa tối thiểu 3 ký tự",
+        "usernamePattern": "Chỉ chấp nhận chữ thường, số, dấu chấm, gạch dưới, gạch ngang",
+        "passwordMinLength": "Mật khẩu phải chứa tối thiểu 8 ký tự",
+        "passwordPattern": "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt",
+        "passwordMismatch": "Mật khẩu xác nhận không khớp"
+      },
+      "toast": {
+        "lockSuccess": "Đã khóa tài khoản người dùng thành công.",
+        "unlockSuccess": "Đã mở khóa tài khoản người dùng thành công.",
+        "createSuccess": "Đã tạo tài khoản người dùng mới thành công.",
+        "updateSuccess": "Đã cập nhật thông tin tài khoản thành công.",
+        "resetPasswordSuccess": "Đã đặt lại mật khẩu cho người dùng thành công.",
+        "selfLockError": "Bạn không thể khóa hoặc thay đổi trạng thái tài khoản của chính mình."
+      },
+      "statusDialog": {
+        "title": "Xác nhận thay đổi trạng thái",
+        "lockMessage": "Bạn có chắc muốn khóa tài khoản của {{name}}? Người dùng sẽ không thể đăng nhập.",
+        "unlockMessage": "Bạn có chắc muốn mở khóa tài khoản của {{name}}?",
+        "reasonLabel": "Lý do khóa (tùy chọn)",
+        "reasonPlaceholder": "Nhập lý do khóa tài khoản..."
+      },
+      "roles": {
+        "loading": "Đang tải danh sách vai trò..."
+      },
+      "totalItems": "người dùng"
+    },
+    "roles": {
+      "eyebrow": "Quản lý truy cập",
+      "title": "Quản lý vai trò",
+      "action": {
+        "create": "Thêm vai trò",
+        "edit": "Chỉnh sửa",
+        "save": "Lưu thay đổi",
+        "viewAll": "Xem tất cả",
+        "selectAll": "Chọn tất cả",
+        "deselectAll": "Bỏ chọn tất cả",
+        "expandAll": "Mở rộng tất cả",
+        "collapseAll": "Thu gọn tất cả",
+        "viewDetails": "Xem chi tiết",
+        "editPermissions": "Sửa quyền hạn"
+      },
+      "filter": {
+        "placeholder": "Tìm vai trò theo tên, mã, hoặc mô tả..."
+      },
+      "badge": {
+        "system": "Hệ thống",
+        "custom": "Tùy chỉnh",
+        "systemLocked": "Khóa hệ thống"
+      },
+      "field": {
+        "code": "Mã vai trò",
+        "codePlaceholder": "VD: PROCUREMENT_LEAD (Chữ hoa và gạch dưới)",
+        "name": "Tên vai trò",
+        "namePlaceholder": "VD: Trưởng nhóm mua sắm",
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Mô tả ngắn gọn mục đích của vai trò (tùy chọn)"
+      },
+      "modal": {
+        "titleCreate": "Tạo vai trò mới",
+        "titleEdit": "Chỉnh sửa vai trò",
+        "sectionBasic": "Thông tin cơ bản",
+        "sectionPermissions": "Gán quyền hạn",
+        "searchPermissions": "Lọc quyền theo tên hoặc module..."
+      },
+      "detail": {
+        "type": "Loại",
+        "permissionsTitle": "Quyền hạn được gán",
+        "noPermissions": "Vai trò này chưa có quyền hạn nào.",
+        "more": "thêm",
+        "permissions": "quyền hạn",
+        "noDescription": "(Không có mô tả cho vai trò này)"
+      },
+      "tooltip": {
+        "systemLocked": "Vai trò mặc định của hệ thống, không được phép chỉnh sửa"
+      },
+      "validation": {
+        "required": "Thông tin này là bắt buộc",
+        "codePattern": "Phải bắt đầu bằng chữ hoa, chỉ chấp nhận chữ hoa, số và gạch dưới"
+      },
+      "toast": {
+        "createSuccess": "Đã tạo vai trò mới thành công.",
+        "updateSuccess": "Đã cập nhật quyền hạn vai trò thành công.",
+        "updateDetailsSuccess": "Đã cập nhật thông tin vai trò thành công."
+      },
+      "empty": {
+        "title": "Không tìm thấy vai trò",
+        "message": "Không có vai trò nào phù hợp với tìm kiếm."
+      },
+      "totalItems": "vai trò"
+    },
+    "rbac": {
+      "eyebrow": "Kiểm soát truy cập (RBAC)",
+      "title": "Ma trận phân quyền",
+      "subtitle": "Quản lý quyền truy cập theo vai trò cho toàn bộ hệ thống.",
+      "stat": {
+        "roles": "Vai trò",
+        "rolesHint": "Hồ sơ truy cập đang áp dụng",
+        "permissions": "Quyền hạn",
+        "permissionsHint": "Mã quyền duy nhất",
+        "modules": "Module",
+        "modulesHint": "Nhóm chức năng nghiệp vụ",
+        "coverage": "Mức phủ quyền",
+        "coverageHint": "{{count}} / {{total}} quyền đã được gán"
+      },
+      "filter": {
+        "searchPlaceholder": "Tìm quyền, module hoặc mã...",
+        "moduleLabel": "Module",
+        "allModules": "Tất cả module",
+        "focusRoleLabel": "Tập trung vai trò",
+        "allRoles": "Tất cả vai trò",
+        "assignedOnly": "Chỉ hiển thị quyền đã gán",
+        "reset": "Đặt lại bộ lọc"
+      },
+      "roles": {
+        "selectorTitle": "Vai trò hiển thị",
+        "searchPlaceholder": "Tìm vai trò theo tên hoặc mã...",
+        "showAll": "Hiện tất cả",
+        "clearAll": "Ẩn tất cả",
+        "showFocused": "Hiện vai trò đang chọn",
+        "empty": "Không có vai trò phù hợp với tìm kiếm."
+      },
+      "summary": "Đang hiển thị {{shown}} / {{total}} quyền thuộc {{modules}} module - {{visibleRoles}}/{{totalRoles}} vai trò hiển thị",
+      "focusedRole": "Đang tập trung: {{role}}",
+      "module": {
+        "label": "Module {{module}}",
+        "count": "{{count}} quyền"
+      },
+      "role": {
+        "assigned": "Đã gán"
+      },
+      "table": {
+        "caption": "Ma trận phân quyền theo vai trò"
+      },
+      "col": {
+        "permission": "Quyền hạn / Chức năng"
+      },
+      "legend": {
+        "active": "Đã cấp quyền",
+        "inactive": "Chưa cấp quyền",
+        "pending": "Đang cập nhật"
+      },
+      "toggle": "Bật/tắt {{permission}} cho vai trò {{role}}",
+      "toast": {
+        "updateSuccess": "Đã cập nhật phân quyền vai trò thành công."
+      },
+      "empty": {
+        "title": "Không tìm thấy vai trò",
+        "message": "Không thể tải danh sách vai trò hệ thống."
+      },
+      "emptyVisible": {
+        "title": "Chưa chọn vai trò hiển thị",
+        "message": "Vui lòng chọn ít nhất một vai trò để xem ma trận."
+      },
+      "emptyFiltered": {
+        "title": "Không có quyền phù hợp với bộ lọc",
+        "message": "Hãy thử xóa bộ lọc hoặc chọn vai trò/module khác."
+      }
+    },
+    "org": {
+      "eyebrow": "Cơ cấu tổ chức",
+      "title": "Sơ đồ phòng ban",
+      "action": {
+        "create": "Thêm phòng ban",
+        "addSubDept": "Thêm bộ phận con"
+      },
+      "col": {
+        "deptName": "Tên phòng ban",
+        "deptCode": "Mã bộ phận",
+        "manager": "Trưởng bộ phận",
+        "actions": "Thao tác"
+      },
+      "modal": {
+        "titleCreate": "Tạo phòng ban mới",
+        "titleEdit": "Cập nhật phòng ban"
+      },
+      "field": {
+        "code": "Mã phòng ban",
+        "codePlaceholder": "VD: TECH_DEPT (Chữ viết hoa và số, gạch dưới)",
+        "name": "Tên phòng ban",
+        "namePlaceholder": "VD: Phòng Công nghệ Thông tin",
+        "parentCode": "Bộ phận cha trực thuộc",
+        "selectParentPlaceholder": "Không có (Bộ phận gốc)",
+        "manager": "Quản lý / Trưởng bộ phận",
+        "selectManagerPlaceholder": "Lựa chọn trưởng bộ phận quản lý"
+      },
+      "validation": {
+        "required": "Thông tin này là bắt buộc",
+        "pattern": "Mã bộ phận chỉ chấp nhận chữ hoa, số và gạch dưới"
+      },
+      "toast": {
+        "createSuccess": "Đã tạo phòng ban bộ phận mới thành công.",
+        "updateSuccess": "Đã cập nhật chi tiết phòng ban thành công."
+      },
+      "empty": {
+        "title": "Không tìm thấy phòng ban",
+        "message": "Không thể tải cây sơ đồ tổ chức phòng ban."
+      }
+    }
+  },
+  "profile": {
+    "title": "Thông tin cá nhân",
+    "subtitle": "Xem và cập nhật thông tin cá nhân, ảnh đại diện và mật khẩu của bạn",
+    "tabs": {
+      "info": "Thông tin chi tiết",
+      "password": "Đổi mật khẩu",
+      "security": "Bảo mật & 2FA"
+    },
+    "security": {
+      "title": "Cài đặt bảo mật & 2FA",
+      "description": "Quản lý xác thực 2 lớp và bảo mật tài khoản nâng cao để bảo vệ tài khoản khỏi truy cập trái phép",
+      "2fa": {
+        "statusLabel": "Phương thức xác thực",
+        "enabled": "Đã bật xác thực 2 lớp (2FA)",
+        "disabled": "Chưa bật xác thực 2 lớp (2FA)",
+        "enabledDesc": "Tài khoản của bạn đang được bảo vệ bằng mật khẩu và mã OTP 2FA.",
+        "disabledDesc": "Xác thực 2 lớp bổ sung thêm một lớp bảo mật bằng cách yêu cầu mã OTP khi đăng nhập.",
+        "enableBtn": "Kích hoạt 2FA",
+        "disableBtn": "Vô hiệu hóa 2FA",
+        "disableConfirmTitle": "Xác nhận tắt 2FA",
+        "disableConfirmMessage": "Bạn có chắc chắn muốn tắt xác thực 2FA không? Quá trình này sẽ làm giảm tính bảo mật của tài khoản của bạn.",
+        "setupTitle": "Thiết lập xác thực 2 lớp",
+        "step1Title": "Quét mã QR",
+        "step1Desc": "Mở ứng dụng xác thực (Google Authenticator, Microsoft Authenticator, v.v.) và quét mã QR bên dưới, hoặc nhập mã khóa bằng tay.",
+        "manualKey": "Khóa thiết lập (nhập tay nếu không quét được QR):",
+        "step2Title": "Nhập mã xác nhận",
+        "step2Desc": "Nhập mã gồm 6 chữ số hiển thị trên ứng dụng xác thực của bạn để hoàn tất thiết lập.",
+        "otpLabel": "Mã xác thực 6 số (OTP)",
+        "otpInvalid": "Mã OTP phải có đúng 6 chữ số.",
+        "setupStarted": "Đã bắt đầu thiết lập 2FA. Vui lòng quét mã QR.",
+        "confirmSuccess": "Kích hoạt xác thực 2 lớp thành công! Vui lòng lưu các mã dự phòng.",
+        "disableSuccess": "Đã tắt xác thực hai lớp (2FA) thành công.",
+        "backupTitle": "Danh sách mã dự phòng",
+        "backupDesc": "Lưu các mã dự phòng này ở nơi an toàn. Mỗi mã chỉ dùng được một lần nếu bạn mất thiết bị xác thực."
+      }
+    },
+    "info": {
+      "employeeCode": "Mã nhân viên",
+      "username": "Tên đăng nhập",
+      "fullName": "Họ và tên",
+      "email": "Email công việc",
+      "phone": "Số điện thoại",
+      "department": "Phòng ban",
+      "roles": "Vai trò hệ thống",
+      "twoFactor": "Xác thực hai lớp (2FA)",
+      "twoFactorEnabled": "Đã kích hoạt",
+      "twoFactorDisabled": "Chưa kích hoạt",
+      "lastLogin": "Lần đăng nhập cuối",
+      "neverLoggedIn": "Chưa từng đăng nhập",
+      "updateProfileSuccess": "Cập nhật thông tin cá nhân thành công."
+    },
+    "password": {
+      "title": "Đổi mật khẩu",
+      "description": "Để đảm bảo bảo mật, vui lòng chọn mật khẩu mạnh gồm ít nhất 8 ký tự.",
+      "oldPassword": "Mật khẩu hiện tại",
+      "newPassword": "Mật khẩu mới",
+      "confirmPassword": "Nhập lại mật khẩu mới",
+      "submit": "Đổi mật khẩu",
+      "mismatch": "Mật khẩu nhập lại không khớp.",
+      "sameAsOld": "Mật khẩu mới không được trùng với mật khẩu hiện tại.",
+      "validation": "Vui lòng điền đầy đủ và đúng định dạng mật khẩu.",
+      "requirements": {
+        "title": "Yêu cầu bảo mật mật khẩu:",
+        "minLength": "Tối thiểu 8 ký tự",
+        "uppercase": "Có ít nhất 1 chữ hoa (A-Z)",
+        "lowercase": "Có ít nhất 1 chữ thường (a-z)",
+        "number": "Có ít nhất 1 chữ số (0-9)",
+        "specialChar": "Có ít nhất 1 ký tự đặc biệt (@$!%*?&#^)"
+      },
+      "success": "Đổi mật khẩu thành công."
+    },
+    "avatar": {
+      "title": "Ảnh đại diện",
+      "description": "Nhấp chọn ảnh đại diện mong muốn từ danh sách",
+      "select": "Chọn làm ảnh đại diện"
     }
   }
 }

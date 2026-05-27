@@ -1,0 +1,64 @@
+<ep-modal
+  [open]="isOpen"
+  [title]="role ? ('admin.roles.modal.titleEdit' | translate) : ('admin.roles.modal.titleCreate' | translate)"
+  (close)="closeForm.emit()">
+  <form class="role-form" (ngSubmit)="onSubmit()">
+    <!-- Basic Info Section -->
+    <div class="role-form__section">
+      <h3 class="role-form__section-title">
+        <ep-icon name="info" [size]="16"></ep-icon>
+        {{ 'admin.roles.modal.sectionBasic' | translate }}
+      </h3>
+      <div class="role-form__grid">
+        <ep-form-field
+          [label]="('admin.roles.field.code' | translate) || 'Role Code'"
+          [error]="formCodeError() ? (formCodeError()! | translate) : null">
+          <input
+            type="text"
+            id="role-code"
+            [placeholder]="'admin.roles.field.codePlaceholder' | translate"
+            [ngModel]="formCode()"
+            (ngModelChange)="formCode.set($event)"
+            [ngModelOptions]="{standalone: true}" />
+        </ep-form-field>
+
+        <ep-form-field [label]="('admin.roles.field.name' | translate) || 'Role Name'">
+          <input
+            type="text"
+            id="role-name"
+            [placeholder]="'admin.roles.field.namePlaceholder' | translate"
+            [ngModel]="formName()"
+            (ngModelChange)="formName.set($event)"
+            [ngModelOptions]="{standalone: true}" />
+        </ep-form-field>
+      </div>
+
+      <ep-form-field [label]="('admin.roles.field.description' | translate) || 'Description'">
+        <textarea
+          id="role-description"
+          rows="3"
+          [placeholder]="'admin.roles.field.descriptionPlaceholder' | translate"
+          [ngModel]="formDescription()"
+          (ngModelChange)="formDescription.set($event)"
+          [ngModelOptions]="{standalone: true}">
+        </textarea>
+      </ep-form-field>
+    </div>
+
+    <!-- Actions -->
+    <div class="role-form__actions">
+      <ep-button variant="secondary" (click)="closeForm.emit()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button
+        variant="primary"
+        type="submit"
+        [icon]="role ? 'save' : 'plus'"
+        [loading]="isSubmitting"
+        [disabled]="!isFormValid() || isSubmitting">
+        {{ (role ? 'admin.roles.action.save' : 'admin.roles.action.create') | translate }}
+      </ep-button>
+    </div>
+  </form>
+</ep-modal>
+

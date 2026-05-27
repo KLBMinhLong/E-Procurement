@@ -22,7 +22,10 @@ import com.eprocure.iam.application.usecase.StartGoogleOAuthUseCase;
 import com.eprocure.iam.application.usecase.VerifyTwoFactorUseCase;
 import com.eprocure.iam.common.api.ApiResponse;
 import com.eprocure.iam.common.api.RequestIdUtil;
+import com.eprocure.iam.common.exception.BusinessException;
+import org.springframework.web.util.UriComponentsBuilder;
 import com.eprocure.iam.common.security.UserPrincipal;
+import com.eprocure.iam.common.util.IpAddressUtil;
 import com.eprocure.iam.common.util.LogMaskingUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,6 +74,7 @@ public class AuthController {
     private final Duration sessionTtl;
     private final Duration twoFactorChallengeTtl;
     private final Duration oauthStateTtl;
+    private final String frontendRedirectUrl;
 
     public AuthController(
             GetPublicKeyUseCase getPublicKeyUseCase,
@@ -90,7 +94,8 @@ public class AuthController {
             @Value("${eprocure.security.cookie-domain:}") String cookieDomain,
             @Value("${eprocure.session.ttl-hours:8}") long sessionTtlHours,
             @Value("${eprocure.two-factor.challenge-ttl-minutes:5}") long twoFactorChallengeTtlMinutes,
-            @Value("${eprocure.google-oauth.state-ttl-minutes:5}") long oauthStateTtlMinutes) {
+            @Value("${eprocure.google-oauth.state-ttl-minutes:5}") long oauthStateTtlMinutes,
+            @Value("${eprocure.google-oauth.frontend-redirect-url:http://localhost:4200/login}") String frontendRedirectUrl) {
         this.getPublicKeyUseCase = getPublicKeyUseCase;
         this.loginUseCase = loginUseCase;
         this.logoutUseCase = logoutUseCase;
@@ -109,6 +114,7 @@ public class AuthController {
         this.sessionTtl = Duration.ofHours(sessionTtlHours);
         this.twoFactorChallengeTtl = Duration.ofMinutes(twoFactorChallengeTtlMinutes);
         this.oauthStateTtl = Duration.ofMinutes(oauthStateTtlMinutes);
+        this.frontendRedirectUrl = frontendRedirectUrl;
     }
 
     @GetMapping("/public-key")
@@ -184,31 +190,56 @@ public class AuthController {
     }
 
     @GetMapping("/oauth/google/callback")
-    public ResponseEntity<ApiResponse<LoginResponse>> handleGoogleOAuthCallback(
+    public ResponseEntity<Void> handleGoogleOAuthCallback(
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String state,
             HttpServletRequest request,
             HttpServletResponse response) {
         log.info("[CONTROLLER] GET /api/v1/auth/oauth/google/callback | userId=anonymous");
-        LoginResult result = handleGoogleOAuthCallbackUseCase.execute(new GoogleOAuthCallbackCommand(
-                code,
-                state,
-                extractCookie(request, oauthStateCookieName).orElse(""),
-                ClientContext.of(resolveClientIp(request), request.getHeader(HttpHeaders.USER_AGENT))));
-        response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(oauthStateCookieName).toString());
-        if (result.requiresTwoFactor()) {
-            response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(cookieName).toString());
-            response.addHeader(HttpHeaders.SET_COOKIE, twoFactorChallengeCookie(result.rawToken()).toString());
-        } else {
-            response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie(result.rawToken()).toString());
-            response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(twoFactorCookieName).toString());
+        try {
+            LoginResult result = handleGoogleOAuthCallbackUseCase.execute(new GoogleOAuthCallbackCommand(
+                    code,
+                    state,
+                    extractCookie(request, oauthStateCookieName).orElse(""),
+                    ClientContext.of(resolveClientIp(request), request.getHeader(HttpHeaders.USER_AGENT))));
+            response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(oauthStateCookieName).toString());
+            
+            String redirectUrl;
+            if (result.requiresTwoFactor()) {
+                response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(cookieName).toString());
+                response.addHeader(HttpHeaders.SET_COOKIE, twoFactorChallengeCookie(result.rawToken()).toString());
+                redirectUrl = UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl)
+                        .queryParam("requiresTwoFactor", "true")
+                        .toUriString();
+            } else {
+                response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie(result.rawToken()).toString());
+                response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(twoFactorCookieName).toString());
+                redirectUrl = UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl)
+                        .replacePath("/")
+                        .toUriString();
+            }
+            return ResponseEntity.status(302)
+                    .location(URI.create(redirectUrl))
+                    .build();
+        } catch (BusinessException e) {
+            log.warn("[EXCEPTION][{}] Google OAuth callback failed: {} | path={}", e.getErrorCode().code(), e.getMessage(), request.getRequestURI());
+            response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(oauthStateCookieName).toString());
+            String errorUrl = UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl)
+                    .queryParam("error", e.getErrorCode().code())
+                    .toUriString();
+            return ResponseEntity.status(302)
+                    .location(URI.create(errorUrl))
+                    .build();
+        } catch (Exception e) {
+            log.error("[EXCEPTION][SYS_001] Google OAuth callback unexpected failure | path={}", request.getRequestURI(), e);
+            response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(oauthStateCookieName).toString());
+            String errorUrl = UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl)
+                    .queryParam("error", "SYS_001")
+                    .toUriString();
+            return ResponseEntity.status(302)
+                    .location(URI.create(errorUrl))
+                    .build();
         }
-        LoginResponse data = new LoginResponse(
-                result.userId(),
-                result.fullName(),
-                result.avatarUrl(),
-                result.requiresTwoFactor());
-        return ResponseEntity.ok(ApiResponse.success(data, RequestIdUtil.resolve(request)));
     }
 
     @PostMapping("/logout")
@@ -313,9 +344,6 @@ public class AuthController {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader("X-Forwarded-For"))
-                .map(value -> value.split(",", 2)[0].trim())
-                .filter(value -> !value.isBlank())
-                .orElseGet(request::getRemoteAddr);
+        return IpAddressUtil.getClientIp(request);
     }
 }

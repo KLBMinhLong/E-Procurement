@@ -1,19 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <Property name="SERVICE_NAME">purchase-request-service</Property>
+        <Property name="LOG_DIR">./logs</Property>
+        <Property name="CONSOLE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight{[%-5level]}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=cyan} [trace=%style{%X{trace_id}}{cyan} span=%style{%X{span_id}}{cyan}] [${SERVICE_NAME}] [%t] %style{%-40.40c{1.}}{magenta} - %msg%n</Property>
+        <Property name="FILE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [trace=%X{trace_id} span=%X{span_id}] [${SERVICE_NAME}] [%t] %-40.40c{1.} - %msg%n</Property>
+    </Properties>
+
     <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%t] %c{1.} - %msg%n"/>
+        <!-- Console with colors -->
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}" disableAnsi="false"/>
         </Console>
+
+        <!-- Application log file -->
+        <RollingFile name="FILE"
+                     fileName="${LOG_DIR}/application.log"
+                     filePattern="${LOG_DIR}/application-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${FILE_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="50MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- Audit log — append-only, separate file -->
+        <RollingFile name="AUDIT"
+                     fileName="${LOG_DIR}/audit.log"
+                     filePattern="${LOG_DIR}/audit-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="${FILE_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="1825"/> <!-- 5 years -->
+        </RollingFile>
     </Appenders>
+
     <Loggers>
+        <!-- SQL Logger (controlled by profile/env) -->
         <Logger name="com.eprocure.pr.infrastructure.persistence.mapper" level="${env:LOG_LEVEL_SQL:-INFO}" additivity="false">
-            <AppenderRef ref="Console"/>
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
         </Logger>
+
+        <!-- Application -->
         <Logger name="com.eprocure" level="${env:LOG_LEVEL_APP:-DEBUG}" additivity="false">
-            <AppenderRef ref="Console"/>
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
         </Logger>
-        <Root level="${env:LOG_LEVEL_ROOT:-INFO}">
-            <AppenderRef ref="Console"/>
+
+        <!-- Audit loggers -->
+        <Logger name="AUDIT" level="INFO" additivity="false">
+            <AppenderRef ref="AUDIT"/>
+        </Logger>
+        <Logger name="com.eprocure.audit" level="INFO" additivity="false">
+            <AppenderRef ref="AUDIT"/>
+        </Logger>
+
+        <!-- Framework logging limits -->
+        <Logger name="org.springframework"          level="WARN"/>
+        <Logger name="org.mybatis"                  level="WARN"/>
+        <Logger name="com.zaxxer.hikari"            level="WARN"/>
+        <Logger name="org.apache.kafka"             level="WARN"/>
+        <Logger name="io.lettuce"                   level="WARN"/>
+
+        <Root level="WARN">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
         </Root>
     </Loggers>
+
 </Configuration>

@@ -12,13 +12,15 @@ RUN mvn -pl services/iam-service -am package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 
-RUN addgroup -S app && adduser -S app -G app
+RUN addgroup -S app && adduser -S app -G app && mkdir -p /app/logs /app/agents && chown -R app:app /app
 WORKDIR /app
 
 ENV TZ=Asia/Ho_Chi_Minh
-ENV JAVA_OPTS="-Xms128m -Xmx384m"
+ENV JAVA_OPTS="-Xms128m -Xmx384m -javaagent:/app/agents/opentelemetry-javaagent.jar"
 
+COPY infra/otel/opentelemetry-javaagent.jar /app/agents/opentelemetry-javaagent.jar
 COPY --from=builder /workspace/services/iam-service/target/iam-service-*.jar /app/app.jar
+RUN chown -R app:app /app
 
 EXPOSE 8081
 HEALTHCHECK --interval=30s --timeout=5s --start-period=75s --retries=5 \

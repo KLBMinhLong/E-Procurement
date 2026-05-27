@@ -1,9 +1,25 @@
-<ep-empty-state
-  icon="lock"
-  [title]="'error.forbidden.title' | translate"
-  [message]="'error.forbidden.message' | translate">
-</ep-empty-state>
+<div class="error-page">
+  <div class="error-page__card">
 
-<ep-button routerLink="/dashboard" variant="secondary">
-  {{ 'error.backDashboard' | translate }}
-</ep-button>
+    <span class="error-page__code">
+      <ep-icon name="shield-off" [size]="12"></ep-icon>
+      403 Forbidden
+    </span>
+
+    <span class="error-page__icon-wrap">
+      <ep-icon name="lock" [size]="32"></ep-icon>
+    </span>
+
+    <div>
+      <h1 class="error-page__title">{{ 'error.forbidden.title' | translate }}</h1>
+      <p class="error-page__message">{{ 'error.forbidden.message' | translate }}</p>
+    </div>
+
+    <div class="error-page__actions">
+      <ep-button routerLink="/dashboard" variant="primary" icon="layout-dashboard">
+        {{ 'error.backDashboard' | translate }}
+      </ep-button>
+    </div>
+
+  </div>
+</div>

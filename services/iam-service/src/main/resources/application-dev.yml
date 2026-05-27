@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${IAM_DB_HOST:postgres}:${IAM_DB_PORT:5432}/${IAM_DB_NAME:db_iam}
+    username: ${IAM_DB_USER:iam_user}
+    password: ${IAM_DB_PASS:iam_pass_dev}
+    hikari:
+      connection-init-sql: SET search_path TO ${IAM_DB_SCHEMA:iam}
+  flyway:
+    schemas: ${IAM_DB_SCHEMA:iam}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+
+eprocure:
+  security:
+    cookie-secure: ${COOKIE_SECURE:false}
+    cookie-same-site: ${COOKIE_SAMESITE:Strict}
+    cookie-domain: ${COOKIE_DOMAIN:}
+  internal:
+    api-key: ${IAM_INTERNAL_API_KEY:change-me-internal-api-key}
+  two-factor:
+    secret-encryption-key: ${TOTP_SECRET_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+  encryption:
+    enabled: ${ENCRYPTION_ENABLED:false}
+    key-version: ${RSA_KEY_VERSION:v2025-01}
+    public-key: ${RSA_PUBLIC_KEY:}
+    private-key: ${RSA_PRIVATE_KEY:}
+  keycloak:
+    url: ${KEYCLOAK_URL:http://keycloak:8080}
+    realm: ${KEYCLOAK_REALM:eprocure}
+    client-id: ${KEYCLOAK_CLIENT_ID:eprocure-iam}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:change-me-keycloak-client-secret}
+    admin-user: ${KEYCLOAK_ADMIN_USER:admin}
+    admin-password: ${KEYCLOAK_ADMIN_PASS:admin_dev_pass}
+  password-reset:
+    frontend-url: ${PASSWORD_RESET_FRONTEND_URL:http://localhost:8080/reset-password}
+  google-oauth:
+    client-id: ${GOOGLE_CLIENT_ID:change-me-google-client-id}
+    client-secret: ${GOOGLE_CLIENT_SECRET:change-me-google-client-secret}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/v1/auth/oauth/google/callback}
+    authorization-url: ${GOOGLE_AUTHORIZATION_URL:https://accounts.google.com/o/oauth2/v2/auth}
+    token-url: ${GOOGLE_TOKEN_URL:https://oauth2.googleapis.com/token}
+    user-info-url: ${GOOGLE_USER_INFO_URL:https://www.googleapis.com/oauth2/v3/userinfo}
+    frontend-redirect-url: ${GOOGLE_OAUTH_FRONTEND_REDIRECT_URL:http://localhost:4200/login}

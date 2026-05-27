@@ -62,10 +62,18 @@
 | architecture-map.md | ✅ | Service relationships, data flow |
 | coding-patterns.md | ✅ | Code templates tái sử dụng |
 | decision-log.md | ✅ | Quyết định kỹ thuật đã chốt |
+| domain-glossary.md | ✅ | Thuật ngữ nghiệp vụ VI/EN, permission/status/event vocabulary |
 | error-history.md | ✅ | Lịch sử lỗi và cách xử lý |
 | progress-tracker.md | ✅ | File này |
 | project-context.md | ✅ | Master context |
 | tech-stack.md | ✅ | Versions, config patterns |
+
+## CODEX PERSONALIZATION (.codex/)
+| File | Status | Ghi chú |
+|---|---|---|
+| CODEX_CONTEXT.md | ✅ | Bootstrap ngắn cho Codex: source-of-truth, snapshot, task bootstrap, commands |
+| config.toml | ✅ | Runtime local config |
+| skills/ui-ux-pro-max | ✅ | Skill UI/UX cục bộ cho frontend/design task |
 
 ## EPICS — CODE
 
@@ -122,6 +130,8 @@
 | Error interceptor | ✅ |
 | WebSocket service | ✅ |
 | Permission guard + directive | ✅ |
+| Rewrite User Profile UI Screen (Personal details, avatar selector, password change checklist, 2FA toggle setup) | ✅ |
+| Unit tests / compilation validation | ✅ |
 
 ### E04: Purchase Request Service
 | Task | Status |
@@ -142,6 +152,16 @@
 | Frontend: PR create form | ✅ |
 | Frontend: PR detail page | ✅ |
 
+### E13-A: Admin Portal (User, RBAC, Org Chart UI) [PRIORITIZED 🚀]
+| Task | Status |
+|---|---|
+| Create Admin lazy-loaded module & routing config (`/admin`) | ✅ |
+| Create Admin HTTP Services (User, RBAC, Org Chart tree) | ✅ |
+| Frontend UI: User Management Screen (CRUD & Lock/Unlock) | ✅ |
+| Frontend UI: Role-Permission Matrix Screen (RBAC mapping) | ✅ |
+| Frontend UI: Org Chart Visual Tree Screen (Department hierarchy) | ✅ |
+| i18n localization (VI/EN) & Integration tests | ✅ |
+
 ### E05: Approval Engine
 | Task | Status |
 |---|---|
@@ -161,6 +181,7 @@
 ### E06–E15: (Xem PROJECT_BRIEF.md)
 | Epic | Status |
 |---|---|
+| E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
 | E06: RFQ & Vendor | ⬜ |
 | E07: Purchase Order | ⬜ |
 | E08: Goods Receipt & Inventory | ⬜ |
@@ -168,6 +189,6 @@
 | E10: Budget Management | ⬜ |
 | E11: Notification & Realtime | ⬜ |
 | E12: Analytics & Reports | ⬜ |
-| E13: Admin & Config Portal | ⬜ |
+| E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
 | E15: Testing & CI/CD | ⬜ |

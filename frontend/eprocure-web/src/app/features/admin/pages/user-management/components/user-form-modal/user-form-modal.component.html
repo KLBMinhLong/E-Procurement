@@ -1,0 +1,136 @@
+<ep-modal
+  [open]="isOpen"
+  [title]="(mode === 'create' ? 'admin.users.modal.titleCreate' : 'admin.users.modal.titleEdit') | translate"
+  (close)="closeModal.emit()">
+
+  @if (isLoading) {
+    <ep-skeleton [rows]="6" />
+  } @else {
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="user-form">
+      <div class="user-form__body">
+        <div class="form-grid">
+          <!-- Employee Code -->
+          <ep-form-field
+            [label]="'admin.users.field.employeeCode' | translate"
+            [error]="userForm.get('employeeCode')?.touched && userForm.get('employeeCode')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+            <input
+              id="form-employeeCode"
+              type="text"
+              formControlName="employeeCode"
+              class="form-input"
+              [placeholder]="'admin.users.field.employeeCodePlaceholder' | translate" />
+          </ep-form-field>
+
+          <!-- Username Field -->
+          <ep-form-field
+            [label]="'admin.users.field.username' | translate"
+            [error]="userForm.get('username')?.touched && userForm.get('username')?.hasError('required') ? ('admin.users.validation.required' | translate) : (userForm.get('username')?.touched && userForm.get('username')?.hasError('minlength') ? ('admin.users.validation.usernameMinLength' | translate) : (userForm.get('username')?.touched && userForm.get('username')?.hasError('pattern') ? ('admin.users.validation.usernamePattern' | translate) : null))">
+            <input
+              id="form-username"
+              type="text"
+              formControlName="username"
+              class="form-input"
+              [placeholder]="'admin.users.field.usernamePlaceholder' | translate" />
+          </ep-form-field>
+
+          <!-- Email Field -->
+          <ep-form-field
+            [label]="'admin.users.field.email' | translate"
+            [error]="userForm.get('email')?.touched && userForm.get('email')?.hasError('required') ? ('admin.users.validation.required' | translate) : (userForm.get('email')?.touched && userForm.get('email')?.hasError('email') ? ('admin.users.validation.email' | translate) : null)">
+            <input
+              id="form-email"
+              type="email"
+              formControlName="email"
+              class="form-input"
+              [placeholder]="'admin.users.field.emailPlaceholder' | translate" />
+          </ep-form-field>
+
+          <!-- Full Name Field -->
+          <ep-form-field
+            [label]="'admin.users.field.fullName' | translate"
+            [error]="userForm.get('fullName')?.touched && userForm.get('fullName')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+            <input
+              id="form-fullName"
+              type="text"
+              formControlName="fullName"
+              class="form-input"
+              [placeholder]="'admin.users.field.fullNamePlaceholder' | translate" />
+          </ep-form-field>
+
+          <!-- Phone Field -->
+          <ep-form-field
+            [label]="'admin.users.field.phone' | translate">
+            <input
+              id="form-phone"
+              type="text"
+              formControlName="phone"
+              class="form-input"
+              [placeholder]="'admin.users.field.phonePlaceholder' | translate" />
+          </ep-form-field>
+
+          <!-- Department Select Field -->
+          <ep-form-field
+            [label]="'admin.users.field.dept' | translate"
+            [error]="userForm.get('departmentId')?.touched && userForm.get('departmentId')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+            <select
+              id="form-departmentId"
+              formControlName="departmentId"
+              class="form-select">
+              <option value="">{{ 'admin.users.field.selectDeptPlaceholder' | translate }}</option>
+              @for (dept of departments; track dept.id) {
+                <option [value]="dept.id">{{ dept.name }}</option>
+              }
+            </select>
+          </ep-form-field>
+        </div>
+
+        <!-- Roles Section -->
+        <div class="roles-section">
+          <span class="roles-section__label">{{ 'admin.users.field.roles' | translate }}</span>
+          @if (userForm.get('roles')?.touched && userForm.get('roles')?.hasError('required')) {
+            <small class="form-error">{{ 'admin.users.validation.required' | translate }}</small>
+          }
+          <div class="roles-grid">
+            @for (role of roles; track role.code) {
+              <label class="role-checkbox-card" [class.role-checkbox-card--active]="isRoleSelected(role.code)">
+                <input
+                  type="checkbox"
+                  [checked]="isRoleSelected(role.code)"
+                  (change)="onRoleCheckboxChange($event, role.code)"
+                  class="sr-only" />
+                <div class="role-checkbox-card__body">
+                  <span class="role-checkbox-card__name">{{ role.name }}</span>
+                  <span class="role-checkbox-card__code">{{ role.code }}</span>
+                  @if (role.description) {
+                    <span class="role-checkbox-card__desc">{{ role.description }}</span>
+                  }
+                </div>
+              </label>
+            } @empty {
+              <p class="roles-section__empty">{{ 'admin.users.roles.loading' | translate }}</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Bar -->
+      <div class="form-actions">
+        <ep-button
+          id="btn-form-cancel"
+          variant="ghost"
+          [disabled]="isSubmitting"
+          (click)="closeModal.emit()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-form-submit"
+          variant="primary"
+          type="submit"
+          [loading]="isSubmitting"
+          [disabled]="isSubmitting">
+          {{ (mode === 'create' ? 'action.create' : 'action.submit') | translate }}
+        </ep-button>
+      </div>
+    </form>
+  }
+</ep-modal>
