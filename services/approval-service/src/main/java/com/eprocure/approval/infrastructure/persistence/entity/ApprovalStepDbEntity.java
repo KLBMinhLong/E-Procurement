@@ -17,6 +17,8 @@ public class ApprovalStepDbEntity {
     private Instant slaDeadline;
     private Instant assignedAt;
     private Instant actedAt;
+    private boolean escalated;
+    private UUID escalatedFrom;
     private String camundaTaskId;
     private UUID createdBy;
 
@@ -122,6 +124,22 @@ public class ApprovalStepDbEntity {
 
     public void setActedAt(Instant actedAt) {
         this.actedAt = actedAt;
+    }
+
+    public boolean isEscalated() {
+        return escalated;
+    }
+
+    public void setEscalated(boolean escalated) {
+        this.escalated = escalated;
+    }
+
+    public UUID getEscalatedFrom() {
+        return escalatedFrom;
+    }
+
+    public void setEscalatedFrom(UUID escalatedFrom) {
+        this.escalatedFrom = escalatedFrom;
     }
 
     public String getCamundaTaskId() {

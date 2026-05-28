@@ -70,3 +70,6 @@ eprocure:
       business-hours-start: ${BUSINESS_HOURS_START:08:00}
       business-hours-end: ${BUSINESS_HOURS_END:17:30}
       business-days: ${BUSINESS_DAYS:MON,TUE,WED,THU,FRI}
+      escalation-enabled: ${SLA_ESCALATION_ENABLED:true}
+      check-interval-minutes: ${SLA_CHECK_INTERVAL_MINUTES:15}
+      escalation-batch-size: ${SLA_ESCALATION_BATCH_SIZE:50}

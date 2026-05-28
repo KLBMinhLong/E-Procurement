@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-28] E05 SLA timer and escalation
+
+- Decision: Add a scheduled `SlaEscalationUseCase` in approval-service to scan overdue pending approval steps, mark `is_escalated`, persist `escalated_from`, reassign to another eligible approver for the same role when IAM returns one, and publish `approval.sla.breached`.
+- Reason: E05 needs durable SLA breach handling after deadlines are already calculated and persisted; the existing schema includes `is_escalated`/`escalated_from`, and overdue task scanning can be replay-safe by filtering non-escalated pending steps.
+- Impact: Approval tasks remain actionable in inbox after escalation because status stays `PENDING`, while details can show `isEscalated=true`. Kafka mode publishes a transaction-after-commit SLA breach event; local fallback logs the same event without requiring Kafka.
+- Constraint: Escalation target resolution currently selects another eligible candidate for the same approver role from IAM and falls back to notifying the original approver when no alternate candidate exists. Delegation-aware substitution and admin approval rule CRUD remain later E05 slices.
+
 ## [2026-05-28] E03 Frontend Breadcrumb i18n Collision and Dynamic Route Parameter Support
 
 - Decision: Resolve translation override by merging duplicate `"route"` JSON blocks in `vi.json` and `en.json` into a nested structure, and upgrade `EpBreadcrumbComponent` to use progressive cumulative path mapping with Regex support for dynamic UUIDs/IDs.

@@ -357,6 +357,11 @@ class StartApprovalProcessUseCaseTest {
         }
 
         @Override
+        public List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit) {
+            return List.of();
+        }
+
+        @Override
         public void updateProcessRuntime(ApprovalProcess process) {
         }
 

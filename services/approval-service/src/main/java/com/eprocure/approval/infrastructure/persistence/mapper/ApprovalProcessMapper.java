@@ -2,6 +2,7 @@ package com.eprocure.approval.infrastructure.persistence.mapper;
 
 import com.eprocure.approval.infrastructure.persistence.entity.ApprovalProcessDbEntity;
 import com.eprocure.approval.infrastructure.persistence.entity.ApprovalStepDbEntity;
+import java.time.Instant;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -80,6 +81,47 @@ public interface ApprovalProcessMapper {
     ApprovalProcessDbEntity findRunningByCamundaTaskId(@Param("camundaTaskId") String camundaTaskId);
 
     @Select("""
+            SELECT p.*,
+                   p.entity_snapshot::text AS entity_snapshot
+            FROM approval.approval_processes p
+            JOIN (
+                SELECT s.process_id,
+                       MIN(s.sla_deadline) AS nearest_deadline
+                FROM approval.approval_steps s
+                JOIN approval.approval_processes p2 ON p2.id = s.process_id
+                WHERE p2.status = 'RUNNING'
+                  AND p2.is_deleted = FALSE
+                  AND s.status = 'PENDING'
+                  AND s.is_escalated = FALSE
+                  AND s.sla_deadline <= #{now}
+                  AND s.is_deleted = FALSE
+                GROUP BY s.process_id
+                ORDER BY MIN(s.sla_deadline) ASC
+                LIMIT #{limit}
+            ) overdue ON overdue.process_id = p.id
+            WHERE p.is_deleted = FALSE
+            ORDER BY overdue.nearest_deadline ASC
+            """)
+    @Results(id = "approvalProcessResultOverdue", value = {
+            @Result(property = "entityType", column = "entity_type"),
+            @Result(property = "entityId", column = "entity_id"),
+            @Result(property = "entityNumber", column = "entity_number"),
+            @Result(property = "entityTitle", column = "entity_title"),
+            @Result(property = "requesterId", column = "requester_id"),
+            @Result(property = "requesterDepartmentId", column = "requester_department_id"),
+            @Result(property = "totalAmount", column = "total_amount"),
+            @Result(property = "camundaProcessInstanceId", column = "camunda_process_instance_id"),
+            @Result(property = "currentStepIndex", column = "current_step_index"),
+            @Result(property = "entitySnapshotJson", column = "entity_snapshot"),
+            @Result(property = "startedAt", column = "started_at"),
+            @Result(property = "completedAt", column = "completed_at"),
+            @Result(property = "createdBy", column = "created_by")
+    })
+    java.util.List<ApprovalProcessDbEntity> findRunningProcessesWithOverdueSteps(
+            @Param("now") Instant now,
+            @Param("limit") int limit);
+
+    @Select("""
             SELECT *
             FROM approval.approval_steps
             WHERE process_id = #{processId}
@@ -96,6 +138,8 @@ public interface ApprovalProcessMapper {
             @Result(property = "slaDeadline", column = "sla_deadline"),
             @Result(property = "assignedAt", column = "assigned_at"),
             @Result(property = "actedAt", column = "acted_at"),
+            @Result(property = "escalated", column = "is_escalated"),
+            @Result(property = "escalatedFrom", column = "escalated_from"),
             @Result(property = "camundaTaskId", column = "camunda_task_id"),
             @Result(property = "createdBy", column = "created_by")
     })
@@ -152,6 +196,8 @@ public interface ApprovalProcessMapper {
                 status,
                 sla_deadline,
                 assigned_at,
+                is_escalated,
+                escalated_from,
                 camunda_task_id,
                 created_by
             ) VALUES (
@@ -165,6 +211,8 @@ public interface ApprovalProcessMapper {
                 #{entity.status},
                 #{entity.slaDeadline},
                 #{entity.assignedAt},
+                #{entity.escalated},
+                #{entity.escalatedFrom},
                 #{entity.camundaTaskId},
                 #{entity.createdBy}
             )
@@ -190,6 +238,8 @@ public interface ApprovalProcessMapper {
                 action = #{entity.action},
                 comment = #{entity.comment},
                 acted_at = #{entity.actedAt},
+                is_escalated = #{entity.escalated},
+                escalated_from = #{entity.escalatedFrom},
                 camunda_task_id = #{entity.camundaTaskId},
                 updated_at = NOW()
             WHERE id = #{entity.id}

@@ -16,6 +16,8 @@ import com.eprocure.approval.infrastructure.persistence.mapper.ApprovalProcessMa
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,6 +64,14 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
         log.debug("[REPO] findRunningByCamundaTaskId approval_processes | camundaTaskId={}", camundaTaskId);
         return Optional.ofNullable(mapper.findRunningByCamundaTaskId(camundaTaskId))
                 .map(this::toDomainWithSteps);
+    }
+
+    @Override
+    public List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit) {
+        log.debug("[REPO] findRunningProcessesWithOverdueSteps approval_processes | now={} | limit={}", now, limit);
+        return mapper.findRunningProcessesWithOverdueSteps(now, limit).stream()
+                .map(this::toDomainWithSteps)
+                .toList();
     }
 
     @Override
@@ -119,6 +129,8 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
         entity.setSlaDeadline(step.getSlaDeadline());
         entity.setAssignedAt(step.getAssignedAt());
         entity.setActedAt(step.getActedAt().orElse(null));
+        entity.setEscalated(step.isEscalated());
+        entity.setEscalatedFrom(step.getEscalatedFrom().orElse(null));
         entity.setCamundaTaskId(step.getCamundaTaskId().orElse(null));
         entity.setCreatedBy(step.getApproverId());
         return entity;
@@ -161,6 +173,8 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
                 entity.getSlaDeadline(),
                 entity.getAssignedAt(),
                 entity.getActedAt(),
+                entity.isEscalated(),
+                entity.getEscalatedFrom(),
                 entity.getCamundaTaskId());
     }
 

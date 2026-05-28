@@ -116,8 +116,6 @@ public class GetTaskDetailUseCase {
                 stepApprover = new ApprovalProcessDetail.Approver(step.getApproverId(), "User (" + step.getApproverId() + ")");
             }
 
-            boolean isStepEscalated = step.getStatus() == com.eprocure.approval.domain.model.ApprovalStepStatus.ESCALATED;
-
             stepsDetailList.add(new ApprovalProcessDetail.StepDetail(
                     step.getStepIndex(),
                     step.getApproverRole(),
@@ -129,7 +127,7 @@ public class GetTaskDetailUseCase {
                     step.getSlaDeadline(),
                     step.getAssignedAt(),
                     step.getActedAt().orElse(null),
-                    isStepEscalated
+                    step.isEscalated()
             ));
         }
 
