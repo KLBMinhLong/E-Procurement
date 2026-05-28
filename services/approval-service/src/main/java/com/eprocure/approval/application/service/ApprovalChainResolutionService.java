@@ -2,6 +2,8 @@ package com.eprocure.approval.application.service;
 
 import com.eprocure.approval.application.port.in.ResolveApprovalChainCommand;
 import com.eprocure.approval.application.port.in.SelectApprovalRuleQuery;
+import com.eprocure.approval.application.port.out.DelegationResolutionPort;
+import com.eprocure.approval.application.port.out.DelegationResolutionPort.ResolveDelegationQuery;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
 import com.eprocure.approval.application.port.out.OrgApproverPort.ApproverCandidate;
 import com.eprocure.approval.application.port.out.OrgApproverPort.ResolveApproverQuery;
@@ -19,14 +21,17 @@ import org.springframework.stereotype.Service;
 public class ApprovalChainResolutionService {
     private final ApprovalRuleSelectionService approvalRuleSelectionService;
     private final OrgApproverPort orgApproverPort;
+    private final DelegationResolutionPort delegationResolutionPort;
     private final SlaDeadlineCalculator slaDeadlineCalculator;
 
     public ApprovalChainResolutionService(
             ApprovalRuleSelectionService approvalRuleSelectionService,
             OrgApproverPort orgApproverPort,
+            DelegationResolutionPort delegationResolutionPort,
             SlaDeadlineCalculator slaDeadlineCalculator) {
         this.approvalRuleSelectionService = approvalRuleSelectionService;
         this.orgApproverPort = orgApproverPort;
+        this.delegationResolutionPort = delegationResolutionPort;
         this.slaDeadlineCalculator = slaDeadlineCalculator;
     }
 
@@ -42,6 +47,7 @@ public class ApprovalChainResolutionService {
         Instant assignedAt = slaDeadlineCalculator.now();
         for (SelectedApprovalRuleView.StepView step : selectedRule.steps()) {
             ApproverCandidate approver = resolveStepApprover(step, command.departmentId(), command.requesterId());
+            UUID delegateId = resolveDelegate(command, approver.id());
             steps.add(new ResolvedApprovalStepView(
                     step.sequence(),
                     step.sourceStepIndex(),
@@ -51,6 +57,7 @@ public class ApprovalChainResolutionService {
                     step.slaHours(),
                     slaDeadlineCalculator.calculateDeadline(assignedAt, step.slaHours(), command.priority()),
                     step.required(),
+                    delegateId,
                     toView(approver)));
         }
 
@@ -83,6 +90,18 @@ public class ApprovalChainResolutionService {
                 .filter(candidate -> !requesterId.equals(candidate.id()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.APR_001));
+    }
+
+    private UUID resolveDelegate(ResolveApprovalChainCommand command, UUID approverId) {
+        return delegationResolutionPort.resolveActiveDelegation(new ResolveDelegationQuery(
+                        approverId,
+                        command.requesterId(),
+                        command.departmentId(),
+                        command.totalAmount().amount(),
+                        command.totalAmount().currency(),
+                        command.categories()))
+                .map(DelegationResolutionPort.ActiveDelegation::delegateId)
+                .orElse(null);
     }
 
     private ApproverView toView(ApproverCandidate candidate) {

@@ -1,18 +1,12 @@
 package com.eprocure.iam.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.eprocure.iam.application.port.in.CreateDelegationCommand;
-import com.eprocure.iam.application.service.DelegationDetailView;
-import com.eprocure.iam.application.service.DelegationViewAssembler;
-import com.eprocure.iam.application.service.IdempotencyGuard;
+import com.eprocure.iam.application.port.in.ResolveActiveDelegationQuery;
+import com.eprocure.iam.application.service.ActiveDelegationView;
 import com.eprocure.iam.application.service.UserViewAssembler;
-import com.eprocure.iam.common.exception.BusinessException;
-import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.domain.model.Delegation;
 import com.eprocure.iam.domain.model.DelegationScope;
-import com.eprocure.iam.domain.model.DelegationStatus;
 import com.eprocure.iam.domain.model.Department;
 import com.eprocure.iam.domain.model.SortDirection;
 import com.eprocure.iam.domain.model.User;
@@ -28,74 +22,79 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-class CreateDelegationUseCaseTest {
+class ResolveActiveDelegationUseCaseTest {
+    private static final UUID DELEGATION_ID = UUID.fromString("40000000-0000-0000-0000-000000000001");
     private static final UUID DELEGATOR_ID = UUID.fromString("30000000-0000-0000-0000-000000000002");
     private static final UUID DELEGATE_ID = UUID.fromString("30000000-0000-0000-0000-000000000003");
+    private static final UUID REQUESTER_ID = UUID.fromString("30000000-0000-0000-0000-000000000004");
     private static final UUID DEPARTMENT_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
-    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-05-17T00:00:00Z"), ZoneOffset.UTC);
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-05-28T02:00:00Z"), ZoneOffset.UTC);
 
     @Test
-    void should_create_delegation_when_delegate_is_same_or_higher_org_level() {
-        FakeDelegationRepository delegationRepository = new FakeDelegationRepository("/HQ/PROCUREMENT", "/HQ");
-        FakeUserRepository userRepository = new FakeUserRepository();
-        CreateDelegationUseCase useCase = newUseCase(delegationRepository, userRepository);
+    void should_return_active_delegation_when_matching_delegation_and_delegate_exist() {
+        FakeDelegationRepository delegationRepository = new FakeDelegationRepository(Optional.of(activeDelegation()));
+        ResolveActiveDelegationUseCase useCase = newUseCase(delegationRepository, new FakeUserRepository(true));
 
-        DelegationDetailView view = useCase.execute(new CreateDelegationCommand(
-                DELEGATOR_ID,
-                DELEGATE_ID,
-                Instant.parse("2026-05-18T00:00:00Z"),
-                Instant.parse("2026-05-20T00:00:00Z"),
-                new BigDecimal("50000000.0000"),
-                "VND",
-                List.of("IT_EQUIPMENT"),
-                DelegationScope.ALL), UUID.randomUUID().toString());
+        ActiveDelegationView result = useCase.execute(defaultQuery());
 
-        assertThat(view.delegate().id()).isEqualTo(DELEGATE_ID);
-        assertThat(view.maxValue()).isEqualTo("50000000.0000");
-        assertThat(delegationRepository.savedDelegation).isNotNull();
+        assertThat(result.active()).isTrue();
+        assertThat(result.delegationId()).isEqualTo(DELEGATION_ID);
+        assertThat(result.delegatorId()).isEqualTo(DELEGATOR_ID);
+        assertThat(result.delegateId()).isEqualTo(DELEGATE_ID);
+        assertThat(result.delegate().id()).isEqualTo(DELEGATE_ID);
+        assertThat(delegationRepository.effectiveAt).isEqualTo(CLOCK.instant());
+        assertThat(delegationRepository.categories).containsExactly("IT_EQUIPMENT");
     }
 
     @Test
-    void should_throw_iam_020_when_delegate_is_lower_org_level() {
-        FakeDelegationRepository delegationRepository = new FakeDelegationRepository("/HQ", "/HQ/PROCUREMENT");
-        CreateDelegationUseCase useCase = newUseCase(delegationRepository, new FakeUserRepository());
+    void should_return_inactive_when_delegate_user_no_longer_exists() {
+        ResolveActiveDelegationUseCase useCase = newUseCase(
+                new FakeDelegationRepository(Optional.of(activeDelegation())),
+                new FakeUserRepository(false));
 
-        assertThatThrownBy(() -> useCase.execute(new CreateDelegationCommand(
-                DELEGATOR_ID,
-                DELEGATE_ID,
-                Instant.parse("2026-05-18T00:00:00Z"),
-                Instant.parse("2026-05-20T00:00:00Z"),
-                null,
-                "VND",
-                null,
-                DelegationScope.ALL), UUID.randomUUID().toString()))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.IAM_020);
+        ActiveDelegationView result = useCase.execute(defaultQuery());
+
+        assertThat(result.active()).isFalse();
     }
 
-    private static CreateDelegationUseCase newUseCase(
+    private static ResolveActiveDelegationUseCase newUseCase(
             FakeDelegationRepository delegationRepository,
             FakeUserRepository userRepository) {
-        UserViewAssembler userViewAssembler = new UserViewAssembler(
+        UserViewAssembler assembler = new UserViewAssembler(
                 new FakeDepartmentRepository(),
                 userRepository,
                 new StubPermissionResolutionService());
-        DelegationViewAssembler delegationViewAssembler = new DelegationViewAssembler(userRepository, userViewAssembler, CLOCK);
-        return new CreateDelegationUseCase(
-                delegationRepository,
-                userRepository,
-                delegationViewAssembler,
-                new IdempotencyGuard(),
-                CLOCK);
+        return new ResolveActiveDelegationUseCase(delegationRepository, userRepository, assembler, CLOCK);
+    }
+
+    private static ResolveActiveDelegationQuery defaultQuery() {
+        return new ResolveActiveDelegationQuery(
+                DELEGATOR_ID,
+                REQUESTER_ID,
+                DEPARTMENT_ID,
+                new BigDecimal("25000000.0000"),
+                "vnd",
+                List.of("it_equipment"));
+    }
+
+    private static Delegation activeDelegation() {
+        return Delegation.create(
+                DELEGATION_ID,
+                DELEGATOR_ID,
+                DELEGATE_ID,
+                Instant.parse("2026-05-27T00:00:00Z"),
+                Instant.parse("2026-05-29T00:00:00Z"),
+                new BigDecimal("50000000.0000"),
+                "VND",
+                List.of("IT_EQUIPMENT"),
+                DelegationScope.ALL,
+                Instant.parse("2026-05-27T00:00:00Z"));
     }
 
     private static User activeUser(UUID id, String username) {
@@ -111,23 +110,22 @@ class CreateDelegationUseCaseTest {
     }
 
     private static final class FakeDelegationRepository implements DelegationRepository {
-        private final String delegatorPath;
-        private final String delegatePath;
-        private Delegation savedDelegation;
+        private final Optional<Delegation> delegation;
+        private List<String> categories = List.of();
+        private Instant effectiveAt;
 
-        private FakeDelegationRepository(String delegatorPath, String delegatePath) {
-            this.delegatorPath = delegatorPath;
-            this.delegatePath = delegatePath;
+        private FakeDelegationRepository(Optional<Delegation> delegation) {
+            this.delegation = delegation;
         }
 
         @Override
         public Optional<Delegation> findById(UUID id) {
-            return Optional.ofNullable(savedDelegation).filter(delegation -> delegation.getId().equals(id));
+            return Optional.empty();
         }
 
         @Override
         public List<Delegation> findByDelegatorId(UUID delegatorId) {
-            return savedDelegation == null ? List.of() : List.of(savedDelegation);
+            return List.of();
         }
 
         @Override
@@ -138,7 +136,9 @@ class CreateDelegationUseCaseTest {
                 String currency,
                 List<String> categories,
                 Instant effectiveAt) {
-            return Optional.empty();
+            this.categories = categories;
+            this.effectiveAt = effectiveAt;
+            return delegation;
         }
 
         @Override
@@ -148,36 +148,31 @@ class CreateDelegationUseCaseTest {
 
         @Override
         public Optional<String> findOrgPathByUserId(UUID userId) {
-            if (DELEGATOR_ID.equals(userId)) {
-                return Optional.of(delegatorPath);
-            }
-            if (DELEGATE_ID.equals(userId)) {
-                return Optional.of(delegatePath);
-            }
             return Optional.empty();
         }
 
         @Override
         public void save(Delegation delegation, UUID actorId) {
-            this.savedDelegation = delegation;
         }
 
         @Override
-        public void updateStatus(UUID delegationId, DelegationStatus status, UUID actorId) {
+        public void updateStatus(UUID delegationId, com.eprocure.iam.domain.model.DelegationStatus status, UUID actorId) {
         }
     }
 
     private static final class FakeUserRepository implements UserRepository {
-        private final Map<UUID, User> users = new HashMap<>();
+        private final boolean includeDelegate;
 
-        private FakeUserRepository() {
-            users.put(DELEGATOR_ID, activeUser(DELEGATOR_ID, "manager"));
-            users.put(DELEGATE_ID, activeUser(DELEGATE_ID, "director"));
+        private FakeUserRepository(boolean includeDelegate) {
+            this.includeDelegate = includeDelegate;
         }
 
         @Override
         public Optional<User> findById(UUID id) {
-            return Optional.ofNullable(users.get(id));
+            if (includeDelegate && DELEGATE_ID.equals(id)) {
+                return Optional.of(activeUser(DELEGATE_ID, "director"));
+            }
+            return Optional.empty();
         }
 
         @Override
@@ -212,7 +207,7 @@ class CreateDelegationUseCaseTest {
 
         @Override
         public Set<String> findPermissionCodesByUserId(UUID userId) {
-            return Set.of("DELEGATION_MANAGE");
+            return Set.of("PR_APPROVE_L1");
         }
 
         @Override
@@ -241,19 +236,6 @@ class CreateDelegationUseCaseTest {
 
         @Override
         public void linkGoogleOauthId(UUID userId, String googleOauthId, UUID actorId) {
-        }
-
-        @Override
-        public void stageTwoFactorSecret(UUID userId, String encryptedSecret, UUID actorId) {
-        }
-
-        @Override
-        public void confirmTwoFactor(
-                UUID userId,
-                String encryptedSecret,
-                List<String> backupCodeHashes,
-                Instant confirmedAt,
-                UUID actorId) {
         }
     }
 

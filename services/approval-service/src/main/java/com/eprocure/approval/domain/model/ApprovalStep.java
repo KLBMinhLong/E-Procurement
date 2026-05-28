@@ -70,6 +70,7 @@ public class ApprovalStep {
             ApprovalStepType stepType,
             String approverRole,
             UUID approverId,
+            UUID delegateId,
             Instant slaDeadline,
             Instant assignedAt) {
         return new ApprovalStep(
@@ -79,7 +80,7 @@ public class ApprovalStep {
                 stepType,
                 approverRole,
                 approverId,
-                null,
+                delegateId,
                 ApprovalStepStatus.PENDING,
                 null,
                 null,
@@ -89,6 +90,17 @@ public class ApprovalStep {
                 false,
                 null,
                 null);
+    }
+
+    public static ApprovalStep pending(
+            UUID processId,
+            int stepIndex,
+            ApprovalStepType stepType,
+            String approverRole,
+            UUID approverId,
+            Instant slaDeadline,
+            Instant assignedAt) {
+        return pending(processId, stepIndex, stepType, approverRole, approverId, null, slaDeadline, assignedAt);
     }
 
     public static ApprovalStep restore(

@@ -1,5 +1,6 @@
 package com.eprocure.approval.infrastructure.iam;
 
+import com.eprocure.approval.application.port.out.DelegationResolutionPort;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
 import com.eprocure.approval.common.api.ApiResponse;
 import com.eprocure.approval.common.exception.BusinessException;
@@ -7,6 +8,7 @@ import com.eprocure.approval.common.exception.ErrorCode;
 import com.eprocure.approval.common.util.LogMaskingUtil;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +23,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
 
 @Component
-public class IamOrgApproverAdapter implements OrgApproverPort, UserResolverPort {
+public class IamOrgApproverAdapter implements OrgApproverPort, DelegationResolutionPort, UserResolverPort {
     private static final Logger log = LogManager.getLogger(IamOrgApproverAdapter.class);
     private static final String INTERNAL_API_KEY_HEADER = "X-Internal-Api-Key";
 
@@ -94,6 +96,55 @@ public class IamOrgApproverAdapter implements OrgApproverPort, UserResolverPort 
                 Optional.ofNullable(response.department()).map(IamDepartmentResponse::id).orElse(null));
     }
 
+    @Override
+    public Optional<ActiveDelegation> resolveActiveDelegation(ResolveDelegationQuery query) {
+        if (internalApiKey.isBlank()) {
+            log.error("[ACTION] Step ResolveActiveDelegationFromIam | delegatorId={} | result=missing_api_key",
+                    LogMaskingUtil.maskId(query.delegatorId()));
+            return Optional.empty();
+        }
+        try {
+            ApiResponse<IamActiveDelegationResponse> response = iamRestClient.get()
+                    .uri(uriBuilder -> buildDelegationUri(uriBuilder, query))
+                    .header(INTERNAL_API_KEY_HEADER, internalApiKey)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+            if (response == null || !response.success() || response.data() == null || !response.data().active()) {
+                return Optional.empty();
+            }
+            IamActiveDelegationResponse data = response.data();
+            return Optional.of(new ActiveDelegation(
+                    data.delegationId(),
+                    data.delegatorId(),
+                    data.delegateId()));
+        } catch (RestClientException exception) {
+            log.warn("[ACTION] Step ResolveActiveDelegationFromIam | delegatorId={} | result=unavailable | error={}",
+                    LogMaskingUtil.maskId(query.delegatorId()),
+                    exception.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private static java.net.URI buildDelegationUri(UriBuilder uriBuilder, ResolveDelegationQuery query) {
+        UriBuilder builder = uriBuilder
+                .path("/internal/org/delegations/active")
+                .queryParam("delegator_id", query.delegatorId())
+                .queryParam("requester_id", query.requesterId())
+                .queryParam("requester_department_id", query.requesterDepartmentId())
+                .queryParam("total_amount", query.totalAmount())
+                .queryParam("currency", query.currency());
+        addCategories(builder, query.categories());
+        return builder.build();
+    }
+
+    private static void addCategories(UriBuilder builder, Set<String> categories) {
+        categories.stream()
+                .filter(category -> category != null && !category.isBlank())
+                .map(String::trim)
+                .forEach(category -> builder.queryParam("category", category));
+    }
+
     private record IamUserSummaryResponse(
             UUID id,
             String employeeCode,
@@ -104,6 +155,13 @@ public class IamOrgApproverAdapter implements OrgApproverPort, UserResolverPort 
     }
 
     private record IamDepartmentResponse(UUID id) {
+    }
+
+    private record IamActiveDelegationResponse(
+            boolean active,
+            UUID delegationId,
+            UUID delegatorId,
+            UUID delegateId) {
     }
 
     @Override

@@ -195,6 +195,7 @@ class ApprovalTaskActionUseCaseTest {
                 24,
                 NOW.plusSeconds(3600L * index),
                 true,
+                null,
                 new ApproverView(
                         approverId,
                         "EMP-" + role,

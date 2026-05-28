@@ -3,6 +3,7 @@ package com.eprocure.approval.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.eprocure.approval.application.port.in.StartApprovalProcessCommand;
+import com.eprocure.approval.application.port.out.DelegationResolutionPort;
 import com.eprocure.approval.application.port.out.ApprovalStepAssignedEventPublisher;
 import com.eprocure.approval.application.port.out.ApprovalWorkflowPort;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
@@ -205,6 +206,7 @@ class StartApprovalProcessUseCaseTest {
         ApprovalChainResolutionService approvalChainResolutionService = new ApprovalChainResolutionService(
                 new ApprovalRuleSelectionService(new StubApprovalRuleRepository(List.of(emergencyRule(), defaultRule()))),
                 orgApproverPort,
+                query -> Optional.empty(),
                 new SlaDeadlineCalculator(
                         BusinessHoursCalendar.from("Asia/Ho_Chi_Minh", "08:00", "17:30", "MON,TUE,WED,THU,FRI"),
                         Clock.fixed(MONDAY_08_VN, ZoneOffset.UTC)));

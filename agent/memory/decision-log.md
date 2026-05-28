@@ -268,3 +268,10 @@
 - Reason: E05 tracker requires approval task actions as the next vertical slice after start-process and PR-pending-approval-callback are complete. Actions must transition process/step state, propagate final results to PR service, and emit `approval.step.assigned` events for newly assigned steps.
 - Impact: `ApprovalTaskController` exposes 4 PATCH endpoints (`/{taskId}/approve`, `/reject`, `/request-changes`, `/forward`) guarded by permission codes. Domain `ApprovalProcess` enforces SoD (requester ≠ approver), sequential step progression, parallel step skipping on reject, and forward-to-eligible-candidate validation via `OrgApproverPort`. PR service receives approval results through internal PATCH endpoints (`/internal/purchase-requests/{id}/approved|rejected|changes-requested`) guarded by `X-Internal-Api-Key`. All actions are idempotent via `IdempotencyService`. 26 approval-service tests and 38 PR-service tests pass (109 total across all modules).
 - Constraint: SLA timer escalation, delegation-aware substitution, admin CRUD for approval rules, and frontend inbox/task-detail screens remain deferred to later E05 slices.
+
+## [2026-05-28] E05 Delegation-aware approval assignment
+
+- Decision: Resolve active approval delegation during approval chain resolution by calling IAM internal delegation lookup and persisting `delegate_id` on generated approval steps while keeping the original approver as delegator.
+- Reason: Approval inbox/detail/action flows already understand `delegate_id`, but newly started processes did not populate it from IAM delegation data.
+- Impact: IAM exposes `GET /internal/org/delegations/active` guarded by `X-Internal-Api-Key`; Approval Engine uses `DelegationResolutionPort` to pass delegator, requester, requester department, amount, currency, and categories before creating steps. Delegated tasks appear in the delegate inbox and can be acted on through existing task authorization. IAM and Approval targeted tests pass: 47 IAM tests, 30 Approval tests.
+- Constraint: Delegation is resolved at process start. Existing in-flight approval steps are not retroactively reassigned if a delegation is created or revoked later.

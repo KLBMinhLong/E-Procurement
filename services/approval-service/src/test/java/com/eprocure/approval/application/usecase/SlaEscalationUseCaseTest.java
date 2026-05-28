@@ -138,6 +138,7 @@ class SlaEscalationUseCaseTest {
                 2,
                 slaDeadline,
                 true,
+                null,
                 new ApproverView(
                         MANAGER_ID,
                         "EMP-MANAGER",

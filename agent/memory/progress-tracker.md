@@ -176,12 +176,12 @@
 | Approve/Reject/RequestChanges/Forward actions | ✅ |
 | Backend: Approval inbox, counts & task detail API | ✅ |
 | SLA timer + escalation | ✅ |
-| Delegation awareness | ⬜ |
+| Delegation awareness | ✅ |
 | Conflict of interest check | ✅ |
 | Admin: CRUD approval rules | ⬜ |
 | Frontend: Approval inbox | ✅ |
 | Frontend: Task detail + actions | ✅ |
-| Unit tests (rule selection foundation + BPMN diagram metadata + chain/SLA resolution + process start + Kafka consumer + approval actions + inbox/detail retrieval + SLA escalation) | ✅ | 29 tests pass |
+| Unit tests (rule selection foundation + BPMN diagram metadata + chain/SLA resolution + process start + Kafka consumer + approval actions + inbox/detail retrieval + SLA escalation + delegation awareness) | ✅ | 30 tests pass |
 
 ### E06–E15: (Xem PROJECT_BRIEF.md)
 | Epic | Status |

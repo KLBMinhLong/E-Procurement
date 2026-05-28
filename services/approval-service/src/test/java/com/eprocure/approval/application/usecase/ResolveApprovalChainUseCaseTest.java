@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.approval.application.port.in.ResolveApprovalChainCommand;
+import com.eprocure.approval.application.port.out.DelegationResolutionPort;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
 import com.eprocure.approval.application.service.ApprovalChainResolutionService;
 import com.eprocure.approval.application.service.ApprovalRuleSelectionService;
@@ -26,6 +27,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,8 @@ class ResolveApprovalChainUseCaseTest {
     private static final UUID REQUESTER_ID = UUID.fromString("30000000-0000-0000-0000-000000000001");
     private static final UUID MANAGER_ID = UUID.fromString("30000000-0000-0000-0000-000000000002");
     private static final UUID FINANCE_ID = UUID.fromString("30000000-0000-0000-0000-000000000003");
+    private static final UUID MANAGER_DELEGATE_ID = UUID.fromString("30000000-0000-0000-0000-000000000004");
+    private static final UUID DELEGATION_ID = UUID.fromString("30000000-0000-0000-0000-000000000005");
     private static final Instant MONDAY_08_VN = Instant.parse("2026-06-01T01:00:00Z");
 
     @Test
@@ -77,6 +81,28 @@ class ResolveApprovalChainUseCaseTest {
     }
 
     @Test
+    void should_include_delegate_id_when_active_delegation_exists_for_approver() {
+        FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
+                "MANAGER", List.of(candidate(MANAGER_ID, "manager")),
+                "FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
+        FakeDelegationResolutionPort delegationResolutionPort = new FakeDelegationResolutionPort(Map.of(
+                MANAGER_ID,
+                new DelegationResolutionPort.ActiveDelegation(DELEGATION_ID, MANAGER_ID, MANAGER_DELEGATE_ID)));
+        ResolveApprovalChainUseCase useCase = newUseCase(orgApproverPort, delegationResolutionPort);
+
+        ResolvedApprovalChainView result = useCase.execute(defaultCommand());
+
+        assertThat(result.steps().get(0).delegateId()).isEqualTo(MANAGER_DELEGATE_ID);
+        assertThat(result.steps().get(1).delegateId()).isNull();
+        assertThat(delegationResolutionPort.queries)
+                .extracting(DelegationResolutionPort.ResolveDelegationQuery::delegatorId)
+                .containsExactly(MANAGER_ID, FINANCE_ID);
+        assertThat(delegationResolutionPort.queries)
+                .extracting(DelegationResolutionPort.ResolveDelegationQuery::categories)
+                .containsOnly(Set.of("OFFICE_SUPPLIES"));
+    }
+
+    @Test
     void should_throw_apr_001_when_only_requester_can_approve() {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
                 "MANAGER", List.of(candidate(REQUESTER_ID, "requester")),
@@ -103,9 +129,16 @@ class ResolveApprovalChainUseCaseTest {
     }
 
     private ResolveApprovalChainUseCase newUseCase(FakeOrgApproverPort orgApproverPort) {
+        return newUseCase(orgApproverPort, new FakeDelegationResolutionPort(Map.of()));
+    }
+
+    private ResolveApprovalChainUseCase newUseCase(
+            FakeOrgApproverPort orgApproverPort,
+            FakeDelegationResolutionPort delegationResolutionPort) {
         return new ResolveApprovalChainUseCase(new ApprovalChainResolutionService(
                 new ApprovalRuleSelectionService(new StubApprovalRuleRepository(List.of(defaultRule()))),
                 orgApproverPort,
+                delegationResolutionPort,
                 new SlaDeadlineCalculator(
                         BusinessHoursCalendar.from("Asia/Ho_Chi_Minh", "08:00", "17:30", "MON,TUE,WED,THU,FRI"),
                         Clock.fixed(MONDAY_08_VN, ZoneOffset.UTC))));
@@ -164,6 +197,21 @@ class ResolveApprovalChainUseCaseTest {
         public List<ApproverCandidate> resolveApprovers(ResolveApproverQuery query) {
             queries.add(query);
             return candidatesByRole.getOrDefault(query.approverRole(), List.of());
+        }
+    }
+
+    private static final class FakeDelegationResolutionPort implements DelegationResolutionPort {
+        private final Map<UUID, ActiveDelegation> delegationsByDelegatorId;
+        private final List<ResolveDelegationQuery> queries = new ArrayList<>();
+
+        private FakeDelegationResolutionPort(Map<UUID, ActiveDelegation> delegationsByDelegatorId) {
+            this.delegationsByDelegatorId = delegationsByDelegatorId;
+        }
+
+        @Override
+        public Optional<ActiveDelegation> resolveActiveDelegation(ResolveDelegationQuery query) {
+            queries.add(query);
+            return Optional.ofNullable(delegationsByDelegatorId.get(query.delegatorId()));
         }
     }
 }

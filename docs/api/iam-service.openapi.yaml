@@ -379,6 +379,29 @@ components:
           type: string
           format: date-time
 
+    ActiveDelegationResult:
+      type: object
+      properties:
+        active:
+          type: boolean
+          description: true khi tìm thấy delegation còn hiệu lực cho approver.
+        delegationId:
+          type: string
+          format: uuid
+          nullable: true
+        delegatorId:
+          type: string
+          format: uuid
+          nullable: true
+        delegateId:
+          type: string
+          format: uuid
+          nullable: true
+        delegate:
+          allOf:
+            - $ref: '#/components/schemas/UserSummary'
+          nullable: true
+
 paths:
   # ── Internal ──────────────────────────────────────────────────
   /internal/org/approvers:
@@ -437,6 +460,79 @@ paths:
           description: Internal API key không hợp lệ
         '422':
           description: Không tìm thấy approver phù hợp
+
+  /internal/org/delegations/active:
+    get:
+      tags: [Internal]
+      summary: Resolve active approval delegation nội bộ
+      description: Endpoint service-to-service để Approval Engine xác định delegate hiện hành của approver theo amount/category/scope.
+      operationId: internalGetActiveDelegation
+      servers:
+        - url: https://{host}
+          variables:
+            host:
+              default: api.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: delegator_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: requester_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: requester_department_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: total_amount
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "25000000.0000"
+        - name: currency
+          in: query
+          required: false
+          schema:
+            type: string
+            default: VND
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Kết quả delegation hiện hành; active=false nếu không có delegation phù hợp.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ActiveDelegationResult'
+        '403':
+          description: Internal API key không hợp lệ
 
   # ── Auth ──────────────────────────────────────────────────────
   /auth/public-key:
