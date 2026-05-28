@@ -122,7 +122,7 @@
 | ep-amount, ep-sla-bar, ep-stat-card | ✅ |
 | ep-avatar, ep-icon (custom SVG) | ✅ |
 | ep-approval-action, ep-filter-bar | ✅ |
-| ep-breadcrumb, ep-lang-switcher | ✅ |
+| ep-breadcrumb, ep-lang-switcher | ✅ | Sửa lỗi ghi đè key `route` trong i18n & hỗ trợ UUIDs động |
 | ep-empty-state, ep-skeleton | ✅ |
 | /ui-showcase page | ✅ |
 | i18n setup (vi/en) | ✅ |

@@ -12,7 +12,7 @@
           <!-- Employee Code -->
           <ep-form-field
             [label]="'admin.users.field.employeeCode' | translate"
-            [error]="userForm.get('employeeCode')?.touched && userForm.get('employeeCode')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+            [error]="getFieldError('employeeCode')">
             <input
               id="form-employeeCode"
               type="text"
@@ -24,7 +24,7 @@
           <!-- Username Field -->
           <ep-form-field
             [label]="'admin.users.field.username' | translate"
-            [error]="userForm.get('username')?.touched && userForm.get('username')?.hasError('required') ? ('admin.users.validation.required' | translate) : (userForm.get('username')?.touched && userForm.get('username')?.hasError('minlength') ? ('admin.users.validation.usernameMinLength' | translate) : (userForm.get('username')?.touched && userForm.get('username')?.hasError('pattern') ? ('admin.users.validation.usernamePattern' | translate) : null))">
+            [error]="getFieldError('username')">
             <input
               id="form-username"
               type="text"
@@ -36,7 +36,7 @@
           <!-- Email Field -->
           <ep-form-field
             [label]="'admin.users.field.email' | translate"
-            [error]="userForm.get('email')?.touched && userForm.get('email')?.hasError('required') ? ('admin.users.validation.required' | translate) : (userForm.get('email')?.touched && userForm.get('email')?.hasError('email') ? ('admin.users.validation.email' | translate) : null)">
+            [error]="getFieldError('email')">
             <input
               id="form-email"
               type="email"
@@ -48,7 +48,7 @@
           <!-- Full Name Field -->
           <ep-form-field
             [label]="'admin.users.field.fullName' | translate"
-            [error]="userForm.get('fullName')?.touched && userForm.get('fullName')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+            [error]="getFieldError('fullName')">
             <input
               id="form-fullName"
               type="text"
@@ -59,7 +59,8 @@
 
           <!-- Phone Field -->
           <ep-form-field
-            [label]="'admin.users.field.phone' | translate">
+            [label]="'admin.users.field.phone' | translate"
+            [error]="getFieldError('phone')">
             <input
               id="form-phone"
               type="text"
@@ -71,7 +72,7 @@
           <!-- Department Select Field -->
           <ep-form-field
             [label]="'admin.users.field.dept' | translate"
-            [error]="userForm.get('departmentId')?.touched && userForm.get('departmentId')?.hasError('required') ? ('admin.users.validation.required' | translate) : null">
+            [error]="getFieldError('departmentId')">
             <select
               id="form-departmentId"
               formControlName="departmentId"
@@ -87,8 +88,8 @@
         <!-- Roles Section -->
         <div class="roles-section">
           <span class="roles-section__label">{{ 'admin.users.field.roles' | translate }}</span>
-          @if (userForm.get('roles')?.touched && userForm.get('roles')?.hasError('required')) {
-            <small class="form-error">{{ 'admin.users.validation.required' | translate }}</small>
+          @if (getFieldError('roles')) {
+            <small class="form-error">{{ getFieldError('roles') }}</small>
           }
           <div class="roles-grid">
             @for (role of roles; track role.code) {

@@ -86,6 +86,7 @@ export class UserManagementComponent implements OnInit {
   readonly modalMode = signal<'create' | 'edit'>('create');
   readonly selectedUser = signal<AdminUserSummary | null>(null);
   readonly isSubmitting = signal(false);
+  readonly apiErrors = signal<Record<string, string> | null>(null);
 
   // ── Status confirm dialog ────────────────────────────────────
   readonly isStatusDialogOpen = signal(false);
@@ -184,12 +185,14 @@ export class UserManagementComponent implements OnInit {
 
   // ── Modal Handlers ───────────────────────────────────────────────
   openCreateModal(): void {
+    this.apiErrors.set(null);
     this.modalMode.set('create');
     this.selectedUser.set(null);
     this.isModalOpen.set(true);
   }
 
   openEditModal(user: AdminUserSummary): void {
+    this.apiErrors.set(null);
     this.modalMode.set('edit');
     this.selectedUser.set(user);
     this.isModalOpen.set(true);
@@ -216,10 +219,44 @@ export class UserManagementComponent implements OnInit {
 
   closeModal(): void {
     this.isModalOpen.set(false);
+    this.apiErrors.set(null);
+  }
+
+  parseApiValidationError(err: any): Record<string, string> | null {
+    const errorBody = err?.error;
+    if (!errorBody) return null;
+
+    const apiErrors: Record<string, string> = {};
+
+    // 1. Single field validation error
+    if (errorBody.field && errorBody.reason) {
+      apiErrors[errorBody.field] = errorBody.reason;
+      return apiErrors;
+    }
+
+    // 2. List of validation errors
+    if (Array.isArray(errorBody.errors)) {
+      errorBody.errors.forEach((e: any) => {
+        if (e.field && e.reason) {
+          apiErrors[e.field] = e.reason;
+        } else if (e.field && e.message) {
+          apiErrors[e.field] = e.message;
+        }
+      });
+      return Object.keys(apiErrors).length ? apiErrors : null;
+    }
+
+    // 3. Fallback for other formats
+    if (errorBody.details && typeof errorBody.details === 'object') {
+      return errorBody.details;
+    }
+
+    return null;
   }
 
   onSubmitUserForm(event: UserFormSubmitEvent): void {
     this.isSubmitting.set(true);
+    this.apiErrors.set(null);
     const formValue = event.formValue;
 
     if (event.mode === 'create') {
@@ -246,7 +283,13 @@ export class UserManagementComponent implements OnInit {
             this.loadData(false);
           },
           error: (err: any) => {
-            this.toastService.error(err.message || 'Create failed');
+            const validationErrors = this.parseApiValidationError(err);
+            if (validationErrors) {
+              this.apiErrors.set(validationErrors);
+              this.toastService.errorKey('admin.users.validation.validationFailed');
+            } else {
+              this.toastService.error(err.error?.message || err.message || 'Create failed');
+            }
             this.cdr.detectChanges();
           }
         });
@@ -283,7 +326,13 @@ export class UserManagementComponent implements OnInit {
               this.loadData(false);
             },
             error: (err: any) => {
-              this.toastService.error(err.message || 'Update failed');
+              const validationErrors = this.parseApiValidationError(err);
+              if (validationErrors) {
+                this.apiErrors.set(validationErrors);
+                this.toastService.errorKey('admin.users.validation.validationFailed');
+              } else {
+                this.toastService.error(err.error?.message || err.message || 'Update failed');
+              }
               this.cdr.detectChanges();
             }
           });
@@ -303,7 +352,13 @@ export class UserManagementComponent implements OnInit {
               this.loadData(false);
             },
             error: (err: any) => {
-              this.toastService.error(err.message || 'Update failed');
+              const validationErrors = this.parseApiValidationError(err);
+              if (validationErrors) {
+                this.apiErrors.set(validationErrors);
+                this.toastService.errorKey('admin.users.validation.validationFailed');
+              } else {
+                this.toastService.error(err.error?.message || err.message || 'Update failed');
+              }
               this.cdr.detectChanges();
             }
           });

@@ -140,15 +140,26 @@
     "open": "Open notifications"
   },
   "route": {
-    "admin": "Admin",
-    "admin.roles": "Role Manager",
-    "approvals": "Approvals",
+    "admin": {
+      "self": "Admin",
+      "users": "User Directory",
+      "roles": "Role Manager",
+      "rbac": "Permissions Matrix",
+      "orgChart": "Department Chart"
+    },
+    "approvals": {
+      "self": "Approvals",
+      "inbox": "Approval Inbox",
+      "detail": "Approval Detail"
+    },
     "dashboard": "Dashboard",
     "procurement": "Procurement",
     "profile": "Personal Profile",
     "uiShowcase": "UI library",
-    "pr.create": "Create Request",
-    "pr.detail": "Request Details"
+    "pr": {
+      "create": "Create Request",
+      "detail": "Request Details"
+    }
   },
   "shared": {
     "breadcrumb": {
@@ -433,7 +444,12 @@
         "usernamePattern": "Only lowercase, numbers, dots, hyphens, and underscores allowed",
         "passwordMinLength": "Password must be at least 8 characters",
         "passwordPattern": "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character",
-        "passwordMismatch": "Passwords do not match"
+        "passwordMismatch": "Passwords do not match",
+        "phonePattern": "Phone number must contain only digits and optional leading +, with length between 9 and 15",
+        "employeeCodeExists": "Employee code already exists",
+        "usernameExists": "Username already exists",
+        "emailExists": "Email already exists",
+        "validationFailed": "Validation failed. Please check the form."
       },
       "toast": {
         "lockSuccess": "User account successfully locked.",
@@ -705,12 +721,7 @@
       "select": "Set as Profile Picture"
     }
   },
-  "route": {
-    "approvals": {
-      "inbox": "Approval Inbox",
-      "detail": "Approval Detail"
-    }
-  },
+
   "approvals": {
     "inbox": {
       "eyebrow": "Business Approvals",
