@@ -105,3 +105,45 @@ export interface ApprovalInboxFilter {
   min_amount?: string;
   is_overdue?: boolean;
 }
+
+export type ApprovalRuleType = 'VALUE' | 'CATEGORY' | 'DEPARTMENT' | 'DEFAULT';
+export type ApprovalStepType = 'SEQUENTIAL' | 'PARALLEL';
+export type ApprovalPriority = 'NORMAL' | 'URGENT' | 'EMERGENCY';
+
+export interface ApprovalRuleCondition {
+  minValue: string | null;
+  maxValue: string | null;
+  categories: string[] | null;
+  departmentIds: string[] | null;
+  priorities: ApprovalPriority[] | null;
+}
+
+export interface ApprovalRuleStepTemplate {
+  stepIndex: number;
+  approverRole: string;
+  stepType: ApprovalStepType;
+  slaHours: number;
+  required: boolean;
+}
+
+export interface ApprovalRuleDetail {
+  id: string;
+  ruleName: string;
+  priority: number;
+  active: boolean;
+  isActive?: boolean;
+  ruleType: ApprovalRuleType;
+  conditions: ApprovalRuleCondition;
+  steps: ApprovalRuleStepTemplate[];
+  description: string | null;
+}
+
+export interface ApprovalRuleUpsertRequest {
+  ruleName: string;
+  priority: number;
+  active?: boolean;
+  ruleType: ApprovalRuleType;
+  conditions: ApprovalRuleCondition;
+  steps: ApprovalRuleStepTemplate[];
+  description: string | null;
+}

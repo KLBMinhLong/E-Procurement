@@ -282,3 +282,10 @@
 - Reason: E05 required admin rule management after approval execution, inbox, SLA, and delegation were complete.
 - Impact: Rule mutations are idempotent, audit-logged, and update `approval_rules` plus replacement `approval_rule_steps` through the approval repository. OpenAPI and error-code docs now include the rule mutation contract; approval-service tests pass with 36 tests.
 - Constraint: Deactivate only sets `is_active=false`; it does not hard-delete or retroactively alter already running approval processes.
+
+## [2026-05-28] E05 Approval rule admin frontend closure
+
+- Decision: Add `/approvals/rules` as the approval rule management UI guarded by `ADMIN_APPROVAL_RULE`, with admin navigation entry and a compatibility redirect from `/admin/approval-rules`.
+- Reason: E05 frontend had inbox/detail/actions, but the story map also required `ApprovalRuleAdminPage` to operate the backend rule CRUD added for E05 closure.
+- Impact: Admin users can list, search, create, update, and deactivate approval rules with condition and step editors. The approvals module route guard now admits either approver permissions or `ADMIN_APPROVAL_RULE`; child routes still enforce their own narrower permissions. Frontend build passes.
+- Constraint: Visual browser QA was not run because no Browser MCP tool was available in this session; verification is limited to Angular production build.

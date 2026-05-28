@@ -15,6 +15,7 @@ const PATH_MAP: Record<string, string> = {
   '/procurement': 'route.procurement',
   '/procurement/create': 'route.pr.create',
   '/approvals': 'route.approvals.self',
+  '/approvals/rules': 'route.approvals.rules',
   '/admin': 'route.admin.self',
   '/admin/users': 'route.admin.users',
   '/admin/roles': 'route.admin.roles',

@@ -129,6 +129,7 @@
     "adminRoles": "Role Manager",
     "adminRbac": "Permissions Matrix",
     "adminOrgChart": "Department Chart",
+    "approvalRules": "Approval Rules",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "openMenu": "Open menu",
@@ -150,7 +151,8 @@
     "approvals": {
       "self": "Approvals",
       "inbox": "Approval Inbox",
-      "detail": "Approval Detail"
+      "detail": "Approval Detail",
+      "rules": "Approval Rules"
     },
     "dashboard": "Dashboard",
     "procurement": "Procurement",
@@ -816,6 +818,110 @@
           "submit": "Forward"
         },
         "cancel": "Cancel"
+      }
+    },
+    "rules": {
+      "eyebrow": "Approval Administration",
+      "title": "Approval Rules",
+      "subtitle": "Manage approval matrices by value, category, department, and priority.",
+      "action": {
+        "create": "Create rule",
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "addStep": "Add step",
+        "removeStep": "Remove step"
+      },
+      "stat": {
+        "total": "Total rules",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "filter": {
+        "searchLabel": "Search rules",
+        "searchPlaceholder": "Search name, type, or description..."
+      },
+      "col": {
+        "name": "Rule",
+        "type": "Type",
+        "conditions": "Conditions",
+        "steps": "Approval chain",
+        "priority": "Priority",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "type": {
+        "VALUE": "Value",
+        "CATEGORY": "Category",
+        "DEPARTMENT": "Department",
+        "DEFAULT": "Default"
+      },
+      "stepType": {
+        "SEQUENTIAL": "Sequential",
+        "PARALLEL": "Parallel"
+      },
+      "priority": {
+        "NORMAL": "Normal",
+        "URGENT": "Urgent",
+        "EMERGENCY": "Emergency"
+      },
+      "condition": {
+        "min": "From",
+        "max": "Below"
+      },
+      "section": {
+        "conditions": "Matching conditions",
+        "steps": "Approval steps"
+      },
+      "field": {
+        "ruleName": "Rule name",
+        "ruleType": "Rule type",
+        "priority": "Priority",
+        "active": "Active",
+        "minValue": "Minimum value",
+        "maxValue": "Maximum value",
+        "categories": "Categories",
+        "departmentIds": "Departments",
+        "priorities": "PR priorities",
+        "stepIndex": "Order",
+        "approverRole": "Approver role",
+        "stepType": "Step type",
+        "slaHours": "SLA hours",
+        "required": "Required",
+        "description": "Description",
+        "reason": "Deactivate reason"
+      },
+      "placeholder": {
+        "ruleName": "E.g. VALUE_5M_20M",
+        "money": "E.g. 5000000.0000",
+        "categories": "E.g. SOFTWARE, SAAS",
+        "departmentIds": "Department UUIDs separated by commas",
+        "approverRole": "E.g. MANAGER",
+        "description": "Describe when this rule applies",
+        "reason": "Enter the reason for deactivation"
+      },
+      "modal": {
+        "createTitle": "Create approval rule",
+        "editTitle": "Update approval rule",
+        "deactivateTitle": "Deactivate rule",
+        "deactivateMessage": "You are about to deactivate {{rule}}. Running processes will not be changed."
+      },
+      "toast": {
+        "loadFailed": "Could not load approval rules.",
+        "validationFailed": "Please review the approval rule information.",
+        "createSuccess": "Approval rule created successfully.",
+        "updateSuccess": "Approval rule updated successfully.",
+        "saveFailed": "Could not save approval rule.",
+        "reasonRequired": "Please enter a deactivation reason.",
+        "deactivateSuccess": "Approval rule deactivated.",
+        "deactivateFailed": "Could not deactivate approval rule."
+      },
+      "empty": {
+        "title": "No matching rules",
+        "message": "Create the first approval rule or adjust the search filter."
       }
     }
   }

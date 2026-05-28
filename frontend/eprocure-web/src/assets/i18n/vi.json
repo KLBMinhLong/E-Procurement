@@ -129,6 +129,7 @@
     "adminRoles": "Quản lý vai trò",
     "adminRbac": "Ma trận phân quyền",
     "adminOrgChart": "Sơ đồ phòng ban",
+    "approvalRules": "Quy tắc phê duyệt",
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
     "openMenu": "Mở menu",
@@ -150,7 +151,8 @@
     "approvals": {
       "self": "Phê duyệt",
       "inbox": "Hộp thư phê duyệt",
-      "detail": "Chi tiết phê duyệt"
+      "detail": "Chi tiết phê duyệt",
+      "rules": "Quy tắc phê duyệt"
     },
     "dashboard": "Tổng quan",
     "procurement": "Mua sắm",
@@ -816,6 +818,110 @@
           "submit": "Chuyển tiếp"
         },
         "cancel": "Hủy"
+      }
+    },
+    "rules": {
+      "eyebrow": "Quản trị phê duyệt",
+      "title": "Quy tắc phê duyệt",
+      "subtitle": "Quản lý ma trận duyệt theo giá trị, danh mục, phòng ban và mức độ ưu tiên.",
+      "action": {
+        "create": "Tạo quy tắc",
+        "edit": "Sửa",
+        "deactivate": "Vô hiệu hóa",
+        "addStep": "Thêm bước",
+        "removeStep": "Xóa bước"
+      },
+      "stat": {
+        "total": "Tổng quy tắc",
+        "active": "Đang hoạt động",
+        "inactive": "Đã tắt"
+      },
+      "filter": {
+        "searchLabel": "Tìm quy tắc",
+        "searchPlaceholder": "Tìm tên, loại hoặc mô tả..."
+      },
+      "col": {
+        "name": "Quy tắc",
+        "type": "Loại",
+        "conditions": "Điều kiện",
+        "steps": "Chuỗi duyệt",
+        "priority": "Ưu tiên",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Đã tắt"
+      },
+      "type": {
+        "VALUE": "Giá trị",
+        "CATEGORY": "Danh mục",
+        "DEPARTMENT": "Phòng ban",
+        "DEFAULT": "Mặc định"
+      },
+      "stepType": {
+        "SEQUENTIAL": "Tuần tự",
+        "PARALLEL": "Song song"
+      },
+      "priority": {
+        "NORMAL": "Bình thường",
+        "URGENT": "Khẩn",
+        "EMERGENCY": "Khẩn cấp"
+      },
+      "condition": {
+        "min": "Từ",
+        "max": "Đến dưới"
+      },
+      "section": {
+        "conditions": "Điều kiện áp dụng",
+        "steps": "Các bước phê duyệt"
+      },
+      "field": {
+        "ruleName": "Tên quy tắc",
+        "ruleType": "Loại quy tắc",
+        "priority": "Mức ưu tiên",
+        "active": "Đang hoạt động",
+        "minValue": "Giá trị tối thiểu",
+        "maxValue": "Giá trị tối đa",
+        "categories": "Danh mục",
+        "departmentIds": "Phòng ban áp dụng",
+        "priorities": "Mức độ PR",
+        "stepIndex": "Thứ tự",
+        "approverRole": "Vai trò duyệt",
+        "stepType": "Kiểu bước",
+        "slaHours": "SLA giờ",
+        "required": "Bắt buộc",
+        "description": "Mô tả",
+        "reason": "Lý do vô hiệu hóa"
+      },
+      "placeholder": {
+        "ruleName": "VD: VALUE_5M_20M",
+        "money": "VD: 5000000.0000",
+        "categories": "VD: SOFTWARE, SAAS",
+        "departmentIds": "UUID phòng ban, phân tách bằng dấu phẩy",
+        "approverRole": "VD: MANAGER",
+        "description": "Mô tả phạm vi áp dụng quy tắc",
+        "reason": "Nhập lý do vô hiệu hóa quy tắc"
+      },
+      "modal": {
+        "createTitle": "Tạo quy tắc phê duyệt",
+        "editTitle": "Cập nhật quy tắc phê duyệt",
+        "deactivateTitle": "Vô hiệu hóa quy tắc",
+        "deactivateMessage": "Bạn sắp vô hiệu hóa quy tắc {{rule}}. Quy trình đang chạy sẽ không bị thay đổi."
+      },
+      "toast": {
+        "loadFailed": "Không thể tải danh sách quy tắc phê duyệt.",
+        "validationFailed": "Vui lòng kiểm tra lại thông tin quy tắc.",
+        "createSuccess": "Đã tạo quy tắc phê duyệt thành công.",
+        "updateSuccess": "Đã cập nhật quy tắc phê duyệt thành công.",
+        "saveFailed": "Không thể lưu quy tắc phê duyệt.",
+        "reasonRequired": "Vui lòng nhập lý do vô hiệu hóa.",
+        "deactivateSuccess": "Đã vô hiệu hóa quy tắc phê duyệt.",
+        "deactivateFailed": "Không thể vô hiệu hóa quy tắc phê duyệt."
+      },
+      "empty": {
+        "title": "Chưa có quy tắc phù hợp",
+        "message": "Tạo quy tắc phê duyệt đầu tiên hoặc thay đổi bộ lọc tìm kiếm."
       }
     }
   }

@@ -51,7 +51,8 @@ export class ShellComponent {
     { icon: 'users', labelKey: 'nav.adminUsers', route: '/admin/users', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] },
     { icon: 'user-cog', labelKey: 'nav.adminRoles', route: '/admin/roles', permissions: ['ADMIN_ROLE_MANAGE'] },
     { icon: 'shield', labelKey: 'nav.adminRbac', route: '/admin/rbac', permissions: ['ADMIN_ROLE_MANAGE'] },
-    { icon: 'network', labelKey: 'nav.adminOrgChart', route: '/admin/org-chart', permissions: ['ORG_VIEW', 'ADMIN_DEPARTMENT_MANAGE'] }
+    { icon: 'network', labelKey: 'nav.adminOrgChart', route: '/admin/org-chart', permissions: ['ORG_VIEW', 'ADMIN_DEPARTMENT_MANAGE'] },
+    { icon: 'workflow', labelKey: 'nav.approvalRules', route: '/approvals/rules', permissions: ['ADMIN_APPROVAL_RULE'] }
   ].filter((item) => this.permissionService.hasAnyPermission(item.permissions)));
 
   toggleSidebar(): void {

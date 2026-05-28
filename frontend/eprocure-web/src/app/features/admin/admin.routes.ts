@@ -38,6 +38,10 @@ export const adminRoutes: Routes = [
     canActivate: [permissionGuard],
     data: { requiredPermissions: ['ORG_VIEW', 'ADMIN_DEPARTMENT_MANAGE'] },
     title: 'route.admin.orgChart'
+  },
+  {
+    path: 'approval-rules',
+    redirectTo: '/approvals/rules'
   }
 ];
 
