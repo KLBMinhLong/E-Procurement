@@ -12,6 +12,8 @@ public enum ErrorCode {
     APR_006("APR_006", "Approval task cannot be forwarded to this user", HttpStatus.UNPROCESSABLE_ENTITY),
     APR_007("APR_007", "Approval rule is invalid or inactive", HttpStatus.UNPROCESSABLE_ENTITY),
     APR_008("APR_008", "Approval process has already been completed", HttpStatus.CONFLICT),
+    APR_009("APR_009", "Approval rule not found", HttpStatus.NOT_FOUND),
+    APR_010("APR_010", "Approval rule name already exists", HttpStatus.CONFLICT),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
     VAL_001("VAL_001", "Validation failed", HttpStatus.BAD_REQUEST);

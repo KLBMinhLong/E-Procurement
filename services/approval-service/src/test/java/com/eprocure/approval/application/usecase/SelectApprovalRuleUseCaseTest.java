@@ -17,6 +17,7 @@ import com.eprocure.approval.domain.model.PurchaseRequestPriority;
 import com.eprocure.approval.domain.model.vo.Money;
 import com.eprocure.approval.domain.repository.ApprovalRuleRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -191,6 +192,33 @@ class SelectApprovalRuleUseCaseTest {
         @Override
         public List<ApprovalRule> findActiveRules() {
             return rules;
+        }
+
+        @Override
+        public List<ApprovalRule> findAllRules() {
+            return rules;
+        }
+
+        @Override
+        public Optional<ApprovalRule> findById(UUID id) {
+            return rules.stream().filter(rule -> rule.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public boolean existsByRuleName(String ruleName, UUID excludedId) {
+            return false;
+        }
+
+        @Override
+        public void save(ApprovalRule rule, UUID actorId) {
+        }
+
+        @Override
+        public void update(ApprovalRule rule, UUID actorId) {
+        }
+
+        @Override
+        public void deactivate(UUID id, UUID actorId) {
         }
     }
 }

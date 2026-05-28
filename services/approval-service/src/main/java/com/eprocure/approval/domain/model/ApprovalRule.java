@@ -60,6 +60,32 @@ public class ApprovalRule {
         return new ApprovalRule(id, ruleName, priority, active, ruleType, condition, stepTemplates, description);
     }
 
+    public static ApprovalRule create(
+            UUID id,
+            String ruleName,
+            int priority,
+            ApprovalRuleType ruleType,
+            ApprovalCondition condition,
+            List<ApprovalStepTemplate> stepTemplates,
+            String description) {
+        return new ApprovalRule(id, ruleName, priority, true, ruleType, condition, stepTemplates, description);
+    }
+
+    public ApprovalRule update(
+            String ruleName,
+            int priority,
+            boolean active,
+            ApprovalRuleType ruleType,
+            ApprovalCondition condition,
+            List<ApprovalStepTemplate> stepTemplates,
+            String description) {
+        return new ApprovalRule(id, ruleName, priority, active, ruleType, condition, stepTemplates, description);
+    }
+
+    public ApprovalRule deactivate() {
+        return new ApprovalRule(id, ruleName, priority, false, ruleType, condition, stepTemplates, description);
+    }
+
     public boolean matches(
             Money totalAmount,
             Set<String> categories,

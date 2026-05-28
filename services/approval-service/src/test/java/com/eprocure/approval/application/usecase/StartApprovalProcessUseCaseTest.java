@@ -284,6 +284,33 @@ class StartApprovalProcessUseCaseTest {
         public List<ApprovalRule> findActiveRules() {
             return rules;
         }
+
+        @Override
+        public List<ApprovalRule> findAllRules() {
+            return rules;
+        }
+
+        @Override
+        public java.util.Optional<ApprovalRule> findById(UUID id) {
+            return rules.stream().filter(rule -> rule.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public boolean existsByRuleName(String ruleName, UUID excludedId) {
+            return false;
+        }
+
+        @Override
+        public void save(ApprovalRule rule, UUID actorId) {
+        }
+
+        @Override
+        public void update(ApprovalRule rule, UUID actorId) {
+        }
+
+        @Override
+        public void deactivate(UUID id, UUID actorId) {
+        }
     }
 
     private static final class FakeOrgApproverPort implements OrgApproverPort {

@@ -275,3 +275,10 @@
 - Reason: Approval inbox/detail/action flows already understand `delegate_id`, but newly started processes did not populate it from IAM delegation data.
 - Impact: IAM exposes `GET /internal/org/delegations/active` guarded by `X-Internal-Api-Key`; Approval Engine uses `DelegationResolutionPort` to pass delegator, requester, requester department, amount, currency, and categories before creating steps. Delegated tasks appear in the delegate inbox and can be acted on through existing task authorization. IAM and Approval targeted tests pass: 47 IAM tests, 30 Approval tests.
 - Constraint: Delegation is resolved at process start. Existing in-flight approval steps are not retroactively reassigned if a delegation is created or revoked later.
+
+## [2026-05-28] E05 Admin approval rule CRUD
+
+- Decision: Add backend admin APIs for listing, creating, updating, and deactivating approval rules under `/api/v1/approvals/rules`, guarded by `ADMIN_APPROVAL_RULE`.
+- Reason: E05 required admin rule management after approval execution, inbox, SLA, and delegation were complete.
+- Impact: Rule mutations are idempotent, audit-logged, and update `approval_rules` plus replacement `approval_rule_steps` through the approval repository. OpenAPI and error-code docs now include the rule mutation contract; approval-service tests pass with 36 tests.
+- Constraint: Deactivate only sets `is_active=false`; it does not hard-delete or retroactively alter already running approval processes.
