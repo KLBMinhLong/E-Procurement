@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +37,16 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
     public GatewayAuthenticationFilter(@Value("${eprocure.internal.api-key:}") String expectedApiKey) {
         this.expectedApiKey = expectedApiKey == null ? "" : expectedApiKey;
+    }
+
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/actuator/health", "/actuator/prometheus", "/actuator/info"
+    );
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override

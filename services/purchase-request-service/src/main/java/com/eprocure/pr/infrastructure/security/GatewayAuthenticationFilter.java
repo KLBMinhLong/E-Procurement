@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -38,9 +39,15 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
         this.expectedApiKey = expectedApiKey == null ? "" : expectedApiKey;
     }
 
+    private static final List<String> BYPASS_PATHS = List.of(
+            "/actuator/health", "/actuator/prometheus", "/actuator/info",
+            "/internal/"
+    );
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/internal/");
+        String path = request.getRequestURI();
+        return BYPASS_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override
