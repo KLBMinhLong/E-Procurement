@@ -6,14 +6,14 @@
   } @else if (!task()) {
     <ep-empty-state
       icon="circle-alert"
-      [title]="'Tác vụ không tồn tại'"
-      [message]="'Không tìm thấy chi tiết cho tác vụ phê duyệt này.'" />
+      [title]="'approvals.detail.empty.title' | translate"
+      [message]="'approvals.detail.empty.message' | translate" />
   } @else {
     <!-- ── Page Header & Actions ────────────────────────────────────── -->
     <header class="detail-header">
       <div class="detail-header__meta">
         <ep-button variant="ghost" size="sm" icon="arrow-left" (click)="goBack()">
-          {{ 'auth.forgotPassword.backToLogin' | translate }}
+          {{ 'approvals.detail.back' | translate }}
         </ep-button>
         <div class="detail-header__title-row">
           <h1 id="approval-detail-heading" class="detail-header__title">
@@ -31,28 +31,28 @@
           variant="secondary"
           icon="user-cog"
           (click)="openModal('forward')">
-          Chuyển tiếp
+          {{ 'approvals.detail.forward' | translate }}
         </ep-button>
         <!-- Request Changes Action -->
         <ep-button
           variant="secondary"
           icon="clipboard-list"
           (click)="openModal('changes')">
-          {{ 'approval.action.requestChanges' | translate }}
+          {{ 'approvals.detail.requestChanges' | translate }}
         </ep-button>
         <!-- Reject Action -->
         <ep-button
           variant="danger"
           icon="x"
           (click)="openModal('reject')">
-          {{ 'approval.action.reject' | translate }}
+          {{ 'approvals.detail.reject' | translate }}
         </ep-button>
         <!-- Approve Action -->
         <ep-button
           variant="primary"
           icon="check"
           (click)="openModal('approve')">
-          {{ 'approval.action.approve' | translate }}
+          {{ 'approvals.detail.approve' | translate }}
         </ep-button>
       </div>
     </header>
@@ -63,27 +63,27 @@
       <main class="detail-main">
         <!-- Basic Info Card -->
         <div class="card basic-info">
-          <h2 class="card__title">Thông tin yêu cầu</h2>
+          <h2 class="card__title">{{ 'approvals.detail.title' | translate }}</h2>
           <div class="basic-info__subject">
-            <label>Tiêu đề</label>
+            <label>{{ 'approvals.detail.subject' | translate }}</label>
             <strong>{{ task()?.entityTitle }}</strong>
           </div>
 
           <div class="basic-info__meta-grid">
             <div>
-              <label>Loại yêu cầu</label>
+              <label>{{ 'approvals.detail.requestType' | translate }}</label>
               <span>{{ 'pr.list.eyebrow' | translate }}</span>
             </div>
             <div>
-              <label>Tổng giá trị</label>
+              <label>{{ 'approvals.detail.totalAmount' | translate }}</label>
               <ep-amount [value]="task()?.totalAmount?.amount" [currency]="task()?.totalAmount?.currency || 'VND'" />
             </div>
             <div>
-              <label>Trạng thái thực tế</label>
+              <label>{{ 'approvals.detail.status' | translate }}</label>
               <ep-badge tone="info" [labelKey]="'pr.status.' + entityPayload()?.status" />
             </div>
             <div>
-              <label>Cần hàng trước ngày</label>
+              <label>{{ 'approvals.detail.needByDate' | translate }}</label>
               <span>{{ formatDate(entityPayload()?.needByDate) }}</span>
             </div>
           </div>
@@ -157,7 +157,7 @@
                   </div>
                   <a [href]="file.fileUrl" target="_blank" class="download-link">
                     <ep-icon name="download" [size]="16"></ep-icon>
-                    Tải về
+                    {{ 'approvals.detail.download' | translate }}
                   </a>
                 </li>
               }
@@ -170,28 +170,28 @@
       <aside class="detail-sidebar">
         <!-- Requester Profile Card -->
         <div class="card sidebar-card requester-card">
-          <h2 class="card__title">Người yêu cầu</h2>
+          <h2 class="card__title">{{ 'approvals.detail.requester' | translate }}</h2>
           <div class="requester-profile">
             <ep-avatar [name]="task()?.requester?.fullName || ''" />
             <div class="requester-profile__details">
               <strong>{{ task()?.requester?.fullName }}</strong>
-              <span>{{ task()?.requester?.department }}</span>
+              <span>{{ task()?.requester?.department || ('approvals.detail.noDepartment' | translate) }}</span>
             </div>
           </div>
         </div>
 
         <!-- SLA Card -->
         <div class="card sidebar-card sla-card">
-          <h2 class="card__title">Hạn xử lý phê duyệt</h2>
+          <h2 class="card__title">{{ 'approvals.detail.slaHeader' | translate }}</h2>
           <div class="sla-container">
             <ep-sla-bar [assignedAt]="task()?.assignedAt || ''" [deadline]="task()?.sla?.deadlineAt || ''" />
             <div class="sla-dates">
               <div>
-                <label>Ngày giao</label>
+                <label>{{ 'approvals.detail.assignedAt' | translate }}</label>
                 <span>{{ formatDate(task()?.assignedAt) }}</span>
               </div>
               <div>
-                <label>Hạn xử lý</label>
+                <label>{{ 'approvals.detail.deadlineAt' | translate }}</label>
                 <span>{{ formatDate(task()?.sla?.deadlineAt) }}</span>
               </div>
             </div>
@@ -200,7 +200,7 @@
 
         <!-- Timeline Workflow Process Card -->
         <div class="card sidebar-card process-card">
-          <h2 class="card__title">Quy trình phê duyệt</h2>
+          <h2 class="card__title">{{ 'approvals.detail.processHeader' | translate }}</h2>
           <div class="timeline">
             @for (step of process()?.steps; track step.stepIndex; let last = $last) {
               <div class="timeline-item" [class.timeline-item--active]="step.status === 'PENDING'">
@@ -214,7 +214,7 @@
 
                 <div class="timeline-content">
                   <div class="timeline-content__header">
-                    <strong>Bước {{ step.stepIndex + 1 }}: {{ step.approverRole }}</strong>
+                    <strong>{{ 'approvals.detail.step' | translate }} {{ step.stepIndex + 1 }}: {{ step.approverRole }}</strong>
                     <ep-badge
                       [tone]="statusTone[step.status] || 'neutral'"
                       [labelKey]="'status.' + step.status" />
@@ -251,21 +251,21 @@
     <!-- Approve Modal -->
     <ep-modal
       [open]="activeModal() === 'approve'"
-      title="Phê duyệt yêu cầu"
+      [title]="'approvals.detail.modal.approve.title' | translate"
       (close)="closeModal()">
       <div class="modal-form">
-        <p class="modal-instruction">Bạn chuẩn bị phê duyệt yêu cầu này. Nhập ý kiến phản hồi (tùy chọn) bên dưới.</p>
-        <ep-form-field label="Ý kiến phê duyệt">
+        <p class="modal-instruction">{{ 'approvals.detail.modal.approve.instruction' | translate }}</p>
+        <ep-form-field [label]="'approvals.detail.modal.approve.label' | translate">
           <textarea
             class="ep-input text-area"
             rows="3"
-            placeholder="Nhập ý kiến phê duyệt..."
+            [placeholder]="'approvals.detail.modal.approve.placeholder' | translate"
             [(ngModel)]="modalComment">
           </textarea>
         </ep-form-field>
         <div class="modal-actions">
-          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
-          <ep-button variant="primary" [loading]="isSubmitting()" (click)="submitAction()">Phê duyệt</ep-button>
+          <ep-button variant="secondary" (click)="closeModal()">{{ 'approvals.detail.modal.cancel' | translate }}</ep-button>
+          <ep-button variant="primary" [loading]="isSubmitting()" (click)="submitAction()">{{ 'approvals.detail.modal.approve.submit' | translate }}</ep-button>
         </div>
       </div>
     </ep-modal>
@@ -273,27 +273,27 @@
     <!-- Reject Modal -->
     <ep-modal
       [open]="activeModal() === 'reject'"
-      title="Từ chối yêu cầu"
+      [title]="'approvals.detail.modal.reject.title' | translate"
       (close)="closeModal()">
       <div class="modal-form">
-        <p class="modal-instruction text-danger">Từ chối yêu cầu sẽ kết thúc quy trình phê duyệt này. Vui lòng nhập lý do từ chối (bắt buộc).</p>
-        <ep-form-field label="Lý do từ chối">
+        <p class="modal-instruction text-danger">{{ 'approvals.detail.modal.reject.instruction' | translate }}</p>
+        <ep-form-field [label]="'approvals.detail.modal.reject.label' | translate">
           <textarea
             class="ep-input text-area"
             rows="3"
             required
-            placeholder="Nhập lý do từ chối..."
+            [placeholder]="'approvals.detail.modal.reject.placeholder' | translate"
             [(ngModel)]="modalComment">
           </textarea>
         </ep-form-field>
         <div class="modal-actions">
-          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
+          <ep-button variant="secondary" (click)="closeModal()">{{ 'approvals.detail.modal.cancel' | translate }}</ep-button>
           <ep-button
             variant="danger"
             [loading]="isSubmitting()"
             [disabled]="!modalComment().trim()"
             (click)="submitAction()">
-            Từ chối
+            {{ 'approvals.detail.modal.reject.submit' | translate }}
           </ep-button>
         </div>
       </div>
@@ -302,27 +302,27 @@
     <!-- Request Changes Modal -->
     <ep-modal
       [open]="activeModal() === 'changes'"
-      title="Yêu cầu bổ sung thông tin"
+      [title]="'approvals.detail.modal.changes.title' | translate"
       (close)="closeModal()">
       <div class="modal-form">
-        <p class="modal-instruction text-warning">Yêu cầu này sẽ được gửi ngược lại cho người tạo để bổ sung thông tin theo phản hồi của bạn. Vui lòng mô tả rõ nội dung cần bổ sung (bắt buộc).</p>
-        <ep-form-field label="Phản hồi cần bổ sung">
+        <p class="modal-instruction text-warning">{{ 'approvals.detail.modal.changes.instruction' | translate }}</p>
+        <ep-form-field [label]="'approvals.detail.modal.changes.label' | translate">
           <textarea
             class="ep-input text-area"
             rows="3"
             required
-            placeholder="Nhập nội dung yêu cầu bổ sung..."
+            [placeholder]="'approvals.detail.modal.changes.placeholder' | translate"
             [(ngModel)]="modalComment">
           </textarea>
         </ep-form-field>
         <div class="modal-actions">
-          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
+          <ep-button variant="secondary" (click)="closeModal()">{{ 'approvals.detail.modal.cancel' | translate }}</ep-button>
           <ep-button
             variant="primary"
             [loading]="isSubmitting()"
             [disabled]="!modalComment().trim()"
             (click)="submitAction()">
-            Gửi yêu cầu
+            {{ 'approvals.detail.modal.changes.submit' | translate }}
           </ep-button>
         </div>
       </div>
@@ -331,42 +331,42 @@
     <!-- Forward Modal -->
     <ep-modal
       [open]="activeModal() === 'forward'"
-      title="Chuyển tiếp phê duyệt"
+      [title]="'approvals.detail.modal.forward.title' | translate"
       (close)="closeModal()">
       <div class="modal-form">
-        <p class="modal-instruction">Ủy quyền hoặc chuyển giao tác vụ phê duyệt này cho một thành viên khác chịu trách nhiệm.</p>
+        <p class="modal-instruction">{{ 'approvals.detail.modal.forward.instruction' | translate }}</p>
         
-        <ep-form-field label="Người nhận chuyển tiếp">
+        <ep-form-field [label]="'approvals.detail.modal.forward.userLabel' | translate">
           <select
             class="ep-input select-box"
             required
             [(ngModel)]="selectedForwardUser">
-            <option value="" disabled selected>Chọn người dùng...</option>
+            <option value="" disabled selected>{{ 'approvals.detail.modal.forward.userPlaceholder' | translate }}</option>
             @for (user of users(); track user.id) {
               <option [value]="user.id">
-                {{ user.fullName }} ({{ user.email }}) - {{ user.departmentName || 'Không phòng ban' }}
+                {{ user.fullName }} ({{ user.email }}) - {{ user.departmentName || ('approvals.detail.noDepartment' | translate) }}
               </option>
             }
           </select>
         </ep-form-field>
 
-        <ep-form-field label="Ghi chú chuyển tiếp (tùy chọn)">
+        <ep-form-field [label]="'approvals.detail.modal.forward.commentLabel' | translate">
           <textarea
             class="ep-input text-area"
             rows="3"
-            placeholder="Nhập lý do chuyển tiếp..."
+            [placeholder]="'approvals.detail.modal.forward.commentPlaceholder' | translate"
             [(ngModel)]="modalComment">
           </textarea>
         </ep-form-field>
 
         <div class="modal-actions">
-          <ep-button variant="secondary" (click)="closeModal()">Hủy</ep-button>
+          <ep-button variant="secondary" (click)="closeModal()">{{ 'approvals.detail.modal.cancel' | translate }}</ep-button>
           <ep-button
             variant="primary"
             [loading]="isSubmitting()"
             [disabled]="!selectedForwardUser()"
             (click)="submitAction()">
-            Chuyển tiếp
+            {{ 'approvals.detail.modal.forward.submit' | translate }}
           </ep-button>
         </div>
       </div>

@@ -7,7 +7,7 @@
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                   id="Definitions_PrApproval"
                   targetNamespace="https://eprocure.internal/bpmn/approval">
-  <bpmn:process id="pr-approval-process" name="Quy trình phê duyệt yêu cầu mua sắm" isExecutable="true">
+  <bpmn:process id="pr-approval-process" name="Quy trình phê duyệt yêu cầu mua sắm" isExecutable="true" camunda:historyTimeToLive="180">
     <bpmn:startEvent id="StartEvent_PrSubmitted" name="PR đã gửi duyệt">
       <bpmn:outgoing>Flow_Start_To_ApprovalTask</bpmn:outgoing>
     </bpmn:startEvent>

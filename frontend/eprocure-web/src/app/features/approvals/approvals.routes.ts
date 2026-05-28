@@ -7,7 +7,7 @@ export const approvalsRoutes: Routes = [
     loadComponent: () =>
       import('./pages/approval-inbox/approval-inbox.component').then((m) => m.ApprovalInboxComponent),
     canActivate: [permissionGuard],
-    data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
+    data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY'] },
     title: 'route.approvals.inbox'
   },
   {
@@ -15,7 +15,7 @@ export const approvalsRoutes: Routes = [
     loadComponent: () =>
       import('./pages/approval-detail/approval-detail.component').then((m) => m.ApprovalDetailComponent),
     canActivate: [permissionGuard],
-    data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
+    data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY'] },
     title: 'route.approvals.detail'
   }
 ];

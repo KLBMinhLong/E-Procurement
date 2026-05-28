@@ -42,14 +42,14 @@ export const routes: Routes = [
       {
         path: 'procurement',
         canActivate: [permissionGuard],
-        data: { requiredPermissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL', 'ADMIN_USER_VIEW'] },
+        data: { requiredPermissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'] },
         loadChildren: () =>
           import('./features/procurement/procurement.routes').then((m) => m.procurementRoutes)
       },
       {
         path: 'approvals',
         canActivate: [permissionGuard],
-        data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'ADMIN_USER_VIEW'] },
+        data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY'] },
         loadChildren: () =>
           import('./features/approvals/approvals.routes').then((m) => m.approvalsRoutes)
       },

@@ -743,6 +743,69 @@
         "deadline": "Hạn chót"
       },
       "totalItems": "nhiệm vụ"
+    },
+    "detail": {
+      "back": "Quay lại",
+      "forward": "Chuyển tiếp",
+      "requestChanges": "Yêu cầu bổ sung",
+      "reject": "Từ chối",
+      "approve": "Phê duyệt",
+      "title": "Thông tin yêu cầu",
+      "subject": "Tiêu đề",
+      "requestType": "Loại yêu cầu",
+      "totalAmount": "Tổng giá trị",
+      "status": "Trạng thái thực tế",
+      "needByDate": "Cần hàng trước ngày",
+      "justification": "Lý do mua sắm",
+      "urgencyReason": "Lý do khẩn cấp",
+      "lineItems": "Danh sách mặt hàng",
+      "attachments": "Tài liệu đính kèm",
+      "download": "Tải về",
+      "requester": "Người yêu cầu",
+      "noDepartment": "Không phòng ban",
+      "slaHeader": "Hạn xử lý phê duyệt",
+      "assignedAt": "Ngày giao",
+      "deadlineAt": "Hạn xử lý",
+      "processHeader": "Quy trình phê duyệt",
+      "step": "Bước",
+      "approver": "Người duyệt",
+      "empty": {
+        "title": "Tác vụ không tồn tại",
+        "message": "Không tìm thấy chi tiết cho tác vụ phê duyệt này."
+      },
+      "modal": {
+        "approve": {
+          "title": "Phê duyệt yêu cầu",
+          "instruction": "Bạn chuẩn bị phê duyệt yêu cầu này. Nhập ý kiến phản hồi (tùy chọn) bên dưới.",
+          "label": "Ý kiến phê duyệt",
+          "placeholder": "Nhập ý kiến phê duyệt...",
+          "submit": "Phê duyệt"
+        },
+        "reject": {
+          "title": "Từ chối yêu cầu",
+          "instruction": "Từ chối yêu cầu sẽ kết thúc quy trình phê duyệt này. Vui lòng nhập lý do từ chối (bắt buộc).",
+          "label": "Lý do từ chối",
+          "placeholder": "Nhập lý do từ chối...",
+          "submit": "Từ chối"
+        },
+        "changes": {
+          "title": "Yêu cầu bổ sung thông tin",
+          "instruction": "Yêu cầu này sẽ được gửi ngược lại cho người tạo để bổ sung thông tin theo phản hồi của bạn. Vui lòng mô tả rõ nội dung cần bổ sung (bắt buộc).",
+          "label": "Phản hồi cần bổ sung",
+          "placeholder": "Nhập nội dung yêu cầu bổ sung...",
+          "submit": "Gửi yêu cầu"
+        },
+        "forward": {
+          "title": "Chuyển tiếp phê duyệt",
+          "instruction": "Ủy quyền hoặc chuyển giao tác vụ phê duyệt này cho một thành viên khác chịu trách nhiệm.",
+          "userLabel": "Người nhận chuyển tiếp",
+          "userPlaceholder": "Chọn người dùng...",
+          "commentLabel": "Ghi chú chuyển tiếp (tùy chọn)",
+          "commentPlaceholder": "Nhập lý do chuyển tiếp...",
+          "submit": "Chuyển tiếp"
+        },
+        "cancel": "Hủy"
+      }
     }
   }
 }

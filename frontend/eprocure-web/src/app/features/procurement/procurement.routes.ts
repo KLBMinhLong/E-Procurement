@@ -7,7 +7,7 @@ export const procurementRoutes: Routes = [
     loadComponent: () =>
       import('./pages/pr-list/pr-list.component').then((m) => m.PrListComponent),
     canActivate: [permissionGuard],
-    data: { requiredPermissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL', 'ADMIN_USER_VIEW'] },
+    data: { requiredPermissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'] },
     title: 'route.procurement'
   },
   {
@@ -15,7 +15,7 @@ export const procurementRoutes: Routes = [
     loadComponent: () =>
       import('./pages/pr-create/pr-create.component').then((m) => m.PrCreateComponent),
     canActivate: [permissionGuard],
-    data: { requiredPermissions: ['PR_CREATE', 'ADMIN_USER_VIEW'] },
+    data: { requiredPermissions: ['PR_CREATE'] },
     title: 'route.pr.create'
   },
   {
@@ -23,7 +23,7 @@ export const procurementRoutes: Routes = [
     loadComponent: () =>
       import('./pages/pr-detail/pr-detail.component').then((m) => m.PrDetailComponent),
     canActivate: [permissionGuard],
-    data: { requiredPermissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL', 'ADMIN_USER_VIEW'] },
+    data: { requiredPermissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'] },
     title: 'route.pr.detail'
   }
 ];

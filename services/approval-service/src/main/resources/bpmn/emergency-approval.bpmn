@@ -6,7 +6,7 @@
                   xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
                   id="Definitions_EmergencyApproval"
                   targetNamespace="https://eprocure.internal/bpmn/approval">
-  <bpmn:process id="emergency-approval" name="Quy trình phê duyệt mua sắm khẩn cấp" isExecutable="true">
+  <bpmn:process id="emergency-approval" name="Quy trình phê duyệt mua sắm khẩn cấp" isExecutable="true" camunda:historyTimeToLive="180">
     <bpmn:startEvent id="StartEvent_EmergencyPrSubmitted" name="PR khẩn cấp đã gửi">
       <bpmn:outgoing>Flow_Start_To_ParallelFork</bpmn:outgoing>
     </bpmn:startEvent>

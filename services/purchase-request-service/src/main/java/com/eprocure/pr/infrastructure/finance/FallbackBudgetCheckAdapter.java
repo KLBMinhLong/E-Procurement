@@ -9,7 +9,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "eprocure.pr.integration.fallback-enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(
+        name = "eprocure.pr.integration.fallback-enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class FallbackBudgetCheckAdapter implements BudgetCheckPort {
     private static final Logger log = LogManager.getLogger(FallbackBudgetCheckAdapter.class);
 

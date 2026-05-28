@@ -75,7 +75,7 @@ public class PurchaseRequestController {
     // ── GET /purchase-requests  (list) ───────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PR_VIEW_OWN')")
+    @PreAuthorize("hasAnyAuthority('PR_VIEW_OWN','PR_VIEW_DEPARTMENT','PR_VIEW_ALL')")
     public ResponseEntity<ApiResponse<List<PurchaseRequestSummaryResponse>>> list(
             @ModelAttribute ListPrRequest request,
             @AuthenticationPrincipal UserPrincipal principal,
@@ -108,7 +108,7 @@ public class PurchaseRequestController {
     // ── GET /purchase-requests/{id}  (detail) ───────────────────────────────
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('PR_VIEW_OWN')")
+    @PreAuthorize("hasAnyAuthority('PR_VIEW_OWN','PR_VIEW_DEPARTMENT','PR_VIEW_ALL')")
     public ResponseEntity<ApiResponse<PurchaseRequestDetailResponse>> getById(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal,

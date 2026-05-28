@@ -743,6 +743,69 @@
         "deadline": "Deadline"
       },
       "totalItems": "tasks"
+    },
+    "detail": {
+      "back": "Back",
+      "forward": "Forward",
+      "requestChanges": "Request Changes",
+      "reject": "Reject",
+      "approve": "Approve",
+      "title": "Approval Request Info",
+      "subject": "Title",
+      "requestType": "Request Type",
+      "totalAmount": "Total Amount",
+      "status": "Actual Status",
+      "needByDate": "Need By Date",
+      "justification": "Justification",
+      "urgencyReason": "Urgency Reason",
+      "lineItems": "Line Items",
+      "attachments": "Attachments",
+      "download": "Download",
+      "requester": "Requester",
+      "noDepartment": "No department",
+      "slaHeader": "Approval SLA Deadline",
+      "assignedAt": "Assigned At",
+      "deadlineAt": "Deadline",
+      "processHeader": "Approval Workflow",
+      "step": "Step",
+      "approver": "Approver",
+      "empty": {
+        "title": "Task not found",
+        "message": "Could not retrieve details for this approval task."
+      },
+      "modal": {
+        "approve": {
+          "title": "Approve Request",
+          "instruction": "You are about to approve this request. Enter your comments below (optional).",
+          "label": "Approval Comments",
+          "placeholder": "Enter approval comments...",
+          "submit": "Approve"
+        },
+        "reject": {
+          "title": "Reject Request",
+          "instruction": "Rejecting this request will terminate the approval workflow. Please provide a reason (required).",
+          "label": "Rejection Reason",
+          "placeholder": "Enter rejection reason...",
+          "submit": "Reject"
+        },
+        "changes": {
+          "title": "Request Additional Info",
+          "instruction": "This request will be sent back to the creator to provide additional information according to your feedback. Please clearly describe what is needed (required).",
+          "label": "Additional Information Request",
+          "placeholder": "Enter information request details...",
+          "submit": "Submit Request"
+        },
+        "forward": {
+          "title": "Forward Approval",
+          "instruction": "Delegate or transfer this approval task to another member to handle.",
+          "userLabel": "Forward Recipient",
+          "userPlaceholder": "Select user...",
+          "commentLabel": "Forward Notes (optional)",
+          "commentPlaceholder": "Enter reason for forwarding...",
+          "submit": "Forward"
+        },
+        "cancel": "Cancel"
+      }
     }
   }
 }
