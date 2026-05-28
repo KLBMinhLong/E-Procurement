@@ -46,6 +46,7 @@ auth_request_set $auth_username $upstream_http_x_username;
 auth_request_set $auth_full_name $upstream_http_x_full_name;
 auth_request_set $auth_permissions $upstream_http_x_permissions;
 
+proxy_set_header X-Api-Key "${NGINX_INTERNAL_API_KEY}";
 proxy_set_header X-User-ID $auth_user_id;
 proxy_set_header X-Department-ID $auth_department_id;
 proxy_set_header X-Username $auth_username;

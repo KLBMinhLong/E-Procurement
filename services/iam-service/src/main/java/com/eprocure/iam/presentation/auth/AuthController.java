@@ -304,7 +304,16 @@ public class AuthController {
     }
 
     private ResponseCookie oauthStateCookie(String rawToken) {
-        return cookie(oauthStateCookieName, rawToken, oauthStateTtl);
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(oauthStateCookieName, rawToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(oauthStateTtl);
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+        return builder.build();
     }
 
     private ResponseCookie cookie(String name, String rawToken, Duration maxAge) {
