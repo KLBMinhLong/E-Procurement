@@ -42,7 +42,7 @@ public class ApprovalTaskController {
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/{taskId}")
-    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
+    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
     public ResponseEntity<ApiResponse<com.eprocure.approval.application.service.ApprovalTaskDetail>> getTaskDetail(
             @PathVariable String taskId,
             @AuthenticationPrincipal UserPrincipal principal,
@@ -55,7 +55,7 @@ public class ApprovalTaskController {
     }
 
     @PatchMapping("/{taskId}/approve")
-    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
+    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
     public ResponseEntity<ApiResponse<ApprovalTaskActionView>> approve(
             @PathVariable String taskId,
             @Valid @RequestBody(required = false) ApprovalCommentRequest body,
@@ -67,7 +67,7 @@ public class ApprovalTaskController {
     }
 
     @PatchMapping("/{taskId}/reject")
-    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
+    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
     public ResponseEntity<ApiResponse<ApprovalTaskActionView>> reject(
             @PathVariable String taskId,
             @Valid @RequestBody ApprovalCommentRequest body,

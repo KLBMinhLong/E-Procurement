@@ -122,7 +122,7 @@
 | ep-amount, ep-sla-bar, ep-stat-card | ✅ |
 | ep-avatar, ep-icon (custom SVG) | ✅ |
 | ep-approval-action, ep-filter-bar | ✅ |
-| ep-breadcrumb, ep-lang-switcher | ✅ |
+| ep-breadcrumb, ep-lang-switcher | ✅ | Sửa lỗi ghi đè key `route` trong i18n & hỗ trợ UUIDs động |
 | ep-empty-state, ep-skeleton | ✅ |
 | /ui-showcase page | ✅ |
 | i18n setup (vi/en) | ✅ |
@@ -179,8 +179,8 @@
 | Delegation awareness | ⬜ |
 | Conflict of interest check | ✅ |
 | Admin: CRUD approval rules | ⬜ |
-| Frontend: Approval inbox | ⬜ |
-| Frontend: Task detail + actions | ⬜ |
+| Frontend: Approval inbox | ✅ |
+| Frontend: Task detail + actions | ✅ |
 | Unit tests (rule selection foundation + BPMN diagram metadata + chain/SLA resolution + process start + Kafka consumer + approval actions + inbox/detail retrieval) | ✅ | 26 tests pass |
 
 ### E06–E15: (Xem PROJECT_BRIEF.md)

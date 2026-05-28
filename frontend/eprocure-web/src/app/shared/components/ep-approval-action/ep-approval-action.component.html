@@ -1,11 +1,11 @@
 <div class="ep-approval-action">
-  <ep-button *epHasPermission="'PR_APPROVE_L1'" icon="check" (click)="approve.emit()">
+  <ep-button *epHasPermission="['PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY']" icon="check" (click)="approve.emit()">
     {{ 'approval.action.approve' | translate }}
   </ep-button>
-  <ep-button *epHasPermission="'PR_REQUEST_CHANGES'" variant="secondary" icon="clipboard-list" (click)="requestChanges.emit()">
+  <ep-button *epHasPermission="['PR_REQUEST_CHANGES','PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY']" variant="secondary" icon="clipboard-list" (click)="requestChanges.emit()">
     {{ 'approval.action.requestChanges' | translate }}
   </ep-button>
-  <ep-button *epHasPermission="'PR_APPROVE_L1'" variant="danger" icon="x" (click)="reject.emit()">
+  <ep-button *epHasPermission="['PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY']" variant="danger" icon="x" (click)="reject.emit()">
     {{ 'approval.action.reject' | translate }}
   </ep-button>
 </div>

@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-28] E03 Frontend Breadcrumb i18n Collision and Dynamic Route Parameter Support
+
+- Decision: Resolve translation override by merging duplicate `"route"` JSON blocks in `vi.json` and `en.json` into a nested structure, and upgrade `EpBreadcrumbComponent` to use progressive cumulative path mapping with Regex support for dynamic UUIDs/IDs.
+- Reason: The duplicate root-level `"route"` key in translations caused the second block to override the first, leading to raw `"route.dashboard"` strings and `"[object Object]"` outputs. Static word-by-word path lookup could not handle nested routes or dynamic ID parameters (e.g. `/procurement/98b50e2d...`), showing ugly raw UUIDs on UI breadcrumbs.
+- Impact: All breadcrumb items now render perfectly localized labels. Dynamic routes (PR details, Approval details) map automatically to generic keys (`route.pr.detail`, `route.approvals.detail`) while preserving precise navigation. Build validation completed successfully with exit code 0.
+- Constraint: Relies on `ngx-translate` nested path resolution parser.
+
 ## [2026-05-27] E05 Backend Approval Inbox, Counts & Task Detail API
 
 - Decision: Implement `/api/v1/approval/inbox`, `/api/v1/approval/inbox/count`, and `/api/v1/approval/tasks/{taskId}` endpoints in approval-service, resolved through custom MyBatis projections and UserResolverPort Feign integrations.

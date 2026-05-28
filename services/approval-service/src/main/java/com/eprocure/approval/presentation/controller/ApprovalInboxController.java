@@ -37,7 +37,7 @@ public class ApprovalInboxController {
     }
 
     @GetMapping("/inbox")
-    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
+    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
     public ResponseEntity<ApiResponse<PageResult<ApprovalTaskSummary>>> getInbox(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -67,7 +67,7 @@ public class ApprovalInboxController {
     }
 
     @GetMapping("/inbox/count")
-    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
+    @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
     public ResponseEntity<ApiResponse<ApprovalInboxCount>> getInboxCount(
             @AuthenticationPrincipal UserPrincipal principal,
             HttpServletRequest request) {

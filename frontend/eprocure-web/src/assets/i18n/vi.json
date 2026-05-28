@@ -140,15 +140,26 @@
     "open": "Mở thông báo"
   },
   "route": {
-    "admin": "Quản trị",
-    "admin.roles": "Quản lý vai trò",
-    "approvals": "Phê duyệt",
+    "admin": {
+      "self": "Quản trị",
+      "users": "Danh mục người dùng",
+      "roles": "Quản lý vai trò",
+      "rbac": "Ma trận phân quyền",
+      "orgChart": "Sơ đồ phòng ban"
+    },
+    "approvals": {
+      "self": "Phê duyệt",
+      "inbox": "Hộp thư phê duyệt",
+      "detail": "Chi tiết phê duyệt"
+    },
     "dashboard": "Tổng quan",
     "procurement": "Mua sắm",
     "profile": "Thông tin cá nhân",
     "uiShowcase": "Thư viện giao diện",
-    "pr.create": "Tạo yêu cầu",
-    "pr.detail": "Chi tiết yêu cầu"
+    "pr": {
+      "create": "Tạo yêu cầu",
+      "detail": "Chi tiết yêu cầu"
+    }
   },
   "shared": {
     "breadcrumb": {
@@ -433,7 +444,12 @@
         "usernamePattern": "Chỉ chấp nhận chữ thường, số, dấu chấm, gạch dưới, gạch ngang",
         "passwordMinLength": "Mật khẩu phải chứa tối thiểu 8 ký tự",
         "passwordPattern": "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt",
-        "passwordMismatch": "Mật khẩu xác nhận không khớp"
+        "passwordMismatch": "Mật khẩu xác nhận không khớp",
+        "phonePattern": "Số điện thoại chỉ gồm chữ số, dấu + ở đầu (9-15 ký tự)",
+        "employeeCodeExists": "Mã nhân viên đã tồn tại trên hệ thống",
+        "usernameExists": "Tên đăng nhập đã tồn tại trên hệ thống",
+        "emailExists": "Địa chỉ email đã tồn tại trên hệ thống",
+        "validationFailed": "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại."
       },
       "toast": {
         "lockSuccess": "Đã khóa tài khoản người dùng thành công.",
@@ -703,6 +719,104 @@
       "title": "Ảnh đại diện",
       "description": "Nhấp chọn ảnh đại diện mong muốn từ danh sách",
       "select": "Chọn làm ảnh đại diện"
+    }
+  },
+
+  "approvals": {
+    "inbox": {
+      "eyebrow": "Phê duyệt nghiệp vụ",
+      "title": "Hộp thư phê duyệt",
+      "stat": {
+        "total": "Cần phê duyệt",
+        "overdue": "Bị quá hạn",
+        "emergency": "Nghiêm trọng",
+        "hint": "Cần xử lý"
+      },
+      "filter": {
+        "placeholder": "Tìm mã yêu cầu, tiêu đề...",
+        "allStatus": "Tất cả trạng thái",
+        "allPriority": "Tất cả độ ưu tiên",
+        "allTypes": "Tất cả loại yêu cầu",
+        "overdueOnly": "Chỉ quá hạn"
+      },
+      "empty": {
+        "title": "Hộp thư trống",
+        "message": "Tuyệt vời! Không có nhiệm vụ nào cần bạn phê duyệt lúc này."
+      },
+      "col": {
+        "number": "Mã yêu cầu",
+        "title": "Tiêu đề",
+        "priority": "Mức độ",
+        "type": "Loại",
+        "amount": "Giá trị",
+        "requester": "Người yêu cầu",
+        "assignedAt": "Ngày giao",
+        "deadline": "Hạn chót"
+      },
+      "totalItems": "nhiệm vụ"
+    },
+    "detail": {
+      "back": "Quay lại",
+      "forward": "Chuyển tiếp",
+      "requestChanges": "Yêu cầu bổ sung",
+      "reject": "Từ chối",
+      "approve": "Phê duyệt",
+      "title": "Thông tin yêu cầu",
+      "subject": "Tiêu đề",
+      "requestType": "Loại yêu cầu",
+      "totalAmount": "Tổng giá trị",
+      "status": "Trạng thái thực tế",
+      "needByDate": "Cần hàng trước ngày",
+      "justification": "Lý do mua sắm",
+      "urgencyReason": "Lý do khẩn cấp",
+      "lineItems": "Danh sách mặt hàng",
+      "attachments": "Tài liệu đính kèm",
+      "download": "Tải về",
+      "requester": "Người yêu cầu",
+      "noDepartment": "Không phòng ban",
+      "slaHeader": "Hạn xử lý phê duyệt",
+      "assignedAt": "Ngày giao",
+      "deadlineAt": "Hạn xử lý",
+      "processHeader": "Quy trình phê duyệt",
+      "step": "Bước",
+      "approver": "Người duyệt",
+      "empty": {
+        "title": "Tác vụ không tồn tại",
+        "message": "Không tìm thấy chi tiết cho tác vụ phê duyệt này."
+      },
+      "modal": {
+        "approve": {
+          "title": "Phê duyệt yêu cầu",
+          "instruction": "Bạn chuẩn bị phê duyệt yêu cầu này. Nhập ý kiến phản hồi (tùy chọn) bên dưới.",
+          "label": "Ý kiến phê duyệt",
+          "placeholder": "Nhập ý kiến phê duyệt...",
+          "submit": "Phê duyệt"
+        },
+        "reject": {
+          "title": "Từ chối yêu cầu",
+          "instruction": "Từ chối yêu cầu sẽ kết thúc quy trình phê duyệt này. Vui lòng nhập lý do từ chối (bắt buộc).",
+          "label": "Lý do từ chối",
+          "placeholder": "Nhập lý do từ chối...",
+          "submit": "Từ chối"
+        },
+        "changes": {
+          "title": "Yêu cầu bổ sung thông tin",
+          "instruction": "Yêu cầu này sẽ được gửi ngược lại cho người tạo để bổ sung thông tin theo phản hồi của bạn. Vui lòng mô tả rõ nội dung cần bổ sung (bắt buộc).",
+          "label": "Phản hồi cần bổ sung",
+          "placeholder": "Nhập nội dung yêu cầu bổ sung...",
+          "submit": "Gửi yêu cầu"
+        },
+        "forward": {
+          "title": "Chuyển tiếp phê duyệt",
+          "instruction": "Ủy quyền hoặc chuyển giao tác vụ phê duyệt này cho một thành viên khác chịu trách nhiệm.",
+          "userLabel": "Người nhận chuyển tiếp",
+          "userPlaceholder": "Chọn người dùng...",
+          "commentLabel": "Ghi chú chuyển tiếp (tùy chọn)",
+          "commentPlaceholder": "Nhập lý do chuyển tiếp...",
+          "submit": "Chuyển tiếp"
+        },
+        "cancel": "Hủy"
+      }
     }
   }
 }

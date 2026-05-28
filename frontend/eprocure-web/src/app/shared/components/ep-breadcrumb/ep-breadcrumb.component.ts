@@ -10,13 +10,18 @@ interface BreadcrumbItem {
   route: string;
 }
 
-const ROUTE_LABELS: Record<string, string> = {
-  dashboard: 'route.dashboard',
-  procurement: 'route.procurement',
-  approvals: 'route.approvals',
-  admin: 'route.admin',
-  'ui-showcase': 'route.uiShowcase',
-  profile: 'profile.title'
+const PATH_MAP: Record<string, string> = {
+  '/dashboard': 'route.dashboard',
+  '/procurement': 'route.procurement',
+  '/procurement/create': 'route.pr.create',
+  '/approvals': 'route.approvals.self',
+  '/admin': 'route.admin.self',
+  '/admin/users': 'route.admin.users',
+  '/admin/roles': 'route.admin.roles',
+  '/admin/rbac': 'route.admin.rbac',
+  '/admin/org-chart': 'route.admin.orgChart',
+  '/profile': 'route.profile',
+  '/ui-showcase': 'route.uiShowcase'
 };
 
 @Component({
@@ -49,9 +54,25 @@ export class EpBreadcrumbComponent {
       return [{ labelKey: 'route.dashboard', route: '/dashboard' }];
     }
 
-    return segments.map((segment, index) => ({
-      labelKey: ROUTE_LABELS[segment] ?? segment,
-      route: `/${segments.slice(0, index + 1).join('/')}`
-    }));
+    return segments.map((segment, index) => {
+      const path = '/' + segments.slice(0, index + 1).join('/');
+      let labelKey = segment;
+
+      if (PATH_MAP[path]) {
+        labelKey = PATH_MAP[path];
+      } else {
+        // Handle dynamic routes with route params (like UUIDs/IDs)
+        if (/^\/procurement\/[^/]+$/.test(path)) {
+          labelKey = 'route.pr.detail';
+        } else if (/^\/approvals\/[^/]+$/.test(path)) {
+          labelKey = 'route.approvals.detail';
+        }
+      }
+
+      return {
+        labelKey,
+        route: path
+      };
+    });
   }
 }

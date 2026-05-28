@@ -36,7 +36,7 @@ export const adminRoutes: Routes = [
     loadComponent: () =>
       import('./pages/org-chart/org-chart.component').then((m) => m.OrgChartComponent),
     canActivate: [permissionGuard],
-    data: { requiredPermissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] },
+    data: { requiredPermissions: ['ORG_VIEW', 'ADMIN_DEPARTMENT_MANAGE'] },
     title: 'route.admin.orgChart'
   }
 ];

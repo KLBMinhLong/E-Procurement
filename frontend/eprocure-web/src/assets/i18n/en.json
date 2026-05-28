@@ -140,15 +140,26 @@
     "open": "Open notifications"
   },
   "route": {
-    "admin": "Admin",
-    "admin.roles": "Role Manager",
-    "approvals": "Approvals",
+    "admin": {
+      "self": "Admin",
+      "users": "User Directory",
+      "roles": "Role Manager",
+      "rbac": "Permissions Matrix",
+      "orgChart": "Department Chart"
+    },
+    "approvals": {
+      "self": "Approvals",
+      "inbox": "Approval Inbox",
+      "detail": "Approval Detail"
+    },
     "dashboard": "Dashboard",
     "procurement": "Procurement",
     "profile": "Personal Profile",
     "uiShowcase": "UI library",
-    "pr.create": "Create Request",
-    "pr.detail": "Request Details"
+    "pr": {
+      "create": "Create Request",
+      "detail": "Request Details"
+    }
   },
   "shared": {
     "breadcrumb": {
@@ -433,7 +444,12 @@
         "usernamePattern": "Only lowercase, numbers, dots, hyphens, and underscores allowed",
         "passwordMinLength": "Password must be at least 8 characters",
         "passwordPattern": "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character",
-        "passwordMismatch": "Passwords do not match"
+        "passwordMismatch": "Passwords do not match",
+        "phonePattern": "Phone number must contain only digits and optional leading +, with length between 9 and 15",
+        "employeeCodeExists": "Employee code already exists",
+        "usernameExists": "Username already exists",
+        "emailExists": "Email already exists",
+        "validationFailed": "Validation failed. Please check the form."
       },
       "toast": {
         "lockSuccess": "User account successfully locked.",
@@ -703,6 +719,104 @@
       "title": "Profile Picture",
       "description": "Select your preferred avatar from the list below",
       "select": "Set as Profile Picture"
+    }
+  },
+
+  "approvals": {
+    "inbox": {
+      "eyebrow": "Business Approvals",
+      "title": "Approval Inbox",
+      "stat": {
+        "total": "Pending Approvals",
+        "overdue": "Overdue",
+        "emergency": "Critical",
+        "hint": "Need Action"
+      },
+      "filter": {
+        "placeholder": "Search request code, title...",
+        "allStatus": "All Statuses",
+        "allPriority": "All Priorities",
+        "allTypes": "All Request Types",
+        "overdueOnly": "Overdue Only"
+      },
+      "empty": {
+        "title": "Inbox is empty",
+        "message": "Excellent! No tasks are awaiting your approval right now."
+      },
+      "col": {
+        "number": "Request Code",
+        "title": "Title",
+        "priority": "Priority",
+        "type": "Type",
+        "amount": "Amount",
+        "requester": "Requester",
+        "assignedAt": "Assigned At",
+        "deadline": "Deadline"
+      },
+      "totalItems": "tasks"
+    },
+    "detail": {
+      "back": "Back",
+      "forward": "Forward",
+      "requestChanges": "Request Changes",
+      "reject": "Reject",
+      "approve": "Approve",
+      "title": "Approval Request Info",
+      "subject": "Title",
+      "requestType": "Request Type",
+      "totalAmount": "Total Amount",
+      "status": "Actual Status",
+      "needByDate": "Need By Date",
+      "justification": "Justification",
+      "urgencyReason": "Urgency Reason",
+      "lineItems": "Line Items",
+      "attachments": "Attachments",
+      "download": "Download",
+      "requester": "Requester",
+      "noDepartment": "No department",
+      "slaHeader": "Approval SLA Deadline",
+      "assignedAt": "Assigned At",
+      "deadlineAt": "Deadline",
+      "processHeader": "Approval Workflow",
+      "step": "Step",
+      "approver": "Approver",
+      "empty": {
+        "title": "Task not found",
+        "message": "Could not retrieve details for this approval task."
+      },
+      "modal": {
+        "approve": {
+          "title": "Approve Request",
+          "instruction": "You are about to approve this request. Enter your comments below (optional).",
+          "label": "Approval Comments",
+          "placeholder": "Enter approval comments...",
+          "submit": "Approve"
+        },
+        "reject": {
+          "title": "Reject Request",
+          "instruction": "Rejecting this request will terminate the approval workflow. Please provide a reason (required).",
+          "label": "Rejection Reason",
+          "placeholder": "Enter rejection reason...",
+          "submit": "Reject"
+        },
+        "changes": {
+          "title": "Request Additional Info",
+          "instruction": "This request will be sent back to the creator to provide additional information according to your feedback. Please clearly describe what is needed (required).",
+          "label": "Additional Information Request",
+          "placeholder": "Enter information request details...",
+          "submit": "Submit Request"
+        },
+        "forward": {
+          "title": "Forward Approval",
+          "instruction": "Delegate or transfer this approval task to another member to handle.",
+          "userLabel": "Forward Recipient",
+          "userPlaceholder": "Select user...",
+          "commentLabel": "Forward Notes (optional)",
+          "commentPlaceholder": "Enter reason for forwarding...",
+          "submit": "Forward"
+        },
+        "cancel": "Cancel"
+      }
     }
   }
 }
