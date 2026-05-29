@@ -1,5 +1,12 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-30] Bug: PR detail UI showed `[object Object] VND` and incomplete line item values
+
+- Symptom: Purchase request detail rendered budget money as `[object Object] VND`, showed missing quantity/unit price values, and exposed long raw UUIDs in operational panels.
+- Root cause: Backend `PurchaseRequestDetailResponse.LineItemResponse` omitted quantity, unit price, GL account, catalog/specification fields although OpenAPI/frontend expected them; frontend `ep-amount` only accepted primitive values while budget check returns `Money` objects.
+- Fix: Expanded PR detail response line item payload, aligned OpenAPI budget money fields with `Money`, allowed `ep-amount` to format `Money` objects, and rebuilt PR list/detail UI around compact operational panels with shortened IDs and safe optional approval data.
+- Prevention: Keep frontend response models and OpenAPI schemas synchronized with backend records, and make shared value-formatting components accept the canonical API value objects directly.
+
 ## [2026-05-30] Bug: Approval rule create/update failed when binding PostgreSQL array columns
 
 - Root cause: `ApprovalRuleDbEntity` stored `categories`, `departmentIds`, and `priorities` as `Object`, while `ApprovalRuleMapper` only declared `jdbcType=ARRAY`. MyBatis delegated to the generic object handler, so the PostgreSQL driver tried to create a `JAVA_OBJECT` array instead of `varchar[]` or `uuid[]`.
