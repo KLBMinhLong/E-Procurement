@@ -6,6 +6,7 @@
     "cancel": "Hủy",
     "confirm": "Xác nhận",
     "create": "Tạo mới",
+    "close": "Đóng",
     "processing": "Đang xử lý",
     "refresh": "Tải lại",
     "submit": "Lưu thay đổi",
@@ -828,17 +829,29 @@
         "create": "Tạo quy tắc",
         "edit": "Sửa",
         "deactivate": "Vô hiệu hóa",
+        "viewChain": "Xem sơ đồ",
         "addStep": "Thêm bước",
         "removeStep": "Xóa bước"
       },
       "stat": {
         "total": "Tổng quy tắc",
         "active": "Đang hoạt động",
-        "inactive": "Đã tắt"
+        "inactive": "Đã tắt",
+        "steps": "Tổng bước duyệt"
       },
       "filter": {
+        "title": "Bộ lọc vận hành",
+        "description": "Thu hẹp danh sách theo loại quy tắc, trạng thái hoặc tên vai trò duyệt.",
         "searchLabel": "Tìm quy tắc",
-        "searchPlaceholder": "Tìm tên, loại hoặc mô tả..."
+        "searchPlaceholder": "Tìm tên, loại, vai trò hoặc mô tả...",
+        "type": "Loại quy tắc",
+        "status": "Trạng thái",
+        "allTypes": "Tất cả loại",
+        "allStatus": "Tất cả trạng thái",
+        "statusActive": "Đang hoạt động",
+        "statusInactive": "Đã tắt",
+        "clear": "Xóa lọc",
+        "showing": "{{count}} / {{total}} quy tắc"
       },
       "col": {
         "name": "Quy tắc",
@@ -870,11 +883,34 @@
       },
       "condition": {
         "min": "Từ",
-        "max": "Đến dưới"
+        "max": "Đến dưới",
+        "categories": "Danh mục",
+        "departments": "Phòng ban",
+        "priorities": "Mức độ",
+        "any": "Áp dụng mặc định"
       },
       "section": {
+        "identity": "Thông tin quy tắc",
+        "identityHint": "Đặt tên chuẩn, chọn loại rule và thứ tự ưu tiên khi engine tìm rule phù hợp.",
         "conditions": "Điều kiện áp dụng",
-        "steps": "Các bước phê duyệt"
+        "conditionsHint": "Bỏ trống điều kiện nào nếu quy tắc không cần giới hạn theo điều kiện đó.",
+        "steps": "Các bước phê duyệt",
+        "stepsHint": "Các bước được sắp theo thứ tự; cùng thứ tự có thể chạy song song nếu chọn kiểu song song."
+      },
+      "step": {
+        "slaSummary": "{{hours}}h SLA",
+        "count": "{{count}} bước",
+        "firstRole": "Bắt đầu: {{role}}",
+        "lastRole": "Kết thúc: {{role}}",
+        "parallelCount": "{{count}} bước song song",
+        "required": "Bắt buộc",
+        "optional": "Không bắt buộc"
+      },
+      "chain": {
+        "title": "Sơ đồ duyệt: {{rule}}",
+        "totalSteps": "{{count}} bước duyệt",
+        "totalSla": "SLA cấu hình {{hours}}h",
+        "empty": "Chưa có bước duyệt trong quy tắc này."
       },
       "field": {
         "ruleName": "Tên quy tắc",

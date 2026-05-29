@@ -24,6 +24,7 @@ import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/e
 import {
   ApprovalPriority,
   ApprovalRuleDetail,
+  ApprovalRuleStepTemplate,
   ApprovalRuleType,
   ApprovalRuleUpsertRequest,
   ApprovalStepType
@@ -51,6 +52,16 @@ type RuleForm = FormGroup<{
   description: FormControl<string>;
   steps: FormArray<StepFormGroup>;
 }>;
+
+type RuleTypeFilter = ApprovalRuleType | 'ALL';
+type RuleStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
+
+interface RuleSummaryCard {
+  icon: string;
+  labelKey: string;
+  value: number;
+  tone: 'neutral' | 'success' | 'warning' | 'info';
+}
 
 @Component({
   selector: 'ep-approval-rules',
@@ -81,12 +92,17 @@ export class ApprovalRulesComponent implements OnInit {
   readonly ruleTypes: ApprovalRuleType[] = ['VALUE', 'CATEGORY', 'DEPARTMENT', 'DEFAULT'];
   readonly stepTypes: ApprovalStepType[] = ['SEQUENTIAL', 'PARALLEL'];
   readonly priorityOptions: ApprovalPriority[] = ['NORMAL', 'URGENT', 'EMERGENCY'];
+  readonly typeFilters: RuleTypeFilter[] = ['ALL', ...this.ruleTypes];
+  readonly statusFilters: RuleStatusFilter[] = ['ALL', 'ACTIVE', 'INACTIVE'];
 
   readonly rules = signal<ApprovalRuleDetail[]>([]);
   readonly isLoading = signal(false);
   readonly isSubmitting = signal(false);
   readonly searchQuery = signal('');
+  readonly activeTypeFilter = signal<RuleTypeFilter>('ALL');
+  readonly activeStatusFilter = signal<RuleStatusFilter>('ALL');
   readonly selectedRule = signal<ApprovalRuleDetail | null>(null);
+  readonly selectedChainRule = signal<ApprovalRuleDetail | null>(null);
   readonly isFormOpen = signal(false);
   readonly isDeactivateOpen = signal(false);
   readonly deactivateReason = signal('');
@@ -107,18 +123,54 @@ export class ApprovalRulesComponent implements OnInit {
 
   readonly filteredRules = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    if (!query) {
-      return this.rules();
-    }
+    const type = this.activeTypeFilter();
+    const status = this.activeStatusFilter();
+
     return this.rules().filter((rule) =>
-      rule.ruleName.toLowerCase().includes(query) ||
-      rule.ruleType.toLowerCase().includes(query) ||
-      (rule.description?.toLowerCase().includes(query) ?? false)
+      this.matchesQuery(rule, query) &&
+      (type === 'ALL' || rule.ruleType === type) &&
+      this.matchesStatus(rule, status)
     );
   });
 
   readonly activeCount = computed(() => this.rules().filter((rule) => this.isRuleActive(rule)).length);
   readonly inactiveCount = computed(() => this.rules().length - this.activeCount());
+  readonly totalSteps = computed(() => this.rules().reduce((sum, rule) => sum + rule.steps.length, 0));
+  readonly hasActiveFilters = computed(() =>
+    Boolean(this.searchQuery().trim()) ||
+    this.activeTypeFilter() !== 'ALL' ||
+    this.activeStatusFilter() !== 'ALL'
+  );
+  readonly summaryCards = computed<RuleSummaryCard[]>(() => [
+    {
+      icon: 'workflow',
+      labelKey: 'approvals.rules.stat.total',
+      value: this.rules().length,
+      tone: 'neutral'
+    },
+    {
+      icon: 'badge-check',
+      labelKey: 'approvals.rules.stat.active',
+      value: this.activeCount(),
+      tone: 'success'
+    },
+    {
+      icon: 'circle-off',
+      labelKey: 'approvals.rules.stat.inactive',
+      value: this.inactiveCount(),
+      tone: 'warning'
+    },
+    {
+      icon: 'list-checks',
+      labelKey: 'approvals.rules.stat.steps',
+      value: this.totalSteps(),
+      tone: 'info'
+    }
+  ]);
+  readonly selectedChainSteps = computed(() => {
+    const rule = this.selectedChainRule();
+    return rule ? this.sortedSteps(rule) : [];
+  });
 
   get stepsArray(): FormArray<StepFormGroup> {
     return this.form.controls.steps;
@@ -172,6 +224,14 @@ export class ApprovalRulesComponent implements OnInit {
   closeFormModal(): void {
     this.isFormOpen.set(false);
     this.selectedRule.set(null);
+  }
+
+  openChainModal(rule: ApprovalRuleDetail): void {
+    this.selectedChainRule.set(rule);
+  }
+
+  closeChainModal(): void {
+    this.selectedChainRule.set(null);
   }
 
   addStep(): void {
@@ -263,12 +323,86 @@ export class ApprovalRulesComponent implements OnInit {
     this.searchQuery.set(value);
   }
 
+  setTypeFilter(type: RuleTypeFilter): void {
+    this.activeTypeFilter.set(type);
+  }
+
+  setStatusFilter(status: RuleStatusFilter): void {
+    this.activeStatusFilter.set(status);
+  }
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.activeTypeFilter.set('ALL');
+    this.activeStatusFilter.set('ALL');
+  }
+
+  setRuleType(type: ApprovalRuleType): void {
+    this.form.controls.ruleType.setValue(type);
+  }
+
   stepGroups(): StepFormGroup[] {
     return this.stepsArray.controls;
   }
 
   isRuleActive(rule: ApprovalRuleDetail): boolean {
     return rule.active ?? rule.isActive ?? false;
+  }
+
+  hasRuleConditions(rule: ApprovalRuleDetail): boolean {
+    return Boolean(
+      rule.conditions.minValue ||
+      rule.conditions.maxValue ||
+      rule.conditions.categories?.length ||
+      rule.conditions.departmentIds?.length ||
+      rule.conditions.priorities?.length
+    );
+  }
+
+  firstStep(rule: ApprovalRuleDetail): ApprovalRuleStepTemplate | null {
+    return this.sortedSteps(rule)[0] ?? null;
+  }
+
+  lastStep(rule: ApprovalRuleDetail): ApprovalRuleStepTemplate | null {
+    const steps = this.sortedSteps(rule);
+    return steps[steps.length - 1] ?? null;
+  }
+
+  hasDistinctLastStep(rule: ApprovalRuleDetail): boolean {
+    const first = this.firstStep(rule);
+    const last = this.lastStep(rule);
+    return Boolean(first && last && (first.stepIndex !== last.stepIndex || first.approverRole !== last.approverRole));
+  }
+
+  parallelStepCount(rule: ApprovalRuleDetail): number {
+    return rule.steps.filter((step) => step.stepType === 'PARALLEL').length;
+  }
+
+  totalSlaHours(rule: ApprovalRuleDetail): number {
+    return rule.steps.reduce((sum, step) => sum + step.slaHours, 0);
+  }
+
+  private matchesQuery(rule: ApprovalRuleDetail, query: string): boolean {
+    if (!query) {
+      return true;
+    }
+    return rule.ruleName.toLowerCase().includes(query) ||
+      rule.ruleType.toLowerCase().includes(query) ||
+      rule.steps.some((step) => step.approverRole.toLowerCase().includes(query)) ||
+      (rule.description?.toLowerCase().includes(query) ?? false);
+  }
+
+  private matchesStatus(rule: ApprovalRuleDetail, status: RuleStatusFilter): boolean {
+    if (status === 'ALL') {
+      return true;
+    }
+    return status === 'ACTIVE' ? this.isRuleActive(rule) : !this.isRuleActive(rule);
+  }
+
+  private sortedSteps(rule: ApprovalRuleDetail): ApprovalRuleStepTemplate[] {
+    return [...rule.steps].sort((left, right) =>
+      left.stepIndex - right.stepIndex || left.approverRole.localeCompare(right.approverRole)
+    );
   }
 
   private resetForm(): void {
