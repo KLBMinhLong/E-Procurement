@@ -3,11 +3,18 @@
 
   <div class="page-header">
     <div class="page-header__meta">
-      <span class="page-header__eyebrow">{{ 'pr.create.eyebrow' | translate }}</span>
-      <h1 id="pr-create-heading" class="page-header__title">{{ 'pr.create.title' | translate }}</h1>
+      <span class="page-header__eyebrow">
+        {{ (isEditMode() ? 'pr.create.eyebrowEdit' : 'pr.create.eyebrow') | translate }}
+      </span>
+      <h1 id="pr-create-heading" class="page-header__title">
+        {{ (isEditMode() ? 'pr.create.titleEdit' : 'pr.create.title') | translate }}
+      </h1>
     </div>
   </div>
 
+  @if (isEditLoading()) {
+    <ep-skeleton [rows]="10" />
+  } @else {
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pr-form" novalidate>
     <div class="pr-form__layout">
 
@@ -166,7 +173,7 @@
                           type="text"
                           formControlName="glAccountCode"
                           class="ep-input"
-                          placeholder="6002">
+                          [placeholder]="'pr.create.lineItem.glAccountPlaceholder' | translate">
                       </ep-form-field>
                     </div>
 
@@ -187,7 +194,7 @@
                           type="text"
                           formControlName="quantityUnit"
                           class="ep-input"
-                          placeholder="cái">
+                          [placeholder]="'pr.create.lineItem.unitPlaceholder' | translate">
                       </ep-form-field>
 
                       <ep-form-field [label]="'pr.create.lineItem.unitPrice' | translate">
@@ -214,48 +221,49 @@
           </div>
         </ep-card>
 
-        <!-- Attachments card -->
-        <ep-card>
-          <div class="card-section">
-            <h2 class="card-section__title">{{ 'pr.create.section.attachments' | translate }}</h2>
+        @if (!isEditMode()) {
+          <ep-card>
+            <div class="card-section">
+              <h2 class="card-section__title">{{ 'pr.create.section.attachments' | translate }}</h2>
 
-            <label class="upload-area" for="file-upload">
-              <ep-icon name="upload-cloud" class="upload-area__icon" />
-              <span class="upload-area__primary">{{ 'pr.create.upload.prompt' | translate }}</span>
-              <span class="upload-area__hint">{{ 'pr.create.upload.hint' | translate }}</span>
-              <input
-                id="file-upload"
-                type="file"
-                class="upload-area__input"
-                accept=".pdf,.xlsx,.docx,.jpg,.png"
-                (change)="onFileSelect($event)">
-            </label>
+              <label class="upload-area" for="file-upload">
+                <ep-icon name="upload-cloud" class="upload-area__icon" />
+                <span class="upload-area__primary">{{ 'pr.create.upload.prompt' | translate }}</span>
+                <span class="upload-area__hint">{{ 'pr.create.upload.hint' | translate }}</span>
+                <input
+                  id="file-upload"
+                  type="file"
+                  class="upload-area__input"
+                  accept=".pdf,.xlsx,.docx,.jpg,.png"
+                  (change)="onFileSelect($event)">
+              </label>
 
-            @if (isUploadingFile()) {
-              <ep-skeleton [rows]="1" />
-            }
+              @if (isUploadingFile()) {
+                <ep-skeleton [rows]="1" />
+              }
 
-            @if (uploadedAttachments().length > 0) {
-              <ul class="attachment-list">
-                @for (att of uploadedAttachments(); track att.id) {
-                  <li class="attachment-item">
-                    <ep-icon name="paperclip" class="attachment-item__icon" />
-                    <span class="attachment-item__name">{{ att.fileName }}</span>
-                    <span class="attachment-item__size">{{ formatFileSize(att.fileSize) }}</span>
-                    <button
-                      type="button"
-                      [id]="'btn-remove-att-' + att.id"
-                      class="attachment-item__remove"
-                      (click)="removeAttachment(att.id)"
-                      [attr.aria-label]="'pr.create.upload.remove' | translate">
-                      <ep-icon name="x" />
-                    </button>
-                  </li>
-                }
-              </ul>
-            }
-          </div>
-        </ep-card>
+              @if (uploadedAttachments().length > 0) {
+                <ul class="attachment-list">
+                  @for (att of uploadedAttachments(); track att.id) {
+                    <li class="attachment-item">
+                      <ep-icon name="paperclip" class="attachment-item__icon" />
+                      <span class="attachment-item__name">{{ att.fileName }}</span>
+                      <span class="attachment-item__size">{{ formatFileSize(att.fileSize) }}</span>
+                      <button
+                        type="button"
+                        [id]="'btn-remove-att-' + att.id"
+                        class="attachment-item__remove"
+                        (click)="removeAttachment(att.id)"
+                        [attr.aria-label]="'pr.create.upload.remove' | translate">
+                        <ep-icon name="x" />
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </ep-card>
+        }
 
       </div><!-- /main -->
 
@@ -282,7 +290,7 @@
                 variant="primary"
                 [loading]="isSubmitting()"
                 [disabled]="isSubmitting()">
-                {{ 'pr.create.action.submit' | translate }}
+                {{ (isEditMode() ? 'pr.create.action.update' : 'pr.create.action.submit') | translate }}
               </ep-button>
               <ep-button
                 id="btn-cancel-create"
@@ -299,6 +307,7 @@
 
     </div><!-- /layout -->
   </form>
+  }
 
   <!-- ── Catalog Picker Modal ─────────────────────────────────────── -->
   <ep-modal

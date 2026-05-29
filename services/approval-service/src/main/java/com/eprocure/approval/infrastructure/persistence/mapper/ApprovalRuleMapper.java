@@ -2,6 +2,8 @@ package com.eprocure.approval.infrastructure.persistence.mapper;
 
 import com.eprocure.approval.infrastructure.persistence.entity.ApprovalRuleDbEntity;
 import com.eprocure.approval.infrastructure.persistence.entity.ApprovalRuleStepDbEntity;
+import com.eprocure.approval.infrastructure.persistence.typehandler.StringArrayTypeHandler;
+import com.eprocure.approval.infrastructure.persistence.typehandler.UuidArrayTypeHandler;
 import java.util.List;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Insert;
@@ -45,9 +47,9 @@ public interface ApprovalRuleMapper {
             @Result(property = "ruleType", column = "rule_type"),
             @Result(property = "minValue", column = "min_value"),
             @Result(property = "maxValue", column = "max_value"),
-            @Result(property = "categories", column = "categories"),
-            @Result(property = "departmentIds", column = "department_ids"),
-            @Result(property = "priorities", column = "priorities"),
+            @Result(property = "categories", column = "categories", typeHandler = StringArrayTypeHandler.class),
+            @Result(property = "departmentIds", column = "department_ids", typeHandler = UuidArrayTypeHandler.class),
+            @Result(property = "priorities", column = "priorities", typeHandler = StringArrayTypeHandler.class),
             @Result(property = "description", column = "description"),
             @Result(property = "createdAt", column = "created_at"),
             @Result(property = "updatedAt", column = "updated_at"),
@@ -84,9 +86,9 @@ public interface ApprovalRuleMapper {
             @Result(property = "ruleType", column = "rule_type"),
             @Result(property = "minValue", column = "min_value"),
             @Result(property = "maxValue", column = "max_value"),
-            @Result(property = "categories", column = "categories"),
-            @Result(property = "departmentIds", column = "department_ids"),
-            @Result(property = "priorities", column = "priorities"),
+            @Result(property = "categories", column = "categories", typeHandler = StringArrayTypeHandler.class),
+            @Result(property = "departmentIds", column = "department_ids", typeHandler = UuidArrayTypeHandler.class),
+            @Result(property = "priorities", column = "priorities", typeHandler = StringArrayTypeHandler.class),
             @Result(property = "description", column = "description"),
             @Result(property = "createdAt", column = "created_at"),
             @Result(property = "updatedAt", column = "updated_at"),
@@ -123,9 +125,9 @@ public interface ApprovalRuleMapper {
             @Result(property = "ruleType", column = "rule_type"),
             @Result(property = "minValue", column = "min_value"),
             @Result(property = "maxValue", column = "max_value"),
-            @Result(property = "categories", column = "categories"),
-            @Result(property = "departmentIds", column = "department_ids"),
-            @Result(property = "priorities", column = "priorities"),
+            @Result(property = "categories", column = "categories", typeHandler = StringArrayTypeHandler.class),
+            @Result(property = "departmentIds", column = "department_ids", typeHandler = UuidArrayTypeHandler.class),
+            @Result(property = "priorities", column = "priorities", typeHandler = StringArrayTypeHandler.class),
             @Result(property = "description", column = "description"),
             @Result(property = "createdAt", column = "created_at"),
             @Result(property = "updatedAt", column = "updated_at"),
@@ -192,9 +194,9 @@ public interface ApprovalRuleMapper {
             #{entity.ruleType},
             #{entity.minValue},
             #{entity.maxValue},
-            #{entity.categories,jdbcType=ARRAY},
-            #{entity.departmentIds,jdbcType=ARRAY},
-            #{entity.priorities,jdbcType=ARRAY},
+            #{entity.categories,jdbcType=ARRAY,typeHandler=com.eprocure.approval.infrastructure.persistence.typehandler.StringArrayTypeHandler},
+            #{entity.departmentIds,jdbcType=ARRAY,typeHandler=com.eprocure.approval.infrastructure.persistence.typehandler.UuidArrayTypeHandler},
+            #{entity.priorities,jdbcType=ARRAY,typeHandler=com.eprocure.approval.infrastructure.persistence.typehandler.StringArrayTypeHandler},
             #{entity.description},
             #{actorId}
         )
@@ -209,9 +211,9 @@ public interface ApprovalRuleMapper {
             rule_type = #{entity.ruleType},
             min_value = #{entity.minValue},
             max_value = #{entity.maxValue},
-            categories = #{entity.categories,jdbcType=ARRAY},
-            department_ids = #{entity.departmentIds,jdbcType=ARRAY},
-            priorities = #{entity.priorities,jdbcType=ARRAY},
+            categories = #{entity.categories,jdbcType=ARRAY,typeHandler=com.eprocure.approval.infrastructure.persistence.typehandler.StringArrayTypeHandler},
+            department_ids = #{entity.departmentIds,jdbcType=ARRAY,typeHandler=com.eprocure.approval.infrastructure.persistence.typehandler.UuidArrayTypeHandler},
+            priorities = #{entity.priorities,jdbcType=ARRAY,typeHandler=com.eprocure.approval.infrastructure.persistence.typehandler.StringArrayTypeHandler},
             description = #{entity.description}
         WHERE id = #{entity.id}
           AND is_deleted = false

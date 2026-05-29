@@ -7,6 +7,7 @@ import com.eprocure.pr.domain.model.PrStatus;
 import com.eprocure.pr.domain.model.vo.BudgetCheckResult;
 import com.eprocure.pr.domain.model.vo.InventoryCheckResult;
 import com.eprocure.pr.domain.model.vo.Money;
+import com.eprocure.pr.domain.model.vo.Quantity;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +42,12 @@ public record PurchaseRequestDetailResponse(
             String itemName,
             String description,
             String categoryCode,
+            Quantity quantity,
+            Money unitPrice,
+            UUID preferredVendorId,
+            String specifications,
+            String glAccountCode,
+            boolean isFromCatalog,
             Money totalPrice
     ) {}
 
@@ -53,6 +60,12 @@ public record PurchaseRequestDetailResponse(
                         li.getItemName(),
                         li.getDescription().orElse(null),
                         li.getCategoryCode(),
+                        li.getQuantity(),
+                        li.getUnitPrice(),
+                        li.getPreferredVendorId().orElse(null),
+                        li.getSpecifications().orElse(null),
+                        li.getGlAccountCode(),
+                        li.isFromCatalog(),
                         li.getTotalPrice()))
                 .toList();
         return new PurchaseRequestDetailResponse(

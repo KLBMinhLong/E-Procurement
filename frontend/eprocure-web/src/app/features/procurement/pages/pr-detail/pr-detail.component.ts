@@ -24,9 +24,10 @@ import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.c
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpSlaBarComponent } from '../../../../shared/components/ep-sla-bar/ep-sla-bar.component';
 import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
+import { ToastService } from '../../../../core/services/toast.service';
 
 import { PurchaseRequestService } from '../../services/purchase-request.service';
-import { PrStatus, PurchaseRequestDetail } from '../../models/purchase-request.model';
+import { BudgetCheckResult, Money, PrLineItemResponse, PrStatus, PurchaseRequestDetail } from '../../models/purchase-request.model';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
   DRAFT: 'neutral',
@@ -85,11 +86,11 @@ const BUDGET_TONE: Record<string, EpBadgeTone> = {
 })
 export class PrDetailComponent implements OnInit {
   private readonly prService = inject(PurchaseRequestService);
+  private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  // ── State ──────────────────────────────────────────────────────────
   readonly pr = signal<PurchaseRequestDetail | null>(null);
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
@@ -98,48 +99,60 @@ export class PrDetailComponent implements OnInit {
 
   readonly cancelReason = new FormControl('', [Validators.required, Validators.minLength(10)]);
 
-  // ── Computed helpers ───────────────────────────────────────────────
   readonly statusTone = computed(() => STATUS_TONE[this.pr()?.status ?? ''] ?? 'neutral');
   readonly priorityTone = computed(() => PRIORITY_TONE[this.pr()?.priority ?? ''] ?? 'neutral');
+  readonly totalLineItems = computed(() => this.pr()?.lineItems?.length ?? 0);
+  readonly budgetUsagePercent = computed(() => this.calculateBudgetUsage(this.pr()?.budgetCheck ?? null));
 
   readonly canEdit = computed(() => {
-    const s = this.pr()?.status as PrStatus;
-    return s === 'DRAFT' || s === 'CHANGES_REQUESTED';
+    const status = this.pr()?.status as PrStatus;
+    return status === 'DRAFT' || status === 'CHANGES_REQUESTED';
   });
 
   readonly canSubmit = computed(() => {
-    const s = this.pr()?.status as PrStatus;
-    return s === 'DRAFT' || s === 'CHANGES_REQUESTED';
+    const status = this.pr()?.status as PrStatus;
+    return status === 'DRAFT' || status === 'CHANGES_REQUESTED';
   });
 
   readonly canCancel = computed(() => {
-    const s = this.pr()?.status as PrStatus;
-    return s === 'DRAFT' || s === 'SUBMITTED' || s === 'CHANGES_REQUESTED';
+    const status = this.pr()?.status as PrStatus;
+    return status === 'DRAFT' || status === 'SUBMITTED' || status === 'CHANGES_REQUESTED';
   });
 
   readonly approvalStepTone = APPROVAL_STEP_TONE;
   readonly budgetTone = BUDGET_TONE;
 
-  // ── Lifecycle ──────────────────────────────────────────────────────
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.loadPr(id);
+    if (id) {
+      this.loadPr(id);
+    }
   }
 
-  // ── Actions ────────────────────────────────────────────────────────
   navigateEdit(): void {
+    const id = this.pr()?.id;
+    if (!id) {
+      return;
+    }
     this.router.navigate(['/procurement', 'create'], {
-      queryParams: { edit: this.pr()?.id }
+      queryParams: { edit: id }
     });
   }
 
   onSubmit(): void {
     const id = this.pr()?.id;
-    if (!id) return;
+    if (!id) {
+      return;
+    }
     this.isSubmitting.set(true);
     this.prService.submit(id)
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false)))
-      .subscribe({ next: () => this.loadPr(id) });
+      .subscribe({
+        next: () => {
+          this.toastService.successKey('pr.detail.toast.submitSuccess');
+          this.loadPr(id);
+        }
+      });
   }
 
   openCancelModal(): void {
@@ -157,12 +170,15 @@ export class PrDetailComponent implements OnInit {
       return;
     }
     const id = this.pr()?.id;
-    if (!id) return;
+    if (!id) {
+      return;
+    }
     this.isCancelling.set(true);
     this.prService.cancel(id, { reason: this.cancelReason.value! })
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isCancelling.set(false)))
       .subscribe({
         next: () => {
+          this.toastService.successKey('pr.detail.toast.cancelSuccess');
           this.showCancelModal.set(false);
           this.loadPr(id);
         }
@@ -173,15 +189,24 @@ export class PrDetailComponent implements OnInit {
     this.router.navigate(['/procurement']);
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────
   formatDate(iso: string | null | undefined): string {
-    if (!iso) return '--';
-    return new Date(iso).toLocaleDateString('vi-VN');
+    if (!iso) {
+      return '--';
+    }
+    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso));
   }
 
   formatDateTime(iso: string | null | undefined): string {
-    if (!iso) return '--';
-    return new Date(iso).toLocaleString('vi-VN');
+    if (!iso) {
+      return '--';
+    }
+    return new Intl.DateTimeFormat('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(new Date(iso));
   }
 
   formatFileSize(bytes: number): string {
@@ -190,7 +215,47 @@ export class PrDetailComponent implements OnInit {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  // ── Private ────────────────────────────────────────────────────────
+  requesterLabel(data: PurchaseRequestDetail): string {
+    return data.requester?.fullName || this.shortId(data.requesterId);
+  }
+
+  requesterDepartmentLabel(data: PurchaseRequestDetail): string {
+    return data.requester?.department || this.shortId(data.departmentId);
+  }
+
+  shortId(value: string | null | undefined): string {
+    if (!value) {
+      return '--';
+    }
+    if (value.length <= 12) {
+      return value;
+    }
+    return `${value.slice(0, 8)}...${value.slice(-4)}`;
+  }
+
+  quantityLabel(item: PrLineItemResponse): string {
+    if (!item.quantity) {
+      return '--';
+    }
+    return `${this.trimDecimal(item.quantity.amount)} ${item.quantity.unit}`;
+  }
+
+  trimDecimal(value: string | number | null | undefined): string {
+    if (value === null || value === undefined || value === '') {
+      return '--';
+    }
+    const trimmed = String(value).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    return trimmed === '' ? '0' : trimmed;
+  }
+
+  budgetStatusTone(status: string | null | undefined): EpBadgeTone {
+    return BUDGET_TONE[status ?? ''] ?? 'neutral';
+  }
+
+  approvalStatusTone(status: string | null | undefined): EpBadgeTone {
+    return APPROVAL_STEP_TONE[status ?? ''] ?? 'neutral';
+  }
+
   private loadPr(id: string): void {
     this.isLoading.set(true);
     this.prService.getById(id)
@@ -199,5 +264,24 @@ export class PrDetailComponent implements OnInit {
         next: (res) => this.pr.set(res.data),
         error: () => this.router.navigate(['/procurement'])
       });
+  }
+
+  private calculateBudgetUsage(budget: BudgetCheckResult | null): string {
+    if (!budget) {
+      return '0%';
+    }
+    const allocated = this.amountNumber(budget.allocated);
+    if (allocated <= 0) {
+      return '0%';
+    }
+    const used = this.amountNumber(budget.committed) + this.amountNumber(budget.spent);
+    const percent = Math.max(0, Math.min(100, (used / allocated) * 100));
+    return `${percent.toFixed(0)}%`;
+  }
+
+  private amountNumber(value: Money | string | number | null | undefined): number {
+    const raw = typeof value === 'object' && value !== null ? value.amount : value;
+    const parsed = Number(raw ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 }

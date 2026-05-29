@@ -1,5 +1,11 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-30] Bug: Approval rule create/update failed when binding PostgreSQL array columns
+
+- Root cause: `ApprovalRuleDbEntity` stored `categories`, `departmentIds`, and `priorities` as `Object`, while `ApprovalRuleMapper` only declared `jdbcType=ARRAY`. MyBatis delegated to the generic object handler, so the PostgreSQL driver tried to create a `JAVA_OBJECT` array instead of `varchar[]` or `uuid[]`.
+- Fix: Add explicit MyBatis array type handlers for `varchar[]` and `uuid[]`, wire them into approval rule result mappings and insert/update bindings, and keep repository conversion tolerant of collection values.
+- Prevention: PostgreSQL array columns must declare an explicit element-type handler in MyBatis; do not rely on bare `jdbcType=ARRAY` for domain-specific arrays such as UUID lists.
+
 ## [2026-05-30] Bug: Approval rules UI failed because seeded rules had no step templates
 
 - Root cause: `V2__seed_default_approval_rules.sql` inserted baseline rules in a data-modifying CTE, then the main `INSERT ... SELECT` tried to join `approval.approval_rules` in the same statement. PostgreSQL executes the query with one snapshot, so the main query could not see rows inserted by the CTE when the database was fresh, resulting in 10 rules and 0 `approval_rule_steps`.

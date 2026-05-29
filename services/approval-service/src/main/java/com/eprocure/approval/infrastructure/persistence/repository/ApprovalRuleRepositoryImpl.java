@@ -15,8 +15,10 @@ import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -146,6 +148,7 @@ public class ApprovalRuleRepositoryImpl implements ApprovalRuleRepository {
 
     private Set<String> toStringSet(Object value) {
         return arrayValues(value).stream()
+                .filter(Objects::nonNull)
                 .map(Object::toString)
                 .filter(item -> !item.isBlank())
                 .collect(Collectors.toUnmodifiableSet());
@@ -153,6 +156,7 @@ public class ApprovalRuleRepositoryImpl implements ApprovalRuleRepository {
 
     private Set<UUID> toUuidSet(Object value) {
         return arrayValues(value).stream()
+                .filter(Objects::nonNull)
                 .map(Object::toString)
                 .filter(item -> !item.isBlank())
                 .map(UUID::fromString)
@@ -161,6 +165,7 @@ public class ApprovalRuleRepositoryImpl implements ApprovalRuleRepository {
 
     private Set<PurchaseRequestPriority> toPrioritySet(Object value) {
         return arrayValues(value).stream()
+                .filter(Objects::nonNull)
                 .map(Object::toString)
                 .filter(item -> !item.isBlank())
                 .map(PurchaseRequestPriority::valueOf)
@@ -184,6 +189,9 @@ public class ApprovalRuleRepositoryImpl implements ApprovalRuleRepository {
         }
         if (value instanceof Object[] values) {
             return Arrays.asList(values);
+        }
+        if (value instanceof Collection<?> values) {
+            return values.stream().map(item -> (Object) item).toList();
         }
         return List.of(value);
     }

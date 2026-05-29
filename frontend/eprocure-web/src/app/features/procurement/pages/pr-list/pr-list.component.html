@@ -1,11 +1,11 @@
 <section class="pr-list-page" aria-labelledby="pr-list-heading">
   <ep-breadcrumb />
 
-  <!-- ── Page Header ──────────────────────────────────────────────── -->
   <div class="page-header">
     <div class="page-header__meta">
       <span class="page-header__eyebrow">{{ 'pr.list.eyebrow' | translate }}</span>
       <h1 id="pr-list-heading" class="page-header__title">{{ 'pr.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'pr.list.subtitle' | translate }}</p>
     </div>
     <div class="page-header__actions">
       <ep-button
@@ -19,19 +19,53 @@
     </div>
   </div>
 
-  <!-- ── Toolbar ──────────────────────────────────────────────────── -->
+  <div class="summary-grid" [attr.aria-label]="'pr.list.summaryLabel' | translate">
+    <div class="summary-card">
+      <ep-icon name="clipboard-list" />
+      <span class="summary-card__label">{{ 'pr.list.stat.total' | translate }}</span>
+      <span class="summary-card__value">{{ meta()?.totalElements ?? items().length }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="clock" />
+      <span class="summary-card__label">{{ 'pr.list.stat.pending' | translate }}</span>
+      <span class="summary-card__value">{{ pendingCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="circle" />
+      <span class="summary-card__label">{{ 'pr.list.stat.draft' | translate }}</span>
+      <span class="summary-card__value">{{ draftCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="check-circle" />
+      <span class="summary-card__label">{{ 'pr.list.stat.completed' | translate }}</span>
+      <span class="summary-card__value">{{ completedCount() }}</span>
+    </div>
+    <div class="summary-card summary-card--amount">
+      <ep-icon name="shopping-cart" />
+      <span class="summary-card__label">{{ 'pr.list.stat.visibleAmount' | translate }}</span>
+      <ep-amount class="summary-card__amount" [value]="visibleTotalAmount()" currency="VND" />
+    </div>
+  </div>
+
   <div class="pr-toolbar">
-    <ep-filter-bar
-      id="pr-search"
-      placeholderKey="pr.list.filter.placeholder"
-      [value]="searchQuery()"
-      (valueChange)="onSearchChange($event)"
-      (refresh)="loadData()">
-    </ep-filter-bar>
+    <div class="pr-toolbar__top">
+      <ep-filter-bar
+        id="pr-search"
+        placeholderKey="pr.list.filter.placeholder"
+        [value]="searchQuery()"
+        (valueChange)="onSearchChange($event)"
+        (refresh)="loadData()">
+      </ep-filter-bar>
+
+      @if (hasActiveFilters()) {
+        <ep-button id="btn-clear-pr-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'pr.list.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
 
     <div class="pr-toolbar__filters">
-      <!-- Status filter -->
-      <div class="filter-chip-group">
+      <div class="filter-chip-group" [attr.aria-label]="'pr.list.filter.status' | translate">
         <button
           id="filter-status-all"
           class="filter-chip"
@@ -39,19 +73,18 @@
           (click)="onStatusChange('')">
           {{ 'pr.list.filter.allStatus' | translate }}
         </button>
-        @for (s of statuses; track s) {
+        @for (status of statuses; track status) {
           <button
-            [id]="'filter-status-' + s"
+            [id]="'filter-status-' + status"
             class="filter-chip"
-            [class.filter-chip--active]="activeStatus() === s"
-            (click)="onStatusChange(s)">
-            {{ ('pr.status.' + s) | translate }}
+            [class.filter-chip--active]="activeStatus() === status"
+            (click)="onStatusChange(status)">
+            {{ ('pr.status.' + status) | translate }}
           </button>
         }
       </div>
 
-      <!-- Priority filter -->
-      <div class="filter-chip-group">
+      <div class="filter-chip-group" [attr.aria-label]="'pr.list.filter.priority' | translate">
         <button
           id="filter-priority-all"
           class="filter-chip"
@@ -59,20 +92,62 @@
           (click)="onPriorityChange('')">
           {{ 'pr.list.filter.allPriority' | translate }}
         </button>
-        @for (p of priorities; track p) {
+        @for (priority of priorities; track priority) {
           <button
-            [id]="'filter-priority-' + p"
+            [id]="'filter-priority-' + priority"
             class="filter-chip"
-            [class.filter-chip--active]="activePriority() === p"
-            (click)="onPriorityChange(p)">
-            {{ ('pr.priority.' + p) | translate }}
+            [class.filter-chip--active]="activePriority() === priority"
+            (click)="onPriorityChange(priority)">
+            {{ ('pr.priority.' + priority) | translate }}
           </button>
         }
       </div>
     </div>
+
+    <div class="advanced-filters">
+      <label class="compact-field">
+        <span>{{ 'pr.list.filter.fromDate' | translate }}</span>
+        <input
+          id="filter-pr-from-date"
+          type="date"
+          class="compact-field__control"
+          [value]="fromDate()"
+          (change)="onDateFilterChange('from', $any($event.target).value)">
+      </label>
+      <label class="compact-field">
+        <span>{{ 'pr.list.filter.toDate' | translate }}</span>
+        <input
+          id="filter-pr-to-date"
+          type="date"
+          class="compact-field__control"
+          [value]="toDate()"
+          (change)="onDateFilterChange('to', $any($event.target).value)">
+      </label>
+      <label class="compact-field">
+        <span>{{ 'pr.list.filter.minAmount' | translate }}</span>
+        <input
+          id="filter-pr-min-amount"
+          type="text"
+          inputmode="decimal"
+          class="compact-field__control"
+          [placeholder]="'pr.list.filter.amountPlaceholder' | translate"
+          [value]="minAmount()"
+          (change)="onAmountFilterChange('min', $any($event.target).value)">
+      </label>
+      <label class="compact-field">
+        <span>{{ 'pr.list.filter.maxAmount' | translate }}</span>
+        <input
+          id="filter-pr-max-amount"
+          type="text"
+          inputmode="decimal"
+          class="compact-field__control"
+          [placeholder]="'pr.list.filter.amountPlaceholder' | translate"
+          [value]="maxAmount()"
+          (change)="onAmountFilterChange('max', $any($event.target).value)">
+      </label>
+    </div>
   </div>
 
-  <!-- ── Content ──────────────────────────────────────────────────── -->
   @if (isLoading()) {
     <ep-skeleton [rows]="8" />
   } @else if (items().length === 0) {
@@ -85,13 +160,34 @@
       <table class="pr-table" role="grid" aria-labelledby="pr-list-heading">
         <thead>
           <tr>
-            <th scope="col">{{ 'pr.list.col.number' | translate }}</th>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('prNumber')">
+                {{ 'pr.list.col.number' | translate }}
+                <ep-icon [name]="sortIcon('prNumber')" [size]="14" />
+              </button>
+            </th>
             <th scope="col">{{ 'pr.list.col.title' | translate }}</th>
             <th scope="col">{{ 'pr.list.col.priority' | translate }}</th>
             <th scope="col">{{ 'pr.list.col.status' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'pr.list.col.amount' | translate }}</th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('totalAmount')">
+                {{ 'pr.list.col.amount' | translate }}
+                <ep-icon [name]="sortIcon('totalAmount')" [size]="14" />
+              </button>
+            </th>
             <th scope="col">{{ 'pr.list.col.requester' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'pr.list.col.createdAt' | translate }}</th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('needByDate')">
+                {{ 'pr.list.col.needByDate' | translate }}
+                <ep-icon [name]="sortIcon('needByDate')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('createdAt')">
+                {{ 'pr.list.col.createdAt' | translate }}
+                <ep-icon [name]="sortIcon('createdAt')" [size]="14" />
+              </button>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -101,8 +197,8 @@
               class="pr-table__row"
               role="button"
               tabindex="0"
-              (click)="onRowClick({ id: pr.id })"
-              (keydown.enter)="onRowClick({ id: pr.id })">
+              (click)="onRowClick(pr.id)"
+              (keydown.enter)="onRowClick(pr.id)">
 
               <td class="pr-table__number">
                 <span class="mono">{{ pr.prNumber }}</span>
@@ -110,6 +206,7 @@
 
               <td class="pr-table__title">
                 <span class="pr-table__title-text">{{ pr.title }}</span>
+                <span class="pr-table__subtitle">{{ shortId(pr.id) }}</span>
               </td>
 
               <td>
@@ -125,16 +222,20 @@
               </td>
 
               <td class="align-right">
-                <ep-amount [value]="pr.totalAmount?.amount" [currency]="pr.totalAmount?.currency || 'VND'" />
+                <ep-amount [value]="pr.totalAmount" />
               </td>
 
               <td class="pr-table__requester">
-                <span class="pr-table__requester-name">{{ pr.requester?.fullName || pr['requesterId'] }}</span>
-                <span class="pr-table__requester-dept">{{ pr.requester?.department || pr['departmentId'] }}</span>
+                <span class="pr-table__requester-name">{{ requesterLabel(pr) }}</span>
+                <span class="pr-table__requester-dept">{{ departmentLabel(pr) }}</span>
               </td>
 
               <td class="align-right pr-table__date">
-                {{ pr.createdAt ? formatDate(pr.createdAt) : '--' }}
+                {{ formatDate(pr.needByDate) }}
+              </td>
+
+              <td class="align-right pr-table__date">
+                {{ formatDate(pr.createdAt) }}
               </td>
             </tr>
           }
@@ -142,13 +243,12 @@
       </table>
     </div>
 
-    <!-- Pagination -->
-    @if (meta(); as m) {
+    @if (meta(); as metaData) {
       <div class="pr-pagination">
         <span class="pr-pagination__summary">
-          {{ 'shared.table.pageSummary' | translate: { page: m.page, total: m.totalPages } }}
-          &nbsp;·&nbsp;
-          {{ m.totalElements }} {{ 'pr.list.totalItems' | translate }}
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="pr-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'pr.list.totalItems' | translate }}
         </span>
         <div class="pr-pagination__controls">
           <ep-button
@@ -156,8 +256,8 @@
             variant="ghost"
             size="sm"
             icon="chevron-left"
-            [disabled]="m.isFirst"
-            (click)="onPageChange({ page: m.page - 1, size: m.size })">
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange({ page: metaData.page - 1, size: metaData.size })">
             {{ 'shared.table.previous' | translate }}
           </ep-button>
           <ep-button
@@ -165,8 +265,8 @@
             variant="ghost"
             size="sm"
             icon="chevron-right"
-            [disabled]="m.isLast"
-            (click)="onPageChange({ page: m.page + 1, size: m.size })">
+            [disabled]="metaData.isLast"
+            (click)="onPageChange({ page: metaData.page + 1, size: metaData.size })">
             {{ 'shared.table.next' | translate }}
           </ep-button>
         </div>

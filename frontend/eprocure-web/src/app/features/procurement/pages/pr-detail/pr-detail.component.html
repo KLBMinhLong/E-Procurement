@@ -9,35 +9,29 @@
   @if (isLoading()) {
     <ep-skeleton [rows]="10" />
   } @else if (pr(); as data) {
-    <!-- ── Page Header ──────────────────────────────────────────────── -->
     <div class="page-header">
       <div class="page-header__meta">
         <span class="page-header__eyebrow">{{ 'pr.detail.eyebrow' | translate }}</span>
         <h1 id="pr-detail-heading" class="page-header__title mono">{{ data.prNumber }}</h1>
+        <p class="page-header__subtitle">{{ data.title }}</p>
         <div class="page-header__badges">
-          <ep-badge
-            [tone]="statusTone()"
-            [labelKey]="'pr.status.' + data.status" />
-          <ep-badge
-            [tone]="priorityTone()"
-            [labelKey]="'pr.priority.' + data.priority" />
+          <ep-badge [tone]="statusTone()" [labelKey]="'pr.status.' + data.status" />
+          <ep-badge [tone]="priorityTone()" [labelKey]="'pr.priority.' + data.priority" />
         </div>
       </div>
-      
+
       <div class="page-header__actions">
-        <!-- Edit -->
         @if (canEdit()) {
           <ep-button
             *epHasPermission="'PR_EDIT_OWN_DRAFT'"
             id="btn-edit-pr"
             variant="secondary"
-            icon="edit-3"
+            icon="pencil"
             (click)="navigateEdit()">
             {{ 'action.edit' | translate }}
           </ep-button>
         }
-        
-        <!-- Cancel -->
+
         @if (canCancel()) {
           <ep-button
             *epHasPermission="'PR_CANCEL_OWN'"
@@ -49,7 +43,6 @@
           </ep-button>
         }
 
-        <!-- Submit -->
         @if (canSubmit()) {
           <ep-button
             *epHasPermission="'PR_CREATE'"
@@ -64,52 +57,90 @@
       </div>
     </div>
 
-    <!-- ── Layout ───────────────────────────────────────────────────── -->
+    <div class="metric-strip" [attr.aria-label]="'pr.detail.metricsLabel' | translate">
+      <div class="metric-card">
+        <span class="metric-card__label">{{ 'pr.detail.label.totalAmount' | translate }}</span>
+        <ep-amount class="metric-card__value" [value]="data.totalAmount" />
+      </div>
+      <div class="metric-card">
+        <span class="metric-card__label">{{ 'pr.detail.label.lineItems' | translate }}</span>
+        <strong class="metric-card__value mono">{{ totalLineItems() }}</strong>
+      </div>
+      <div class="metric-card">
+        <span class="metric-card__label">{{ 'pr.detail.label.needByDate' | translate }}</span>
+        <strong class="metric-card__value mono">{{ formatDate(data.needByDate) }}</strong>
+      </div>
+      <div class="metric-card">
+        <span class="metric-card__label">{{ 'pr.detail.label.fiscalYear' | translate }}</span>
+        <strong class="metric-card__value mono">{{ data.fiscalYear || '--' }}</strong>
+      </div>
+    </div>
+
     <div class="pr-detail-layout">
-      <!-- MAIN CONTENT -->
       <div class="pr-detail-layout__main">
-        
-        <!-- General Info -->
         <ep-card>
           <div class="card-section">
-            <h2 class="card-section__title">{{ data.title }}</h2>
-            
-            <div class="info-grid">
-              <div class="info-group">
-                <span class="info-group__label">{{ 'pr.detail.label.justification' | translate }}</span>
-                <p class="info-group__text">{{ data.justification }}</p>
+            <div class="section-title-row">
+              <div>
+                <span class="section-kicker">{{ 'pr.detail.section.overview' | translate }}</span>
+                <h2 class="card-section__title">{{ data.title }}</h2>
               </div>
-
-              @if (data.urgencyReason) {
-                <div class="info-group info-group--danger">
-                  <span class="info-group__label">{{ 'pr.detail.label.urgencyReason' | translate }}</span>
-                  <p class="info-group__text">{{ data.urgencyReason }}</p>
-                </div>
+              @if (data.blanketRelease) {
+                <span class="info-pill">{{ 'pr.detail.label.blanketRelease' | translate }}</span>
               }
             </div>
 
-            <div class="info-grid info-grid--3-cols">
-              <div class="info-group">
-                <span class="info-group__label">{{ 'pr.detail.label.requester' | translate }}</span>
-                <span class="info-group__value">{{ data.requester?.fullName || data.requesterId }} ({{ data.requester?.department || data.departmentId }})</span>
+            <div class="narrative-block">
+              <span class="info-label">{{ 'pr.detail.label.justification' | translate }}</span>
+              <p>{{ data.justification }}</p>
+            </div>
+
+            @if (data.urgencyReason) {
+              <div class="narrative-block narrative-block--warning">
+                <span class="info-label">{{ 'pr.detail.label.urgencyReason' | translate }}</span>
+                <p>{{ data.urgencyReason }}</p>
               </div>
-              <div class="info-group">
-                <span class="info-group__label">{{ 'pr.detail.label.createdAt' | translate }}</span>
-                <span class="info-group__value mono">{{ formatDateTime(data.createdAt) }}</span>
+            }
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">{{ 'pr.detail.label.requester' | translate }}</span>
+                <strong>{{ requesterLabel(data) }}</strong>
+                <small class="entity-ref">{{ shortId(data.requesterId) }}</small>
               </div>
-              <div class="info-group">
-                <span class="info-group__label">{{ 'pr.detail.label.needByDate' | translate }}</span>
-                <span class="info-group__value mono">{{ formatDate(data.needByDate) }}</span>
+              <div class="info-item">
+                <span class="info-label">{{ 'pr.detail.label.department' | translate }}</span>
+                <strong>{{ requesterDepartmentLabel(data) }}</strong>
+                <small class="entity-ref">{{ shortId(data.departmentId) }}</small>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'pr.detail.label.createdAt' | translate }}</span>
+                <strong class="mono">{{ formatDateTime(data.createdAt) }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'pr.detail.label.submittedAt' | translate }}</span>
+                <strong class="mono">{{ formatDateTime(data.submittedAt) }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'pr.detail.label.updatedAt' | translate }}</span>
+                <strong class="mono">{{ formatDateTime(data.updatedAt) }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'pr.detail.label.requestId' | translate }}</span>
+                <strong class="mono">{{ shortId(data.id) }}</strong>
               </div>
             </div>
           </div>
         </ep-card>
 
-        <!-- Line Items -->
         <ep-card>
-          <div class="card-section card-section--no-pad-bottom">
-            <h2 class="card-section__title">{{ 'pr.detail.section.lineItems' | translate }}</h2>
+          <div class="card-section card-section--compact">
+            <div class="section-title-row">
+              <h2 class="card-section__title">{{ 'pr.detail.section.lineItems' | translate }}</h2>
+              <span class="info-pill">{{ 'pr.detail.step.count' | translate:{ count: totalLineItems() } }}</span>
+            </div>
           </div>
+
           <div class="pr-table-wrapper">
             <table class="pr-table">
               <thead>
@@ -117,7 +148,7 @@
                   <th>#</th>
                   <th>{{ 'pr.detail.col.item' | translate }}</th>
                   <th>{{ 'pr.detail.col.category' | translate }}</th>
-                  <th class="align-right">{{ 'pr.detail.col.quantity' | translate }}</th>
+                  <th>{{ 'pr.detail.col.quantity' | translate }}</th>
                   <th class="align-right">{{ 'pr.detail.col.price' | translate }}</th>
                   <th class="align-right">{{ 'pr.detail.col.total' | translate }}</th>
                 </tr>
@@ -128,37 +159,56 @@
                     <td class="mono">{{ item.lineNumber }}</td>
                     <td>
                       <div class="item-name">
-                        {{ item.itemName }}
-                        @if (item['isFromCatalog']) {
-                          <ep-icon name="box" class="icon-catalog" [attr.aria-label]="'pr.detail.label.fromCatalog' | translate" />
+                        <strong>{{ item.itemName }}</strong>
+                        @if (item.isFromCatalog) {
+                          <span class="catalog-badge">
+                            <ep-icon name="box" [size]="14" />
+                            {{ 'pr.detail.label.fromCatalog' | translate }}
+                          </span>
                         }
                       </div>
-                      @if (item['specifications'] || item.description) {
-                        <div class="item-desc">{{ item['specifications'] || item.description }}</div>
+                      <div class="item-meta">
+                        @if (item.itemCode) {
+                          <span>{{ item.itemCode }}</span>
+                        }
+                        @if (item.glAccountCode) {
+                          <span>{{ 'pr.detail.label.glAccount' | translate }} {{ item.glAccountCode }}</span>
+                        }
+                      </div>
+                      @if (item.specifications || item.description) {
+                        <p class="item-desc">{{ item.specifications || item.description }}</p>
                       }
                     </td>
                     <td class="mono">{{ item.categoryCode }}</td>
-                    <td class="align-right mono">{{ item.quantity?.amount || '--' }} {{ item.quantity?.unit || '' }}</td>
-                    <td class="align-right"><ep-amount [value]="item.unitPrice?.amount" [currency]="item.unitPrice?.currency || 'VND'" /></td>
-                    <td class="align-right total-cell"><ep-amount [value]="item.totalPrice?.amount" [currency]="item.totalPrice?.currency || 'VND'" /></td>
+                    <td class="mono">{{ quantityLabel(item) }}</td>
+                    <td class="align-right">
+                      <ep-amount [value]="item.unitPrice" />
+                    </td>
+                    <td class="align-right total-cell">
+                      <ep-amount [value]="item.totalPrice" />
+                    </td>
                   </tr>
                 }
               </tbody>
               <tfoot>
                 <tr>
                   <td colspan="5" class="align-right font-bold">{{ 'pr.detail.label.totalAmount' | translate }}</td>
-                  <td class="align-right grand-total"><ep-amount [value]="data.totalAmount?.amount" [currency]="data.totalAmount?.currency || 'VND'" /></td>
+                  <td class="align-right grand-total">
+                    <ep-amount [value]="data.totalAmount" />
+                  </td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </ep-card>
 
-        <!-- Attachments -->
-        @if (data.attachments && data.attachments.length > 0) {
+        @if (data.attachments?.length) {
           <ep-card>
             <div class="card-section">
-              <h2 class="card-section__title">{{ 'pr.detail.section.attachments' | translate }}</h2>
+              <div class="section-title-row">
+                <h2 class="card-section__title">{{ 'pr.detail.section.attachments' | translate }}</h2>
+                <span class="info-pill">{{ data.attachments?.length }}</span>
+              </div>
               <ul class="attachment-list">
                 @for (att of data.attachments; track att.id) {
                   <li class="attachment-item">
@@ -173,29 +223,37 @@
             </div>
           </ep-card>
         }
-
       </div>
 
-      <!-- SIDEBAR -->
-      <div class="pr-detail-layout__sidebar">
-        
-        <!-- Budget Check -->
+      <aside class="pr-detail-layout__sidebar">
         @if (data.budgetCheck) {
-          <ep-card tone="raised" class="budget-card">
+          <ep-card tone="raised">
             <div class="card-section">
-              <div class="section-header-icon">
+              <div class="section-title-row">
                 <h2 class="card-section__title">{{ 'pr.detail.section.budget' | translate }}</h2>
-                <ep-badge [tone]="budgetTone[data.budgetCheck.status]" [labelKey]="'budget.status.' + data.budgetCheck.status" />
+                <ep-badge [tone]="budgetStatusTone(data.budgetCheck.status)" [labelKey]="'budget.status.' + data.budgetCheck.status" />
               </div>
-              
+
+              <div class="budget-meter" [attr.aria-label]="'pr.detail.budget.usage' | translate">
+                <span class="budget-meter__fill" [style.width]="budgetUsagePercent()"></span>
+              </div>
+
               <div class="budget-stats">
                 <div class="budget-stat">
-                  <span class="budget-stat__label">{{ 'pr.detail.budget.allocated' | translate }}</span>
-                  <ep-amount class="budget-stat__value" [value]="data.budgetCheck.allocated" currency="VND" />
+                  <span>{{ 'pr.detail.budget.allocated' | translate }}</span>
+                  <ep-amount [value]="data.budgetCheck.allocated" />
                 </div>
                 <div class="budget-stat">
-                  <span class="budget-stat__label">{{ 'pr.detail.budget.available' | translate }}</span>
-                  <ep-amount class="budget-stat__value" [value]="data.budgetCheck.available" currency="VND" />
+                  <span>{{ 'pr.detail.budget.committed' | translate }}</span>
+                  <ep-amount [value]="data.budgetCheck.committed" />
+                </div>
+                <div class="budget-stat">
+                  <span>{{ 'pr.detail.budget.spent' | translate }}</span>
+                  <ep-amount [value]="data.budgetCheck.spent" />
+                </div>
+                <div class="budget-stat budget-stat--strong">
+                  <span>{{ 'pr.detail.budget.available' | translate }}</span>
+                  <ep-amount [value]="data.budgetCheck.available" />
                 </div>
               </div>
 
@@ -209,49 +267,98 @@
           </ep-card>
         }
 
-        <!-- Approval Process -->
-        @if (data.approvalProcess) {
+        @if (data.inventoryCheck) {
           <ep-card tone="raised">
             <div class="card-section">
-              <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
-              
-              <div class="approval-timeline">
-                @for (step of data.approvalProcess.steps; track step.stepIndex) {
-                  <div class="timeline-item" [class.timeline-item--active]="step.stepIndex === data.approvalProcess.currentStep">
-                    <div class="timeline-item__marker">
-                      @if (step.status === 'APPROVED') { <ep-icon name="check" class="icon-success" /> }
-                      @else if (step.status === 'REJECTED') { <ep-icon name="x" class="icon-danger" /> }
-                      @else { <div class="dot"></div> }
-                    </div>
-                    <div class="timeline-item__content">
-                      <div class="timeline-item__header">
-                        <span class="timeline-item__role">{{ step.approverRole }}</span>
-                        <ep-badge [tone]="approvalStepTone[step.status]" [labelKey]="'approval.status.' + step.status" />
-                      </div>
-                      <span class="timeline-item__person">{{ step.approver.fullName }}</span>
-                      
-                      @if (step.status === 'PENDING' && step.slaRemainingHours !== null) {
-                        <div class="timeline-item__sla">
-                          <ep-sla-bar [assignedAt]="step.assignedAt" [deadline]="step.slaDeadline" />
-                        </div>
-                      }
-                      
-                      @if (step.comment) {
-                        <div class="timeline-item__comment">"{{ step.comment }}"</div>
-                      }
-                    </div>
-                  </div>
-                }
+              <div class="section-title-row">
+                <h2 class="card-section__title">{{ 'pr.detail.section.inventory' | translate }}</h2>
+                <ep-icon name="warehouse" class="section-icon" />
               </div>
+
+              @if (data.inventoryCheck.suggestion) {
+                <p class="side-note">{{ data.inventoryCheck.suggestion }}</p>
+              }
+
+              @if (data.inventoryCheck.itemsWithStock.length) {
+                <ul class="inventory-list">
+                  @for (stock of data.inventoryCheck.itemsWithStock; track stock.itemCode) {
+                    <li>
+                      <span>
+                        <strong>{{ stock.itemName }}</strong>
+                        <small class="mono">{{ stock.itemCode }}</small>
+                      </span>
+                      <strong class="mono">{{ trimDecimal(stock.quantityOnHand) }} {{ stock.unit }}</strong>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="side-note">{{ 'pr.detail.inventory.empty' | translate }}</p>
+              }
             </div>
           </ep-card>
         }
 
-      </div>
+        <ep-card tone="raised">
+          <div class="card-section">
+            <div class="section-title-row">
+              <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
+              @if (data.approvalProcess) {
+                <ep-badge [tone]="approvalStatusTone(data.approvalProcess.status)" [labelKey]="'approval.status.' + data.approvalProcess.status" />
+              }
+            </div>
+
+            @if (data.approvalProcess; as process) {
+              @if (process.steps.length) {
+                <div class="approval-timeline">
+                  @for (step of process.steps; track step.stepIndex) {
+                    <div class="timeline-item" [class.timeline-item--active]="step.stepIndex === process.currentStep">
+                      <div class="timeline-item__marker">
+                        @if (step.status === 'APPROVED') {
+                          <ep-icon name="check" class="icon-success" />
+                        } @else if (step.status === 'REJECTED') {
+                          <ep-icon name="x" class="icon-danger" />
+                        } @else {
+                          <span class="dot"></span>
+                        }
+                      </div>
+                      <div class="timeline-item__content">
+                        <div class="timeline-item__header">
+                          <span class="timeline-item__role">{{ step.approverRole }}</span>
+                          <ep-badge [tone]="approvalStatusTone(step.status)" [labelKey]="'approval.status.' + step.status" />
+                        </div>
+                        <span class="timeline-item__person">
+                          {{ step.approver?.fullName || shortId(step.approver?.id) }}
+                        </span>
+                        <div class="timeline-item__meta">
+                          <span>{{ 'pr.detail.approval.assignedAt' | translate }} {{ formatDateTime(step.assignedAt) }}</span>
+                          <span>{{ 'pr.detail.approval.deadline' | translate }} {{ formatDateTime(step.slaDeadline) }}</span>
+                        </div>
+
+                        @if (step.status === 'PENDING' && step.slaRemainingHours !== null && step.assignedAt && step.slaDeadline) {
+                          <div class="timeline-item__sla">
+                            <ep-sla-bar [assignedAt]="step.assignedAt" [deadline]="step.slaDeadline" />
+                          </div>
+                        }
+
+                        @if (step.comment) {
+                          <div class="timeline-item__comment">{{ step.comment }}</div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="side-note">{{ 'pr.detail.approval.none' | translate }}</p>
+              }
+            } @else {
+              <p class="side-note">{{ 'pr.detail.approval.none' | translate }}</p>
+            }
+          </div>
+        </ep-card>
+      </aside>
     </div>
   }
 
-  <!-- Cancel Modal -->
   <ep-modal
     [open]="showCancelModal()"
     [title]="'pr.detail.modal.cancel.title' | translate"
@@ -264,15 +371,15 @@
         <textarea
           [formControl]="cancelReason"
           class="ep-textarea"
-          rows="3"
+          rows="4"
           [placeholder]="'pr.detail.modal.cancel.reasonPlaceholder' | translate"
           autofocus>
         </textarea>
       </ep-form-field>
-      
+
       <div class="cancel-modal__actions">
         <ep-button variant="ghost" (click)="closeCancelModal()" [disabled]="isCancelling()">
-          {{ 'action.cancel' | translate }}
+          {{ 'action.close' | translate }}
         </ep-button>
         <ep-button variant="danger" (click)="onConfirmCancel()" [loading]="isCancelling()">
           {{ 'pr.detail.action.confirmCancel' | translate }}

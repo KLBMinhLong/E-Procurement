@@ -157,10 +157,10 @@ components:
     BudgetCheckResult:
       type: object
       properties:
-        allocated: { type: string, example: "500000000.0000" }
-        committed: { type: string, example: "120000000.0000" }
-        spent:     { type: string, example: "80000000.0000" }
-        available: { type: string, example: "300000000.0000" }
+        allocated: { $ref: '#/components/schemas/Money' }
+        committed: { $ref: '#/components/schemas/Money' }
+        spent:     { $ref: '#/components/schemas/Money' }
+        available: { $ref: '#/components/schemas/Money' }
         status:
           type: string
           enum: [PASS, WARNING, FAIL]

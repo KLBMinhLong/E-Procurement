@@ -3,14 +3,17 @@
     "skipToContent": "Bỏ qua điều hướng"
   },
   "action": {
+    "back": "Quay lại",
     "cancel": "Hủy",
     "confirm": "Xác nhận",
     "create": "Tạo mới",
     "close": "Đóng",
+    "edit": "Chỉnh sửa",
     "processing": "Đang xử lý",
     "refresh": "Tải lại",
     "submit": "Lưu thay đổi",
-    "delete": "Xóa"
+    "delete": "Xóa",
+    "view": "Xem"
   },
   "app": {
     "name": "eProcure",
@@ -21,6 +24,17 @@
       "approve": "Phê duyệt",
       "reject": "Từ chối",
       "requestChanges": "Yêu cầu bổ sung"
+    },
+    "status": {
+      "PENDING": "Chờ xử lý",
+      "APPROVED": "Đã duyệt",
+      "REJECTED": "Từ chối",
+      "ESCALATED": "Đã chuyển cấp",
+      "SKIPPED": "Bỏ qua",
+      "FORWARDED": "Chuyển tiếp",
+      "IN_PROGRESS": "Đang duyệt",
+      "COMPLETED": "Hoàn tất",
+      "CANCELLED": "Đã hủy"
     }
   },
   "auth": {
@@ -235,17 +249,40 @@
   "user": {
     "noDepartment": "Chưa có phòng ban"
   },
+  "validation": {
+    "required": "Thông tin này là bắt buộc",
+    "minChars": "ký tự tối thiểu",
+    "minLength": "Thông tin chưa đủ độ dài tối thiểu",
+    "maxLength": "Thông tin vượt quá độ dài cho phép"
+  },
   "pr": {
     "list": {
       "eyebrow": "Quản lý mua sắm",
       "title": "Yêu cầu mua sắm",
+      "subtitle": "Theo dõi trạng thái, mức độ ưu tiên, giá trị và thời hạn cần hàng của các yêu cầu mua sắm.",
+      "summaryLabel": "Tổng quan danh sách yêu cầu mua sắm",
+      "stat": {
+        "total": "Tổng yêu cầu",
+        "pending": "Đang xử lý",
+        "draft": "Bản nháp",
+        "completed": "Hoàn tất",
+        "visibleAmount": "Giá trị đang hiển thị"
+      },
       "action": {
         "create": "Tạo yêu cầu"
       },
       "filter": {
         "placeholder": "Tìm kiếm mã PR, tiêu đề...",
         "allStatus": "Tất cả trạng thái",
-        "allPriority": "Tất cả mức độ"
+        "allPriority": "Tất cả mức độ",
+        "clear": "Xóa lọc",
+        "status": "Trạng thái",
+        "priority": "Mức độ",
+        "fromDate": "Từ ngày",
+        "toDate": "Đến ngày",
+        "minAmount": "Giá trị từ",
+        "maxAmount": "Giá trị đến",
+        "amountPlaceholder": "VD: 5000000"
       },
       "empty": {
         "title": "Không có yêu cầu nào",
@@ -258,13 +295,16 @@
         "status": "Trạng thái",
         "amount": "Tổng tiền",
         "requester": "Người yêu cầu",
-        "createdAt": "Ngày tạo"
+        "createdAt": "Ngày tạo",
+        "needByDate": "Cần trước"
       },
       "totalItems": "kết quả"
     },
     "create": {
       "eyebrow": "Tạo mới",
+      "eyebrowEdit": "Cập nhật",
       "title": "Tạo yêu cầu mua sắm",
+      "titleEdit": "Cập nhật yêu cầu mua sắm",
       "section": {
         "basic": "Thông tin cơ bản",
         "lineItems": "Danh sách hàng hóa",
@@ -288,15 +328,18 @@
         "category": "Danh mục",
         "categoryPlaceholder": "Chọn danh mục...",
         "glAccount": "Tài khoản GL",
+        "glAccountPlaceholder": "VD: 6002",
         "quantity": "Số lượng",
         "unit": "ĐVT",
+        "unitPlaceholder": "VD: EA",
         "unitPrice": "Đơn giá",
         "total": "Thành tiền"
       },
       "action": {
         "addItem": "Thêm hàng hóa",
         "searchCatalog": "Tìm trong catalog",
-        "submit": "Tạo yêu cầu"
+        "submit": "Tạo yêu cầu",
+        "update": "Lưu cập nhật"
       },
       "upload": {
         "prompt": "Kéo thả file hoặc click để tải lên",
@@ -311,10 +354,15 @@
         "title": "Danh mục hàng hóa",
         "searchPlaceholder": "Tìm tên hoặc mã hàng hóa...",
         "noResults": "Không tìm thấy hàng hóa nào phù hợp."
+      },
+      "toast": {
+        "createSuccess": "Đã tạo yêu cầu mua sắm.",
+        "updateSuccess": "Đã cập nhật yêu cầu mua sắm."
       }
     },
     "detail": {
       "eyebrow": "Chi tiết yêu cầu",
+      "metricsLabel": "Chỉ số nhanh của yêu cầu mua sắm",
       "action": {
         "submit": "Gửi phê duyệt",
         "confirmCancel": "Xác nhận hủy"
@@ -323,15 +371,25 @@
         "justification": "Lý do mua sắm",
         "urgencyReason": "Lý do khẩn cấp",
         "requester": "Người tạo",
+        "department": "Phòng ban",
         "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật",
+        "submittedAt": "Ngày gửi",
         "needByDate": "Cần hàng trước",
         "totalAmount": "Tổng cộng",
-        "fromCatalog": "Từ catalog"
+        "lineItems": "Dòng hàng",
+        "fiscalYear": "Năm tài chính",
+        "requestId": "Mã hệ thống",
+        "blanketRelease": "Đơn gọi từ hợp đồng khung",
+        "fromCatalog": "Catalog",
+        "glAccount": "GL"
       },
       "section": {
+        "overview": "Thông tin yêu cầu",
         "lineItems": "Danh sách hàng hóa",
         "attachments": "Tài liệu đính kèm",
         "budget": "Kiểm tra ngân sách",
+        "inventory": "Tồn kho liên quan",
         "approval": "Quy trình phê duyệt"
       },
       "col": {
@@ -343,7 +401,25 @@
       },
       "budget": {
         "allocated": "Ngân sách cấp:",
-        "available": "Còn lại khả dụng:"
+        "committed": "Đã cam kết:",
+        "spent": "Đã chi:",
+        "available": "Còn lại khả dụng:",
+        "usage": "Tỷ lệ sử dụng ngân sách"
+      },
+      "inventory": {
+        "empty": "Không có tồn kho có thể thay thế cho các hàng hóa trong yêu cầu."
+      },
+      "approval": {
+        "none": "Chưa phát sinh quy trình phê duyệt cho yêu cầu này.",
+        "assignedAt": "Giao:",
+        "deadline": "Hạn:"
+      },
+      "step": {
+        "count": "{{count}} dòng"
+      },
+      "toast": {
+        "submitSuccess": "Đã gửi yêu cầu vào quy trình phê duyệt.",
+        "cancelSuccess": "Đã hủy yêu cầu mua sắm."
       },
       "modal": {
         "cancel": {
