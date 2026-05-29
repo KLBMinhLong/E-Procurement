@@ -1,5 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
+export type EpAmountValue =
+  | string
+  | number
+  | {
+      amount?: string | number | null;
+      currency?: string | null;
+    }
+  | null
+  | undefined;
+
 @Component({
   selector: 'ep-amount',
   standalone: true,
@@ -8,11 +18,12 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EpAmountComponent {
-  readonly value = input<string | number | null | undefined>(null);
+  readonly value = input<EpAmountValue>(null);
   readonly currency = input('VND');
 
   readonly formattedValue = computed(() => {
-    const value = this.value();
+    const rawValue = this.value();
+    const value = this.amountValue(rawValue);
 
     if (value === null || value === undefined || value === '') {
       return '--';
@@ -22,6 +33,24 @@ export class EpAmountComponent {
     const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const decimals = decimalPart ? `.${decimalPart.slice(0, 4)}` : '';
 
-    return `${grouped}${decimals} ${this.currency()}`;
+    return `${grouped}${decimals} ${this.currencyValue(rawValue)}`;
   });
+
+  private amountValue(value: EpAmountValue): string | number | null | undefined {
+    if (this.isAmountObject(value)) {
+      return value.amount;
+    }
+    return value;
+  }
+
+  private currencyValue(value: EpAmountValue): string {
+    if (this.isAmountObject(value) && value.currency) {
+      return value.currency;
+    }
+    return this.currency();
+  }
+
+  private isAmountObject(value: EpAmountValue): value is { amount?: string | number | null; currency?: string | null } {
+    return typeof value === 'object' && value !== null && 'amount' in value;
+  }
 }

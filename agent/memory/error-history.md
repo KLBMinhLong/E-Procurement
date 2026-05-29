@@ -1,5 +1,24 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-30] Bug: PR detail UI showed `[object Object] VND` and incomplete line item values
+
+- Symptom: Purchase request detail rendered budget money as `[object Object] VND`, showed missing quantity/unit price values, and exposed long raw UUIDs in operational panels.
+- Root cause: Backend `PurchaseRequestDetailResponse.LineItemResponse` omitted quantity, unit price, GL account, catalog/specification fields although OpenAPI/frontend expected them; frontend `ep-amount` only accepted primitive values while budget check returns `Money` objects.
+- Fix: Expanded PR detail response line item payload, aligned OpenAPI budget money fields with `Money`, allowed `ep-amount` to format `Money` objects, and rebuilt PR list/detail UI around compact operational panels with shortened IDs and safe optional approval data.
+- Prevention: Keep frontend response models and OpenAPI schemas synchronized with backend records, and make shared value-formatting components accept the canonical API value objects directly.
+
+## [2026-05-30] Bug: Approval rule create/update failed when binding PostgreSQL array columns
+
+- Root cause: `ApprovalRuleDbEntity` stored `categories`, `departmentIds`, and `priorities` as `Object`, while `ApprovalRuleMapper` only declared `jdbcType=ARRAY`. MyBatis delegated to the generic object handler, so the PostgreSQL driver tried to create a `JAVA_OBJECT` array instead of `varchar[]` or `uuid[]`.
+- Fix: Add explicit MyBatis array type handlers for `varchar[]` and `uuid[]`, wire them into approval rule result mappings and insert/update bindings, and keep repository conversion tolerant of collection values.
+- Prevention: PostgreSQL array columns must declare an explicit element-type handler in MyBatis; do not rely on bare `jdbcType=ARRAY` for domain-specific arrays such as UUID lists.
+
+## [2026-05-30] Bug: Approval rules UI failed because seeded rules had no step templates
+
+- Root cause: `V2__seed_default_approval_rules.sql` inserted baseline rules in a data-modifying CTE, then the main `INSERT ... SELECT` tried to join `approval.approval_rules` in the same statement. PostgreSQL executes the query with one snapshot, so the main query could not see rows inserted by the CTE when the database was fresh, resulting in 10 rules and 0 `approval_rule_steps`.
+- Fix: Add `V3__backfill_default_approval_rule_steps.sql` to insert the baseline step templates for existing active baseline rules with `ON CONFLICT DO NOTHING`.
+- Prevention: When a migration needs to seed parent and child rows in one statement, join child rows against the CTE `RETURNING` output or split the work into separate statements/migrations; verify seed counts on a clean DB before accepting the migration.
+
 ## [2026-05-27] Bug: Compilation failure due to custom Java Record accessor and PageMeta builder constraints
 
 - Root cause:
@@ -93,3 +112,9 @@
   1. Updated Google OAuth callback handler to catch successful authentications and exceptions, performing an HTTP 302 redirect back to the Angular frontend (`http://localhost:4200/login`) with appropriate query parameters (`?error=IAM_030` or `?requiresTwoFactor=true`).
   2. Implemented query parameter interception in Angular `LoginComponent` to automatically show localized error alerts (for `IAM_030` / "Tài khoản Google chưa liên kết") and auto-switch the UI view to the premium OTP and Backup Code verification panel when `requiresTwoFactor=true` is detected.
 - Prevention: Ensure standard full-page browser callback flows always return HTTP 302 redirects instead of raw API responses, and ensure all multi-factor auth states trigger explicit frontend navigation cues.
+
+## [2026-05-30] Bug: Approval rules table clipped actions when approval chains were long
+
+- Root cause: The approval rules table rendered every approval step card directly inside the `Chuỗi duyệt` column. Long chains increased row height and consumed horizontal space, causing the action buttons to wrap and clip labels such as `Vô hiệu hóa`.
+- Fix: Replace the table cell with a compact approval-chain summary and move the full ordered step/SLA view into a modal diagram opened by `Xem sơ đồ`; keep row action buttons in a no-wrap action group.
+- Prevention: Dense operational tables should show bounded summaries for expandable workflow data, while full workflow diagrams belong in detail drawers/modals rather than primary rows.

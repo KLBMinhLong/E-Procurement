@@ -3,13 +3,17 @@
     "skipToContent": "Skip to content"
   },
   "action": {
+    "back": "Back",
     "cancel": "Cancel",
     "confirm": "Confirm",
     "create": "Create",
+    "close": "Close",
+    "edit": "Edit",
     "processing": "Processing",
     "refresh": "Refresh",
     "submit": "Save Changes",
-    "delete": "Delete"
+    "delete": "Delete",
+    "view": "View"
   },
   "app": {
     "name": "eProcure",
@@ -20,6 +24,17 @@
       "approve": "Approve",
       "reject": "Reject",
       "requestChanges": "Request changes"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "ESCALATED": "Escalated",
+      "SKIPPED": "Skipped",
+      "FORWARDED": "Forwarded",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
     }
   },
   "auth": {
@@ -129,6 +144,7 @@
     "adminRoles": "Role Manager",
     "adminRbac": "Permissions Matrix",
     "adminOrgChart": "Department Chart",
+    "approvalRules": "Approval Rules",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
     "openMenu": "Open menu",
@@ -150,7 +166,8 @@
     "approvals": {
       "self": "Approvals",
       "inbox": "Approval Inbox",
-      "detail": "Approval Detail"
+      "detail": "Approval Detail",
+      "rules": "Approval Rules"
     },
     "dashboard": "Dashboard",
     "procurement": "Procurement",
@@ -232,17 +249,40 @@
   "user": {
     "noDepartment": "No department"
   },
+  "validation": {
+    "required": "This field is required",
+    "minChars": "minimum characters",
+    "minLength": "This field is below the minimum length",
+    "maxLength": "This field exceeds the allowed length"
+  },
   "pr": {
     "list": {
       "eyebrow": "Procurement Management",
       "title": "Purchase Requests",
+      "subtitle": "Track request status, priority, amount, and need-by dates in one operational list.",
+      "summaryLabel": "Purchase request list summary",
+      "stat": {
+        "total": "Total requests",
+        "pending": "In progress",
+        "draft": "Drafts",
+        "completed": "Completed",
+        "visibleAmount": "Visible amount"
+      },
       "action": {
         "create": "Create request"
       },
       "filter": {
         "placeholder": "Search PR code, title...",
         "allStatus": "All Statuses",
-        "allPriority": "All Priorities"
+        "allPriority": "All Priorities",
+        "clear": "Clear filters",
+        "status": "Status",
+        "priority": "Priority",
+        "fromDate": "From date",
+        "toDate": "To date",
+        "minAmount": "Min amount",
+        "maxAmount": "Max amount",
+        "amountPlaceholder": "E.g. 5000000"
       },
       "empty": {
         "title": "No requests found",
@@ -255,13 +295,16 @@
         "status": "Status",
         "amount": "Total Amount",
         "requester": "Requester",
-        "createdAt": "Created At"
+        "createdAt": "Created At",
+        "needByDate": "Need by"
       },
       "totalItems": "items"
     },
     "create": {
       "eyebrow": "Create New",
+      "eyebrowEdit": "Update",
       "title": "Create Purchase Request",
+      "titleEdit": "Update Purchase Request",
       "section": {
         "basic": "Basic Information",
         "lineItems": "Line Items",
@@ -285,15 +328,18 @@
         "category": "Category",
         "categoryPlaceholder": "Select category...",
         "glAccount": "GL Account",
+        "glAccountPlaceholder": "E.g. 6002",
         "quantity": "Quantity",
         "unit": "Unit",
+        "unitPlaceholder": "E.g. EA",
         "unitPrice": "Unit Price",
         "total": "Total"
       },
       "action": {
         "addItem": "Add Item",
         "searchCatalog": "Search Catalog",
-        "submit": "Create Request"
+        "submit": "Create Request",
+        "update": "Save Updates"
       },
       "upload": {
         "prompt": "Drag and drop or click to upload",
@@ -308,10 +354,15 @@
         "title": "Item Catalog",
         "searchPlaceholder": "Search item name or code...",
         "noResults": "No items match your search."
+      },
+      "toast": {
+        "createSuccess": "Purchase request created.",
+        "updateSuccess": "Purchase request updated."
       }
     },
     "detail": {
       "eyebrow": "Request Details",
+      "metricsLabel": "Purchase request quick metrics",
       "action": {
         "submit": "Submit for Approval",
         "confirmCancel": "Confirm Cancel"
@@ -320,15 +371,25 @@
         "justification": "Justification",
         "urgencyReason": "Urgency Reason",
         "requester": "Requester",
+        "department": "Department",
         "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "submittedAt": "Submitted At",
         "needByDate": "Need By Date",
         "totalAmount": "Total Amount",
-        "fromCatalog": "From catalog"
+        "lineItems": "Line items",
+        "fiscalYear": "Fiscal year",
+        "requestId": "System ID",
+        "blanketRelease": "Blanket release",
+        "fromCatalog": "Catalog",
+        "glAccount": "GL"
       },
       "section": {
+        "overview": "Request information",
         "lineItems": "Line Items",
         "attachments": "Attachments",
         "budget": "Budget Check",
+        "inventory": "Related Inventory",
         "approval": "Approval Workflow"
       },
       "col": {
@@ -340,7 +401,25 @@
       },
       "budget": {
         "allocated": "Allocated Budget:",
-        "available": "Available Balance:"
+        "committed": "Committed:",
+        "spent": "Spent:",
+        "available": "Available Balance:",
+        "usage": "Budget usage"
+      },
+      "inventory": {
+        "empty": "No replacement stock is available for this request."
+      },
+      "approval": {
+        "none": "No approval workflow has been generated for this request.",
+        "assignedAt": "Assigned:",
+        "deadline": "Due:"
+      },
+      "step": {
+        "count": "{{count}} rows"
+      },
+      "toast": {
+        "submitSuccess": "Request submitted for approval.",
+        "cancelSuccess": "Purchase request cancelled."
       },
       "modal": {
         "cancel": {
@@ -816,6 +895,150 @@
           "submit": "Forward"
         },
         "cancel": "Cancel"
+      }
+    },
+    "rules": {
+      "eyebrow": "Approval Administration",
+      "title": "Approval Rules",
+      "subtitle": "Manage approval matrices by value, category, department, and priority.",
+      "action": {
+        "create": "Create rule",
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "viewChain": "View flow",
+        "addStep": "Add step",
+        "removeStep": "Remove step"
+      },
+      "stat": {
+        "total": "Total rules",
+        "active": "Active",
+        "inactive": "Inactive",
+        "steps": "Total steps"
+      },
+      "filter": {
+        "title": "Operational filters",
+        "description": "Narrow the matrix by rule type, status, or approver role.",
+        "searchLabel": "Search rules",
+        "searchPlaceholder": "Search name, type, role, or description...",
+        "type": "Rule type",
+        "status": "Status",
+        "allTypes": "All types",
+        "allStatus": "All statuses",
+        "statusActive": "Active",
+        "statusInactive": "Inactive",
+        "clear": "Clear filters",
+        "showing": "{{count}} / {{total}} rules"
+      },
+      "col": {
+        "name": "Rule",
+        "type": "Type",
+        "conditions": "Conditions",
+        "steps": "Approval chain",
+        "priority": "Priority",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "type": {
+        "VALUE": "Value",
+        "CATEGORY": "Category",
+        "DEPARTMENT": "Department",
+        "DEFAULT": "Default"
+      },
+      "stepType": {
+        "SEQUENTIAL": "Sequential",
+        "PARALLEL": "Parallel"
+      },
+      "priority": {
+        "NORMAL": "Normal",
+        "URGENT": "Urgent",
+        "EMERGENCY": "Emergency"
+      },
+      "condition": {
+        "min": "From",
+        "max": "Below",
+        "categories": "Categories",
+        "departments": "Departments",
+        "priorities": "Priorities",
+        "any": "Default match"
+      },
+      "section": {
+        "identity": "Rule identity",
+        "identityHint": "Use a stable name, choose the rule type, and set selection priority for the approval engine.",
+        "conditions": "Matching conditions",
+        "conditionsHint": "Leave a condition empty when the rule does not need to restrict by that dimension.",
+        "steps": "Approval steps",
+        "stepsHint": "Steps run in order; equal indexes can run together when the step type is parallel."
+      },
+      "step": {
+        "slaSummary": "{{hours}}h SLA",
+        "count": "{{count}} steps",
+        "firstRole": "Starts with {{role}}",
+        "lastRole": "Ends with {{role}}",
+        "parallelCount": "{{count}} parallel steps",
+        "required": "Required",
+        "optional": "Optional"
+      },
+      "chain": {
+        "title": "Approval flow: {{rule}}",
+        "totalSteps": "{{count}} approval steps",
+        "totalSla": "Configured SLA {{hours}}h",
+        "empty": "This rule has no approval steps."
+      },
+      "reference": {
+        "selectedCount": "{{count}} selected",
+        "noCategories": "Categories could not be loaded. Existing rule values can still be saved.",
+        "noDepartments": "Departments could not be loaded. Check ORG_VIEW permission or reload the page."
+      },
+      "field": {
+        "ruleName": "Rule name",
+        "ruleType": "Rule type",
+        "priority": "Priority",
+        "active": "Active",
+        "minValue": "Minimum value",
+        "maxValue": "Maximum value",
+        "categories": "Categories",
+        "departmentIds": "Departments",
+        "priorities": "PR priorities",
+        "stepIndex": "Order",
+        "approverRole": "Approver role",
+        "stepType": "Step type",
+        "slaHours": "SLA hours",
+        "required": "Required",
+        "description": "Description",
+        "reason": "Deactivate reason"
+      },
+      "placeholder": {
+        "ruleName": "E.g. VALUE_5M_20M",
+        "money": "E.g. 5000000.0000",
+        "categories": "E.g. SOFTWARE, SAAS",
+        "departmentIds": "Department UUIDs separated by commas",
+        "approverRole": "E.g. MANAGER",
+        "description": "Describe when this rule applies",
+        "reason": "Enter the reason for deactivation"
+      },
+      "modal": {
+        "createTitle": "Create approval rule",
+        "editTitle": "Update approval rule",
+        "deactivateTitle": "Deactivate rule",
+        "deactivateMessage": "You are about to deactivate {{rule}}. Running processes will not be changed."
+      },
+      "toast": {
+        "loadFailed": "Could not load approval rules.",
+        "validationFailed": "Please review the approval rule information.",
+        "createSuccess": "Approval rule created successfully.",
+        "updateSuccess": "Approval rule updated successfully.",
+        "saveFailed": "Could not save approval rule.",
+        "reasonRequired": "Please enter a deactivation reason.",
+        "deactivateSuccess": "Approval rule deactivated.",
+        "deactivateFailed": "Could not deactivate approval rule."
+      },
+      "empty": {
+        "title": "No matching rules",
+        "message": "Create the first approval rule or adjust the search filter."
       }
     }
   }

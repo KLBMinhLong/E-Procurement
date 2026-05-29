@@ -58,11 +58,11 @@ export interface AttachmentInfo {
 export interface ApprovalStepSummary {
   stepIndex: number;
   approverRole: string;
-  approver: { id: string; fullName: string };
+  approver?: { id: string; fullName: string } | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ESCALATED' | 'SKIPPED' | 'FORWARDED';
   comment: string | null;
-  assignedAt: string;
-  slaDeadline: string;
+  assignedAt: string | null;
+  slaDeadline: string | null;
   slaRemainingHours: number | null;
   actedAt: string | null;
 }
@@ -75,10 +75,10 @@ export interface ApprovalProcess {
 
 // ── Budget & Inventory ────────────────────────────────────────────────
 export interface BudgetCheckResult {
-  allocated: string;
-  committed: string;
-  spent: string;
-  available: string;
+  allocated: Money;
+  committed: Money;
+  spent: Money;
+  available: Money;
   status: BudgetCheckStatus;
   warningMessage: string | null;
 }
@@ -132,11 +132,14 @@ export interface PurchaseRequestDetail extends PurchaseRequestSummary {
   urgencyReason: string | null;
   fiscalYear: number;
   departmentId: string;
+  blanketRelease?: boolean;
+  submittedAt?: string | null;
+  createdBy?: string | null;
   lineItems: PrLineItemResponse[];
-  attachments: AttachmentInfo[];
+  attachments?: AttachmentInfo[];
   budgetCheck: BudgetCheckResult | null;
   inventoryCheck: InventoryCheckResult | null;
-  approvalProcess: ApprovalProcess | null;
+  approvalProcess?: ApprovalProcess | null;
 }
 
 // ── Request payloads ──────────────────────────────────────────────────

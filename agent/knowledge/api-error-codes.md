@@ -85,9 +85,10 @@
 | APR_004 | 404 | Approval task khong ton tai |
 | APR_005 | 422 | Comment bat buoc khi tu choi (toi thieu 20 ky tu) |
 | APR_006 | 422 | Khong the forward cho nguoi co cap thap hon |
-| APR_007 | 422 | Approval rule khong ton tai hoac khong con hoat dong |
+| APR_007 | 422 | Approval rule khong hop le hoac khong con hoat dong |
 | APR_008 | 409 | Approval process da hoan thanh, khong the thay doi |
-| APR_010 | 422 | Approval rule conditions conflict voi rule khac |
+| APR_009 | 404 | Approval rule khong ton tai |
+| APR_010 | 409 | Approval rule name da ton tai |
 
 ### Finance (FIN_)
 | Code | HTTP | Description |

@@ -12,7 +12,9 @@ import {
   RejectTaskRequest,
   RequestChangesRequest,
   ForwardTaskRequest,
-  ApprovalProcessDetail
+  ApprovalProcessDetail,
+  ApprovalRuleDetail,
+  ApprovalRuleUpsertRequest
 } from '../models/approvals.model';
 
 @Injectable({ providedIn: 'root' })
@@ -88,6 +90,37 @@ export class ApprovalsService {
   getProcessDetail(entityType: string, entityId: string): Observable<ApiResponse<ApprovalProcessDetail>> {
     return this.http.get<ApiResponse<ApprovalProcessDetail>>(
       `${this.baseUrl}/approvals/processes/${entityType}/${entityId}`,
+      { withCredentials: true }
+    );
+  }
+
+  getRules(): Observable<ApiResponse<ApprovalRuleDetail[]>> {
+    return this.http.get<ApiResponse<ApprovalRuleDetail[]>>(
+      `${this.baseUrl}/approvals/rules`,
+      { withCredentials: true }
+    );
+  }
+
+  createRule(request: ApprovalRuleUpsertRequest): Observable<ApiResponse<ApprovalRuleDetail>> {
+    return this.http.post<ApiResponse<ApprovalRuleDetail>>(
+      `${this.baseUrl}/approvals/rules`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  updateRule(ruleId: string, request: ApprovalRuleUpsertRequest): Observable<ApiResponse<ApprovalRuleDetail>> {
+    return this.http.put<ApiResponse<ApprovalRuleDetail>>(
+      `${this.baseUrl}/approvals/rules/${ruleId}`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  deactivateRule(ruleId: string, reason: string): Observable<ApiResponse<ApprovalRuleDetail>> {
+    return this.http.patch<ApiResponse<ApprovalRuleDetail>>(
+      `${this.baseUrl}/approvals/rules/${ruleId}/deactivate`,
+      { reason },
       { withCredentials: true }
     );
   }

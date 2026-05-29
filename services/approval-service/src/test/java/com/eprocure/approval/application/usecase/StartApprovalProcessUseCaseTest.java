@@ -3,6 +3,7 @@ package com.eprocure.approval.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.eprocure.approval.application.port.in.StartApprovalProcessCommand;
+import com.eprocure.approval.application.port.out.DelegationResolutionPort;
 import com.eprocure.approval.application.port.out.ApprovalStepAssignedEventPublisher;
 import com.eprocure.approval.application.port.out.ApprovalWorkflowPort;
 import com.eprocure.approval.application.port.out.OrgApproverPort;
@@ -205,6 +206,7 @@ class StartApprovalProcessUseCaseTest {
         ApprovalChainResolutionService approvalChainResolutionService = new ApprovalChainResolutionService(
                 new ApprovalRuleSelectionService(new StubApprovalRuleRepository(List.of(emergencyRule(), defaultRule()))),
                 orgApproverPort,
+                query -> Optional.empty(),
                 new SlaDeadlineCalculator(
                         BusinessHoursCalendar.from("Asia/Ho_Chi_Minh", "08:00", "17:30", "MON,TUE,WED,THU,FRI"),
                         Clock.fixed(MONDAY_08_VN, ZoneOffset.UTC)));
@@ -282,6 +284,33 @@ class StartApprovalProcessUseCaseTest {
         public List<ApprovalRule> findActiveRules() {
             return rules;
         }
+
+        @Override
+        public List<ApprovalRule> findAllRules() {
+            return rules;
+        }
+
+        @Override
+        public java.util.Optional<ApprovalRule> findById(UUID id) {
+            return rules.stream().filter(rule -> rule.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public boolean existsByRuleName(String ruleName, UUID excludedId) {
+            return false;
+        }
+
+        @Override
+        public void save(ApprovalRule rule, UUID actorId) {
+        }
+
+        @Override
+        public void update(ApprovalRule rule, UUID actorId) {
+        }
+
+        @Override
+        public void deactivate(UUID id, UUID actorId) {
+        }
     }
 
     private static final class FakeOrgApproverPort implements OrgApproverPort {
@@ -354,6 +383,11 @@ class StartApprovalProcessUseCaseTest {
         @Override
         public Optional<ApprovalProcess> findRunningByCamundaTaskId(String camundaTaskId) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit) {
+            return List.of();
         }
 
         @Override

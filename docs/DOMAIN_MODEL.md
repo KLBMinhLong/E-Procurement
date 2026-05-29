@@ -48,8 +48,8 @@ User (Aggregate Root)
 ├── employeeCode: String         (VD: "EMP-2025-00123")
 ├── username: String             (lowercase, unique)
 ├── passwordHash: String         (BCrypt, salt bao gồm userId)
-├── email: Email                 (Value Object, masked in log)
-├── phone: PhoneNumber           (Value Object, masked in log)
+├── email: String                (validated at request layer, masked in log)
+├── phone: String                (nullable, validated at request layer, masked in log)
 ├── fullName: String
 ├── avatarUrl: String
 ├── departmentId: DepartmentId
@@ -74,22 +74,9 @@ Invariants:
 - LOCKED sau 5 lần login sai liên tiếp
 ```
 
-**Value Objects:**
-```java
-// Email — immutable, validation built-in
-public record Email(String value) {
-    public Email {
-        if (!value.matches("^[\\w.+-]+@[\\w-]+\\.[\\w.]+$"))
-            throw new InvalidEmailException(value);
-    }
-    public String masked() { /* u***@***.com */ }
-}
-
-// PhoneNumber
-public record PhoneNumber(String value) {
-    public String masked() { /* 09*****678 */ }
-}
-```
+**Ghi chú triển khai hiện tại:**
+- IAM service đang dùng `String` cho email/phone; validation thực hiện ở request/DTO.
+- Masking dùng utility logging, không qua Value Object.
 
 ### 2.2 Aggregate: Role
 

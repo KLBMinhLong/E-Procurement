@@ -147,12 +147,12 @@
               </td>
 
               <td class="align-right">
-                <ep-amount [value]="task.totalAmount?.amount" [currency]="task.totalAmount?.currency || 'VND'" />
+                <ep-amount [value]="task.totalAmount.amount" [currency]="task.totalAmount.currency || 'VND'" />
               </td>
 
               <td class="inbox-table__requester">
-                <span class="inbox-table__requester-name">{{ task.requester?.fullName }}</span>
-                <span class="inbox-table__requester-dept">{{ task.requester?.department || ('user.noDepartment' | translate) }}</span>
+                <span class="inbox-table__requester-name">{{ task.requester.fullName }}</span>
+                <span class="inbox-table__requester-dept">{{ task.requester.department || ('user.noDepartment' | translate) }}</span>
               </td>
 
               <td class="sla-col">

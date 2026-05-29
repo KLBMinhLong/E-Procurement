@@ -1,0 +1,534 @@
+<section class="approval-rules-page" aria-labelledby="approval-rules-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'approvals.rules.eyebrow' | translate }}</span>
+      <h1 id="approval-rules-heading" class="page-header__title">{{ 'approvals.rules.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'approvals.rules.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button variant="secondary" icon="refresh-cw" [disabled]="isLoading()" (click)="loadRules()">
+        {{ 'action.refresh' | translate }}
+      </ep-button>
+      <ep-button variant="primary" icon="plus" (click)="openCreateModal()">
+        {{ 'approvals.rules.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="rule-stats" aria-label="approval-rule-summary">
+    @for (stat of summaryCards(); track stat.labelKey) {
+      <div
+        class="rule-stat"
+        [class.rule-stat--success]="stat.tone === 'success'"
+        [class.rule-stat--warning]="stat.tone === 'warning'"
+        [class.rule-stat--info]="stat.tone === 'info'">
+        <span class="rule-stat__icon" aria-hidden="true">
+          <ep-icon [name]="stat.icon" [size]="18"></ep-icon>
+        </span>
+        <span class="rule-stat__label">{{ stat.labelKey | translate }}</span>
+        <strong>{{ stat.value }}</strong>
+      </div>
+    }
+  </div>
+
+  <section class="rules-console" aria-labelledby="approval-rules-filter-heading">
+    <div class="rules-console__header">
+      <div>
+        <span id="approval-rules-filter-heading" class="rules-console__eyebrow">
+          {{ 'approvals.rules.filter.title' | translate }}
+        </span>
+        <p>{{ 'approvals.rules.filter.description' | translate }}</p>
+      </div>
+      <div class="rules-console__result">
+        {{ 'approvals.rules.filter.showing' | translate: { count: filteredRules().length, total: rules().length } }}
+      </div>
+    </div>
+
+    <div class="rule-toolbar">
+      <label class="rule-search">
+        <ep-icon name="search" [size]="16"></ep-icon>
+        <span class="sr-only">{{ 'approvals.rules.filter.searchLabel' | translate }}</span>
+        <input
+          type="text"
+          [placeholder]="'approvals.rules.filter.searchPlaceholder' | translate"
+          [value]="searchQuery()"
+          (input)="onSearchChange($any($event.target).value)" />
+      </label>
+
+      @if (hasActiveFilters()) {
+        <ep-button variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'approvals.rules.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
+
+    <div class="filter-grid">
+      <div class="filter-group">
+        <span class="filter-group__label">
+          <ep-icon name="list-filter" [size]="15"></ep-icon>
+          {{ 'approvals.rules.filter.type' | translate }}
+        </span>
+        <div class="filter-chip-list" role="group" [attr.aria-label]="'approvals.rules.filter.type' | translate">
+          @for (type of typeFilters; track type) {
+            <button
+              type="button"
+              class="filter-chip"
+              [class.filter-chip--active]="activeTypeFilter() === type"
+              (click)="setTypeFilter(type)">
+              {{ type === 'ALL' ? ('approvals.rules.filter.allTypes' | translate) : ('approvals.rules.type.' + type | translate) }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-group__label">
+          <ep-icon name="sliders-horizontal" [size]="15"></ep-icon>
+          {{ 'approvals.rules.filter.status' | translate }}
+        </span>
+        <div class="filter-chip-list" role="group" [attr.aria-label]="'approvals.rules.filter.status' | translate">
+          @for (status of statusFilters; track status) {
+            <button
+              type="button"
+              class="filter-chip"
+              [class.filter-chip--active]="activeStatusFilter() === status"
+              (click)="setStatusFilter(status)">
+              @switch (status) {
+                @case ('ACTIVE') {
+                  {{ 'approvals.rules.filter.statusActive' | translate }}
+                }
+                @case ('INACTIVE') {
+                  {{ 'approvals.rules.filter.statusInactive' | translate }}
+                }
+                @default {
+                  {{ 'approvals.rules.filter.allStatus' | translate }}
+                }
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  @if (isLoading()) {
+    <ep-skeleton type="table" [rows]="6" />
+  } @else if (filteredRules().length === 0) {
+    <ep-empty-state
+      icon="workflow"
+      [title]="'approvals.rules.empty.title' | translate"
+      [message]="'approvals.rules.empty.message' | translate" />
+  } @else {
+    <div class="rules-table-wrap">
+      <table class="rules-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'approvals.rules.col.name' | translate }}</th>
+            <th scope="col">{{ 'approvals.rules.col.type' | translate }}</th>
+            <th scope="col">{{ 'approvals.rules.col.conditions' | translate }}</th>
+            <th scope="col">{{ 'approvals.rules.col.steps' | translate }}</th>
+            <th scope="col">{{ 'approvals.rules.col.priority' | translate }}</th>
+            <th scope="col">{{ 'approvals.rules.col.status' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'approvals.rules.col.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of filteredRules(); track rule.id) {
+            <tr>
+              <td>
+                <div class="rule-name">
+                  <strong>{{ rule.ruleName }}</strong>
+                  @if (rule.description) {
+                    <span>{{ rule.description }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <ep-badge tone="info" [labelKey]="'approvals.rules.type.' + rule.ruleType" />
+              </td>
+              <td>
+                <div class="condition-tags">
+                  @if (hasRuleConditions(rule)) {
+                    @if (rule.conditions.minValue) {
+                      <span>{{ 'approvals.rules.condition.min' | translate }} {{ rule.conditions.minValue }}</span>
+                    }
+                    @if (rule.conditions.maxValue) {
+                      <span>{{ 'approvals.rules.condition.max' | translate }} {{ rule.conditions.maxValue }}</span>
+                    }
+                    @if (rule.conditions.categories; as categories) {
+                      @if (categories.length) {
+                        <span>{{ 'approvals.rules.condition.categories' | translate }}: {{ categories.join(', ') }}</span>
+                      }
+                    }
+                    @if (rule.conditions.departmentIds; as departmentIds) {
+                      @if (departmentIds.length) {
+                        <span>{{ 'approvals.rules.condition.departments' | translate }}: {{ departmentIds.length }}</span>
+                      }
+                    }
+                    @if (rule.conditions.priorities; as priorities) {
+                      @if (priorities.length) {
+                        <span>{{ 'approvals.rules.condition.priorities' | translate }}: {{ priorities.join(', ') }}</span>
+                      }
+                    }
+                  } @else {
+                    <span class="condition-tags__empty">{{ 'approvals.rules.condition.any' | translate }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <div class="chain-summary">
+                  <span class="chain-summary__icon" aria-hidden="true">
+                    <ep-icon name="workflow" [size]="16"></ep-icon>
+                  </span>
+                  <div class="chain-summary__body">
+                    <strong>{{ 'approvals.rules.step.count' | translate: { count: rule.steps.length } }}</strong>
+                    @if (firstStep(rule); as first) {
+                      <span>{{ 'approvals.rules.step.firstRole' | translate: { role: first.approverRole } }}</span>
+                    }
+                    @if (hasDistinctLastStep(rule)) {
+                      @if (lastStep(rule); as last) {
+                        <span>{{ 'approvals.rules.step.lastRole' | translate: { role: last.approverRole } }}</span>
+                      }
+                    }
+                    @if (parallelStepCount(rule) > 0) {
+                      <small>{{ 'approvals.rules.step.parallelCount' | translate: { count: parallelStepCount(rule) } }}</small>
+                    }
+                  </div>
+                  <ep-button
+                    variant="ghost"
+                    size="sm"
+                    icon="eye"
+                    [ariaLabel]="'approvals.rules.action.viewChain' | translate"
+                    (click)="openChainModal(rule)">
+                    {{ 'approvals.rules.action.viewChain' | translate }}
+                  </ep-button>
+                </div>
+              </td>
+              <td class="mono">{{ rule.priority }}</td>
+              <td>
+                <ep-badge
+                  [tone]="isRuleActive(rule) ? 'success' : 'neutral'"
+                  [labelKey]="isRuleActive(rule) ? 'approvals.rules.status.active' : 'approvals.rules.status.inactive'" />
+              </td>
+              <td class="actions-cell">
+                <div class="row-actions">
+                  <ep-button variant="ghost" size="sm" icon="pencil" (click)="openEditModal(rule)">
+                    {{ 'approvals.rules.action.edit' | translate }}
+                  </ep-button>
+                  <ep-button
+                    variant="ghost"
+                    size="sm"
+                    icon="ban"
+                    [disabled]="!isRuleActive(rule)"
+                    (click)="openDeactivateModal(rule)">
+                    {{ 'approvals.rules.action.deactivate' | translate }}
+                  </ep-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<ep-modal
+  [open]="selectedChainRule() !== null"
+  size="lg"
+  [title]="'approvals.rules.chain.title' | translate: { rule: selectedChainRule()?.ruleName }"
+  (close)="closeChainModal()">
+  @if (selectedChainRule(); as rule) {
+    <div class="chain-dialog">
+      <div class="chain-dialog__header">
+        <div>
+          <strong>{{ rule.ruleName }}</strong>
+          @if (rule.description) {
+            <p>{{ rule.description }}</p>
+          }
+        </div>
+        <ep-badge tone="info" [labelKey]="'approvals.rules.type.' + rule.ruleType" />
+      </div>
+
+      <div class="chain-metrics">
+        <span>
+          <ep-icon name="list-checks" [size]="15"></ep-icon>
+          {{ 'approvals.rules.chain.totalSteps' | translate: { count: rule.steps.length } }}
+        </span>
+        <span>
+          <ep-icon name="clock" [size]="15"></ep-icon>
+          {{ 'approvals.rules.chain.totalSla' | translate: { hours: totalSlaHours(rule) } }}
+        </span>
+        @if (parallelStepCount(rule) > 0) {
+          <span>
+            <ep-icon name="workflow" [size]="15"></ep-icon>
+            {{ 'approvals.rules.step.parallelCount' | translate: { count: parallelStepCount(rule) } }}
+          </span>
+        }
+      </div>
+
+      @if (selectedChainSteps().length) {
+        <ol class="chain-diagram">
+          @for (step of selectedChainSteps(); track step.stepIndex + ':' + step.approverRole + ':' + $index) {
+            <li class="chain-step" [class.chain-step--parallel]="step.stepType === 'PARALLEL'">
+              <span class="chain-step__marker">{{ step.stepIndex }}</span>
+              <div class="chain-step__content">
+                <div class="chain-step__title">
+                  <strong>{{ step.approverRole }}</strong>
+                  <ep-badge tone="neutral" [labelKey]="'approvals.rules.stepType.' + step.stepType" />
+                </div>
+                <div class="chain-step__meta">
+                  <span>{{ 'approvals.rules.step.slaSummary' | translate: { hours: step.slaHours } }}</span>
+                  <span>
+                    {{ (step.required ? 'approvals.rules.step.required' : 'approvals.rules.step.optional') | translate }}
+                  </span>
+                </div>
+              </div>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="chain-dialog__empty">{{ 'approvals.rules.chain.empty' | translate }}</p>
+      }
+
+      <footer class="modal-actions">
+        <ep-button variant="secondary" (click)="closeChainModal()">{{ 'action.close' | translate }}</ep-button>
+        <ep-button variant="primary" icon="pencil" (click)="closeChainModal(); openEditModal(rule)">
+          {{ 'approvals.rules.action.edit' | translate }}
+        </ep-button>
+      </footer>
+    </div>
+  }
+</ep-modal>
+
+<ep-modal
+  [open]="isFormOpen()"
+  size="xl"
+  [title]="selectedRule() ? ('approvals.rules.modal.editTitle' | translate) : ('approvals.rules.modal.createTitle' | translate)"
+  (close)="closeFormModal()">
+  <form class="rule-form" [formGroup]="form" (ngSubmit)="submitForm()">
+    <div class="rule-form__layout">
+      <section class="form-section form-section--identity">
+        <div class="section-heading">
+          <div>
+            <h3>{{ 'approvals.rules.section.identity' | translate }}</h3>
+            <p>{{ 'approvals.rules.section.identityHint' | translate }}</p>
+          </div>
+          @if (selectedRule()) {
+            <label class="switch-field">
+              <input type="checkbox" formControlName="active" />
+              <span>{{ 'approvals.rules.field.active' | translate }}</span>
+            </label>
+          }
+        </div>
+
+        <div class="form-grid form-grid--identity">
+          <ep-form-field [label]="'approvals.rules.field.ruleName' | translate">
+            <input formControlName="ruleName" type="text" [placeholder]="'approvals.rules.placeholder.ruleName' | translate" />
+          </ep-form-field>
+          <ep-form-field [label]="'approvals.rules.field.priority' | translate">
+            <input formControlName="priority" type="number" min="1" />
+          </ep-form-field>
+        </div>
+
+        <div class="segmented-field">
+          <span>{{ 'approvals.rules.field.ruleType' | translate }}</span>
+          <div class="segmented-field__options" role="group" [attr.aria-label]="'approvals.rules.field.ruleType' | translate">
+            @for (type of ruleTypes; track type) {
+              <button
+                type="button"
+                class="segmented-control"
+                [class.segmented-control--active]="form.controls.ruleType.value === type"
+                (click)="setRuleType(type)">
+                {{ 'approvals.rules.type.' + type | translate }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="form-grid form-grid--money">
+          <ep-form-field [label]="'approvals.rules.field.minValue' | translate">
+            <input formControlName="minValue" type="text" [placeholder]="'approvals.rules.placeholder.money' | translate" />
+          </ep-form-field>
+          <ep-form-field [label]="'approvals.rules.field.maxValue' | translate">
+            <input formControlName="maxValue" type="text" [placeholder]="'approvals.rules.placeholder.money' | translate" />
+          </ep-form-field>
+        </div>
+
+        <div class="priority-picker">
+          <span>{{ 'approvals.rules.field.priorities' | translate }}</span>
+          <div class="priority-picker__options">
+            @for (priority of priorityOptions; track priority) {
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="form.controls.priorities.value.includes(priority)"
+                  (change)="togglePriority(priority, $any($event.target).checked)" />
+                <span>{{ 'approvals.rules.priority.' + priority | translate }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section form-section--conditions">
+        <div class="section-heading">
+          <div>
+            <h3>{{ 'approvals.rules.section.conditions' | translate }}</h3>
+            <p>{{ 'approvals.rules.section.conditionsHint' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="reference-picker">
+          <div class="reference-picker__header">
+            <strong>{{ 'approvals.rules.field.categories' | translate }}</strong>
+            <span>{{ 'approvals.rules.reference.selectedCount' | translate: { count: form.controls.categories.value.length } }}</span>
+          </div>
+          @if (flatCategories().length) {
+            <div class="reference-grid">
+              @for (category of flatCategories(); track category.code) {
+                <label class="reference-option" [class.reference-option--selected]="isCategorySelected(category.code)">
+                  <input
+                    type="checkbox"
+                    [checked]="isCategorySelected(category.code)"
+                    (change)="toggleCategory(category.code, $any($event.target).checked)" />
+                  <span>
+                    <strong>{{ category.code }}</strong>
+                    <small>{{ category.name }}</small>
+                  </span>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="reference-empty">{{ 'approvals.rules.reference.noCategories' | translate }}</p>
+          }
+        </div>
+
+        <div class="reference-picker">
+          <div class="reference-picker__header">
+            <strong>{{ 'approvals.rules.field.departmentIds' | translate }}</strong>
+            <span>{{ 'approvals.rules.reference.selectedCount' | translate: { count: form.controls.departmentIds.value.length } }}</span>
+          </div>
+          @if (flatDepartments().length) {
+            <div class="reference-grid reference-grid--departments">
+              @for (department of flatDepartments(); track department.id) {
+                <label class="reference-option" [class.reference-option--selected]="isDepartmentSelected(department.id)">
+                  <input
+                    type="checkbox"
+                    [checked]="isDepartmentSelected(department.id)"
+                    (change)="toggleDepartment(department.id, $any($event.target).checked)" />
+                  <span>
+                    <strong>{{ department.code }}</strong>
+                    <small>{{ department.name }}</small>
+                  </span>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="reference-empty">{{ 'approvals.rules.reference.noDepartments' | translate }}</p>
+          }
+        </div>
+      </section>
+    </div>
+
+    <section class="form-section">
+      <div class="section-heading">
+        <div>
+          <h3>{{ 'approvals.rules.section.steps' | translate }}</h3>
+          <p>{{ 'approvals.rules.section.stepsHint' | translate }}</p>
+        </div>
+        <ep-button variant="secondary" size="sm" icon="plus" (click)="addStep()">
+          {{ 'approvals.rules.action.addStep' | translate }}
+        </ep-button>
+      </div>
+      <div class="steps-editor" formArrayName="steps">
+        @for (step of stepGroups(); track $index) {
+          <section class="step-editor" [formGroupName]="$index">
+            <header class="step-editor__header">
+              <div class="step-editor__index">
+                <span>{{ step.controls.stepIndex.value }}</span>
+                <strong>{{ 'approvals.rules.field.approverRole' | translate }}</strong>
+              </div>
+              <ep-button
+                variant="ghost"
+                size="sm"
+                icon="trash-2"
+                [disabled]="stepsArray.length <= 1"
+                (click)="removeStep($index)">
+                {{ 'approvals.rules.action.removeStep' | translate }}
+              </ep-button>
+            </header>
+
+            <div class="step-editor__grid">
+              <ep-form-field [label]="'approvals.rules.field.stepIndex' | translate">
+                <input formControlName="stepIndex" type="number" min="1" />
+              </ep-form-field>
+              <ep-form-field [label]="'approvals.rules.field.approverRole' | translate">
+                <input
+                  formControlName="approverRole"
+                  type="text"
+                  list="approval-role-options"
+                  [placeholder]="'approvals.rules.placeholder.approverRole' | translate" />
+              </ep-form-field>
+              <ep-form-field [label]="'approvals.rules.field.stepType' | translate">
+                <select formControlName="stepType">
+                  @for (type of stepTypes; track type) {
+                    <option [value]="type">{{ 'approvals.rules.stepType.' + type | translate }}</option>
+                  }
+                </select>
+              </ep-form-field>
+              <ep-form-field [label]="'approvals.rules.field.slaHours' | translate">
+                <input formControlName="slaHours" type="number" min="1" />
+              </ep-form-field>
+              <label class="switch-field switch-field--compact">
+                <input type="checkbox" formControlName="required" />
+                <span>{{ 'approvals.rules.field.required' | translate }}</span>
+              </label>
+            </div>
+          </section>
+        }
+      </div>
+    </section>
+
+    <section class="form-section form-section--description">
+      <ep-form-field [label]="'approvals.rules.field.description' | translate">
+        <textarea formControlName="description" rows="3" [placeholder]="'approvals.rules.placeholder.description' | translate"></textarea>
+      </ep-form-field>
+    </section>
+
+    <datalist id="approval-role-options">
+      @for (role of roleOptions(); track role.code) {
+        <option [value]="role.code">{{ role.name }}</option>
+      }
+    </datalist>
+
+    <footer class="modal-actions">
+      <ep-button variant="secondary" (click)="closeFormModal()">{{ 'action.cancel' | translate }}</ep-button>
+      <ep-button variant="primary" type="submit" [loading]="isSubmitting()">{{ 'action.submit' | translate }}</ep-button>
+    </footer>
+  </form>
+</ep-modal>
+
+<ep-modal
+  [open]="isDeactivateOpen()"
+  [title]="'approvals.rules.modal.deactivateTitle' | translate"
+  (close)="closeDeactivateModal()">
+  <div class="deactivate-dialog">
+    <p>{{ 'approvals.rules.modal.deactivateMessage' | translate:{ rule: selectedRule()?.ruleName } }}</p>
+    <ep-form-field [label]="'approvals.rules.field.reason' | translate">
+      <textarea
+        rows="3"
+        [placeholder]="'approvals.rules.placeholder.reason' | translate"
+        [value]="deactivateReason()"
+        (input)="deactivateReason.set($any($event.target).value)"></textarea>
+    </ep-form-field>
+    <footer class="modal-actions">
+      <ep-button variant="secondary" (click)="closeDeactivateModal()">{{ 'action.cancel' | translate }}</ep-button>
+      <ep-button variant="danger" icon="ban" [loading]="isSubmitting()" (click)="confirmDeactivate()">
+        {{ 'approvals.rules.action.deactivate' | translate }}
+      </ep-button>
+    </footer>
+  </div>
+</ep-modal>

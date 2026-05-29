@@ -195,6 +195,7 @@ class ApprovalTaskActionUseCaseTest {
                 24,
                 NOW.plusSeconds(3600L * index),
                 true,
+                null,
                 new ApproverView(
                         approverId,
                         "EMP-" + role,
@@ -227,6 +228,11 @@ class ApprovalTaskActionUseCaseTest {
         @Override
         public Optional<ApprovalProcess> findRunningByCamundaTaskId(String camundaTaskId) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit) {
+            return List.of();
         }
 
         @Override

@@ -26,6 +26,7 @@ public record ResolvedApprovalChainView(
             int slaHours,
             Instant slaDeadline,
             boolean required,
+            UUID delegateId,
             ApproverView approver) {
     }
 

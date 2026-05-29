@@ -11,14 +11,16 @@ public class ApprovalStep {
     private final int stepIndex;
     private final ApprovalStepType stepType;
     private final String approverRole;
-    private final UUID approverId;
-    private final UUID delegateId;
+    private UUID approverId;
+    private UUID delegateId;
     private ApprovalStepStatus status;
     private ApprovalAction action;
     private String comment;
     private final Instant slaDeadline;
     private final Instant assignedAt;
     private Instant actedAt;
+    private boolean escalated;
+    private UUID escalatedFrom;
     private String camundaTaskId;
 
     private ApprovalStep(
@@ -35,6 +37,8 @@ public class ApprovalStep {
             Instant slaDeadline,
             Instant assignedAt,
             Instant actedAt,
+            boolean escalated,
+            UUID escalatedFrom,
             String camundaTaskId) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.processId = Objects.requireNonNull(processId, "processId must not be null");
@@ -55,7 +59,37 @@ public class ApprovalStep {
         this.slaDeadline = Objects.requireNonNull(slaDeadline, "slaDeadline must not be null");
         this.assignedAt = Objects.requireNonNull(assignedAt, "assignedAt must not be null");
         this.actedAt = actedAt;
+        this.escalated = escalated;
+        this.escalatedFrom = escalatedFrom;
         this.camundaTaskId = camundaTaskId == null || camundaTaskId.isBlank() ? null : camundaTaskId.trim();
+    }
+
+    public static ApprovalStep pending(
+            UUID processId,
+            int stepIndex,
+            ApprovalStepType stepType,
+            String approverRole,
+            UUID approverId,
+            UUID delegateId,
+            Instant slaDeadline,
+            Instant assignedAt) {
+        return new ApprovalStep(
+                UUID.randomUUID(),
+                processId,
+                stepIndex,
+                stepType,
+                approverRole,
+                approverId,
+                delegateId,
+                ApprovalStepStatus.PENDING,
+                null,
+                null,
+                slaDeadline,
+                assignedAt,
+                null,
+                false,
+                null,
+                null);
     }
 
     public static ApprovalStep pending(
@@ -66,21 +100,7 @@ public class ApprovalStep {
             UUID approverId,
             Instant slaDeadline,
             Instant assignedAt) {
-        return new ApprovalStep(
-                UUID.randomUUID(),
-                processId,
-                stepIndex,
-                stepType,
-                approverRole,
-                approverId,
-                null,
-                ApprovalStepStatus.PENDING,
-                null,
-                null,
-                slaDeadline,
-                assignedAt,
-                null,
-                null);
+        return pending(processId, stepIndex, stepType, approverRole, approverId, null, slaDeadline, assignedAt);
     }
 
     public static ApprovalStep restore(
@@ -97,6 +117,8 @@ public class ApprovalStep {
             Instant slaDeadline,
             Instant assignedAt,
             Instant actedAt,
+            boolean escalated,
+            UUID escalatedFrom,
             String camundaTaskId) {
         return new ApprovalStep(
                 id,
@@ -112,6 +134,8 @@ public class ApprovalStep {
                 slaDeadline,
                 assignedAt,
                 actedAt,
+                escalated,
+                escalatedFrom,
                 camundaTaskId);
     }
 
@@ -129,6 +153,20 @@ public class ApprovalStep {
 
     public void forward(String reason, Instant actedAt) {
         complete(ApprovalStepStatus.FORWARDED, ApprovalAction.FORWARD, reason, actedAt);
+    }
+
+    public void escalateTo(UUID escalationTargetId, Instant escalatedAt) {
+        if (status != ApprovalStepStatus.PENDING) {
+            throw new IllegalStateException("approval step has already been processed");
+        }
+        UUID targetId = Objects.requireNonNull(escalationTargetId, "escalationTargetId must not be null");
+        Objects.requireNonNull(escalatedAt, "escalatedAt must not be null");
+        if (!escalated) {
+            escalatedFrom = approverId;
+        }
+        approverId = targetId;
+        delegateId = null;
+        escalated = true;
     }
 
     public void skip(Instant actedAt) {
@@ -192,6 +230,14 @@ public class ApprovalStep {
 
     public Optional<Instant> getActedAt() {
         return Optional.ofNullable(actedAt);
+    }
+
+    public boolean isEscalated() {
+        return escalated;
+    }
+
+    public Optional<UUID> getEscalatedFrom() {
+        return Optional.ofNullable(escalatedFrom);
     }
 
     public Optional<String> getCamundaTaskId() {

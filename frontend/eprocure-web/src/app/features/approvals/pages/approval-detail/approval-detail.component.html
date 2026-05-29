@@ -220,7 +220,7 @@
                       [labelKey]="'status.' + step.status" />
                   </div>
                   <div class="timeline-content__body">
-                    @if (step.approver?.fullName) {
+                    @if (step.approver.fullName) {
                       <div class="timeline-approver">
                         <ep-icon name="user" [size]="12"></ep-icon>
                         <span>{{ step.approver.fullName }}</span>

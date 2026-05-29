@@ -131,6 +131,17 @@ class CreateDelegationUseCaseTest {
         }
 
         @Override
+        public Optional<Delegation> findActiveForApproval(
+                UUID delegatorId,
+                UUID requesterDepartmentId,
+                BigDecimal totalAmount,
+                String currency,
+                List<String> categories,
+                Instant effectiveAt) {
+            return Optional.empty();
+        }
+
+        @Override
         public boolean hasActiveOverlap(UUID delegatorId, Instant startAt, Instant endAt) {
             return false;
         }

@@ -55,6 +55,61 @@
         ORDER BY start_at DESC, created_at DESC
     </select>
 
+    <select id="findActiveForApproval" resultMap="delegationResult">
+        SELECT d.id,
+               d.delegator_id,
+               d.delegate_id,
+               d.start_at,
+               d.end_at,
+               d.max_value,
+               d.currency,
+               d.allowed_categories::text AS allowed_categories_json,
+               d.scope,
+               d.status,
+               d.created_at
+        FROM iam.delegations d
+        JOIN iam.users delegator ON delegator.id = d.delegator_id
+            AND delegator.is_deleted = FALSE
+            AND delegator.status = 'ACTIVE'
+        JOIN iam.users delegate_user ON delegate_user.id = d.delegate_id
+            AND delegate_user.is_deleted = FALSE
+            AND delegate_user.status = 'ACTIVE'
+        WHERE d.is_deleted = FALSE
+          AND d.delegator_id = #{delegatorId}
+          AND d.status = 'ACTIVE'
+          AND d.start_at &lt;= #{effectiveAt}
+          AND d.end_at > #{effectiveAt}
+          AND (d.max_value IS NULL OR d.max_value >= #{totalAmount})
+          AND UPPER(d.currency) = UPPER(#{currency})
+          AND (
+              d.scope = 'ALL'
+              OR (d.scope = 'OWN_TEAM' AND delegator.department_id = #{requesterDepartmentId})
+          )
+          <choose>
+              <when test="categories != null and categories.size() > 0">
+                  AND (
+                      d.allowed_categories IS NULL
+                      OR EXISTS (
+                          SELECT 1
+                          FROM jsonb_array_elements_text(d.allowed_categories) AS category(value)
+                          WHERE UPPER(category.value) IN
+                          <foreach collection="categories" item="category" open="(" separator="," close=")">
+                              UPPER(#{category})
+                          </foreach>
+                      )
+                  )
+              </when>
+              <otherwise>
+                  AND d.allowed_categories IS NULL
+              </otherwise>
+          </choose>
+        ORDER BY
+          CASE WHEN d.max_value IS NULL THEN 1 ELSE 0 END ASC,
+          d.max_value ASC,
+          d.end_at ASC
+        LIMIT 1
+    </select>
+
     <select id="hasActiveOverlap" resultType="boolean">
         SELECT EXISTS (
             SELECT 1

@@ -3,13 +3,17 @@
     "skipToContent": "Bỏ qua điều hướng"
   },
   "action": {
+    "back": "Quay lại",
     "cancel": "Hủy",
     "confirm": "Xác nhận",
     "create": "Tạo mới",
+    "close": "Đóng",
+    "edit": "Chỉnh sửa",
     "processing": "Đang xử lý",
     "refresh": "Tải lại",
     "submit": "Lưu thay đổi",
-    "delete": "Xóa"
+    "delete": "Xóa",
+    "view": "Xem"
   },
   "app": {
     "name": "eProcure",
@@ -20,6 +24,17 @@
       "approve": "Phê duyệt",
       "reject": "Từ chối",
       "requestChanges": "Yêu cầu bổ sung"
+    },
+    "status": {
+      "PENDING": "Chờ xử lý",
+      "APPROVED": "Đã duyệt",
+      "REJECTED": "Từ chối",
+      "ESCALATED": "Đã chuyển cấp",
+      "SKIPPED": "Bỏ qua",
+      "FORWARDED": "Chuyển tiếp",
+      "IN_PROGRESS": "Đang duyệt",
+      "COMPLETED": "Hoàn tất",
+      "CANCELLED": "Đã hủy"
     }
   },
   "auth": {
@@ -129,6 +144,7 @@
     "adminRoles": "Quản lý vai trò",
     "adminRbac": "Ma trận phân quyền",
     "adminOrgChart": "Sơ đồ phòng ban",
+    "approvalRules": "Quy tắc phê duyệt",
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
     "openMenu": "Mở menu",
@@ -150,7 +166,8 @@
     "approvals": {
       "self": "Phê duyệt",
       "inbox": "Hộp thư phê duyệt",
-      "detail": "Chi tiết phê duyệt"
+      "detail": "Chi tiết phê duyệt",
+      "rules": "Quy tắc phê duyệt"
     },
     "dashboard": "Tổng quan",
     "procurement": "Mua sắm",
@@ -232,17 +249,40 @@
   "user": {
     "noDepartment": "Chưa có phòng ban"
   },
+  "validation": {
+    "required": "Thông tin này là bắt buộc",
+    "minChars": "ký tự tối thiểu",
+    "minLength": "Thông tin chưa đủ độ dài tối thiểu",
+    "maxLength": "Thông tin vượt quá độ dài cho phép"
+  },
   "pr": {
     "list": {
       "eyebrow": "Quản lý mua sắm",
       "title": "Yêu cầu mua sắm",
+      "subtitle": "Theo dõi trạng thái, mức độ ưu tiên, giá trị và thời hạn cần hàng của các yêu cầu mua sắm.",
+      "summaryLabel": "Tổng quan danh sách yêu cầu mua sắm",
+      "stat": {
+        "total": "Tổng yêu cầu",
+        "pending": "Đang xử lý",
+        "draft": "Bản nháp",
+        "completed": "Hoàn tất",
+        "visibleAmount": "Giá trị đang hiển thị"
+      },
       "action": {
         "create": "Tạo yêu cầu"
       },
       "filter": {
         "placeholder": "Tìm kiếm mã PR, tiêu đề...",
         "allStatus": "Tất cả trạng thái",
-        "allPriority": "Tất cả mức độ"
+        "allPriority": "Tất cả mức độ",
+        "clear": "Xóa lọc",
+        "status": "Trạng thái",
+        "priority": "Mức độ",
+        "fromDate": "Từ ngày",
+        "toDate": "Đến ngày",
+        "minAmount": "Giá trị từ",
+        "maxAmount": "Giá trị đến",
+        "amountPlaceholder": "VD: 5000000"
       },
       "empty": {
         "title": "Không có yêu cầu nào",
@@ -255,13 +295,16 @@
         "status": "Trạng thái",
         "amount": "Tổng tiền",
         "requester": "Người yêu cầu",
-        "createdAt": "Ngày tạo"
+        "createdAt": "Ngày tạo",
+        "needByDate": "Cần trước"
       },
       "totalItems": "kết quả"
     },
     "create": {
       "eyebrow": "Tạo mới",
+      "eyebrowEdit": "Cập nhật",
       "title": "Tạo yêu cầu mua sắm",
+      "titleEdit": "Cập nhật yêu cầu mua sắm",
       "section": {
         "basic": "Thông tin cơ bản",
         "lineItems": "Danh sách hàng hóa",
@@ -285,15 +328,18 @@
         "category": "Danh mục",
         "categoryPlaceholder": "Chọn danh mục...",
         "glAccount": "Tài khoản GL",
+        "glAccountPlaceholder": "VD: 6002",
         "quantity": "Số lượng",
         "unit": "ĐVT",
+        "unitPlaceholder": "VD: EA",
         "unitPrice": "Đơn giá",
         "total": "Thành tiền"
       },
       "action": {
         "addItem": "Thêm hàng hóa",
         "searchCatalog": "Tìm trong catalog",
-        "submit": "Tạo yêu cầu"
+        "submit": "Tạo yêu cầu",
+        "update": "Lưu cập nhật"
       },
       "upload": {
         "prompt": "Kéo thả file hoặc click để tải lên",
@@ -308,10 +354,15 @@
         "title": "Danh mục hàng hóa",
         "searchPlaceholder": "Tìm tên hoặc mã hàng hóa...",
         "noResults": "Không tìm thấy hàng hóa nào phù hợp."
+      },
+      "toast": {
+        "createSuccess": "Đã tạo yêu cầu mua sắm.",
+        "updateSuccess": "Đã cập nhật yêu cầu mua sắm."
       }
     },
     "detail": {
       "eyebrow": "Chi tiết yêu cầu",
+      "metricsLabel": "Chỉ số nhanh của yêu cầu mua sắm",
       "action": {
         "submit": "Gửi phê duyệt",
         "confirmCancel": "Xác nhận hủy"
@@ -320,15 +371,25 @@
         "justification": "Lý do mua sắm",
         "urgencyReason": "Lý do khẩn cấp",
         "requester": "Người tạo",
+        "department": "Phòng ban",
         "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật",
+        "submittedAt": "Ngày gửi",
         "needByDate": "Cần hàng trước",
         "totalAmount": "Tổng cộng",
-        "fromCatalog": "Từ catalog"
+        "lineItems": "Dòng hàng",
+        "fiscalYear": "Năm tài chính",
+        "requestId": "Mã hệ thống",
+        "blanketRelease": "Đơn gọi từ hợp đồng khung",
+        "fromCatalog": "Catalog",
+        "glAccount": "GL"
       },
       "section": {
+        "overview": "Thông tin yêu cầu",
         "lineItems": "Danh sách hàng hóa",
         "attachments": "Tài liệu đính kèm",
         "budget": "Kiểm tra ngân sách",
+        "inventory": "Tồn kho liên quan",
         "approval": "Quy trình phê duyệt"
       },
       "col": {
@@ -340,7 +401,25 @@
       },
       "budget": {
         "allocated": "Ngân sách cấp:",
-        "available": "Còn lại khả dụng:"
+        "committed": "Đã cam kết:",
+        "spent": "Đã chi:",
+        "available": "Còn lại khả dụng:",
+        "usage": "Tỷ lệ sử dụng ngân sách"
+      },
+      "inventory": {
+        "empty": "Không có tồn kho có thể thay thế cho các hàng hóa trong yêu cầu."
+      },
+      "approval": {
+        "none": "Chưa phát sinh quy trình phê duyệt cho yêu cầu này.",
+        "assignedAt": "Giao:",
+        "deadline": "Hạn:"
+      },
+      "step": {
+        "count": "{{count}} dòng"
+      },
+      "toast": {
+        "submitSuccess": "Đã gửi yêu cầu vào quy trình phê duyệt.",
+        "cancelSuccess": "Đã hủy yêu cầu mua sắm."
       },
       "modal": {
         "cancel": {
@@ -816,6 +895,150 @@
           "submit": "Chuyển tiếp"
         },
         "cancel": "Hủy"
+      }
+    },
+    "rules": {
+      "eyebrow": "Quản trị phê duyệt",
+      "title": "Quy tắc phê duyệt",
+      "subtitle": "Quản lý ma trận duyệt theo giá trị, danh mục, phòng ban và mức độ ưu tiên.",
+      "action": {
+        "create": "Tạo quy tắc",
+        "edit": "Sửa",
+        "deactivate": "Vô hiệu hóa",
+        "viewChain": "Xem sơ đồ",
+        "addStep": "Thêm bước",
+        "removeStep": "Xóa bước"
+      },
+      "stat": {
+        "total": "Tổng quy tắc",
+        "active": "Đang hoạt động",
+        "inactive": "Đã tắt",
+        "steps": "Tổng bước duyệt"
+      },
+      "filter": {
+        "title": "Bộ lọc vận hành",
+        "description": "Thu hẹp danh sách theo loại quy tắc, trạng thái hoặc tên vai trò duyệt.",
+        "searchLabel": "Tìm quy tắc",
+        "searchPlaceholder": "Tìm tên, loại, vai trò hoặc mô tả...",
+        "type": "Loại quy tắc",
+        "status": "Trạng thái",
+        "allTypes": "Tất cả loại",
+        "allStatus": "Tất cả trạng thái",
+        "statusActive": "Đang hoạt động",
+        "statusInactive": "Đã tắt",
+        "clear": "Xóa lọc",
+        "showing": "{{count}} / {{total}} quy tắc"
+      },
+      "col": {
+        "name": "Quy tắc",
+        "type": "Loại",
+        "conditions": "Điều kiện",
+        "steps": "Chuỗi duyệt",
+        "priority": "Ưu tiên",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Đã tắt"
+      },
+      "type": {
+        "VALUE": "Giá trị",
+        "CATEGORY": "Danh mục",
+        "DEPARTMENT": "Phòng ban",
+        "DEFAULT": "Mặc định"
+      },
+      "stepType": {
+        "SEQUENTIAL": "Tuần tự",
+        "PARALLEL": "Song song"
+      },
+      "priority": {
+        "NORMAL": "Bình thường",
+        "URGENT": "Khẩn",
+        "EMERGENCY": "Khẩn cấp"
+      },
+      "condition": {
+        "min": "Từ",
+        "max": "Đến dưới",
+        "categories": "Danh mục",
+        "departments": "Phòng ban",
+        "priorities": "Mức độ",
+        "any": "Áp dụng mặc định"
+      },
+      "section": {
+        "identity": "Thông tin quy tắc",
+        "identityHint": "Đặt tên chuẩn, chọn loại rule và thứ tự ưu tiên khi engine tìm rule phù hợp.",
+        "conditions": "Điều kiện áp dụng",
+        "conditionsHint": "Bỏ trống điều kiện nào nếu quy tắc không cần giới hạn theo điều kiện đó.",
+        "steps": "Các bước phê duyệt",
+        "stepsHint": "Các bước được sắp theo thứ tự; cùng thứ tự có thể chạy song song nếu chọn kiểu song song."
+      },
+      "step": {
+        "slaSummary": "{{hours}}h SLA",
+        "count": "{{count}} bước",
+        "firstRole": "Bắt đầu: {{role}}",
+        "lastRole": "Kết thúc: {{role}}",
+        "parallelCount": "{{count}} bước song song",
+        "required": "Bắt buộc",
+        "optional": "Không bắt buộc"
+      },
+      "chain": {
+        "title": "Sơ đồ duyệt: {{rule}}",
+        "totalSteps": "{{count}} bước duyệt",
+        "totalSla": "SLA cấu hình {{hours}}h",
+        "empty": "Chưa có bước duyệt trong quy tắc này."
+      },
+      "reference": {
+        "selectedCount": "{{count}} đã chọn",
+        "noCategories": "Chưa tải được danh mục. Vẫn có thể lưu các giá trị đã có của quy tắc.",
+        "noDepartments": "Chưa tải được phòng ban. Kiểm tra quyền ORG_VIEW hoặc thử tải lại trang."
+      },
+      "field": {
+        "ruleName": "Tên quy tắc",
+        "ruleType": "Loại quy tắc",
+        "priority": "Mức ưu tiên",
+        "active": "Đang hoạt động",
+        "minValue": "Giá trị tối thiểu",
+        "maxValue": "Giá trị tối đa",
+        "categories": "Danh mục",
+        "departmentIds": "Phòng ban áp dụng",
+        "priorities": "Mức độ PR",
+        "stepIndex": "Thứ tự",
+        "approverRole": "Vai trò duyệt",
+        "stepType": "Kiểu bước",
+        "slaHours": "SLA giờ",
+        "required": "Bắt buộc",
+        "description": "Mô tả",
+        "reason": "Lý do vô hiệu hóa"
+      },
+      "placeholder": {
+        "ruleName": "VD: VALUE_5M_20M",
+        "money": "VD: 5000000.0000",
+        "categories": "VD: SOFTWARE, SAAS",
+        "departmentIds": "UUID phòng ban, phân tách bằng dấu phẩy",
+        "approverRole": "VD: MANAGER",
+        "description": "Mô tả phạm vi áp dụng quy tắc",
+        "reason": "Nhập lý do vô hiệu hóa quy tắc"
+      },
+      "modal": {
+        "createTitle": "Tạo quy tắc phê duyệt",
+        "editTitle": "Cập nhật quy tắc phê duyệt",
+        "deactivateTitle": "Vô hiệu hóa quy tắc",
+        "deactivateMessage": "Bạn sắp vô hiệu hóa quy tắc {{rule}}. Quy trình đang chạy sẽ không bị thay đổi."
+      },
+      "toast": {
+        "loadFailed": "Không thể tải danh sách quy tắc phê duyệt.",
+        "validationFailed": "Vui lòng kiểm tra lại thông tin quy tắc.",
+        "createSuccess": "Đã tạo quy tắc phê duyệt thành công.",
+        "updateSuccess": "Đã cập nhật quy tắc phê duyệt thành công.",
+        "saveFailed": "Không thể lưu quy tắc phê duyệt.",
+        "reasonRequired": "Vui lòng nhập lý do vô hiệu hóa.",
+        "deactivateSuccess": "Đã vô hiệu hóa quy tắc phê duyệt.",
+        "deactivateFailed": "Không thể vô hiệu hóa quy tắc phê duyệt."
+      },
+      "empty": {
+        "title": "Chưa có quy tắc phù hợp",
+        "message": "Tạo quy tắc phê duyệt đầu tiên hoặc thay đổi bộ lọc tìm kiếm."
       }
     }
   }

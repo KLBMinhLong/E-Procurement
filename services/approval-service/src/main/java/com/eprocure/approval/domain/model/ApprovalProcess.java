@@ -91,6 +91,7 @@ public class ApprovalProcess {
                         step.stepType(),
                         step.approverRole(),
                         step.approver().id(),
+                        step.delegateId(),
                         step.slaDeadline(),
                         startedAt))
                 .toList();

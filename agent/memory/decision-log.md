@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-28] E05 SLA timer and escalation
+
+- Decision: Add a scheduled `SlaEscalationUseCase` in approval-service to scan overdue pending approval steps, mark `is_escalated`, persist `escalated_from`, reassign to another eligible approver for the same role when IAM returns one, and publish `approval.sla.breached`.
+- Reason: E05 needs durable SLA breach handling after deadlines are already calculated and persisted; the existing schema includes `is_escalated`/`escalated_from`, and overdue task scanning can be replay-safe by filtering non-escalated pending steps.
+- Impact: Approval tasks remain actionable in inbox after escalation because status stays `PENDING`, while details can show `isEscalated=true`. Kafka mode publishes a transaction-after-commit SLA breach event; local fallback logs the same event without requiring Kafka.
+- Constraint: Escalation target resolution currently selects another eligible candidate for the same approver role from IAM and falls back to notifying the original approver when no alternate candidate exists. Delegation-aware substitution and admin approval rule CRUD remain later E05 slices.
+
 ## [2026-05-28] E03 Frontend Breadcrumb i18n Collision and Dynamic Route Parameter Support
 
 - Decision: Resolve translation override by merging duplicate `"route"` JSON blocks in `vi.json` and `en.json` into a nested structure, and upgrade `EpBreadcrumbComponent` to use progressive cumulative path mapping with Regex support for dynamic UUIDs/IDs.
@@ -261,3 +268,24 @@
 - Reason: E05 tracker requires approval task actions as the next vertical slice after start-process and PR-pending-approval-callback are complete. Actions must transition process/step state, propagate final results to PR service, and emit `approval.step.assigned` events for newly assigned steps.
 - Impact: `ApprovalTaskController` exposes 4 PATCH endpoints (`/{taskId}/approve`, `/reject`, `/request-changes`, `/forward`) guarded by permission codes. Domain `ApprovalProcess` enforces SoD (requester ≠ approver), sequential step progression, parallel step skipping on reject, and forward-to-eligible-candidate validation via `OrgApproverPort`. PR service receives approval results through internal PATCH endpoints (`/internal/purchase-requests/{id}/approved|rejected|changes-requested`) guarded by `X-Internal-Api-Key`. All actions are idempotent via `IdempotencyService`. 26 approval-service tests and 38 PR-service tests pass (109 total across all modules).
 - Constraint: SLA timer escalation, delegation-aware substitution, admin CRUD for approval rules, and frontend inbox/task-detail screens remain deferred to later E05 slices.
+
+## [2026-05-28] E05 Delegation-aware approval assignment
+
+- Decision: Resolve active approval delegation during approval chain resolution by calling IAM internal delegation lookup and persisting `delegate_id` on generated approval steps while keeping the original approver as delegator.
+- Reason: Approval inbox/detail/action flows already understand `delegate_id`, but newly started processes did not populate it from IAM delegation data.
+- Impact: IAM exposes `GET /internal/org/delegations/active` guarded by `X-Internal-Api-Key`; Approval Engine uses `DelegationResolutionPort` to pass delegator, requester, requester department, amount, currency, and categories before creating steps. Delegated tasks appear in the delegate inbox and can be acted on through existing task authorization. IAM and Approval targeted tests pass: 47 IAM tests, 30 Approval tests.
+- Constraint: Delegation is resolved at process start. Existing in-flight approval steps are not retroactively reassigned if a delegation is created or revoked later.
+
+## [2026-05-28] E05 Admin approval rule CRUD
+
+- Decision: Add backend admin APIs for listing, creating, updating, and deactivating approval rules under `/api/v1/approvals/rules`, guarded by `ADMIN_APPROVAL_RULE`.
+- Reason: E05 required admin rule management after approval execution, inbox, SLA, and delegation were complete.
+- Impact: Rule mutations are idempotent, audit-logged, and update `approval_rules` plus replacement `approval_rule_steps` through the approval repository. OpenAPI and error-code docs now include the rule mutation contract; approval-service tests pass with 36 tests.
+- Constraint: Deactivate only sets `is_active=false`; it does not hard-delete or retroactively alter already running approval processes.
+
+## [2026-05-28] E05 Approval rule admin frontend closure
+
+- Decision: Add `/approvals/rules` as the approval rule management UI guarded by `ADMIN_APPROVAL_RULE`, with admin navigation entry and a compatibility redirect from `/admin/approval-rules`.
+- Reason: E05 frontend had inbox/detail/actions, but the story map also required `ApprovalRuleAdminPage` to operate the backend rule CRUD added for E05 closure.
+- Impact: Admin users can list, search, create, update, and deactivate approval rules with condition and step editors. The approvals module route guard now admits either approver permissions or `ADMIN_APPROVAL_RULE`; child routes still enforce their own narrower permissions. Frontend build passes.
+- Constraint: Visual browser QA was not run because no Browser MCP tool was available in this session; verification is limited to Angular production build.

@@ -8,6 +8,7 @@ import com.eprocure.iam.infrastructure.persistence.mapper.DelegationMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,24 @@ public class DelegationRepositoryImpl implements DelegationRepository {
     @Override
     public List<Delegation> findByDelegatorId(UUID delegatorId) {
         return delegationMapper.findByDelegatorId(delegatorId).stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public Optional<Delegation> findActiveForApproval(
+            UUID delegatorId,
+            UUID requesterDepartmentId,
+            BigDecimal totalAmount,
+            String currency,
+            List<String> categories,
+            Instant effectiveAt) {
+        return Optional.ofNullable(delegationMapper.findActiveForApproval(
+                        delegatorId,
+                        requesterDepartmentId,
+                        totalAmount,
+                        currency,
+                        categories == null ? List.of() : categories,
+                        effectiveAt))
+                .map(this::toDomain);
     }
 
     @Override

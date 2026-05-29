@@ -2,6 +2,7 @@ package com.eprocure.iam.infrastructure.persistence.mapper;
 
 import com.eprocure.iam.domain.model.DelegationStatus;
 import com.eprocure.iam.infrastructure.persistence.entity.DelegationDbEntity;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +14,14 @@ public interface DelegationMapper {
     DelegationDbEntity findById(@Param("id") UUID id);
 
     List<DelegationDbEntity> findByDelegatorId(@Param("delegatorId") UUID delegatorId);
+
+    DelegationDbEntity findActiveForApproval(
+            @Param("delegatorId") UUID delegatorId,
+            @Param("requesterDepartmentId") UUID requesterDepartmentId,
+            @Param("totalAmount") BigDecimal totalAmount,
+            @Param("currency") String currency,
+            @Param("categories") List<String> categories,
+            @Param("effectiveAt") Instant effectiveAt);
 
     boolean hasActiveOverlap(
             @Param("delegatorId") UUID delegatorId,

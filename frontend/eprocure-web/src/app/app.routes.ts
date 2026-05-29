@@ -49,14 +49,14 @@ export const routes: Routes = [
       {
         path: 'approvals',
         canActivate: [permissionGuard],
-        data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY'] },
+        data: { requiredPermissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY', 'ADMIN_APPROVAL_RULE'] },
         loadChildren: () =>
           import('./features/approvals/approvals.routes').then((m) => m.approvalsRoutes)
       },
       {
         path: 'admin',
         canActivate: [permissionGuard],
-        data: { requiredPermissions: ['ADMIN_USER_VIEW', 'ADMIN_ROLE_MANAGE', 'SYSTEM_CONFIG'] },
+        data: { requiredPermissions: ['ADMIN_USER_VIEW', 'ADMIN_ROLE_MANAGE', 'SYSTEM_CONFIG', 'ADMIN_APPROVAL_RULE'] },
         loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes)
       },
       {

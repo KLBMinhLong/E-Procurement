@@ -7,11 +7,11 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { finalize, debounceTime, distinctUntilChanged } from 'rxjs';
+import { finalize } from 'rxjs';
 
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
@@ -19,9 +19,9 @@ import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcru
 import { EpAmountComponent } from '../../../../shared/components/ep-amount/ep-amount.component';
 import { EpCardComponent } from '../../../../shared/components/ep-card/ep-card.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
-import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
+import { ToastService } from '../../../../core/services/toast.service';
 
 import { PurchaseRequestService } from '../../services/purchase-request.service';
 import { CatalogService } from '../../services/catalog.service';
@@ -30,6 +30,7 @@ import {
   CatalogItem,
   CreatePrRequest,
   PrLineItemRequest,
+  PrLineItemResponse,
   PrPriority
 } from '../../models/purchase-request.model';
 
@@ -46,7 +47,6 @@ import {
     EpAmountComponent,
     EpCardComponent,
     EpIconComponent,
-    EpBadgeComponent,
     EpSkeletonComponent,
     EpModalComponent
   ],
@@ -56,12 +56,16 @@ import {
 export class PrCreateComponent implements OnInit {
   private readonly prService = inject(PurchaseRequestService);
   private readonly catalogService = inject(CatalogService);
+  private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
   // ── State ──────────────────────────────────────────────────────────
   readonly isSubmitting = signal(false);
+  readonly isEditLoading = signal(false);
+  readonly editingId = signal<string | null>(null);
   readonly isUploadingFile = signal(false);
   readonly showCatalogPicker = signal(false);
   readonly catalogPickerTargetIndex = signal<number | null>(null);
@@ -72,6 +76,8 @@ export class PrCreateComponent implements OnInit {
   readonly uploadedAttachments = signal<{ id: string; fileName: string; fileSize: number }[]>([]);
 
   readonly priorities: PrPriority[] = ['NORMAL', 'URGENT', 'EMERGENCY'];
+
+  readonly isEditMode = computed(() => Boolean(this.editingId()));
 
   readonly showUrgencyReason = computed(() => {
     const p = this.form.get('priority')?.value as PrPriority;
@@ -105,21 +111,30 @@ export class PrCreateComponent implements OnInit {
   // ── Lifecycle ──────────────────────────────────────────────────────
   ngOnInit(): void {
     this.loadCategories();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const editId = params.get('edit');
+        this.editingId.set(editId);
+        if (editId) {
+          this.loadForEdit(editId);
+        }
+      });
   }
 
   // ── Line item helpers ──────────────────────────────────────────────
-  createLineItemGroup(): FormGroup {
+  createLineItemGroup(item?: Partial<PrLineItemResponse>): FormGroup {
     return this.fb.group({
-      itemCode: [null as string | null],
-      itemName: ['', [Validators.required, Validators.maxLength(300)]],
-      description: [null as string | null],
-      categoryCode: ['', Validators.required],
-      quantityAmount: ['1', Validators.required],
-      quantityUnit: ['cái', Validators.required],
-      unitPriceAmount: ['0', Validators.required],
-      glAccountCode: ['', Validators.required],
-      specifications: [null as string | null],
-      isFromCatalog: [false]
+      itemCode: [item?.itemCode ?? null as string | null],
+      itemName: [item?.itemName ?? '', [Validators.required, Validators.maxLength(300)]],
+      description: [item?.description ?? null as string | null],
+      categoryCode: [item?.categoryCode ?? '', Validators.required],
+      quantityAmount: [item?.quantity?.amount ?? '1', Validators.required],
+      quantityUnit: [item?.quantity?.unit ?? 'EA', Validators.required],
+      unitPriceAmount: [item?.unitPrice?.amount ?? '0', Validators.required],
+      glAccountCode: [item?.glAccountCode ?? '', Validators.required],
+      specifications: [item?.specifications ?? null as string | null],
+      isFromCatalog: [item?.isFromCatalog ?? false]
     });
   }
 
@@ -235,14 +250,32 @@ export class PrCreateComponent implements OnInit {
       priority: v.priority,
       urgencyReason: this.showUrgencyReason() ? v.urgencyReason : null,
       needByDate: v.needByDate || null,
-      lineItems,
-      attachmentIds: this.uploadedAttachments().map((a) => a.id)
+      lineItems
     };
 
-    this.prService.create(request)
+    const editId = this.editingId();
+    if (editId) {
+      this.prService.update(editId, request)
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false)))
+        .subscribe({
+          next: () => {
+            this.toastService.successKey('pr.create.toast.updateSuccess');
+            this.router.navigate(['/procurement', editId]);
+          }
+        });
+      return;
+    }
+
+    this.prService.create({
+      ...request,
+      attachmentIds: this.uploadedAttachments().map((a) => a.id)
+    })
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false)))
       .subscribe({
-        next: (res) => this.router.navigate(['/procurement', res.data.id])
+        next: (res) => {
+          this.toastService.successKey('pr.create.toast.createSuccess');
+          this.router.navigate(['/procurement', res.data.id]);
+        }
       });
   }
 
@@ -255,6 +288,39 @@ export class PrCreateComponent implements OnInit {
     this.catalogService.getCategories()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (res) => this.catalogCategories.set(res.data ?? []) });
+  }
+
+  private loadForEdit(id: string): void {
+    this.isEditLoading.set(true);
+    this.prService.getById(id)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isEditLoading.set(false)))
+      .subscribe({
+        next: (res) => {
+          const data = res.data;
+          this.form.patchValue({
+            title: data.title,
+            justification: data.justification,
+            priority: data.priority,
+            urgencyReason: data.urgencyReason,
+            needByDate: this.toDateInput(data.needByDate)
+          });
+          this.lineItems.clear();
+          data.lineItems.forEach((item) => this.lineItems.push(this.createLineItemGroup(item)));
+          if (!this.lineItems.length) {
+            this.addLineItem();
+          }
+          this.uploadedAttachments.set(data.attachments?.map((att) => ({
+            id: att.id,
+            fileName: att.fileName,
+            fileSize: att.fileSize
+          })) ?? []);
+        },
+        error: () => this.router.navigate(['/procurement'])
+      });
+  }
+
+  private toDateInput(value: string | null | undefined): string | null {
+    return value ? value.slice(0, 10) : null;
   }
 
   // ── Field error helpers ────────────────────────────────────────────

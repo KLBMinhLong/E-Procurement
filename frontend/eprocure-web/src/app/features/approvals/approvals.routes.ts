@@ -3,6 +3,14 @@ import { permissionGuard } from '../../core/permissions/permission.guard';
 
 export const approvalsRoutes: Routes = [
   {
+    path: 'rules',
+    loadComponent: () =>
+      import('./pages/approval-rules/approval-rules.component').then((m) => m.ApprovalRulesComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['ADMIN_APPROVAL_RULE'] },
+    title: 'route.approvals.rules'
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./pages/approval-inbox/approval-inbox.component').then((m) => m.ApprovalInboxComponent),

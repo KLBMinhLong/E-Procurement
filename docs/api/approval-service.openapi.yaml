@@ -187,6 +187,38 @@ components:
             $ref: '#/components/schemas/ApprovalRuleStepTemplate'
         description:  { type: string, nullable: true }
 
+    ApprovalRuleUpsertRequest:
+      type: object
+      required: [ruleName, ruleType, steps]
+      properties:
+        ruleName:
+          type: string
+          example: VALUE_5M_20M
+        priority:
+          type: integer
+          default: 100
+        active:
+          type: boolean
+          nullable: true
+          description: Chỉ dùng khi cập nhật; tạo mới luôn active.
+        ruleType:
+          type: string
+          enum: [VALUE, CATEGORY, DEPARTMENT, DEFAULT]
+        conditions:
+          type: object
+          properties:
+            minValue:      { type: string, nullable: true, example: "5000000.0000" }
+            maxValue:      { type: string, nullable: true, example: "20000000.0000" }
+            categories:    { type: array, items: { type: string }, nullable: true }
+            departmentIds: { type: array, items: { type: string, format: uuid }, nullable: true }
+            priorities:    { type: array, items: { type: string }, nullable: true }
+        steps:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ApprovalRuleStepTemplate'
+        description: { type: string, nullable: true }
+
 paths:
   /approvals/inbox:
     get:
@@ -508,32 +540,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [ruleName, ruleType, steps]
-              properties:
-                ruleName:
-                  type: string
-                  example: VALUE_5M_20M
-                priority:
-                  type: integer
-                  default: 100
-                ruleType:
-                  type: string
-                  enum: [VALUE, CATEGORY, DEPARTMENT, DEFAULT]
-                conditions:
-                  type: object
-                  properties:
-                    minValue:      { type: string, nullable: true, example: "5000000" }
-                    maxValue:      { type: string, nullable: true, example: "20000000" }
-                    categories:    { type: array, items: { type: string }, nullable: true }
-                    departmentIds: { type: array, items: { type: string, format: uuid }, nullable: true }
-                    priorities:    { type: array, items: { type: string }, nullable: true }
-                steps:
-                  type: array
-                  minItems: 1
-                  items:
-                    $ref: '#/components/schemas/ApprovalRuleStepTemplate'
-                description: { type: string }
+              $ref: '#/components/schemas/ApprovalRuleUpsertRequest'
       responses:
         '201':
           description: Tạo rule thành công
@@ -564,7 +571,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalRuleDetail'
+              $ref: '#/components/schemas/ApprovalRuleUpsertRequest'
       responses:
         '200':
           description: Cập nhật thành công
@@ -605,4 +612,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ApprovalRuleDetail'

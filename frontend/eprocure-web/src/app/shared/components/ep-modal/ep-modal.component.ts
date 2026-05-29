@@ -14,5 +14,6 @@ import { EpIconComponent } from '../ep-icon/ep-icon.component';
 export class EpModalComponent {
   readonly open = input(false);
   readonly title = input.required<string>();
+  readonly size = input<'md' | 'lg' | 'xl'>('md');
   readonly close = output<void>();
 }
