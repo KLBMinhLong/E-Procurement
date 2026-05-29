@@ -912,6 +912,11 @@
         "totalSla": "SLA cấu hình {{hours}}h",
         "empty": "Chưa có bước duyệt trong quy tắc này."
       },
+      "reference": {
+        "selectedCount": "{{count}} đã chọn",
+        "noCategories": "Chưa tải được danh mục. Vẫn có thể lưu các giá trị đã có của quy tắc.",
+        "noDepartments": "Chưa tải được phòng ban. Kiểm tra quyền ORG_VIEW hoặc thử tải lại trang."
+      },
       "field": {
         "ruleName": "Tên quy tắc",
         "ruleType": "Loại quy tắc",

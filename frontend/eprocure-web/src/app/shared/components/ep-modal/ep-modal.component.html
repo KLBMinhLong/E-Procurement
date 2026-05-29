@@ -1,6 +1,9 @@
 @if (open()) {
   <div class="ep-modal" role="dialog" aria-modal="true">
-    <div class="ep-modal__panel">
+    <div
+      class="ep-modal__panel"
+      [class.ep-modal__panel--lg]="size() === 'lg'"
+      [class.ep-modal__panel--xl]="size() === 'xl'">
       <header>
         <h2>{{ title() }}</h2>
         <ep-button variant="ghost" [ariaLabel]="'shared.modal.close' | translate" (click)="close.emit()">

@@ -912,6 +912,11 @@
         "totalSla": "Configured SLA {{hours}}h",
         "empty": "This rule has no approval steps."
       },
+      "reference": {
+        "selectedCount": "{{count}} selected",
+        "noCategories": "Categories could not be loaded. Existing rule values can still be saved.",
+        "noDepartments": "Departments could not be loaded. Check ORG_VIEW permission or reload the page."
+      },
       "field": {
         "ruleName": "Rule name",
         "ruleType": "Rule type",

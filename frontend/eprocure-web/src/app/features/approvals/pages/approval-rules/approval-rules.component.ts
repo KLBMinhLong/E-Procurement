@@ -30,6 +30,11 @@ import {
   ApprovalStepType
 } from '../../models/approvals.model';
 import { ApprovalsService } from '../../services/approvals.service';
+import { AdminDepartment, AdminRole } from '../../../admin/models/admin.model';
+import { AdminOrgService } from '../../../admin/services/admin-org.service';
+import { AdminRbacService } from '../../../admin/services/admin-rbac.service';
+import { CatalogCategory } from '../../../procurement/models/purchase-request.model';
+import { CatalogService } from '../../../procurement/services/catalog.service';
 
 type StepFormGroup = FormGroup<{
   stepIndex: FormControl<number>;
@@ -46,8 +51,8 @@ type RuleForm = FormGroup<{
   ruleType: FormControl<ApprovalRuleType>;
   minValue: FormControl<string>;
   maxValue: FormControl<string>;
-  categories: FormControl<string>;
-  departmentIds: FormControl<string>;
+  categories: FormControl<string[]>;
+  departmentIds: FormControl<string[]>;
   priorities: FormControl<ApprovalPriority[]>;
   description: FormControl<string>;
   steps: FormArray<StepFormGroup>;
@@ -85,6 +90,9 @@ interface RuleSummaryCard {
 })
 export class ApprovalRulesComponent implements OnInit {
   private readonly approvalsService = inject(ApprovalsService);
+  private readonly orgService = inject(AdminOrgService);
+  private readonly rbacService = inject(AdminRbacService);
+  private readonly catalogService = inject(CatalogService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(NonNullableFormBuilder);
@@ -106,6 +114,9 @@ export class ApprovalRulesComponent implements OnInit {
   readonly isFormOpen = signal(false);
   readonly isDeactivateOpen = signal(false);
   readonly deactivateReason = signal('');
+  readonly departments = signal<AdminDepartment[]>([]);
+  readonly catalogCategories = signal<CatalogCategory[]>([]);
+  readonly roleOptions = signal<AdminRole[]>([]);
 
   readonly form: RuleForm = this.fb.group({
     ruleName: this.fb.control('', { validators: [Validators.required] }),
@@ -114,8 +125,8 @@ export class ApprovalRulesComponent implements OnInit {
     ruleType: this.fb.control<ApprovalRuleType>('VALUE', { validators: [Validators.required] }),
     minValue: this.fb.control(''),
     maxValue: this.fb.control(''),
-    categories: this.fb.control(''),
-    departmentIds: this.fb.control(''),
+    categories: this.fb.control<string[]>([]),
+    departmentIds: this.fb.control<string[]>([]),
     priorities: this.fb.control<ApprovalPriority[]>(['NORMAL', 'URGENT']),
     description: this.fb.control(''),
     steps: this.fb.array<StepFormGroup>([this.createStepGroup()])
@@ -171,12 +182,15 @@ export class ApprovalRulesComponent implements OnInit {
     const rule = this.selectedChainRule();
     return rule ? this.sortedSteps(rule) : [];
   });
+  readonly flatDepartments = computed(() => this.flattenDepartments(this.departments()));
+  readonly flatCategories = computed(() => this.flattenCategories(this.catalogCategories()));
 
   get stepsArray(): FormArray<StepFormGroup> {
     return this.form.controls.steps;
   }
 
   ngOnInit(): void {
+    this.loadReferenceData();
     this.loadRules();
   }
 
@@ -208,8 +222,8 @@ export class ApprovalRulesComponent implements OnInit {
       ruleType: rule.ruleType,
       minValue: rule.conditions?.minValue ?? '',
       maxValue: rule.conditions?.maxValue ?? '',
-      categories: this.joinValues(rule.conditions?.categories),
-      departmentIds: this.joinValues(rule.conditions?.departmentIds),
+      categories: rule.conditions?.categories ?? [],
+      departmentIds: rule.conditions?.departmentIds ?? [],
       priorities: rule.conditions?.priorities?.length ? rule.conditions.priorities : [],
       description: rule.description ?? ''
     });
@@ -252,6 +266,32 @@ export class ApprovalRulesComponent implements OnInit {
       ? Array.from(new Set([...current, priority]))
       : current.filter((item) => item !== priority);
     this.form.controls.priorities.setValue(next);
+  }
+
+  toggleCategory(code: string, checked: boolean): void {
+    this.toggleArrayValue(this.form.controls.categories, code, checked);
+  }
+
+  toggleDepartment(id: string, checked: boolean): void {
+    this.toggleArrayValue(this.form.controls.departmentIds, id, checked);
+  }
+
+  isCategorySelected(code: string): boolean {
+    return this.form.controls.categories.value.includes(code);
+  }
+
+  isDepartmentSelected(id: string): boolean {
+    return this.form.controls.departmentIds.value.includes(id);
+  }
+
+  categoryLabel(code: string): string {
+    const category = this.flatCategories().find((item) => item.code === code);
+    return category ? `${category.code} - ${category.name}` : code;
+  }
+
+  departmentLabel(id: string): string {
+    const department = this.flatDepartments().find((item) => item.id === id);
+    return department ? `${department.code} - ${department.name}` : id;
   }
 
   submitForm(): void {
@@ -413,8 +453,8 @@ export class ApprovalRulesComponent implements OnInit {
       ruleType: 'VALUE',
       minValue: '',
       maxValue: '',
-      categories: '',
-      departmentIds: '',
+      categories: [],
+      departmentIds: [],
       priorities: ['NORMAL', 'URGENT'],
       description: ''
     });
@@ -446,9 +486,9 @@ export class ApprovalRulesComponent implements OnInit {
       conditions: {
         minValue: this.blankToNull(value.minValue),
         maxValue: this.blankToNull(value.maxValue),
-        categories: this.parseCsv(value.categories),
-        departmentIds: this.parseCsv(value.departmentIds),
-        priorities: value.priorities.length ? value.priorities : null
+        categories: value.categories,
+        departmentIds: value.departmentIds,
+        priorities: value.priorities
       },
       steps: value.steps.map((step) => this.toStepValue(step)),
       description: this.blankToNull(value.description)
@@ -471,20 +511,47 @@ export class ApprovalRulesComponent implements OnInit {
     };
   }
 
-  private parseCsv(value: string): string[] | null {
-    const items = value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-    return items.length ? items : null;
-  }
-
-  private joinValues(values: string[] | null | undefined): string {
-    return values?.join(', ') ?? '';
-  }
-
   private blankToNull(value: string): string | null {
     const trimmed = value.trim();
     return trimmed ? trimmed : null;
+  }
+
+  private loadReferenceData(): void {
+    this.orgService.getDepartments()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => this.departments.set(response.data ?? []),
+        error: () => this.departments.set([])
+      });
+
+    this.catalogService.getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => this.catalogCategories.set(response.data ?? []),
+        error: () => this.catalogCategories.set([])
+      });
+
+    this.rbacService.getRoles()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => this.roleOptions.set(response.data ?? []),
+        error: () => this.roleOptions.set([])
+      });
+  }
+
+  private flattenDepartments(nodes: AdminDepartment[]): AdminDepartment[] {
+    return nodes.flatMap((node) => [node, ...this.flattenDepartments(node.children ?? [])]);
+  }
+
+  private flattenCategories(nodes: CatalogCategory[]): CatalogCategory[] {
+    return nodes.flatMap((node) => [node, ...this.flattenCategories(node.children ?? [])]);
+  }
+
+  private toggleArrayValue(control: FormControl<string[]>, value: string, checked: boolean): void {
+    const current = control.value;
+    const next = checked
+      ? Array.from(new Set([...current, value]))
+      : current.filter((item) => item !== value);
+    control.setValue(next);
   }
 }

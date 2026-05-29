@@ -237,6 +237,7 @@
 
 <ep-modal
   [open]="selectedChainRule() !== null"
+  size="lg"
   [title]="'approvals.rules.chain.title' | translate: { rule: selectedChainRule()?.ruleName }"
   (close)="closeChainModal()">
   @if (selectedChainRule(); as rule) {
@@ -304,82 +305,133 @@
 
 <ep-modal
   [open]="isFormOpen()"
+  size="xl"
   [title]="selectedRule() ? ('approvals.rules.modal.editTitle' | translate) : ('approvals.rules.modal.createTitle' | translate)"
   (close)="closeFormModal()">
   <form class="rule-form" [formGroup]="form" (ngSubmit)="submitForm()">
-    <section class="form-section form-section--identity">
-      <div class="section-heading">
-        <div>
-          <h3>{{ 'approvals.rules.section.identity' | translate }}</h3>
-          <p>{{ 'approvals.rules.section.identityHint' | translate }}</p>
-        </div>
-        <label class="switch-field">
-          <input type="checkbox" formControlName="active" />
-          <span>{{ 'approvals.rules.field.active' | translate }}</span>
-        </label>
-      </div>
-
-      <div class="form-grid form-grid--identity">
-        <ep-form-field [label]="'approvals.rules.field.ruleName' | translate">
-          <input formControlName="ruleName" type="text" [placeholder]="'approvals.rules.placeholder.ruleName' | translate" />
-        </ep-form-field>
-        <ep-form-field [label]="'approvals.rules.field.priority' | translate">
-          <input formControlName="priority" type="number" min="1" />
-        </ep-form-field>
-      </div>
-
-      <div class="segmented-field">
-        <span>{{ 'approvals.rules.field.ruleType' | translate }}</span>
-        <div class="segmented-field__options" role="group" [attr.aria-label]="'approvals.rules.field.ruleType' | translate">
-          @for (type of ruleTypes; track type) {
-            <button
-              type="button"
-              class="segmented-control"
-              [class.segmented-control--active]="form.controls.ruleType.value === type"
-              (click)="setRuleType(type)">
-              {{ 'approvals.rules.type.' + type | translate }}
-            </button>
-          }
-        </div>
-      </div>
-    </section>
-
-    <section class="form-section">
-      <div class="section-heading">
-        <div>
-          <h3>{{ 'approvals.rules.section.conditions' | translate }}</h3>
-          <p>{{ 'approvals.rules.section.conditionsHint' | translate }}</p>
-        </div>
-      </div>
-      <div class="form-grid">
-        <ep-form-field [label]="'approvals.rules.field.minValue' | translate">
-          <input formControlName="minValue" type="text" [placeholder]="'approvals.rules.placeholder.money' | translate" />
-        </ep-form-field>
-        <ep-form-field [label]="'approvals.rules.field.maxValue' | translate">
-          <input formControlName="maxValue" type="text" [placeholder]="'approvals.rules.placeholder.money' | translate" />
-        </ep-form-field>
-        <ep-form-field [label]="'approvals.rules.field.categories' | translate">
-          <input formControlName="categories" type="text" [placeholder]="'approvals.rules.placeholder.categories' | translate" />
-        </ep-form-field>
-        <ep-form-field [label]="'approvals.rules.field.departmentIds' | translate">
-          <input formControlName="departmentIds" type="text" [placeholder]="'approvals.rules.placeholder.departmentIds' | translate" />
-        </ep-form-field>
-      </div>
-      <div class="priority-picker">
-        <span>{{ 'approvals.rules.field.priorities' | translate }}</span>
-        <div class="priority-picker__options">
-          @for (priority of priorityOptions; track priority) {
-            <label>
-              <input
-                type="checkbox"
-                [checked]="form.controls.priorities.value.includes(priority)"
-                (change)="togglePriority(priority, $any($event.target).checked)" />
-              <span>{{ 'approvals.rules.priority.' + priority | translate }}</span>
+    <div class="rule-form__layout">
+      <section class="form-section form-section--identity">
+        <div class="section-heading">
+          <div>
+            <h3>{{ 'approvals.rules.section.identity' | translate }}</h3>
+            <p>{{ 'approvals.rules.section.identityHint' | translate }}</p>
+          </div>
+          @if (selectedRule()) {
+            <label class="switch-field">
+              <input type="checkbox" formControlName="active" />
+              <span>{{ 'approvals.rules.field.active' | translate }}</span>
             </label>
           }
         </div>
-      </div>
-    </section>
+
+        <div class="form-grid form-grid--identity">
+          <ep-form-field [label]="'approvals.rules.field.ruleName' | translate">
+            <input formControlName="ruleName" type="text" [placeholder]="'approvals.rules.placeholder.ruleName' | translate" />
+          </ep-form-field>
+          <ep-form-field [label]="'approvals.rules.field.priority' | translate">
+            <input formControlName="priority" type="number" min="1" />
+          </ep-form-field>
+        </div>
+
+        <div class="segmented-field">
+          <span>{{ 'approvals.rules.field.ruleType' | translate }}</span>
+          <div class="segmented-field__options" role="group" [attr.aria-label]="'approvals.rules.field.ruleType' | translate">
+            @for (type of ruleTypes; track type) {
+              <button
+                type="button"
+                class="segmented-control"
+                [class.segmented-control--active]="form.controls.ruleType.value === type"
+                (click)="setRuleType(type)">
+                {{ 'approvals.rules.type.' + type | translate }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="form-grid form-grid--money">
+          <ep-form-field [label]="'approvals.rules.field.minValue' | translate">
+            <input formControlName="minValue" type="text" [placeholder]="'approvals.rules.placeholder.money' | translate" />
+          </ep-form-field>
+          <ep-form-field [label]="'approvals.rules.field.maxValue' | translate">
+            <input formControlName="maxValue" type="text" [placeholder]="'approvals.rules.placeholder.money' | translate" />
+          </ep-form-field>
+        </div>
+
+        <div class="priority-picker">
+          <span>{{ 'approvals.rules.field.priorities' | translate }}</span>
+          <div class="priority-picker__options">
+            @for (priority of priorityOptions; track priority) {
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="form.controls.priorities.value.includes(priority)"
+                  (change)="togglePriority(priority, $any($event.target).checked)" />
+                <span>{{ 'approvals.rules.priority.' + priority | translate }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section form-section--conditions">
+        <div class="section-heading">
+          <div>
+            <h3>{{ 'approvals.rules.section.conditions' | translate }}</h3>
+            <p>{{ 'approvals.rules.section.conditionsHint' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="reference-picker">
+          <div class="reference-picker__header">
+            <strong>{{ 'approvals.rules.field.categories' | translate }}</strong>
+            <span>{{ 'approvals.rules.reference.selectedCount' | translate: { count: form.controls.categories.value.length } }}</span>
+          </div>
+          @if (flatCategories().length) {
+            <div class="reference-grid">
+              @for (category of flatCategories(); track category.code) {
+                <label class="reference-option" [class.reference-option--selected]="isCategorySelected(category.code)">
+                  <input
+                    type="checkbox"
+                    [checked]="isCategorySelected(category.code)"
+                    (change)="toggleCategory(category.code, $any($event.target).checked)" />
+                  <span>
+                    <strong>{{ category.code }}</strong>
+                    <small>{{ category.name }}</small>
+                  </span>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="reference-empty">{{ 'approvals.rules.reference.noCategories' | translate }}</p>
+          }
+        </div>
+
+        <div class="reference-picker">
+          <div class="reference-picker__header">
+            <strong>{{ 'approvals.rules.field.departmentIds' | translate }}</strong>
+            <span>{{ 'approvals.rules.reference.selectedCount' | translate: { count: form.controls.departmentIds.value.length } }}</span>
+          </div>
+          @if (flatDepartments().length) {
+            <div class="reference-grid reference-grid--departments">
+              @for (department of flatDepartments(); track department.id) {
+                <label class="reference-option" [class.reference-option--selected]="isDepartmentSelected(department.id)">
+                  <input
+                    type="checkbox"
+                    [checked]="isDepartmentSelected(department.id)"
+                    (change)="toggleDepartment(department.id, $any($event.target).checked)" />
+                  <span>
+                    <strong>{{ department.code }}</strong>
+                    <small>{{ department.name }}</small>
+                  </span>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="reference-empty">{{ 'approvals.rules.reference.noDepartments' | translate }}</p>
+          }
+        </div>
+      </section>
+    </div>
 
     <section class="form-section">
       <div class="section-heading">
@@ -414,7 +466,11 @@
                 <input formControlName="stepIndex" type="number" min="1" />
               </ep-form-field>
               <ep-form-field [label]="'approvals.rules.field.approverRole' | translate">
-                <input formControlName="approverRole" type="text" [placeholder]="'approvals.rules.placeholder.approverRole' | translate" />
+                <input
+                  formControlName="approverRole"
+                  type="text"
+                  list="approval-role-options"
+                  [placeholder]="'approvals.rules.placeholder.approverRole' | translate" />
               </ep-form-field>
               <ep-form-field [label]="'approvals.rules.field.stepType' | translate">
                 <select formControlName="stepType">
@@ -436,9 +492,17 @@
       </div>
     </section>
 
-    <ep-form-field [label]="'approvals.rules.field.description' | translate">
-      <textarea formControlName="description" rows="3" [placeholder]="'approvals.rules.placeholder.description' | translate"></textarea>
-    </ep-form-field>
+    <section class="form-section form-section--description">
+      <ep-form-field [label]="'approvals.rules.field.description' | translate">
+        <textarea formControlName="description" rows="3" [placeholder]="'approvals.rules.placeholder.description' | translate"></textarea>
+      </ep-form-field>
+    </section>
+
+    <datalist id="approval-role-options">
+      @for (role of roleOptions(); track role.code) {
+        <option [value]="role.code">{{ role.name }}</option>
+      }
+    </datalist>
 
     <footer class="modal-actions">
       <ep-button variant="secondary" (click)="closeFormModal()">{{ 'action.cancel' | translate }}</ep-button>

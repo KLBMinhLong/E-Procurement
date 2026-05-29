@@ -24,6 +24,14 @@
   overflow: hidden;
 }
 
+.ep-modal__panel--lg {
+  max-width: min(48rem, calc(100vw - var(--spacing-8)));
+}
+
+.ep-modal__panel--xl {
+  max-width: min(76rem, calc(100vw - var(--spacing-8)));
+}
+
 header {
   align-items: center;
   border-bottom: var(--border-subtle);
