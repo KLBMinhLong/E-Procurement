@@ -233,6 +233,8 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `THREE_WAY_MATCH_TOLERANCE_PCT` | `5` | `5` | Dung sai 5% số lượng/giá |
 | `INVOICE_DUE_WARNING_DAYS` | `7` | `7` | Cảnh báo trước hạn thanh toán N ngày |
 | `BUDGET_CACHE_TTL_MINUTES` | `5` | `5` | Cache ngân sách dashboard (phút) |
+| `FINANCE_KAFKA_ENABLED` | `true` | `true` | Bật/tắt Kafka integration của Finance |
+| `FINANCE_KAFKA_AUTO_STARTUP` | `true` | `true` | Khi `true`, Finance start Kafka listeners sau khi app ready; lỗi broker tạm thời không làm fail `/actuator/health` |
 
 ---
 
@@ -475,6 +477,7 @@ REDIS_PASS=
 
 # ── Kafka ────────────────────────────────────────────────────
 KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+FINANCE_KAFKA_AUTO_STARTUP=true
 
 # ── Keycloak ─────────────────────────────────────────────────
 KEYCLOAK_URL=http://keycloak:8080

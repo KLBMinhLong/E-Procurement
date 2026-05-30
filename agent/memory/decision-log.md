@@ -1,5 +1,47 @@
 # Decision Log
 
+## [2026-05-30] E10 budget alert event publisher
+
+- Decision: Add a finance `BudgetAlertService` with a `BudgetAlertEventPublisher` port, Kafka publisher, and logging fallback for `finance.budget.warning` and `finance.budget.exceeded`.
+- Reason: Budget check, PR budget commitments, and budget transfers need one consistent policy point for low-budget alerts instead of duplicating threshold logic across use cases.
+- Impact: Budget check emits warning/exceeded alerts for projected results, tentative/firm commits emit after successful ledger mutation, and transfers emit for the source budget after allocation movement. Kafka publishes after transaction commit when finance Kafka integration is enabled.
+- Constraint: Notification-service consumption and user-facing realtime delivery remain E11; this slice only publishes the finance-side event contract.
+
+## [2026-05-30] Finance Kafka listener startup is non-fatal
+
+- Decision: Finance-service disables Spring Kafka listener auto-startup and starts listener containers after `ApplicationReadyEvent` through a guarded starter.
+- Reason: Finance APIs, Flyway, and `/actuator/health` must remain available when Kafka is temporarily unavailable or its Docker container exits after the application has been built.
+- Impact: Missing Kafka DNS/broker now logs `[KAFKA] Finance Kafka listeners not started` without aborting the Spring context; `FINANCE_KAFKA_AUTO_STARTUP=false` can disable the background listener start in local diagnostics.
+- Constraint: This preserves eventual Kafka integration semantics, but if Kafka is down the service will not consume PR budget events until the listener start is retried by restarting the service or toggling runtime deployment.
+
+## [2026-05-30] E10 budget override and transfer actions
+
+- Decision: Implement budget override and transfer as `PATCH` state-changing finance-service actions with required `Idempotency-Key`, Redis replay cache, DB idempotency keys, and auditable `budget_overrides`/`budget_transfers` tables.
+- Reason: These actions change approval/audit or allocation state and must follow the repo convention for state transitions while preventing duplicate mutation on retries.
+- Impact: Override approvals persist an audit record and do not mutate `allocated_amount`; override amounts above the configured threshold are rejected with `FIN_004`. Transfers lock source/target budget rows in stable UUID order, validate active same-year/same-currency budgets, adjust allocated amounts atomically, and write balanced `TRANSFER_OUT`/`TRANSFER_IN` ledger rows.
+- Constraint: High-threshold CEO/CFO approval is represented as a guarded failure path for now; notification publishing for `finance.budget.exceeded` remains a later integration slice.
+
+## [2026-05-30] E10 budget dashboard/list read model
+
+- Decision: Implement public budget read APIs as read-only finance-service use cases with department-scoped filtering, aggregate ledger projections, and Redis dashboard cache evicted by budget ledger write use cases.
+- Reason: Finance and department managers need a stable read model for allocated/committed/spent/available before override/transfer workflows are added, and cached dashboards must not bypass permission checks or remain stale after PR lifecycle events.
+- Impact: `GET /api/v1/budgets` and `GET /api/v1/budgets/{id}/dashboard` are guarded by `BUDGET_VIEW_OWN_DEPT` or `BUDGET_VIEW_ALL`; own-department users cannot view other departments, while view-all users can filter all departments. MyBatis sorts through whitelist XML mapping.
+- Constraint: Department names/top-category analytics and budget override/transfer mutations remain later E10 slices.
+
+## [2026-05-30] E10 finance-service budget check foundation
+
+- Decision: Start E10 with a narrow `finance-service` budget foundation and an internal `GET /internal/budgets/check` endpoint consumed by purchase-request-service.
+- Reason: PR submit currently depends on a fallback `BudgetCheckPort`; replacing that fake dependency is higher priority than starting RFQ/PO because it protects the financial control boundary of the existing PR approval flow.
+- Impact: `finance-service` becomes a Maven/Docker service on port 8084 with budget ledger schema and local seed budgets. PR service can use `FinanceBudgetCheckAdapter` when `PR_FINANCE_INTEGRATION_ENABLED=true`, while local fallback remains available by config.
+- Constraint: Kafka commit/release budget transactions, public budget dashboard APIs, override and transfer flows remain later E10 slices.
+
+## [2026-05-30] E10 budget ledger event source
+
+- Decision: Publish `procurement.pr.approved`, `procurement.pr.rejected`, and `procurement.pr.changes-requested` from purchase-request-service after the approval callback updates PR state, while finance-service consumes those topics plus `procurement.pr.submitted` and `procurement.pr.cancelled`.
+- Reason: Approval-service currently applies approval results through synchronous internal PR callbacks and does not own the final persisted PR status; publishing after PR commit keeps budget ledger events aligned with committed PR state.
+- Impact: Finance writes immutable `budget_transactions` for tentative commit, firm commit, and release with `finance.event_processing_log` idempotency by event id. Topic registry now documents PR service as the status-event publisher after approval callback.
+- Constraint: Budget warning/exceeded producer and public dashboard/list APIs remain later E10 slices.
+
 ## [2026-05-28] E05 SLA timer and escalation
 
 - Decision: Add a scheduled `SlaEscalationUseCase` in approval-service to scan overdue pending approval steps, mark `is_escalated`, persist `escalated_from`, reassign to another eligible approver for the same role when IAM returns one, and publish `approval.sla.breached`.

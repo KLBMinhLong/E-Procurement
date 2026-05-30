@@ -5,6 +5,7 @@ COPY pom.xml .
 COPY services/iam-service/pom.xml services/iam-service/pom.xml
 COPY services/purchase-request-service/pom.xml services/purchase-request-service/pom.xml
 COPY services/approval-service/pom.xml services/approval-service/pom.xml
+COPY services/finance-service/pom.xml services/finance-service/pom.xml
 COPY infra/keycloak/eprocure-keycloak-provider/pom.xml infra/keycloak/eprocure-keycloak-provider/pom.xml
 RUN mvn -pl services/approval-service -am dependency:go-offline
 

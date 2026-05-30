@@ -3,9 +3,9 @@
 | Topic | Publisher | Consumers | Event |
 |---|---|---|---|
 | procurement.pr.submitted | pr-service | approval-service, notification-service | PR submitted |
-| procurement.pr.approved | approval-service | pr-service, finance-service, notification-service | PR approved |
-| procurement.pr.rejected | approval-service | pr-service, notification-service | PR rejected |
-| procurement.pr.changes-requested | approval-service | pr-service, notification-service | PR changes requested |
+| procurement.pr.approved | pr-service (after approval callback) | finance-service, notification-service | PR approved |
+| procurement.pr.rejected | pr-service (after approval callback) | finance-service, notification-service | PR rejected |
+| procurement.pr.changes-requested | pr-service (after approval callback) | finance-service, notification-service | PR changes requested |
 | procurement.pr.cancelled | pr-service | approval-service, finance-service, notification-service | PR cancelled |
 | approval.step.assigned | approval-service | notification-service | Step assigned |
 | approval.step.completed | approval-service | approval-service (next step), pr-service | Step completed |

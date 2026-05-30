@@ -104,16 +104,23 @@ Requester sees PR status APPROVED
 
 ---
 
-## 6. Next Documentation Work
+## 6. Current Continuation Plan
 
-Sau MVP E01-E05, viết chi tiết theo thứ tự:
+Hiện trạng cập nhật 2026-05-30:
+
+- E01-E05 và E13-A đã được triển khai theo tracker.
+- Backend hiện có `iam-service`, `purchase-request-service`, `approval-service` và Keycloak provider.
+- Frontend đã có PR, Approval inbox/detail/actions, Approval Rule Admin, Admin User/RBAC/Org UI.
+- Các service Finance/Inventory/Vendor/Notification/Analytics/Admin chưa có code backend riêng, mới có tài liệu và OpenAPI nền.
+
+Thứ tự nên làm tiếp:
 
 ```
-E10 Budget Management trước phần budget thật của PR
-E11 Notification trước realtime production
-E06 RFQ & Vendor
-E07 Purchase Order
-E08 Goods Receipt & Inventory
-E09 Invoice & Payment
-E12-E15 sau khi luồng nghiệp vụ chính chạy được
+1. E10 Budget Management: dùng `E10-budget-management.md` để dựng finance-service budget foundation và thay BudgetCheckPort fallback của PR.
+2. E11 Notification & Realtime: dùng `E11-notification-realtime.md` để nhận các event PR/approval/budget và gửi email/in-app/WebSocket.
+3. E06 RFQ & Vendor: mở vendor-service/RFQ sau khi budget và notification nền đã rõ.
+4. E07 Purchase Order: tạo PO từ PR đã approved và vendor/RFQ result.
+5. E08 Goods Receipt & Inventory.
+6. E09 Invoice & Payment.
+7. E12-E15 sau khi luồng nghiệp vụ chính chạy được.
 ```

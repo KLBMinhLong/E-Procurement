@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${FINANCE_DB_HOST:localhost}:${FINANCE_DB_PORT:5432}/${FINANCE_DB_NAME:db_finance}
+    username: ${FINANCE_DB_USER:finance_user}
+    password: ${FINANCE_DB_PASS:finance_pass_dev}
+    hikari:
+      connection-init-sql: SET search_path TO ${FINANCE_DB_SCHEMA:finance}
+  flyway:
+    schemas: ${FINANCE_DB_SCHEMA:finance}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eprocure:
+  internal:
+    api-key: ${FINANCE_INTERNAL_API_KEY:change-me-internal-api-key}
+  finance:
+    integration:
+      kafka-enabled: ${FINANCE_KAFKA_ENABLED:false}
+      kafka-auto-startup: ${FINANCE_KAFKA_AUTO_STARTUP:true}
+      default-gl-account-code: ${FINANCE_DEFAULT_GL_ACCOUNT_CODE:6002}

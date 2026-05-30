@@ -45,6 +45,7 @@ PostgreSQL Cluster
 │   └── schema: finance
 │       ├── budgets
 │       ├── budget_transactions
+│       ├── event_processing_log
 │       ├── budget_transfers
 │       ├── purchase_orders
 │       ├── po_line_items
@@ -582,11 +583,12 @@ CREATE INDEX idx_budgets_dept_year ON finance.budgets(department_id, fiscal_year
 CREATE TABLE finance.budget_transactions (
     id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     budget_id       UUID            NOT NULL REFERENCES finance.budgets(id),
-    transaction_type VARCHAR(30)    NOT NULL,               -- COMMIT_TENTATIVE|COMMIT_FIRM|RELEASE|SPEND
+    transaction_type VARCHAR(30)    NOT NULL,               -- COMMIT_TENTATIVE|COMMIT_FIRM|RELEASE|SPEND|TRANSFER_OUT|TRANSFER_IN
     amount          NUMERIC(19,4)   NOT NULL,
     currency        VARCHAR(3)      NOT NULL DEFAULT 'VND',
     reference_type  VARCHAR(50)     NOT NULL,               -- 'PURCHASE_REQUEST'|'PURCHASE_ORDER'|'INVOICE'
     reference_id    UUID            NOT NULL,
+    source_event_id VARCHAR(80),
     description     TEXT,
     performed_by    UUID            NOT NULL,
     performed_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW()
@@ -594,9 +596,87 @@ CREATE TABLE finance.budget_transactions (
 );
 CREATE INDEX idx_budget_tx_budget ON finance.budget_transactions(budget_id);
 CREATE INDEX idx_budget_tx_ref ON finance.budget_transactions(reference_type, reference_id);
+CREATE INDEX idx_budget_tx_source_event ON finance.budget_transactions(source_event_id) WHERE source_event_id IS NOT NULL;
 ```
 
-### 5.3 purchase_orders
+### 5.3 event_processing_log
+
+```sql
+CREATE TABLE finance.event_processing_log (
+    event_id      VARCHAR(80)     PRIMARY KEY,
+    topic         VARCHAR(120)    NOT NULL,
+    partition_id  INTEGER,
+    offset_value  BIGINT,
+    handler_name  VARCHAR(120)    NOT NULL,
+    status        VARCHAR(20)     NOT NULL,                  -- PROCESSED|SKIPPED
+    processed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+```
+
+### 5.4 budget_overrides
+
+```sql
+CREATE TABLE finance.budget_overrides (
+    id                  UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
+    budget_id           UUID            NOT NULL REFERENCES finance.budgets(id),
+    purchase_request_id UUID            NOT NULL,
+    override_amount     NUMERIC(19,4)   NOT NULL,
+    currency            VARCHAR(3)      NOT NULL DEFAULT 'VND',
+    override_reason     TEXT            NOT NULL,
+    status              VARCHAR(20)     NOT NULL DEFAULT 'APPROVED',
+    approved_by         UUID            NOT NULL,
+    approved_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    idempotency_key     UUID            NOT NULL,
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by          UUID            NOT NULL,
+    updated_by          UUID,
+    is_deleted          BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at          TIMESTAMPTZ,
+    deleted_by          UUID,
+
+    CONSTRAINT chk_budget_overrides_amount CHECK (override_amount > 0),
+    CONSTRAINT chk_budget_overrides_reason CHECK (char_length(trim(override_reason)) >= 50),
+    CONSTRAINT chk_budget_overrides_status CHECK (status IN ('APPROVED'))
+);
+CREATE UNIQUE INDEX idx_budget_overrides_idempotency
+    ON finance.budget_overrides(idempotency_key) WHERE is_deleted = FALSE;
+CREATE INDEX idx_budget_overrides_budget ON finance.budget_overrides(budget_id) WHERE is_deleted = FALSE;
+CREATE INDEX idx_budget_overrides_pr ON finance.budget_overrides(purchase_request_id) WHERE is_deleted = FALSE;
+```
+
+### 5.5 budget_transfers
+
+```sql
+CREATE TABLE finance.budget_transfers (
+    id                  UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
+    source_budget_id    UUID            NOT NULL REFERENCES finance.budgets(id),
+    target_budget_id    UUID            NOT NULL REFERENCES finance.budgets(id),
+    amount              NUMERIC(19,4)   NOT NULL,
+    currency            VARCHAR(3)      NOT NULL DEFAULT 'VND',
+    reason              TEXT            NOT NULL,
+    approved_by         UUID            NOT NULL,
+    approved_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    idempotency_key     UUID            NOT NULL,
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by          UUID            NOT NULL,
+    updated_by          UUID,
+    is_deleted          BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at          TIMESTAMPTZ,
+    deleted_by          UUID,
+
+    CONSTRAINT chk_budget_transfers_amount CHECK (amount > 0),
+    CONSTRAINT chk_budget_transfers_reason CHECK (char_length(trim(reason)) >= 20),
+    CONSTRAINT chk_budget_transfers_distinct_budgets CHECK (source_budget_id <> target_budget_id)
+);
+CREATE UNIQUE INDEX idx_budget_transfers_idempotency
+    ON finance.budget_transfers(idempotency_key) WHERE is_deleted = FALSE;
+CREATE INDEX idx_budget_transfers_source ON finance.budget_transfers(source_budget_id) WHERE is_deleted = FALSE;
+CREATE INDEX idx_budget_transfers_target ON finance.budget_transfers(target_budget_id) WHERE is_deleted = FALSE;
+```
+
+### 5.6 purchase_orders
 
 ```sql
 CREATE TABLE finance.purchase_orders (
@@ -631,7 +711,7 @@ CREATE INDEX idx_po_vendor ON finance.purchase_orders(vendor_id);
 CREATE INDEX idx_po_status ON finance.purchase_orders(status) WHERE is_deleted = FALSE;
 ```
 
-### 5.4 invoices
+### 5.7 invoices
 
 ```sql
 CREATE TABLE finance.invoices (

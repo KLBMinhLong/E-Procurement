@@ -21,6 +21,10 @@ components:
       type: apiKey
       in: cookie
       name: ep_session
+    internalApiKey:
+      type: apiKey
+      in: header
+      name: X-Internal-Api-Key
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -71,7 +75,6 @@ components:
       properties:
         id:               { type: string, format: uuid }
         departmentId:     { type: string, format: uuid }
-        departmentName:   { type: string }
         fiscalYear:       { type: integer }
         quarter:          { type: integer, nullable: true }
         glAccountCode:    { type: string }
@@ -83,15 +86,50 @@ components:
         burnRatePerMonth: { type: string, nullable: true }
         forecastExhaustedAt: { type: string, format: date, nullable: true }
         status:           { type: string, enum: [PLANNING, SUBMITTED, APPROVED, ACTIVE, CLOSED] }
-        topCategories:
-          type: array
-          items:
-            type: object
-            properties:
-              categoryCode: { type: string }
-              categoryName: { type: string }
-              spent:        { type: string }
-              percent:      { type: number, format: float }
+    BudgetOverrideApproval:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        budgetId:        { type: string, format: uuid }
+        prId:            { type: string, format: uuid }
+        overrideAmount:  { type: string, example: "28000000.0000" }
+        currency:        { type: string, example: VND }
+        overrideReason:  { type: string }
+        approvedBy:      { type: string, format: uuid }
+        approvedAt:      { type: string, format: date-time }
+        status:          { type: string, enum: [APPROVED] }
+    BudgetTransfer:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        sourceBudgetId:  { type: string, format: uuid }
+        targetBudgetId:  { type: string, format: uuid }
+        amount:          { type: string, example: "10000000.0000" }
+        currency:        { type: string, example: VND }
+        reason:          { type: string }
+        approvedBy:      { type: string, format: uuid }
+        approvedAt:      { type: string, format: date-time }
+        sourceDashboard: { $ref: '#/components/schemas/BudgetDashboard' }
+        targetDashboard: { $ref: '#/components/schemas/BudgetDashboard' }
+    Money:
+      type: object
+      properties:
+        amount:   { type: string, example: "70000000.0000" }
+        currency: { type: string, example: VND }
+    BudgetCheckResult:
+      type: object
+      properties:
+        budgetId:       { type: string, format: uuid }
+        departmentId:   { type: string, format: uuid }
+        fiscalYear:     { type: integer }
+        quarter:        { type: integer, nullable: true }
+        glAccountCode:  { type: string, example: "6002" }
+        allocated:      { $ref: '#/components/schemas/Money' }
+        committed:      { $ref: '#/components/schemas/Money' }
+        spent:          { $ref: '#/components/schemas/Money' }
+        available:      { $ref: '#/components/schemas/Money' }
+        status:         { type: string, enum: [PASS, WARNING, FAIL] }
+        warningMessage: { type: string, nullable: true }
     PoLineItem:
       type: object
       properties:
@@ -189,12 +227,63 @@ components:
         createdAt: { type: string, format: date-time }
 
 paths:
+  /internal/budgets/check:
+    get:
+      tags: [Budget]
+      summary: Internal budget check for PR submit
+      operationId: checkBudgetInternal
+      description: Endpoint nội bộ cho purchase-request-service. Bắt buộc `X-Internal-Api-Key`.
+      servers:
+        - url: http://{host}
+          variables:
+            host:
+              default: finance-service.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: department_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: fiscal_year
+          in: query
+          required: true
+          schema: { type: integer, example: 2026 }
+        - name: amount
+          in: query
+          required: true
+          schema: { type: string, example: "70000000.0000" }
+        - name: currency
+          in: query
+          schema: { type: string, default: VND }
+        - name: gl_account_code
+          in: query
+          schema: { type: string, example: "6002" }
+      responses:
+        '200':
+          description: Budget check result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BudgetCheckResult'
+        '404':
+          description: Active budget not found (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /budgets:
     get:
       tags: [Budget]
       summary: Danh sách ngân sách
       operationId: listBudgets
-      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      x-required-permission: BUDGET_VIEW_OWN_DEPT | BUDGET_VIEW_ALL
       parameters:
         - name: department_id
           in: query
@@ -207,9 +296,36 @@ paths:
           schema: { type: integer, enum: [1, 2, 3, 4] }
         - name: status
           in: query
-          schema: { type: string }
+          schema: { type: string, enum: [PLANNING, SUBMITTED, APPROVED, ACTIVE, CLOSED] }
+        - name: gl_account_code
+          in: query
+          schema: { type: string, example: "6002" }
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/SizeParam'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: fiscalYear,desc
+            enum:
+              - departmentId,asc
+              - departmentId,desc
+              - fiscalYear,asc
+              - fiscalYear,desc
+              - quarter,asc
+              - quarter,desc
+              - glAccountCode,asc
+              - glAccountCode,desc
+              - status,asc
+              - status,desc
+              - allocated,asc
+              - allocated,desc
+              - committed,asc
+              - committed,desc
+              - spent,asc
+              - spent,desc
+              - available,asc
+              - available,desc
       responses:
         '200':
           description: Danh sách ngân sách
@@ -226,13 +342,19 @@ paths:
                           $ref: '#/components/schemas/BudgetDashboard'
                       meta:
                         $ref: '#/components/schemas/PageMeta'
+        '403':
+          description: Không có quyền xem ngân sách (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /budgets/{id}/dashboard:
     get:
       tags: [Budget]
       summary: Dashboard ngân sách real-time (từ Redis cache)
       operationId: getBudgetDashboard
-      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      x-required-permission: BUDGET_VIEW_OWN_DEPT | BUDGET_VIEW_ALL
       parameters:
         - name: id
           in: path
@@ -250,9 +372,21 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/BudgetDashboard'
+        '403':
+          description: Không có quyền xem ngân sách này (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Budget không tồn tại (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /budgets/{id}/override-approval:
-    post:
+    patch:
       tags: [Budget]
       summary: Phê duyệt chi vượt ngân sách
       operationId: approveBudgetOverride
@@ -279,23 +413,44 @@ paths:
                   minLength: 50
                 overrideAmount:
                   type: string
-                  example: "28000000"
+                  example: "28000000.0000"
+                currency:
+                  type: string
+                  example: VND
+                  default: VND
       responses:
         '200':
           description: Override được phê duyệt
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BudgetOverrideApproval'
+        '400':
+          description: Idempotency-Key hoặc dữ liệu không hợp lệ (SYS_005, VAL_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Vượt 30% ngân sách, cần CEO duyệt (FIN_004)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Budget không tồn tại (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /budgets/{id}/transfer:
-    post:
+    patch:
       tags: [Budget]
       summary: Điều chuyển ngân sách giữa phòng ban
       operationId: transferBudget
@@ -315,7 +470,8 @@ paths:
               required: [targetBudgetId, amount, reason]
               properties:
                 targetBudgetId: { type: string, format: uuid }
-                amount:         { type: string, example: "10000000" }
+                amount:         { type: string, example: "10000000.0000" }
+                currency:       { type: string, example: VND, default: VND }
                 reason:         { type: string, minLength: 20 }
       responses:
         '200':
@@ -323,7 +479,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BudgetTransfer'
+        '400':
+          description: Idempotency-Key hoặc dữ liệu không hợp lệ (SYS_005, VAL_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Budget nguồn hoặc đích không tồn tại (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Budget chưa active, sai currency hoặc không đủ ngân sách nguồn (FIN_003, FIN_005, FIN_009)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /purchase-orders:
     get:

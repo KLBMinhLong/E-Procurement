@@ -1,0 +1,50 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  application:
+    name: ${SERVICE_NAME:finance-service}
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: ${FINANCE_DB_POOL_MIN:${DB_POOL_MIN:2}}
+      maximum-pool-size: ${FINANCE_DB_POOL_MAX:${DB_POOL_MAX:5}}
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      validation-timeout: 3000
+      connection-test-query: SELECT 1
+      pool-name: ${SERVICE_NAME:finance-service}-HikariPool
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  jackson:
+    time-zone: UTC
+  kafka:
+    listener:
+      auto-startup: false
+      missing-topics-fatal: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-handlers-package: com.eprocure.finance.infrastructure.persistence.typehandler
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+
+eprocure:
+  finance:
+    budget-cache-ttl-minutes: ${BUDGET_CACHE_TTL_MINUTES:5}
