@@ -35,7 +35,8 @@ public class BusinessEventNotificationConsumer {
             "${eprocure.notification.kafka.topics.pr-rejected:procurement.pr.rejected}",
             "${eprocure.notification.kafka.topics.pr-changes-requested:procurement.pr.changes-requested}",
             "${eprocure.notification.kafka.topics.budget-warning:finance.budget.warning}",
-            "${eprocure.notification.kafka.topics.budget-exceeded:finance.budget.exceeded}"
+            "${eprocure.notification.kafka.topics.budget-exceeded:finance.budget.exceeded}",
+            "${eprocure.notification.kafka.topics.email-send:notification.email.send}"
     })
     public void consume(ConsumerRecord<String, String> record) {
         BusinessEventCommand command = toCommand(record);

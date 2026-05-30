@@ -29,3 +29,6 @@ eprocure:
       kafka-enabled: ${NOTIFICATION_KAFKA_ENABLED:true}
       kafka-auto-startup: ${NOTIFICATION_KAFKA_AUTO_STARTUP:true}
     budget-alert-recipient-ids: ${NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS:}
+    email:
+      provider: ${NOTIFICATION_EMAIL_PROVIDER:brevo}
+      from-address: ${EMAIL_FROM_ADDRESS}

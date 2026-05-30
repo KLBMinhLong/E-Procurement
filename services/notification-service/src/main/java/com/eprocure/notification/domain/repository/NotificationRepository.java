@@ -25,6 +25,20 @@ public interface NotificationRepository {
 
     Optional<NotificationTemplate> findActiveTemplate(String eventType, NotificationChannel channel, String language);
 
+    List<Notification> findEmailDispatchCandidates(Instant now, int limit, short maxAttempts);
+
+    int markEmailSent(UUID id, Instant sentAt, String providerMessageId);
+
+    int markEmailFailed(UUID id, Instant attemptedAt, Instant nextAttemptAt, short maxAttempts, String lastError);
+
+    int recordEmailDeadLetter(
+            UUID notificationId,
+            String recipientEmail,
+            String eventType,
+            String failureReason,
+            short retryCount,
+            Instant failedAt);
+
     boolean markEventProcessed(
             String eventId,
             String eventType,

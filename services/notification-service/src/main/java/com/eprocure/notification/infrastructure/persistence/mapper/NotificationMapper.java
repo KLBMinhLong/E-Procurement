@@ -22,13 +22,15 @@ public interface NotificationMapper {
             INSERT INTO notification.notifications (
                 id, recipient_id, event_type, channel, subject, body,
                 reference_type, reference_id, reference_number, action_url,
-                status, is_read, read_at, sent_at, retry_count, last_error,
+                email_to, provider_message_id, status, is_read, read_at, sent_at,
+                retry_count, last_error, last_attempt_at, next_attempt_at,
                 created_at, updated_at, created_by, is_deleted, deleted_at, deleted_by
             ) VALUES (
                 #{entity.id}, #{entity.recipientId}, #{entity.eventType}, #{entity.channel},
                 #{entity.subject}, #{entity.body}, #{entity.referenceType}, #{entity.referenceId},
-                #{entity.referenceNumber}, #{entity.actionUrl}, #{entity.status}, #{entity.read},
-                #{entity.readAt}, #{entity.sentAt}, #{entity.retryCount}, #{entity.lastError},
+                #{entity.referenceNumber}, #{entity.actionUrl}, #{entity.emailTo}, #{entity.providerMessageId},
+                #{entity.status}, #{entity.read}, #{entity.readAt}, #{entity.sentAt},
+                #{entity.retryCount}, #{entity.lastError}, #{entity.lastAttemptAt}, #{entity.nextAttemptAt},
                 #{entity.createdAt}, #{entity.updatedAt}, #{entity.createdBy}, #{entity.deleted},
                 #{entity.deletedAt}, #{entity.deletedBy}
             )
@@ -52,7 +54,8 @@ public interface NotificationMapper {
             SELECT
                 id, recipient_id, event_type, channel, subject, body,
                 reference_type, reference_id, reference_number, action_url,
-                status, is_read, read_at, sent_at, retry_count, last_error,
+                email_to, provider_message_id, status, is_read, read_at, sent_at,
+                retry_count, last_error, last_attempt_at, next_attempt_at,
                 created_at, updated_at, created_by, is_deleted, deleted_at, deleted_by
             FROM notification.notifications
             WHERE id = #{id}
@@ -70,12 +73,16 @@ public interface NotificationMapper {
             @Result(property = "referenceId", column = "reference_id"),
             @Result(property = "referenceNumber", column = "reference_number"),
             @Result(property = "actionUrl", column = "action_url"),
+            @Result(property = "emailTo", column = "email_to"),
+            @Result(property = "providerMessageId", column = "provider_message_id"),
             @Result(property = "status", column = "status"),
             @Result(property = "read", column = "is_read"),
             @Result(property = "readAt", column = "read_at"),
             @Result(property = "sentAt", column = "sent_at"),
             @Result(property = "retryCount", column = "retry_count"),
             @Result(property = "lastError", column = "last_error"),
+            @Result(property = "lastAttemptAt", column = "last_attempt_at"),
+            @Result(property = "nextAttemptAt", column = "next_attempt_at"),
             @Result(property = "createdAt", column = "created_at"),
             @Result(property = "updatedAt", column = "updated_at"),
             @Result(property = "createdBy", column = "created_by"),
@@ -136,6 +143,64 @@ public interface NotificationMapper {
             @Param("eventType") String eventType,
             @Param("channel") String channel,
             @Param("language") String language);
+
+    List<NotificationDbEntity> findEmailDispatchCandidates(
+            @Param("now") Instant now,
+            @Param("limit") int limit,
+            @Param("maxAttempts") short maxAttempts);
+
+    @Update("""
+            UPDATE notification.notifications
+            SET status = 'SENT',
+                sent_at = #{sentAt},
+                provider_message_id = #{providerMessageId},
+                last_error = NULL,
+                last_attempt_at = #{sentAt},
+                next_attempt_at = NULL,
+                updated_at = #{sentAt}
+            WHERE id = #{id}
+              AND channel = 'EMAIL'
+              AND is_deleted = FALSE
+            """)
+    int markEmailSent(
+            @Param("id") UUID id,
+            @Param("sentAt") Instant sentAt,
+            @Param("providerMessageId") String providerMessageId);
+
+    @Update("""
+            UPDATE notification.notifications
+            SET status = CASE WHEN retry_count + 1 >= #{maxAttempts} THEN 'FAILED' ELSE 'PENDING' END,
+                retry_count = retry_count + 1,
+                last_error = #{lastError},
+                last_attempt_at = #{attemptedAt},
+                next_attempt_at = CASE WHEN retry_count + 1 >= #{maxAttempts} THEN NULL ELSE #{nextAttemptAt} END,
+                updated_at = #{attemptedAt}
+            WHERE id = #{id}
+              AND channel = 'EMAIL'
+              AND is_deleted = FALSE
+            """)
+    int markEmailFailed(
+            @Param("id") UUID id,
+            @Param("attemptedAt") Instant attemptedAt,
+            @Param("nextAttemptAt") Instant nextAttemptAt,
+            @Param("maxAttempts") short maxAttempts,
+            @Param("lastError") String lastError);
+
+    @Insert("""
+            INSERT INTO notification.email_dispatch_dead_letters (
+                notification_id, recipient_email, event_type, failure_reason, retry_count, failed_at
+            ) VALUES (
+                #{notificationId}, #{recipientEmail}, #{eventType}, #{failureReason}, #{retryCount}, #{failedAt}
+            )
+            ON CONFLICT (notification_id) DO NOTHING
+            """)
+    int insertEmailDeadLetter(
+            @Param("notificationId") UUID notificationId,
+            @Param("recipientEmail") String recipientEmail,
+            @Param("eventType") String eventType,
+            @Param("failureReason") String failureReason,
+            @Param("retryCount") short retryCount,
+            @Param("failedAt") Instant failedAt);
 
     @Insert("""
             INSERT INTO notification.event_processing_log (

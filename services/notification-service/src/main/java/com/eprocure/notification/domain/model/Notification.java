@@ -15,12 +15,16 @@ public record Notification(
         UUID referenceId,
         String referenceNumber,
         String actionUrl,
+        String emailTo,
+        String providerMessageId,
         NotificationStatus status,
         boolean read,
         Instant readAt,
         Instant sentAt,
         short retryCount,
         String lastError,
+        Instant lastAttemptAt,
+        Instant nextAttemptAt,
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,
@@ -41,7 +45,12 @@ public record Notification(
         referenceType = normalizeNullable(referenceType);
         referenceNumber = normalizeNullable(referenceNumber);
         actionUrl = normalizeActionUrl(actionUrl);
+        emailTo = normalizeNullable(emailTo);
+        providerMessageId = normalizeNullable(providerMessageId);
         lastError = normalizeNullable(lastError);
+        if (channel == NotificationChannel.EMAIL && emailTo == null) {
+            throw new IllegalArgumentException("emailTo must not be blank for EMAIL notifications");
+        }
     }
 
     public static Notification createInApp(
@@ -65,12 +74,56 @@ public record Notification(
                 referenceId,
                 referenceNumber,
                 actionUrl,
+                null,
+                null,
                 NotificationStatus.SENT,
                 false,
                 null,
                 now,
                 (short) 0,
                 null,
+                null,
+                null,
+                now,
+                now,
+                recipientId,
+                false,
+                null,
+                null);
+    }
+
+    public static Notification createEmail(
+            UUID recipientId,
+            String emailTo,
+            String eventType,
+            String subject,
+            String body,
+            String referenceType,
+            UUID referenceId,
+            String referenceNumber,
+            String actionUrl,
+            Instant now) {
+        return new Notification(
+                UUID.randomUUID(),
+                recipientId,
+                eventType,
+                NotificationChannel.EMAIL,
+                subject,
+                body,
+                referenceType,
+                referenceId,
+                referenceNumber,
+                actionUrl,
+                requireText(emailTo, "emailTo").toLowerCase(),
+                null,
+                NotificationStatus.PENDING,
+                true,
+                null,
+                null,
+                (short) 0,
+                null,
+                null,
+                now,
                 now,
                 now,
                 recipientId,
@@ -95,12 +148,16 @@ public record Notification(
                 referenceId,
                 referenceNumber,
                 actionUrl,
+                emailTo,
+                providerMessageId,
                 status,
                 true,
                 readAt,
                 sentAt,
                 retryCount,
                 lastError,
+                lastAttemptAt,
+                nextAttemptAt,
                 createdAt,
                 readAt,
                 createdBy,

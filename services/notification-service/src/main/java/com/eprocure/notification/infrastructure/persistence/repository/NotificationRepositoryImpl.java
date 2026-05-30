@@ -82,6 +82,39 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
+    public List<Notification> findEmailDispatchCandidates(Instant now, int limit, short maxAttempts) {
+        return mapper.findEmailDispatchCandidates(now, limit, maxAttempts).stream()
+                .map(entity -> objectMapper.convertValue(entity, Notification.class))
+                .toList();
+    }
+
+    @Override
+    public int markEmailSent(UUID id, Instant sentAt, String providerMessageId) {
+        return mapper.markEmailSent(id, sentAt, providerMessageId);
+    }
+
+    @Override
+    public int markEmailFailed(
+            UUID id,
+            Instant attemptedAt,
+            Instant nextAttemptAt,
+            short maxAttempts,
+            String lastError) {
+        return mapper.markEmailFailed(id, attemptedAt, nextAttemptAt, maxAttempts, lastError);
+    }
+
+    @Override
+    public int recordEmailDeadLetter(
+            UUID notificationId,
+            String recipientEmail,
+            String eventType,
+            String failureReason,
+            short retryCount,
+            Instant failedAt) {
+        return mapper.insertEmailDeadLetter(notificationId, recipientEmail, eventType, failureReason, retryCount, failedAt);
+    }
+
+    @Override
     public boolean markEventProcessed(
             String eventId,
             String eventType,

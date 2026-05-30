@@ -29,3 +29,6 @@ eprocure:
       kafka-enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
       kafka-auto-startup: ${NOTIFICATION_KAFKA_AUTO_STARTUP:true}
     budget-alert-recipient-ids: ${NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS:10000000-0000-4000-8000-000000000001}
+    email:
+      provider: ${NOTIFICATION_EMAIL_PROVIDER:logging}
+      from-address: ${EMAIL_FROM_ADDRESS:dev@eprocure.local}

@@ -223,7 +223,7 @@
 | In-app notification feed/count/read API | ✅ | `GET /api/v1/notifications`, `/count`, `PATCH /read`, `PATCH /read-all`; guarded by `NOTIFICATION_VIEW_OWN` |
 | Business event consumer foundation | ✅ | Consumes approval/PR/finance notification topics; budget alerts route to configured finance recipients |
 | WebSocket realtime delivery | ✅ | STOMP endpoint `/ws/notifications`, user queue `/user/queue/notifications`, after-commit `SimpMessagingTemplate` delivery |
-| Email dispatch + retry/DLQ | ⬜ | Brevo/email path pending |
+| Email dispatch + retry/DLQ | ✅ | `notification.email.send` creates EMAIL outbox rows; scheduled dispatch uses logging/Brevo provider, retry attempts, and dead-letter persistence |
 | Template admin API/UI | ⬜ | Template management and preview pending |
 | Frontend notification bell/feed | ✅ | Shell bell dropdown loads count/feed, marks read/all-read, and subscribes to realtime STOMP messages |
-| Unit tests | 🔄 | Budget alert consume + duplicate event tests pass; API/repository integration tests pending |
+| Unit tests | 🔄 | Budget/email consume, email retry/DLQ, and WebSocket adapter tests pass; API/repository integration tests pending |

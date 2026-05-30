@@ -49,3 +49,15 @@ eprocure:
   notification:
     default-language: ${NOTIFICATION_DEFAULT_LANGUAGE:vi}
     budget-alert-recipient-ids: ${NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS:}
+    email:
+      dispatch-enabled: ${NOTIFICATION_EMAIL_DISPATCH_ENABLED:true}
+      provider: ${NOTIFICATION_EMAIL_PROVIDER:logging}
+      from-name: ${EMAIL_FROM_NAME:eProcure}
+      from-address: ${EMAIL_FROM_ADDRESS:}
+      max-attempts: ${EMAIL_RETRY_MAX:3}
+      retry-delay-seconds: ${EMAIL_RETRY_DELAY_SECONDS:30}
+      retry-fixed-delay-ms: ${NOTIFICATION_EMAIL_RETRY_FIXED_DELAY_MS:60000}
+      batch-size: ${NOTIFICATION_EMAIL_BATCH_SIZE:25}
+      brevo:
+        api-url: ${BREVO_API_URL:https://api.brevo.com/v3/smtp/email}
+        api-key: ${BREVO_API_KEY:}

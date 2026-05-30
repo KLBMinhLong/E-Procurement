@@ -14,6 +14,13 @@
 - Impact: Frontend users with `NOTIFICATION_VIEW_OWN` can see unread count, latest feed, read/read-all actions, and live push toasts in the shell.
 - Constraint: WebSocket principal name is derived from gateway `X-User-ID`; direct service WebSocket calls without gateway headers are not a supported production auth path.
 
+## [2026-05-30] E11 email dispatch outbox
+
+- Decision: Handle `notification.email.send` as a Kafka-driven EMAIL outbox row in `notification.notifications`, then let a scheduled worker dispatch via a pluggable logging/Brevo `EmailSenderPort`.
+- Reason: Email delivery must not block PR/Approval/Finance transactions, and failed sends need durable retry state rather than transient adapter logs.
+- Impact: EMAIL notifications track `email_to`, provider message id, attempt timestamps, retry count, sanitized last error, and exhausted failures in `notification.email_dispatch_dead_letters`.
+- Constraint: Dev/local default provider is `logging`; production should set `NOTIFICATION_EMAIL_PROVIDER=brevo`, `BREVO_API_KEY`, and `EMAIL_FROM_ADDRESS` through ENV only.
+
 ## [2026-05-30] E10 budget alert event publisher
 
 - Decision: Add a finance `BudgetAlertService` with a `BudgetAlertEventPublisher` port, Kafka publisher, and logging fallback for `finance.budget.warning` and `finance.budget.exceeded`.

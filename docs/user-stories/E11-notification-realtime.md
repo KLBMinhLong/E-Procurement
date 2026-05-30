@@ -162,9 +162,9 @@ notification.email.send
 **Acceptance criteria:**
 
 ```
-[ ] Email dispatch is async and does not block PR/Approval/Finance transactions.
-[ ] No raw token/password is logged.
-[ ] Reset password email sends only short-lived reset URL/token material per IAM contract and masks logs.
+[x] Email dispatch is async and does not block PR/Approval/Finance transactions.
+[x] No raw token/password is logged.
+[x] Reset password email sends only short-lived reset URL/token material per IAM contract and masks logs.
 ```
 
 ### E11-UC-006: ListMyNotificationsUseCase
@@ -319,7 +319,7 @@ Tests: event idempotency, template render, read/unread scope, retry handling
 2. [x] Implement in-app notification persistence plus GET /notifications and /notifications/count.
 3. [x] Consume approval/PR/finance notification topics and persist in-app notifications. Budget alerts are wired first because E10 now publishes them.
 4. [x] Add real WebSocket/STOMP adapter and frontend notification bell consuming count/feed and realtime messages.
-5. [ ] Add email dispatch for notification.email.send after in-app path is stable.
+5. [x] Add email dispatch for notification.email.send after in-app path is stable.
 ```
 
 This keeps E11 useful immediately for Approval tasks while avoiding early coupling to every future event type.
@@ -331,9 +331,9 @@ This keeps E11 useful immediately for Approval tasks while avoiding early coupli
 ```
 [x] Template seed list defined for approval.step.assigned, PR result events, SLA events, and budget alert events.
 [x] Event payload fields needed for subject/body/actionUrl documented in `notification-service` template seed and `ConsumeBusinessEventUseCase` mapping.
-[ ] Brevo credentials remain ENV-only and never logged.
-[ ] Retry/DLQ behavior decided for failed email.
-[ ] IAM password reset delivery migration path decided: Kafka notification.email.send preferred; internal API only if product requires sync confirmation.
+[x] Brevo credentials remain ENV-only and never logged.
+[x] Retry/DLQ behavior decided for failed email.
+[x] IAM password reset delivery migration path decided: Kafka notification.email.send preferred; internal API only if product requires sync confirmation.
 
 ---
 
@@ -348,7 +348,7 @@ This keeps E11 useful immediately for Approval tasks while avoiding early coupli
 [x] Unit tests for budget alert creation and duplicate event idempotency
 [x] Real STOMP/WebSocket delivery adapter
 [x] Angular notification bell/feed in shell
-[ ] Email dispatch + retry worker
+[x] Email dispatch + retry worker
 [ ] Template admin API/UI
 ```
 ```

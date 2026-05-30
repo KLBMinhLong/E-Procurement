@@ -70,6 +70,21 @@ class ConsumeBusinessEventUseCaseTest {
         assertThat(webSocketPushPort.pushed).hasSize(1);
     }
 
+    @Test
+    void should_create_pending_email_notification_when_email_send_event_received() throws Exception {
+        int created = useCase.execute(emailCommand("evt-email-password-reset-001"));
+
+        assertThat(created).isEqualTo(1);
+        assertThat(repository.saved).hasSize(1);
+        Notification notification = repository.saved.get(0);
+        assertThat(notification.channel()).isEqualTo(NotificationChannel.EMAIL);
+        assertThat(notification.status().name()).isEqualTo("PENDING");
+        assertThat(notification.emailTo()).isEqualTo("requester@example.com");
+        assertThat(notification.eventType()).isEqualTo("PASSWORD_RESET");
+        assertThat(notification.body()).contains("https://app.eprocure.local/reset");
+        assertThat(webSocketPushPort.pushed).isEmpty();
+    }
+
     private BusinessEventCommand command(String eventId) throws Exception {
         JsonNode payload = objectMapper.readTree("""
                 {
@@ -99,6 +114,27 @@ class ConsumeBusinessEventUseCaseTest {
                 "finance.budget.warning",
                 0,
                 12L,
+                payload);
+    }
+
+    private BusinessEventCommand emailCommand(String eventId) throws Exception {
+        JsonNode payload = objectMapper.readTree("""
+                {
+                  "recipientId": "10000000-0000-4000-8000-000000000001",
+                  "recipientEmail": "requester@example.com",
+                  "templateEventType": "PASSWORD_RESET",
+                  "resetUrl": "https://app.eprocure.local/reset?token=opaque-short-lived",
+                  "language": "vi"
+                }
+                """);
+        return new BusinessEventCommand(
+                eventId,
+                "notification.email.send",
+                "iam-service",
+                NOW,
+                "notification.email.send",
+                0,
+                30L,
                 payload);
     }
 
@@ -155,6 +191,18 @@ class ConsumeBusinessEventUseCaseTest {
                 String eventType,
                 NotificationChannel channel,
                 String language) {
+            if ("PASSWORD_RESET".equals(eventType) && channel == NotificationChannel.EMAIL) {
+                return Optional.of(new NotificationTemplate(
+                        "EMAIL_PASSWORD_RESET_VI",
+                        "PASSWORD_RESET",
+                        NotificationChannel.EMAIL,
+                        "vi",
+                        "Reset password",
+                        "Open {{resetUrl}} to reset your password.",
+                        true,
+                        NOW,
+                        NOW));
+            }
             if (!"BUDGET_WARNING".equals(eventType) || channel != NotificationChannel.IN_APP) {
                 return Optional.empty();
             }
@@ -168,6 +216,37 @@ class ConsumeBusinessEventUseCaseTest {
                     true,
                     NOW,
                     NOW));
+        }
+
+        @Override
+        public List<Notification> findEmailDispatchCandidates(Instant now, int limit, short maxAttempts) {
+            return List.of();
+        }
+
+        @Override
+        public int markEmailSent(UUID id, Instant sentAt, String providerMessageId) {
+            return 0;
+        }
+
+        @Override
+        public int markEmailFailed(
+                UUID id,
+                Instant attemptedAt,
+                Instant nextAttemptAt,
+                short maxAttempts,
+                String lastError) {
+            return 0;
+        }
+
+        @Override
+        public int recordEmailDeadLetter(
+                UUID notificationId,
+                String recipientEmail,
+                String eventType,
+                String failureReason,
+                short retryCount,
+                Instant failedAt) {
+            return 0;
         }
 
         @Override

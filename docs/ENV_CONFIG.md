@@ -297,8 +297,13 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `NOTIFICATION_DB_PASS` | `notif_pass_dev` | `***SENSITIVE***` | |
 | `NOTIFICATION_DB_POOL_MIN` | `1` | `2` | |
 | `NOTIFICATION_DB_POOL_MAX` | `3` | `10` | |
+| `NOTIFICATION_EMAIL_DISPATCH_ENABLED` | `true` | `true` | Bật worker gửi email async |
+| `NOTIFICATION_EMAIL_PROVIDER` | `logging` | `brevo` | `logging` cho dev, `brevo` cho gửi thật |
+| `NOTIFICATION_EMAIL_BATCH_SIZE` | `25` | `50` | Số email xử lý mỗi batch |
+| `NOTIFICATION_EMAIL_RETRY_FIXED_DELAY_MS` | `60000` | `60000` | Chu kỳ worker retry email |
 | `EMAIL_ENABLED` | `false` | `true` | Bật gửi email thực (tắt ở dev) |
 | `BREVO_API_KEY` | *(empty)* | `***SENSITIVE***` | Brevo SMTP API Key |
+| `BREVO_API_URL` | `https://api.brevo.com/v3/smtp/email` | `https://api.brevo.com/v3/smtp/email` | Brevo transactional email API |
 | `BREVO_SMTP_HOST` | `smtp-relay.brevo.com` | `smtp-relay.brevo.com` | |
 | `BREVO_SMTP_PORT` | `587` | `587` | |
 | `BREVO_SMTP_USER` | `dev@eprocure.vn` | `noreply@eprocure.vn` | |

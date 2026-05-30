@@ -21,6 +21,19 @@ public final class LogMaskingUtil {
                 .orElse("***");
     }
 
+    public static String maskEmail(String email) {
+        return Optional.ofNullable(email)
+                .map(String::trim)
+                .filter(value -> value.contains("@"))
+                .map(value -> {
+                    String[] parts = value.split("@", 2);
+                    String local = parts[0].isBlank() ? "*" : parts[0].substring(0, 1) + "***";
+                    String domain = parts[1].isBlank() ? "***" : parts[1].replaceAll("(?<=.).(?=[^@]*\\.)", "*");
+                    return local + "@" + domain;
+                })
+                .orElse("***");
+    }
+
     public static String maskClientIp(String ipAddress) {
         return Optional.ofNullable(ipAddress)
                 .filter(value -> !value.isBlank())

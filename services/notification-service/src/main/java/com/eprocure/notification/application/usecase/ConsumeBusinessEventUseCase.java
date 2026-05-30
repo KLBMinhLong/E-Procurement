@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -71,6 +72,9 @@ public class ConsumeBusinessEventUseCase {
         if (recipients.isEmpty()) {
             return 0;
         }
+        if (isEmailSendTopic(command.topic())) {
+            return createEmailNotifications(eventType, recipients, variables);
+        }
 
         RenderedNotification rendered = templateRenderer.render(
                 eventType,
@@ -101,6 +105,7 @@ public class ConsumeBusinessEventUseCase {
 
     private String normalizedEventType(BusinessEventCommand command) {
         return switch (command.topic()) {
+            case "notification.email.send" -> emailEventType(command);
             case "finance.budget.warning" -> "BUDGET_WARNING";
             case "finance.budget.exceeded" -> "BUDGET_EXCEEDED";
             case "approval.step.assigned" -> "APPROVAL_TASK_ASSIGNED";
@@ -111,6 +116,81 @@ public class ConsumeBusinessEventUseCase {
             case "procurement.pr.changes-requested" -> "PR_CHANGES_REQUESTED";
             default -> command.eventType();
         };
+    }
+
+    private int createEmailNotifications(
+            String eventType,
+            Set<UUID> recipients,
+            Map<String, String> variables) {
+        String emailTo = emailTo(variables);
+        if (emailTo == null) {
+            log.warn("[ACTION] Skip email notification without recipient email | eventType={}", eventType);
+            return 0;
+        }
+
+        RenderedNotification rendered = renderEmail(eventType, variables);
+        int created = 0;
+        for (UUID recipientId : recipients) {
+            Notification notification = Notification.createEmail(
+                    recipientId,
+                    emailTo,
+                    eventType,
+                    rendered.subject(),
+                    rendered.body(),
+                    referenceType(eventType, variables),
+                    referenceId(eventType, variables),
+                    referenceNumber(variables),
+                    actionUrl(eventType, variables),
+                    clock.instant());
+            notificationRepository.save(notification);
+            created++;
+            log.info("[ACTION] Created email notification | eventType={} | recipientId={} | to={}",
+                    eventType,
+                    LogMaskingUtil.maskId(recipientId),
+                    LogMaskingUtil.maskEmail(emailTo));
+        }
+        return created;
+    }
+
+    private RenderedNotification renderEmail(String eventType, Map<String, String> variables) {
+        String subject = variables.get("subject");
+        String body = variables.get("body");
+        if (subject != null && !subject.isBlank() && body != null && !body.isBlank()) {
+            return new RenderedNotification(subject, body);
+        }
+        return templateRenderer.render(
+                eventType,
+                NotificationChannel.EMAIL,
+                variables.getOrDefault("language", "vi"),
+                variables);
+    }
+
+    private boolean isEmailSendTopic(String topic) {
+        return "notification.email.send".equals(topic);
+    }
+
+    private String emailEventType(BusinessEventCommand command) {
+        String eventType = firstText(command.payload(), "templateEventType", "notificationType", "eventType");
+        if (eventType == null || eventType.isBlank()) {
+            eventType = command.eventType();
+        }
+        if (eventType == null || eventType.isBlank() || "notification.email.send".equals(eventType)) {
+            eventType = "EMAIL_SEND";
+        }
+        return eventType.trim()
+                .replace('.', '_')
+                .replace('-', '_')
+                .toUpperCase(Locale.ROOT);
+    }
+
+    private String firstText(JsonNode payload, String... fields) {
+        for (String field : fields) {
+            JsonNode value = payload.get(field);
+            if (value != null && value.isTextual() && !value.asText().isBlank()) {
+                return value.asText();
+            }
+        }
+        return null;
     }
 
     private Map<String, String> flatten(JsonNode payload) {
@@ -168,6 +248,14 @@ public class ConsumeBusinessEventUseCase {
 
     private String referenceNumber(Map<String, String> variables) {
         return firstPresent(variables, "referenceNumber", "prNumber", "poNumber", "invoiceNumber");
+    }
+
+    private String emailTo(Map<String, String> variables) {
+        String value = firstPresent(variables, "recipientEmail", "toEmail", "email", "to");
+        if (value == null || !value.contains("@")) {
+            return null;
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
     }
 
     private String actionUrl(String eventType, Map<String, String> variables) {
