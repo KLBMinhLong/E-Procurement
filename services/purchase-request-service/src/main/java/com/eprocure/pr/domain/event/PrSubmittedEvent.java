@@ -23,6 +23,7 @@ public record PrSubmittedEvent(
             UUID requesterId,
             UUID departmentId,
             PrPriority priority,
+            int fiscalYear,
             Money totalAmount,
             Set<String> categories) {
         this(
@@ -32,7 +33,7 @@ public record PrSubmittedEvent(
                 "purchase-request-service",
                 Instant.now(),
                 UUID.randomUUID(),
-                new Payload(purchaseRequestId, prNumber, title, requesterId, departmentId, priority, totalAmount, categories));
+                new Payload(purchaseRequestId, prNumber, title, requesterId, departmentId, priority, fiscalYear, totalAmount, categories));
     }
 
     public PrSubmittedEvent {
@@ -52,6 +53,7 @@ public record PrSubmittedEvent(
             UUID requesterId,
             UUID departmentId,
             PrPriority priority,
+            int fiscalYear,
             Money totalAmount,
             Set<String> categories) {
         public Payload {
@@ -61,6 +63,9 @@ public record PrSubmittedEvent(
             Objects.requireNonNull(requesterId, "requesterId must not be null");
             Objects.requireNonNull(departmentId, "departmentId must not be null");
             Objects.requireNonNull(priority, "priority must not be null");
+            if (fiscalYear < 2000 || fiscalYear > 2100) {
+                throw new IllegalArgumentException("fiscalYear is out of range");
+            }
             Objects.requireNonNull(totalAmount, "totalAmount must not be null");
             categories = categories == null ? Set.of() : Set.copyOf(categories);
         }

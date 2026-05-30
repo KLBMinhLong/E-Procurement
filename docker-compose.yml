@@ -310,10 +310,77 @@ services:
       PR_ATTACHMENT_MAX_SIZE_MB: ${PR_ATTACHMENT_MAX_SIZE_MB:-20}
       PR_EMERGENCY_MONTHLY_LIMIT: ${PR_EMERGENCY_MONTHLY_LIMIT:-3}
       PR_INTEGRATION_FALLBACK_ENABLED: ${PR_INTEGRATION_FALLBACK_ENABLED:-false}
+      PR_FINANCE_INTEGRATION_ENABLED: ${PR_FINANCE_INTEGRATION_ENABLED:-true}
+      FINANCE_SERVICE_URL: http://finance-service:8084
+      FINANCE_INTERNAL_API_KEY: ${FINANCE_INTERNAL_API_KEY:-change-me-internal-api-key}
+      PR_DEFAULT_GL_ACCOUNT_CODE: ${PR_DEFAULT_GL_ACCOUNT_CODE:-6002}
       PR_INTERNAL_API_KEY: ${PR_INTERNAL_API_KEY:-change-me-internal-api-key}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "${PR_SERVICE_PORT:-8082}:8082"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      finance-service:
+        condition: service_healthy
+    cpus: 0.25
+    mem_limit: 512m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 75s
+    logging: *default-logging
+
+  finance-service:
+    build:
+      context: .
+      dockerfile: services/finance-service/Dockerfile
+    container_name: eprocure-finance-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: finance-service
+      SERVER_PORT: 8084
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: finance-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      # OTEL_TRACES_EXPORTER: otlp
+      OTEL_TRACES_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
+      FINANCE_DB_HOST: postgres
+      FINANCE_DB_PORT: 5432
+      FINANCE_DB_NAME: db_finance
+      FINANCE_DB_SCHEMA: finance
+      FINANCE_DB_USER: ${FINANCE_DB_USER:-finance_user}
+      FINANCE_DB_PASS: ${FINANCE_DB_PASS:-finance_pass_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASS: ${REDIS_PASS:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      FINANCE_INTERNAL_API_KEY: ${FINANCE_INTERNAL_API_KEY:-change-me-internal-api-key}
+      FINANCE_KAFKA_ENABLED: ${FINANCE_KAFKA_ENABLED:-true}
+      FINANCE_DEFAULT_GL_ACCOUNT_CODE: ${FINANCE_DEFAULT_GL_ACCOUNT_CODE:-6002}
+    ports:
+      - "${FINANCE_SERVICE_PORT:-8084}:8084"
     networks:
       - eprocure-net
     depends_on:
@@ -334,7 +401,7 @@ services:
           cpus: "0.10"
           memory: 256M
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/actuator/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8084/actuator/health"]
       interval: 15s
       timeout: 5s
       retries: 10

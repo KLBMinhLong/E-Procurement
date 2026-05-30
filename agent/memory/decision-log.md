@@ -1,5 +1,19 @@
 # Decision Log
 
+## [2026-05-30] E10 finance-service budget check foundation
+
+- Decision: Start E10 with a narrow `finance-service` budget foundation and an internal `GET /internal/budgets/check` endpoint consumed by purchase-request-service.
+- Reason: PR submit currently depends on a fallback `BudgetCheckPort`; replacing that fake dependency is higher priority than starting RFQ/PO because it protects the financial control boundary of the existing PR approval flow.
+- Impact: `finance-service` becomes a Maven/Docker service on port 8084 with budget ledger schema and local seed budgets. PR service can use `FinanceBudgetCheckAdapter` when `PR_FINANCE_INTEGRATION_ENABLED=true`, while local fallback remains available by config.
+- Constraint: Kafka commit/release budget transactions, public budget dashboard APIs, override and transfer flows remain later E10 slices.
+
+## [2026-05-30] E10 budget ledger event source
+
+- Decision: Publish `procurement.pr.approved`, `procurement.pr.rejected`, and `procurement.pr.changes-requested` from purchase-request-service after the approval callback updates PR state, while finance-service consumes those topics plus `procurement.pr.submitted` and `procurement.pr.cancelled`.
+- Reason: Approval-service currently applies approval results through synchronous internal PR callbacks and does not own the final persisted PR status; publishing after PR commit keeps budget ledger events aligned with committed PR state.
+- Impact: Finance writes immutable `budget_transactions` for tentative commit, firm commit, and release with `finance.event_processing_log` idempotency by event id. Topic registry now documents PR service as the status-event publisher after approval callback.
+- Constraint: Budget warning/exceeded producer and public dashboard/list APIs remain later E10 slices.
+
 ## [2026-05-28] E05 SLA timer and escalation
 
 - Decision: Add a scheduled `SlaEscalationUseCase` in approval-service to scan overdue pending approval steps, mark `is_escalated`, persist `escalated_from`, reassign to another eligible approver for the same role when IAM returns one, and publish `approval.sla.breached`.

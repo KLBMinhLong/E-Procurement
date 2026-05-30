@@ -194,9 +194,21 @@
 | E07: Purchase Order | ⬜ |
 | E08: Goods Receipt & Inventory | ⬜ |
 | E09: Invoice & Payment | ⬜ |
-| E10: Budget Management | ⬜ |
+| E10: Budget Management | 🔄 |
 | E11: Notification & Realtime | ⬜ |
 | E12: Analytics & Reports | ⬜ |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
 | E15: Testing & CI/CD | ⬜ |
+
+### E10: Budget Management
+| Task | Status | Ghi chú |
+|---|---|---|
+| User story/use case chi tiết | ✅ | `docs/user-stories/E10-budget-management.md` |
+| Spring Boot finance-service module setup | ✅ | Scaffold service + Docker/compose; `mvn test` xanh |
+| Flyway migrations (budgets, budget_transactions) | ✅ | Budget foundation + local seed |
+| Internal budget check API | ✅ | `GET /internal/budgets/check` + use case tests |
+| PR service FinanceBudgetCheckAdapter | ✅ | Feature flag thay fallback; full reactor test xanh |
+| Kafka commit/release budget events | ✅ | Finance consumes submitted/approved/rejected/cancelled/changes-requested and writes idempotent ledger |
+| Budget dashboard/list API | ⬜ | Later E10 slice |
+| Override/transfer API | ⬜ | Later E10 slice |

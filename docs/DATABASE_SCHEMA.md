@@ -45,6 +45,7 @@ PostgreSQL Cluster
 │   └── schema: finance
 │       ├── budgets
 │       ├── budget_transactions
+│       ├── event_processing_log
 │       ├── budget_transfers
 │       ├── purchase_orders
 │       ├── po_line_items
@@ -587,6 +588,7 @@ CREATE TABLE finance.budget_transactions (
     currency        VARCHAR(3)      NOT NULL DEFAULT 'VND',
     reference_type  VARCHAR(50)     NOT NULL,               -- 'PURCHASE_REQUEST'|'PURCHASE_ORDER'|'INVOICE'
     reference_id    UUID            NOT NULL,
+    source_event_id VARCHAR(80),
     description     TEXT,
     performed_by    UUID            NOT NULL,
     performed_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW()
@@ -594,9 +596,24 @@ CREATE TABLE finance.budget_transactions (
 );
 CREATE INDEX idx_budget_tx_budget ON finance.budget_transactions(budget_id);
 CREATE INDEX idx_budget_tx_ref ON finance.budget_transactions(reference_type, reference_id);
+CREATE INDEX idx_budget_tx_source_event ON finance.budget_transactions(source_event_id) WHERE source_event_id IS NOT NULL;
 ```
 
-### 5.3 purchase_orders
+### 5.3 event_processing_log
+
+```sql
+CREATE TABLE finance.event_processing_log (
+    event_id      VARCHAR(80)     PRIMARY KEY,
+    topic         VARCHAR(120)    NOT NULL,
+    partition_id  INTEGER,
+    offset_value  BIGINT,
+    handler_name  VARCHAR(120)    NOT NULL,
+    status        VARCHAR(20)     NOT NULL,                  -- PROCESSED|SKIPPED
+    processed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+```
+
+### 5.4 purchase_orders
 
 ```sql
 CREATE TABLE finance.purchase_orders (
@@ -631,7 +648,7 @@ CREATE INDEX idx_po_vendor ON finance.purchase_orders(vendor_id);
 CREATE INDEX idx_po_status ON finance.purchase_orders(status) WHERE is_deleted = FALSE;
 ```
 
-### 5.4 invoices
+### 5.5 invoices
 
 ```sql
 CREATE TABLE finance.invoices (

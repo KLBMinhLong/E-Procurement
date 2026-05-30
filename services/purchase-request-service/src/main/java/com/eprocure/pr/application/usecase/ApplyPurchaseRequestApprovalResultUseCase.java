@@ -1,16 +1,19 @@
 package com.eprocure.pr.application.usecase;
 
 import com.eprocure.pr.application.port.in.ApplyPurchaseRequestApprovalResultCommand;
+import com.eprocure.pr.application.port.out.PrApprovalResultEventPublisher;
 import com.eprocure.pr.application.service.AppliedApprovalResultView;
 import com.eprocure.pr.application.service.IdempotencyService;
 import com.eprocure.pr.common.exception.BusinessException;
 import com.eprocure.pr.common.exception.ErrorCode;
 import com.eprocure.pr.common.util.LogMaskingUtil;
+import com.eprocure.pr.domain.event.PrApprovalResultEvent;
 import com.eprocure.pr.domain.model.PrStatus;
 import com.eprocure.pr.domain.model.PurchaseRequest;
 import com.eprocure.pr.domain.repository.PurchaseRequestRepository;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -26,14 +29,17 @@ public class ApplyPurchaseRequestApprovalResultUseCase {
 
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final IdempotencyService idempotencyService;
+    private final PrApprovalResultEventPublisher eventPublisher;
     private final Clock clock;
 
     public ApplyPurchaseRequestApprovalResultUseCase(
             PurchaseRequestRepository purchaseRequestRepository,
             IdempotencyService idempotencyService,
+            PrApprovalResultEventPublisher eventPublisher,
             Clock clock) {
         this.purchaseRequestRepository = purchaseRequestRepository;
         this.idempotencyService = idempotencyService;
+        this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
 
@@ -55,11 +61,16 @@ public class ApplyPurchaseRequestApprovalResultUseCase {
 
         PurchaseRequest purchaseRequest = purchaseRequestRepository.findById(command.purchaseRequestId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PR_001));
+        boolean stateChanged = false;
         if (purchaseRequest.getStatus() == PrStatus.PENDING_APPROVAL) {
             apply(purchaseRequest, command.targetStatus(), Instant.now(clock));
             purchaseRequestRepository.update(purchaseRequest);
+            stateChanged = true;
         } else if (purchaseRequest.getStatus() != command.targetStatus()) {
             throw new BusinessException(ErrorCode.PR_003);
+        }
+        if (stateChanged) {
+            publishApprovalResultEvents(purchaseRequest.pullDomainEvents());
         }
 
         AppliedApprovalResultView view = new AppliedApprovalResultView(
@@ -85,5 +96,12 @@ public class ApplyPurchaseRequestApprovalResultUseCase {
 
     private String operation(PrStatus targetStatus) {
         return IDEMPOTENCY_OPERATION + "-" + targetStatus.name().toLowerCase();
+    }
+
+    private void publishApprovalResultEvents(List<Object> events) {
+        events.stream()
+                .filter(PrApprovalResultEvent.class::isInstance)
+                .map(PrApprovalResultEvent.class::cast)
+                .forEach(eventPublisher::publish);
     }
 }

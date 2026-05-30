@@ -91,6 +91,7 @@ public class PrSubmittedEventConsumer {
             String title,
             UUID requesterId,
             UUID departmentId,
+            Integer fiscalYear,
             String priority,
             MoneyPayload totalAmount,
             Set<String> categories) {

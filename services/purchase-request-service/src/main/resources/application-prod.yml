@@ -27,3 +27,8 @@ eprocure:
   pr:
     integration:
       fallback-enabled: false
+      finance-enabled: true
+      finance:
+        base-url: ${FINANCE_SERVICE_URL}
+        internal-api-key: ${FINANCE_INTERNAL_API_KEY}
+        default-gl-account-code: ${PR_DEFAULT_GL_ACCOUNT_CODE:6002}

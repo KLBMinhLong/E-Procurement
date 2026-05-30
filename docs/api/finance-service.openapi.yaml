@@ -21,6 +21,10 @@ components:
       type: apiKey
       in: cookie
       name: ep_session
+    internalApiKey:
+      type: apiKey
+      in: header
+      name: X-Internal-Api-Key
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -92,6 +96,25 @@ components:
               categoryName: { type: string }
               spent:        { type: string }
               percent:      { type: number, format: float }
+    Money:
+      type: object
+      properties:
+        amount:   { type: string, example: "70000000.0000" }
+        currency: { type: string, example: VND }
+    BudgetCheckResult:
+      type: object
+      properties:
+        budgetId:       { type: string, format: uuid }
+        departmentId:   { type: string, format: uuid }
+        fiscalYear:     { type: integer }
+        quarter:        { type: integer, nullable: true }
+        glAccountCode:  { type: string, example: "6002" }
+        allocated:      { $ref: '#/components/schemas/Money' }
+        committed:      { $ref: '#/components/schemas/Money' }
+        spent:          { $ref: '#/components/schemas/Money' }
+        available:      { $ref: '#/components/schemas/Money' }
+        status:         { type: string, enum: [PASS, WARNING, FAIL] }
+        warningMessage: { type: string, nullable: true }
     PoLineItem:
       type: object
       properties:
@@ -189,6 +212,57 @@ components:
         createdAt: { type: string, format: date-time }
 
 paths:
+  /internal/budgets/check:
+    get:
+      tags: [Budget]
+      summary: Internal budget check for PR submit
+      operationId: checkBudgetInternal
+      description: Endpoint nội bộ cho purchase-request-service. Bắt buộc `X-Internal-Api-Key`.
+      servers:
+        - url: http://{host}
+          variables:
+            host:
+              default: finance-service.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: department_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: fiscal_year
+          in: query
+          required: true
+          schema: { type: integer, example: 2026 }
+        - name: amount
+          in: query
+          required: true
+          schema: { type: string, example: "70000000.0000" }
+        - name: currency
+          in: query
+          schema: { type: string, default: VND }
+        - name: gl_account_code
+          in: query
+          schema: { type: string, example: "6002" }
+      responses:
+        '200':
+          description: Budget check result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BudgetCheckResult'
+        '404':
+          description: Active budget not found (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /budgets:
     get:
       tags: [Budget]

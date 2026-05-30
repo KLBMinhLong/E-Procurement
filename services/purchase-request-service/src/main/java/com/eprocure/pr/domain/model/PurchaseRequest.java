@@ -1,6 +1,7 @@
 package com.eprocure.pr.domain.model;
 
 import com.eprocure.pr.domain.event.PrCancelledEvent;
+import com.eprocure.pr.domain.event.PrApprovalResultEvent;
 import com.eprocure.pr.domain.event.PrSubmittedEvent;
 import com.eprocure.pr.domain.model.vo.BudgetCheckResult;
 import com.eprocure.pr.domain.model.vo.InventoryCheckResult;
@@ -169,6 +170,7 @@ public class PurchaseRequest {
                 requesterId,
                 departmentId,
                 priority,
+                fiscalYear,
                 totalAmount,
                 submittedCategories()));
     }
@@ -187,6 +189,7 @@ public class PurchaseRequest {
         }
         this.status = PrStatus.CHANGES_REQUESTED;
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt must not be null");
+        domainEvents.add(new PrApprovalResultEvent(id, prNumber, departmentId, fiscalYear, totalAmount, status));
     }
 
     public void approve(Instant updatedAt) {
@@ -195,6 +198,7 @@ public class PurchaseRequest {
         }
         this.status = PrStatus.APPROVED;
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt must not be null");
+        domainEvents.add(new PrApprovalResultEvent(id, prNumber, departmentId, fiscalYear, totalAmount, status));
     }
 
     public void reject(Instant updatedAt) {
@@ -203,6 +207,7 @@ public class PurchaseRequest {
         }
         this.status = PrStatus.REJECTED;
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt must not be null");
+        domainEvents.add(new PrApprovalResultEvent(id, prNumber, departmentId, fiscalYear, totalAmount, status));
     }
 
     public void convertToPurchaseOrder(Instant updatedAt) {

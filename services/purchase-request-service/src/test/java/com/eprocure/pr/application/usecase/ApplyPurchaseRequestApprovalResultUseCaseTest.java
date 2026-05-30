@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.pr.application.port.in.ApplyPurchaseRequestApprovalResultCommand;
+import com.eprocure.pr.application.port.out.PrApprovalResultEventPublisher;
 import com.eprocure.pr.application.service.AppliedApprovalResultView;
 import com.eprocure.pr.application.service.IdempotencyService;
 import com.eprocure.pr.common.exception.BusinessException;
 import com.eprocure.pr.common.exception.ErrorCode;
+import com.eprocure.pr.domain.event.PrApprovalResultEvent;
 import com.eprocure.pr.domain.model.PrLineItem;
 import com.eprocure.pr.domain.model.PrPriority;
 import com.eprocure.pr.domain.model.PrStatus;
@@ -40,13 +42,15 @@ class ApplyPurchaseRequestApprovalResultUseCaseTest {
     private final Clock clock = Clock.fixed(Instant.parse("2026-05-21T02:00:00Z"), ZoneOffset.UTC);
     private InMemoryPurchaseRequestRepository purchaseRequestRepository;
     private FakeIdempotencyService idempotencyService;
+    private FakePrApprovalResultEventPublisher eventPublisher;
     private ApplyPurchaseRequestApprovalResultUseCase useCase;
 
     @BeforeEach
     void setUp() {
         purchaseRequestRepository = new InMemoryPurchaseRequestRepository();
         idempotencyService = new FakeIdempotencyService();
-        useCase = new ApplyPurchaseRequestApprovalResultUseCase(purchaseRequestRepository, idempotencyService, clock);
+        eventPublisher = new FakePrApprovalResultEventPublisher();
+        useCase = new ApplyPurchaseRequestApprovalResultUseCase(purchaseRequestRepository, idempotencyService, eventPublisher, clock);
     }
 
     @Test
@@ -61,6 +65,8 @@ class ApplyPurchaseRequestApprovalResultUseCaseTest {
         assertThat(purchaseRequest.getUpdatedAt()).contains(clock.instant());
         assertThat(purchaseRequestRepository.updated).isSameAs(purchaseRequest);
         assertThat(idempotencyService.savedResponse).isEqualTo(result);
+        assertThat(eventPublisher.published).hasSize(1);
+        assertThat(eventPublisher.published.get(0).payload().status()).isEqualTo(PrStatus.APPROVED);
     }
 
     @Test
@@ -77,6 +83,7 @@ class ApplyPurchaseRequestApprovalResultUseCaseTest {
         assertThat(result).isEqualTo(cached);
         assertThat(purchaseRequestRepository.findCalls).isZero();
         assertThat(purchaseRequestRepository.updated).isNull();
+        assertThat(eventPublisher.published).isEmpty();
     }
 
     @Test
@@ -211,6 +218,15 @@ class ApplyPurchaseRequestApprovalResultUseCaseTest {
         @Override
         public void save(String operation, UUID actorId, String idempotencyKey, Object response) {
             savedResponse = response;
+        }
+    }
+
+    private static final class FakePrApprovalResultEventPublisher implements PrApprovalResultEventPublisher {
+        private final List<PrApprovalResultEvent> published = new java.util.ArrayList<>();
+
+        @Override
+        public void publish(PrApprovalResultEvent event) {
+            published.add(event);
         }
     }
 }
