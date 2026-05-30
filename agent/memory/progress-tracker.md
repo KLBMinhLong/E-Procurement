@@ -34,6 +34,8 @@
 | user-stories/E03-ui-shell-design-system.md | ✅ | User story/use case chi tiết MVP |
 | user-stories/E04-purchase-request-service.md | ✅ | User story/use case chi tiết MVP |
 | user-stories/E05-approval-engine.md | ✅ | User story/use case chi tiết MVP |
+| user-stories/E10-budget-management.md | ✅ | User story/use case chi tiết chuẩn bị finance-service budget foundation |
+| user-stories/E11-notification-realtime.md | ✅ | User story/use case chi tiết chuẩn bị notification-service |
 
 ## RULES LAYER (.cursor/rules/)
 | File | Status | Ghi chú |

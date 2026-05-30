@@ -21,12 +21,13 @@ eProcure Enterprise là hệ thống mua sắm nội bộ cho doanh nghiệp 200
 
 Hiện trạng triển khai:
 
-- Maven reactor: `services/iam-service`, `services/purchase-request-service`, `infra/keycloak/eprocure-keycloak-provider`.
+- Maven reactor: `services/iam-service`, `services/purchase-request-service`, `services/approval-service`, `infra/keycloak/eprocure-keycloak-provider`.
 - Frontend: Angular 21 standalone app tại `frontend/eprocure-web`.
 - Infra: Docker Compose có PostgreSQL 15, Redis 7, Kafka KRaft, Keycloak, NGINX gateway, Prometheus, Grafana, Loki, Tempo.
-- Epics xong chính: E01 infra, E02 IAM phần lớn, E03 UI shell/design system, E04 PR service, E13-A Admin Portal UI.
-- Epic đang làm chính: E05 Approval Engine foundation (`approval-service`, Camunda starter, BPMN files, baseline rule selector).
-- Epic chưa làm chính: phần còn lại E05, E06-E12, phần còn lại E13, E14, E15.
+- Epics đã đóng theo tracker: E01 infrastructure, E03 UI shell/design system, E04 PR service, E05 Approval Engine, E13-A Admin Portal UI.
+- E02 IAM đã hoàn thiện phần lớn business/API surface; các hạng mục còn theo tracker là hardening/adapters/test coverage như RSA+AES completion, email delivery adapter, unit test hardening.
+- Chưa có code backend riêng cho `finance-service`, `inventory-service`, `vendor-service`, `notification-service`, `analytics-service`, `admin-service`; hiện mới có OpenAPI/docs cho các service này.
+- Việc nên ưu tiên tiếp theo sau MVP E01-E05: triển khai E10 Budget Management/finance-service budget foundation để thay `BudgetCheckPort` fallback trong PR trước khi mở rộng RFQ/PO/Goods Receipt. User stories chi tiết đã có tại `docs/user-stories/E10-budget-management.md`; E11 notification readiness đã có tại `docs/user-stories/E11-notification-realtime.md`.
 
 ## Non-Negotiable Invariants
 
@@ -81,6 +82,7 @@ Root/backend:
 mvn test
 mvn -pl services/iam-service test
 mvn -pl services/purchase-request-service test
+mvn -pl services/approval-service test
 mvn -pl infra/keycloak/eprocure-keycloak-provider test
 ```
 

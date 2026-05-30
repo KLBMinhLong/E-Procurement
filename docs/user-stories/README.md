@@ -18,9 +18,11 @@ E02-iam-service.md
 E03-ui-shell-design-system.md
 E04-purchase-request-service.md
 E05-approval-engine.md
+E10-budget-management.md
+E11-notification-realtime.md
 ```
 
-Các epic E06-E15 chỉ được story map ở mức roadmap. Khi bắt đầu code từng epic sau MVP, tạo file chi tiết riêng theo format E01-E05.
+Các epic E06-E09 và E12-E15 vẫn chỉ được story map ở mức roadmap. Khi bắt đầu code từng epic còn lại, tạo file chi tiết riêng theo format E01-E05/E10-E11.
 
 ---
 
@@ -59,7 +61,7 @@ E04 Purchase Request Service
 E05 Approval Engine
 ```
 
-Notification, Finance và Inventory ở MVP có thể dùng adapter/stub có contract rõ, sau đó thay bằng service thật ở E08-E11.
+Notification, Finance và Inventory ở MVP có thể dùng adapter/stub có contract rõ. Sau MVP E01-E05, ưu tiên E10 để thay budget fallback bằng finance-service thật, rồi E11 để nhận event và gửi notification realtime/email.
 
 ---
 
