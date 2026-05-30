@@ -1,5 +1,19 @@
 # Decision Log
 
+## [2026-05-30] E11 notification-service first backend slice
+
+- Decision: Scaffold `notification-service` as a Maven/Docker service on port 8088 with notification schema, in-app notification APIs, template rendering, Kafka business-event consumption, and event idempotency.
+- Reason: E10 now publishes `finance.budget.warning` and `finance.budget.exceeded`; E11 needs a durable receiver before adding frontend bell, real WebSocket/STOMP delivery, or email dispatch.
+- Impact: Notification-service persists `notifications`, `notification_templates`, and `event_processing_log`; users can list/count/read their own notifications using `NOTIFICATION_VIEW_OWN`; budget alerts route to configured finance recipients via `NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS`.
+- Constraint: Brevo/email and template-admin work remains later E11 slices. Runtime verification showed `notification-service` needs a 0.25 CPU dev limit and longer Docker health start period when OTel is enabled.
+
+## [2026-05-30] E11 realtime notification delivery
+
+- Decision: Deliver in-app notification events through Spring STOMP endpoint `/ws/notifications` and user destination `/user/queue/notifications`, with the Angular shell bell consuming count/feed APIs plus realtime messages.
+- Reason: Persisted notification APIs were already stable; realtime delivery should reuse gateway-authenticated user headers and keep push emission after transaction commit.
+- Impact: Frontend users with `NOTIFICATION_VIEW_OWN` can see unread count, latest feed, read/read-all actions, and live push toasts in the shell.
+- Constraint: WebSocket principal name is derived from gateway `X-User-ID`; direct service WebSocket calls without gateway headers are not a supported production auth path.
+
 ## [2026-05-30] E10 budget alert event publisher
 
 - Decision: Add a finance `BudgetAlertService` with a `BudgetAlertEventPublisher` port, Kafka publisher, and logging fallback for `finance.budget.warning` and `finance.budget.exceeded`.

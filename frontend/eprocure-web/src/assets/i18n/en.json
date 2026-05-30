@@ -153,7 +153,14 @@
     "purchaseRequest": "Purchase Requests"
   },
   "notification": {
-    "open": "Open notifications"
+    "empty": "No notifications",
+    "loading": "Loading notifications",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "open": "Open notifications",
+    "panelLabel": "Notification panel",
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread"
   },
   "route": {
     "admin": {

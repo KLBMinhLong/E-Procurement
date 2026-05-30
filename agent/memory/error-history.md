@@ -1,5 +1,12 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-30] Bug: Notification-service startup failed while parsing MyBatis UUID mappings
+
+- Symptom: Notification container stayed unhealthy and restarted; logs showed `Failed to parse mapping resource [mapper/NotificationMapper.xml]` and `No typehandler found for property id`.
+- Root cause: The new notification module used UUID columns in MyBatis XML/result mappings but did not register a PostgreSQL UUID type handler.
+- Fix: Add `UuidTypeHandler` under `notification.infrastructure.persistence.typehandler` and configure `mybatis.type-handlers-package`.
+- Prevention: Every new Spring/MyBatis service with UUID columns must include the UUID type handler before Docker runtime verification, not just compile-time tests.
+
 ## [2026-05-30] Bug: Finance health failed when Kafka DNS was unavailable
 
 - Symptom: Finance container logged `SYS_001` on `/actuator/health` with `No WebApplicationContext found`, then the Spring context failed while starting `internalKafkaListenerEndpointRegistry`.

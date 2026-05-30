@@ -76,7 +76,7 @@ notification.email.send
 [ ] Duplicate event does not duplicate notifications.
 [ ] Unknown eventType is logged and skipped safely.
 [ ] Payload/log không chứa password, token, secret, encrypted payload.
-[ ] Notification creation happens transactionally before WebSocket push.
+[x] Notification creation happens transactionally before WebSocket push.
 ```
 
 ### E11-UC-002: ResolveNotificationRecipientsUseCase
@@ -142,7 +142,7 @@ notification.email.send
 ```
 [ ] notifications table supports unread feed by recipient_id/is_read/created_at.
 [ ] actionUrl is a relative FE route, not hardcoded domain.
-[ ] WebSocket failure does not roll back persisted notification.
+[x] WebSocket failure does not roll back persisted notification.
 ```
 
 ### E11-UC-005: DispatchEmailUseCase
@@ -288,7 +288,7 @@ Toast bridge: show short realtime toast for task assigned/result/SLA events.
 Acceptance:
 
 ```
-[ ] WebSocket service uses cookie auth and reconnect strategy.
+[x] WebSocket service uses cookie auth and reconnect strategy.
 [ ] All HTTP requests use withCredentials.
 [ ] PATCH read/read-all uses Idempotency-Key.
 [ ] No hardcoded visible text; translate keys only.
@@ -315,11 +315,11 @@ Tests: event idempotency, template render, read/unread scope, retry handling
 ## 7. First Coding Slice Recommendation
 
 ```
-1. Scaffold notification-service with schema, template seed, Log4j2, Kafka, Redis and Docker resource limit.
-2. Implement in-app notification persistence plus GET /notifications and /notifications/count.
-3. Consume approval.step.assigned and push WebSocket/in-app notification.
-4. Add frontend notification bell consuming count/feed and WebSocket.
-5. Add email dispatch for notification.email.send after in-app path is stable.
+1. [x] Scaffold notification-service with schema, template seed, Log4j2, Kafka, Redis and Docker resource limit.
+2. [x] Implement in-app notification persistence plus GET /notifications and /notifications/count.
+3. [x] Consume approval/PR/finance notification topics and persist in-app notifications. Budget alerts are wired first because E10 now publishes them.
+4. [x] Add real WebSocket/STOMP adapter and frontend notification bell consuming count/feed and realtime messages.
+5. [ ] Add email dispatch for notification.email.send after in-app path is stable.
 ```
 
 This keeps E11 useful immediately for Approval tasks while avoiding early coupling to every future event type.
@@ -329,9 +329,26 @@ This keeps E11 useful immediately for Approval tasks while avoiding early coupli
 ## 8. Readiness Checklist
 
 ```
-[ ] Template seed list defined for approval.step.assigned and PR result events.
-[ ] Event payload fields needed for subject/body/actionUrl documented per event.
+[x] Template seed list defined for approval.step.assigned, PR result events, SLA events, and budget alert events.
+[x] Event payload fields needed for subject/body/actionUrl documented in `notification-service` template seed and `ConsumeBusinessEventUseCase` mapping.
 [ ] Brevo credentials remain ENV-only and never logged.
 [ ] Retry/DLQ behavior decided for failed email.
 [ ] IAM password reset delivery migration path decided: Kafka notification.email.send preferred; internal API only if product requires sync confirmation.
+
+---
+
+## 9. Implementation Status
+
+```
+[x] services/notification-service Maven module
+[x] Dockerfile + docker-compose service on port 8088
+[x] Flyway V1 notification schema + template seed + event_processing_log
+[x] In-app feed/count/read APIs guarded by NOTIFICATION_VIEW_OWN
+[x] Business event consumer for approval/PR/finance notification topics
+[x] Unit tests for budget alert creation and duplicate event idempotency
+[x] Real STOMP/WebSocket delivery adapter
+[x] Angular notification bell/feed in shell
+[ ] Email dispatch + retry worker
+[ ] Template admin API/UI
+```
 ```

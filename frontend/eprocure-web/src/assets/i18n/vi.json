@@ -153,7 +153,14 @@
     "purchaseRequest": "Yêu cầu mua sắm"
   },
   "notification": {
-    "open": "Mở thông báo"
+    "empty": "Chưa có thông báo",
+    "loading": "Đang tải thông báo",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "markRead": "Đánh dấu đã đọc",
+    "open": "Mở thông báo",
+    "panelLabel": "Bảng thông báo",
+    "title": "Thông báo",
+    "unreadCount": "{{count}} chưa đọc"
   },
   "route": {
     "admin": {

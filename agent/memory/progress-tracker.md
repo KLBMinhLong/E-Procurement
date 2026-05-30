@@ -195,7 +195,7 @@
 | E08: Goods Receipt & Inventory | ⬜ |
 | E09: Invoice & Payment | ⬜ |
 | E10: Budget Management | ✅ |
-| E11: Notification & Realtime | ⬜ |
+| E11: Notification & Realtime | 🔄 |
 | E12: Analytics & Reports | ⬜ |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
@@ -213,3 +213,17 @@
 | Budget dashboard/list API | ✅ | `GET /api/v1/budgets` + `GET /api/v1/budgets/{id}/dashboard`; scope quyền + Redis cache |
 | Override/transfer API | ✅ | `PATCH /api/v1/budgets/{id}/override-approval` + `PATCH /api/v1/budgets/{id}/transfer`; idempotent audit/ledger + tests |
 | Budget warning/exceeded events | ✅ | `BudgetAlertService` publishes `finance.budget.warning` / `finance.budget.exceeded` for low/negative projected available budget; notification consumption remains E11 |
+
+### E11: Notification & Realtime
+| Task | Status | Ghi chú |
+|---|---|---|
+| User story/use case chi tiết | ✅ | `docs/user-stories/E11-notification-realtime.md` |
+| Spring Boot notification-service module setup | ✅ | Maven module + Docker/compose service on port 8088 |
+| Flyway migrations (notification_templates, notifications, event_processing_log) | ✅ | In-app notification schema + template seed + Kafka dedup log |
+| In-app notification feed/count/read API | ✅ | `GET /api/v1/notifications`, `/count`, `PATCH /read`, `PATCH /read-all`; guarded by `NOTIFICATION_VIEW_OWN` |
+| Business event consumer foundation | ✅ | Consumes approval/PR/finance notification topics; budget alerts route to configured finance recipients |
+| WebSocket realtime delivery | ✅ | STOMP endpoint `/ws/notifications`, user queue `/user/queue/notifications`, after-commit `SimpMessagingTemplate` delivery |
+| Email dispatch + retry/DLQ | ⬜ | Brevo/email path pending |
+| Template admin API/UI | ⬜ | Template management and preview pending |
+| Frontend notification bell/feed | ✅ | Shell bell dropdown loads count/feed, marks read/all-read, and subscribes to realtime STOMP messages |
+| Unit tests | 🔄 | Budget alert consume + duplicate event tests pass; API/repository integration tests pending |

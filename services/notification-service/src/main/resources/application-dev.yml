@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${NOTIFICATION_DB_HOST:postgres}:${NOTIFICATION_DB_PORT:5432}/${NOTIFICATION_DB_NAME:db_notification}
+    username: ${NOTIFICATION_DB_USER:notification_user}
+    password: ${NOTIFICATION_DB_PASS:notification_pass_dev}
+    hikari:
+      connection-init-sql: SET search_path TO ${NOTIFICATION_DB_SCHEMA:notification}
+  flyway:
+    schemas: ${NOTIFICATION_DB_SCHEMA:notification}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      group-id: notification-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+
+eprocure:
+  internal:
+    api-key: ${NOTIFICATION_INTERNAL_API_KEY:change-me-internal-api-key}
+  notification:
+    integration:
+      kafka-enabled: ${NOTIFICATION_KAFKA_ENABLED:true}
+      kafka-auto-startup: ${NOTIFICATION_KAFKA_AUTO_STARTUP:true}
+    budget-alert-recipient-ids: ${NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS:10000000-0000-4000-8000-000000000001}

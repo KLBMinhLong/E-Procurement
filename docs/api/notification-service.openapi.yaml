@@ -94,6 +94,7 @@ paths:
       tags: [Notifications]
       summary: Danh sách thông báo của tôi (in-app)
       operationId: listMyNotifications
+      x-required-permission: NOTIFICATION_VIEW_OWN
       description: Hỗ trợ cursor-based pagination cho feed realtime.
       parameters:
         - name: is_read
@@ -138,6 +139,7 @@ paths:
       tags: [Notifications]
       summary: Đếm thông báo chưa đọc (dùng cho badge header)
       operationId: countUnreadNotifications
+      x-required-permission: NOTIFICATION_VIEW_OWN
       responses:
         '200':
           description: Số thông báo chưa đọc
@@ -158,6 +160,7 @@ paths:
       tags: [Notifications]
       summary: Đánh dấu 1 thông báo đã đọc
       operationId: markNotificationRead
+      x-required-permission: NOTIFICATION_VIEW_OWN
       parameters:
         - name: id
           in: path
@@ -170,13 +173,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/NotificationItem'
 
   /notifications/read-all:
     patch:
       tags: [Notifications]
       summary: Đánh dấu tất cả thông báo đã đọc
       operationId: markAllNotificationsRead
+      x-required-permission: NOTIFICATION_VIEW_OWN
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
@@ -312,7 +321,8 @@ paths:
 
         **URL:** `wss://{host}/ws/notifications`  
         **Protocol:** STOMP over WebSocket  
-        **Auth:** Cookie `ep_session` được gửi trong WebSocket handshake (browser tự gửi)
+        **Auth:** Cookie `ep_session` đi qua NGINX auth_request; gateway forward `X-User-ID`
+        để service bind STOMP principal theo userId.
 
         ### Angular Setup
         ```typescript
@@ -322,7 +332,7 @@ paths:
           brokerURL: 'wss://api.eprocure.internal/ws/notifications',
           onConnect: () => {
             // Subscribe cá nhân
-            client.subscribe(`/user/me/notifications`, (msg) => {
+            client.subscribe(`/user/queue/notifications`, (msg) => {
               const notification = JSON.parse(msg.body);
               this.handleNotification(notification);
             });
@@ -336,12 +346,15 @@ paths:
         {
           "id": "uuid",
           "eventType": "APPROVAL_TASK_ASSIGNED",
+          "channel": "IN_APP",
+          "subject": "Task phê duyệt mới",
           "body": "Bạn có task cần phê duyệt: PR-2025-01-00001",
+          "isRead": false,
+          "readAt": null,
           "referenceType": "PURCHASE_REQUEST",
           "referenceId": "uuid",
           "referenceNumber": "PR-2025-01-00001",
           "actionUrl": "/approvals/inbox",
-          "priority": "NORMAL",
           "createdAt": "2025-01-15T08:30:00.000Z"
         }
         ```

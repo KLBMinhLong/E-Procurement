@@ -899,7 +899,11 @@ CREATE TABLE notification.notification_templates (
     body_template   TEXT            NOT NULL,               -- Handlebars/Thymeleaf template
     is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by      UUID,
+    is_deleted      BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMPTZ,
+    deleted_by      UUID
 );
 ```
 
@@ -915,6 +919,8 @@ CREATE TABLE notification.notifications (
     body            TEXT            NOT NULL,
     reference_type  VARCHAR(50),
     reference_id    UUID,
+    reference_number VARCHAR(100),
+    action_url      VARCHAR(500),                        -- relative FE route
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
     is_read         BOOLEAN         NOT NULL DEFAULT FALSE,
     read_at         TIMESTAMPTZ,
@@ -922,11 +928,48 @@ CREATE TABLE notification.notifications (
     retry_count     SMALLINT        NOT NULL DEFAULT 0,
     last_error      TEXT,
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by      UUID,
+    is_deleted      BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMPTZ,
+    deleted_by      UUID,
 
     CONSTRAINT chk_notif_status CHECK (status IN ('PENDING','SENT','FAILED','CANCELLED'))
 );
-CREATE INDEX idx_notif_recipient ON notification.notifications(recipient_id, is_read, created_at DESC);
-CREATE INDEX idx_notif_status ON notification.notifications(status) WHERE status = 'PENDING';
+CREATE INDEX idx_notif_recipient
+    ON notification.notifications(recipient_id, is_read, created_at DESC)
+    WHERE is_deleted = FALSE;
+CREATE INDEX idx_notif_status
+    ON notification.notifications(status)
+    WHERE status = 'PENDING' AND is_deleted = FALSE;
+```
+
+### 8.3 event_processing_log
+
+```sql
+CREATE TABLE notification.event_processing_log (
+    event_id        VARCHAR(100)    PRIMARY KEY,
+    event_type      VARCHAR(100)    NOT NULL,
+    source          VARCHAR(100)    NOT NULL,
+    topic           VARCHAR(150)    NOT NULL,
+    partition_id    INTEGER,
+    offset_value    BIGINT,
+    handler_name    VARCHAR(100)    NOT NULL,
+    status          VARCHAR(20)     NOT NULL DEFAULT 'PROCESSED',
+    processed_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by      UUID,
+    is_deleted      BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMPTZ,
+    deleted_by      UUID,
+
+    CONSTRAINT chk_notification_event_log_status
+        CHECK (status IN ('PROCESSED','SKIPPED','FAILED'))
+);
+CREATE INDEX idx_notification_event_log_topic_processed
+    ON notification.event_processing_log(topic, processed_at DESC)
+    WHERE is_deleted = FALSE;
 ```
 
 ---

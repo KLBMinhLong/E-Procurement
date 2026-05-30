@@ -13,6 +13,14 @@ export interface ToastMessage {
 export class ToastService {
   readonly messages = signal<ToastMessage[]>([]);
 
+  infoKey(message: string): void {
+    this.push('info', message, true);
+  }
+
+  info(message: string): void {
+    this.push('info', message, false);
+  }
+
   successKey(message: string): void {
     this.push('success', message, true);
   }
