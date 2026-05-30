@@ -2,6 +2,7 @@ package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.RecordBudgetCommitmentCommand;
 import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
+import com.eprocure.finance.application.service.BudgetAlertService;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
@@ -27,10 +28,15 @@ public class FirmCommitBudgetUseCase {
 
     private final BudgetRepository budgetRepository;
     private final BudgetDashboardCachePort cachePort;
+    private final BudgetAlertService budgetAlertService;
 
-    public FirmCommitBudgetUseCase(BudgetRepository budgetRepository, BudgetDashboardCachePort cachePort) {
+    public FirmCommitBudgetUseCase(
+            BudgetRepository budgetRepository,
+            BudgetDashboardCachePort cachePort,
+            BudgetAlertService budgetAlertService) {
         this.budgetRepository = budgetRepository;
         this.cachePort = cachePort;
+        this.budgetAlertService = budgetAlertService;
     }
 
     @Transactional
@@ -44,6 +50,7 @@ public class FirmCommitBudgetUseCase {
         BudgetCommitmentHold hold = budgetRepository.findHeldCommitment(REFERENCE_TYPE, command.purchaseRequestId())
                 .orElse(null);
         UUID budgetId = hold == null ? activeBudgetId(command) : hold.budgetId();
+        boolean committed = false;
         if (hold != null && hold.hasHeldAmount() && !budgetRepository.existsTransaction(
                 hold.budgetId(), BudgetTransactionType.RELEASE, REFERENCE_TYPE, command.purchaseRequestId())) {
             budgetRepository.insertTransaction(new BudgetTransaction(
@@ -60,6 +67,7 @@ public class FirmCommitBudgetUseCase {
         }
         if (!budgetRepository.existsTransaction(
                 budgetId, BudgetTransactionType.COMMIT_FIRM, REFERENCE_TYPE, command.purchaseRequestId())) {
+            committed = true;
             budgetRepository.insertTransaction(new BudgetTransaction(
                     budgetId,
                     BudgetTransactionType.COMMIT_FIRM,
@@ -71,6 +79,9 @@ public class FirmCommitBudgetUseCase {
                     command.occurredAt(),
                     command.eventId()));
             cachePort.evict(budgetId);
+        }
+        if (committed) {
+            publishAlert(budgetId, command);
         }
         budgetRepository.markEventProcessed(
                 command.eventId(), command.topic(), command.partitionId(), command.offsetValue(), HANDLER_NAME);
@@ -86,5 +97,16 @@ public class FirmCommitBudgetUseCase {
                         command.glAccountCode()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.FIN_001));
         return budget.id();
+    }
+
+    private void publishAlert(UUID budgetId, RecordBudgetCommitmentCommand command) {
+        budgetRepository.findSummaryById(budgetId)
+                .ifPresent(summary -> budgetAlertService.publishIfNeeded(
+                        summary,
+                        command.amount(),
+                        REFERENCE_TYPE,
+                        command.purchaseRequestId(),
+                        command.eventId(),
+                        "Budget is below policy threshold after firm commitment"));
     }
 }

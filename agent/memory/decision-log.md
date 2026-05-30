@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-30] E10 budget alert event publisher
+
+- Decision: Add a finance `BudgetAlertService` with a `BudgetAlertEventPublisher` port, Kafka publisher, and logging fallback for `finance.budget.warning` and `finance.budget.exceeded`.
+- Reason: Budget check, PR budget commitments, and budget transfers need one consistent policy point for low-budget alerts instead of duplicating threshold logic across use cases.
+- Impact: Budget check emits warning/exceeded alerts for projected results, tentative/firm commits emit after successful ledger mutation, and transfers emit for the source budget after allocation movement. Kafka publishes after transaction commit when finance Kafka integration is enabled.
+- Constraint: Notification-service consumption and user-facing realtime delivery remain E11; this slice only publishes the finance-side event contract.
+
 ## [2026-05-30] Finance Kafka listener startup is non-fatal
 
 - Decision: Finance-service disables Spring Kafka listener auto-startup and starts listener containers after `ApplicationReadyEvent` through a guarded starter.

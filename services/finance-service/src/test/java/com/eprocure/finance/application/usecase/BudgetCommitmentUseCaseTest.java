@@ -4,8 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.eprocure.finance.application.port.in.RecordBudgetCommitmentCommand;
 import com.eprocure.finance.application.port.in.ReleaseBudgetCommitmentCommand;
+import com.eprocure.finance.application.port.out.BudgetAlertEventPublisher;
 import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
+import com.eprocure.finance.application.service.BudgetAlertService;
 import com.eprocure.finance.application.service.BudgetDashboardView;
+import com.eprocure.finance.domain.event.BudgetAlertEvent;
+import com.eprocure.finance.domain.model.BudgetAlertType;
 import com.eprocure.finance.domain.model.BudgetCheckCriteria;
 import com.eprocure.finance.domain.model.BudgetCommitmentHold;
 import com.eprocure.finance.domain.model.BudgetLedgerSummary;
@@ -18,7 +22,9 @@ import com.eprocure.finance.domain.model.vo.Money;
 import com.eprocure.finance.domain.repository.BudgetFilter;
 import com.eprocure.finance.domain.repository.BudgetRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,16 +42,20 @@ class BudgetCommitmentUseCaseTest {
 
     private FakeBudgetRepository budgetRepository;
     private FakeBudgetDashboardCachePort cachePort;
+    private FakeBudgetAlertEventPublisher alertPublisher;
+    private BudgetAlertService budgetAlertService;
 
     @BeforeEach
     void setUp() {
         budgetRepository = new FakeBudgetRepository();
         cachePort = new FakeBudgetDashboardCachePort();
+        alertPublisher = new FakeBudgetAlertEventPublisher();
+        budgetAlertService = new BudgetAlertService(alertPublisher, Clock.fixed(OCCURRED_AT, ZoneOffset.UTC));
     }
 
     @Test
     void should_create_tentative_commit_when_pr_submitted_event_arrives() {
-        var useCase = new TentativeCommitBudgetUseCase(budgetRepository, cachePort);
+        var useCase = new TentativeCommitBudgetUseCase(budgetRepository, cachePort, budgetAlertService);
 
         useCase.execute(recordCommand("evt-submitted-001", "procurement.pr.submitted"));
 
@@ -53,23 +63,38 @@ class BudgetCommitmentUseCaseTest {
         assertThat(budgetRepository.transactions.get(0).transactionType()).isEqualTo(BudgetTransactionType.COMMIT_TENTATIVE);
         assertThat(budgetRepository.processedEvents).contains("evt-submitted-001");
         assertThat(cachePort.evictedBudgetIds).contains(BUDGET_ID);
+        assertThat(alertPublisher.events).isEmpty();
+    }
+
+    @Test
+    void should_publish_warning_when_tentative_commit_drops_budget_below_threshold() {
+        budgetRepository.summary = summary("100000000.0000", "15000000.0000", "0.0000");
+        var useCase = new TentativeCommitBudgetUseCase(budgetRepository, cachePort, budgetAlertService);
+
+        useCase.execute(recordCommand("evt-submitted-low-001", "procurement.pr.submitted"));
+
+        assertThat(alertPublisher.events).hasSize(1);
+        assertThat(alertPublisher.events.get(0).payload().alertType()).isEqualTo(BudgetAlertType.WARNING);
+        assertThat(alertPublisher.events.get(0).payload().sourceEventId()).isEqualTo("evt-submitted-low-001");
+        assertThat(alertPublisher.events.get(0).payload().projectedAvailablePercent()).isEqualByComparingTo("15.00");
     }
 
     @Test
     void should_skip_tentative_commit_when_event_already_processed() {
         budgetRepository.processedEvents.add("evt-submitted-001");
-        var useCase = new TentativeCommitBudgetUseCase(budgetRepository, cachePort);
+        var useCase = new TentativeCommitBudgetUseCase(budgetRepository, cachePort, budgetAlertService);
 
         useCase.execute(recordCommand("evt-submitted-001", "procurement.pr.submitted"));
 
         assertThat(budgetRepository.transactions).isEmpty();
         assertThat(cachePort.evictedBudgetIds).isEmpty();
+        assertThat(alertPublisher.events).isEmpty();
     }
 
     @Test
     void should_release_tentative_and_create_firm_commit_when_pr_approved() {
         budgetRepository.hold = new BudgetCommitmentHold(BUDGET_ID, money("70000000.0000"));
-        var useCase = new FirmCommitBudgetUseCase(budgetRepository, cachePort);
+        var useCase = new FirmCommitBudgetUseCase(budgetRepository, cachePort, budgetAlertService);
 
         useCase.execute(recordCommand("evt-approved-001", "procurement.pr.approved"));
 
@@ -141,26 +166,31 @@ class BudgetCommitmentUseCaseTest {
     }
 
     private static BudgetLedgerSummary summary() {
+        return summary("500000000.0000", "0.0000", "0.0000");
+    }
+
+    private static BudgetLedgerSummary summary(String allocated, String committed, String spent) {
         return new BudgetLedgerSummary(
                 BUDGET_ID,
                 DEPARTMENT_ID,
                 2026,
                 null,
                 "6002",
-                money("500000000.0000"),
-                money("0.0000"),
-                money("0.0000"),
+                money(allocated),
+                money(committed),
+                money(spent),
                 BudgetStatus.ACTIVE);
     }
 
     private static final class FakeBudgetRepository implements BudgetRepository {
         private final Set<String> processedEvents = new HashSet<>();
         private final List<BudgetTransaction> transactions = new ArrayList<>();
+        private BudgetLedgerSummary summary = summary();
         private BudgetCommitmentHold hold;
 
         @Override
         public Optional<BudgetLedgerSummary> findActiveSummary(BudgetCheckCriteria criteria) {
-            return Optional.of(summary());
+            return Optional.of(summary);
         }
 
         @Override
@@ -175,7 +205,25 @@ class BudgetCommitmentUseCaseTest {
 
         @Override
         public Optional<BudgetLedgerSummary> findSummaryById(UUID budgetId) {
-            return Optional.empty();
+            if (!BUDGET_ID.equals(budgetId)) {
+                return Optional.empty();
+            }
+            Money committed = transactions.stream()
+                    .filter(transaction -> transaction.budgetId().equals(budgetId))
+                    .map(transaction -> transaction.transactionType() == BudgetTransactionType.RELEASE
+                            ? new Money(transaction.money().amount().negate(), transaction.money().currency())
+                            : transaction.money())
+                    .reduce(summary.committed(), Money::add);
+            return Optional.of(new BudgetLedgerSummary(
+                    summary.id(),
+                    summary.departmentId(),
+                    summary.fiscalYear(),
+                    summary.quarter(),
+                    summary.glAccountCode(),
+                    summary.allocated(),
+                    committed,
+                    summary.spent(),
+                    summary.status()));
         }
 
         @Override
@@ -232,6 +280,15 @@ class BudgetCommitmentUseCaseTest {
 
         @Override
         public void adjustAllocatedAmount(UUID budgetId, Money delta, UUID actorId) {
+        }
+    }
+
+    private static final class FakeBudgetAlertEventPublisher implements BudgetAlertEventPublisher {
+        private final List<BudgetAlertEvent> events = new ArrayList<>();
+
+        @Override
+        public void publish(BudgetAlertEvent event) {
+            events.add(event);
         }
     }
 }

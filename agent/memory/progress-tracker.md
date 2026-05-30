@@ -194,7 +194,7 @@
 | E07: Purchase Order | ⬜ |
 | E08: Goods Receipt & Inventory | ⬜ |
 | E09: Invoice & Payment | ⬜ |
-| E10: Budget Management | 🔄 |
+| E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ⬜ |
 | E12: Analytics & Reports | ⬜ |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
@@ -212,4 +212,4 @@
 | Kafka commit/release budget events | ✅ | Finance consumes submitted/approved/rejected/cancelled/changes-requested and writes idempotent ledger |
 | Budget dashboard/list API | ✅ | `GET /api/v1/budgets` + `GET /api/v1/budgets/{id}/dashboard`; scope quyền + Redis cache |
 | Override/transfer API | ✅ | `PATCH /api/v1/budgets/{id}/override-approval` + `PATCH /api/v1/budgets/{id}/transfer`; idempotent audit/ledger + tests |
-| Budget warning/exceeded events | ⬜ | Wire `finance.budget.warning` / `finance.budget.exceeded` publisher when available drops below policy thresholds |
+| Budget warning/exceeded events | ✅ | `BudgetAlertService` publishes `finance.budget.warning` / `finance.budget.exceeded` for low/negative projected available budget; notification consumption remains E11 |

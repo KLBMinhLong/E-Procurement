@@ -4,8 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.finance.application.port.in.CheckBudgetCommand;
+import com.eprocure.finance.application.port.out.BudgetAlertEventPublisher;
+import com.eprocure.finance.application.service.BudgetAlertService;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
+import com.eprocure.finance.domain.event.BudgetAlertEvent;
+import com.eprocure.finance.domain.model.BudgetAlertType;
 import com.eprocure.finance.domain.model.BudgetCheckCriteria;
 import com.eprocure.finance.domain.model.BudgetCommitmentHold;
 import com.eprocure.finance.domain.model.BudgetCheckStatus;
@@ -19,6 +23,10 @@ import com.eprocure.finance.domain.repository.BudgetFilter;
 import com.eprocure.finance.domain.model.vo.Money;
 import com.eprocure.finance.domain.repository.BudgetRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,14 +36,19 @@ import org.junit.jupiter.api.Test;
 class CheckBudgetUseCaseTest {
     private static final UUID BUDGET_ID = UUID.fromString("70000000-0000-4000-8000-000000000001");
     private static final UUID DEPARTMENT_ID = UUID.fromString("33333333-3333-4333-8333-333333333333");
+    private static final Instant NOW = Instant.parse("2026-05-30T04:00:00Z");
 
     private FakeBudgetRepository budgetRepository;
+    private FakeBudgetAlertEventPublisher alertPublisher;
     private CheckBudgetUseCase useCase;
 
     @BeforeEach
     void setUp() {
         budgetRepository = new FakeBudgetRepository();
-        useCase = new CheckBudgetUseCase(budgetRepository);
+        alertPublisher = new FakeBudgetAlertEventPublisher();
+        useCase = new CheckBudgetUseCase(
+                budgetRepository,
+                new BudgetAlertService(alertPublisher, Clock.fixed(NOW, ZoneOffset.UTC)));
     }
 
     @Test
@@ -48,6 +61,7 @@ class CheckBudgetUseCaseTest {
         assertThat(result.available().amount()).isEqualByComparingTo("350000000.0000");
         assertThat(result.warningMessage()).isNull();
         assertThat(budgetRepository.criteria.departmentId()).isEqualTo(DEPARTMENT_ID);
+        assertThat(alertPublisher.events).isEmpty();
     }
 
     @Test
@@ -58,6 +72,10 @@ class CheckBudgetUseCaseTest {
 
         assertThat(result.status()).isEqualTo(BudgetCheckStatus.WARNING);
         assertThat(result.warningMessage()).contains("below 20%");
+        assertThat(alertPublisher.events).hasSize(1);
+        assertThat(alertPublisher.events.get(0).payload().alertType()).isEqualTo(BudgetAlertType.WARNING);
+        assertThat(alertPublisher.events.get(0).payload().projectedAvailable().amount())
+                .isEqualByComparingTo("80000000.0000");
     }
 
     @Test
@@ -68,6 +86,8 @@ class CheckBudgetUseCaseTest {
 
         assertThat(result.status()).isEqualTo(BudgetCheckStatus.FAIL);
         assertThat(result.warningMessage()).contains("insufficient");
+        assertThat(alertPublisher.events).hasSize(1);
+        assertThat(alertPublisher.events.get(0).payload().alertType()).isEqualTo(BudgetAlertType.EXCEEDED);
     }
 
     @Test
@@ -182,6 +202,15 @@ class CheckBudgetUseCaseTest {
 
         @Override
         public void adjustAllocatedAmount(UUID budgetId, Money delta, UUID actorId) {
+        }
+    }
+
+    private static final class FakeBudgetAlertEventPublisher implements BudgetAlertEventPublisher {
+        private final List<BudgetAlertEvent> events = new ArrayList<>();
+
+        @Override
+        public void publish(BudgetAlertEvent event) {
+            events.add(event);
         }
     }
 }

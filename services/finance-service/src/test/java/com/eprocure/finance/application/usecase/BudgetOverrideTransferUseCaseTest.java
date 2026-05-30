@@ -5,11 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.finance.application.port.in.ApproveBudgetOverrideCommand;
 import com.eprocure.finance.application.port.in.TransferBudgetCommand;
+import com.eprocure.finance.application.port.out.BudgetAlertEventPublisher;
 import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
+import com.eprocure.finance.application.service.BudgetAlertService;
 import com.eprocure.finance.application.service.BudgetDashboardView;
 import com.eprocure.finance.application.service.IdempotencyService;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
+import com.eprocure.finance.domain.event.BudgetAlertEvent;
+import com.eprocure.finance.domain.model.BudgetAlertType;
 import com.eprocure.finance.domain.model.BudgetCheckCriteria;
 import com.eprocure.finance.domain.model.BudgetCommitmentHold;
 import com.eprocure.finance.domain.model.BudgetLedgerSummary;
@@ -50,6 +54,8 @@ class BudgetOverrideTransferUseCaseTest {
     private FakeBudgetRepository budgetRepository;
     private FakeBudgetDashboardCachePort cachePort;
     private FakeIdempotencyService idempotencyService;
+    private FakeBudgetAlertEventPublisher alertPublisher;
+    private BudgetAlertService budgetAlertService;
     private Clock clock;
 
     @BeforeEach
@@ -57,7 +63,9 @@ class BudgetOverrideTransferUseCaseTest {
         budgetRepository = new FakeBudgetRepository();
         cachePort = new FakeBudgetDashboardCachePort();
         idempotencyService = new FakeIdempotencyService();
+        alertPublisher = new FakeBudgetAlertEventPublisher();
         clock = Clock.fixed(NOW, ZoneOffset.UTC);
+        budgetAlertService = new BudgetAlertService(alertPublisher, clock);
     }
 
     @Test
@@ -102,7 +110,8 @@ class BudgetOverrideTransferUseCaseTest {
     void should_transfer_budget_and_write_balanced_ledger_transactions() {
         budgetRepository.put(summary(SOURCE_BUDGET_ID, DEPARTMENT_ID, "500000000.0000", "100000000.0000", "50000000.0000"));
         budgetRepository.put(summary(TARGET_BUDGET_ID, TARGET_DEPARTMENT_ID, "200000000.0000", "0.0000", "0.0000"));
-        var useCase = new TransferBudgetUseCase(budgetRepository, cachePort, idempotencyService, clock);
+        var useCase = new TransferBudgetUseCase(
+                budgetRepository, cachePort, idempotencyService, budgetAlertService, clock);
 
         var result = useCase.execute(new TransferBudgetCommand(
                 ACTOR_ID,
@@ -118,13 +127,36 @@ class BudgetOverrideTransferUseCaseTest {
         assertThat(result.view().sourceDashboard().allocated().amount()).isEqualByComparingTo("450000000.0000");
         assertThat(result.view().targetDashboard().allocated().amount()).isEqualByComparingTo("250000000.0000");
         assertThat(cachePort.evictedBudgetIds).contains(SOURCE_BUDGET_ID, TARGET_BUDGET_ID);
+        assertThat(alertPublisher.events).isEmpty();
+    }
+
+    @Test
+    void should_publish_warning_when_transfer_source_drops_below_threshold() {
+        budgetRepository.put(summary(SOURCE_BUDGET_ID, DEPARTMENT_ID, "100000000.0000", "60000000.0000", "0.0000"));
+        budgetRepository.put(summary(TARGET_BUDGET_ID, TARGET_DEPARTMENT_ID, "200000000.0000", "0.0000", "0.0000"));
+        var useCase = new TransferBudgetUseCase(
+                budgetRepository, cachePort, idempotencyService, budgetAlertService, clock);
+
+        useCase.execute(new TransferBudgetCommand(
+                ACTOR_ID,
+                SOURCE_BUDGET_ID,
+                TARGET_BUDGET_ID,
+                money("26000000.0000"),
+                "Move approved budget to balance urgent team spend."), IDEMPOTENCY_KEY);
+
+        assertThat(alertPublisher.events).hasSize(1);
+        assertThat(alertPublisher.events.get(0).payload().alertType()).isEqualTo(BudgetAlertType.WARNING);
+        assertThat(alertPublisher.events.get(0).payload().referenceType()).isEqualTo("BUDGET_TRANSFER");
+        assertThat(alertPublisher.events.get(0).payload().projectedAvailable().amount())
+                .isEqualByComparingTo("14000000.0000");
     }
 
     @Test
     void should_throw_fin_009_when_source_budget_available_is_insufficient() {
         budgetRepository.put(summary(SOURCE_BUDGET_ID, DEPARTMENT_ID, "500000000.0000", "450000000.0000", "40000000.0000"));
         budgetRepository.put(summary(TARGET_BUDGET_ID, TARGET_DEPARTMENT_ID, "200000000.0000", "0.0000", "0.0000"));
-        var useCase = new TransferBudgetUseCase(budgetRepository, cachePort, idempotencyService, clock);
+        var useCase = new TransferBudgetUseCase(
+                budgetRepository, cachePort, idempotencyService, budgetAlertService, clock);
 
         assertThatThrownBy(() -> useCase.execute(new TransferBudgetCommand(
                 ACTOR_ID,
@@ -151,7 +183,8 @@ class BudgetOverrideTransferUseCaseTest {
                 NOW,
                 UUID.fromString(IDEMPOTENCY_KEY));
         budgetRepository.existingTransfer = existing;
-        var useCase = new TransferBudgetUseCase(budgetRepository, cachePort, idempotencyService, clock);
+        var useCase = new TransferBudgetUseCase(
+                budgetRepository, cachePort, idempotencyService, budgetAlertService, clock);
 
         var result = useCase.execute(new TransferBudgetCommand(
                 ACTOR_ID,
@@ -164,6 +197,7 @@ class BudgetOverrideTransferUseCaseTest {
         assertThat(budgetRepository.transfers).isEmpty();
         assertThat(budgetRepository.transactions).isEmpty();
         assertThat(budgetRepository.adjustments).isEmpty();
+        assertThat(alertPublisher.events).isEmpty();
     }
 
     private static BudgetLedgerSummary summary(
@@ -229,6 +263,15 @@ class BudgetOverrideTransferUseCaseTest {
         @Override
         public void save(String operation, UUID actorId, String idempotencyKey, Object response) {
             cache.put(operation + actorId + idempotencyKey, response);
+        }
+    }
+
+    private static final class FakeBudgetAlertEventPublisher implements BudgetAlertEventPublisher {
+        private final List<BudgetAlertEvent> events = new ArrayList<>();
+
+        @Override
+        public void publish(BudgetAlertEvent event) {
+            events.add(event);
         }
     }
 

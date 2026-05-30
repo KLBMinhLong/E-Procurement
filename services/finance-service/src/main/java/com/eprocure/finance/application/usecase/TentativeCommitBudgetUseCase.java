@@ -2,6 +2,7 @@ package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.RecordBudgetCommitmentCommand;
 import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
+import com.eprocure.finance.application.service.BudgetAlertService;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
@@ -26,10 +27,15 @@ public class TentativeCommitBudgetUseCase {
 
     private final BudgetRepository budgetRepository;
     private final BudgetDashboardCachePort cachePort;
+    private final BudgetAlertService budgetAlertService;
 
-    public TentativeCommitBudgetUseCase(BudgetRepository budgetRepository, BudgetDashboardCachePort cachePort) {
+    public TentativeCommitBudgetUseCase(
+            BudgetRepository budgetRepository,
+            BudgetDashboardCachePort cachePort,
+            BudgetAlertService budgetAlertService) {
         this.budgetRepository = budgetRepository;
         this.cachePort = cachePort;
+        this.budgetAlertService = budgetAlertService;
     }
 
     @Transactional
@@ -45,8 +51,9 @@ public class TentativeCommitBudgetUseCase {
                         command.glAccountCode()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.FIN_001));
 
-        if (!budgetRepository.existsTransaction(
-                budget.id(), BudgetTransactionType.COMMIT_TENTATIVE, REFERENCE_TYPE, command.purchaseRequestId())) {
+        boolean committed = !budgetRepository.existsTransaction(
+                budget.id(), BudgetTransactionType.COMMIT_TENTATIVE, REFERENCE_TYPE, command.purchaseRequestId());
+        if (committed) {
             budgetRepository.insertTransaction(new BudgetTransaction(
                     budget.id(),
                     BudgetTransactionType.COMMIT_TENTATIVE,
@@ -58,11 +65,23 @@ public class TentativeCommitBudgetUseCase {
                     command.occurredAt(),
                     command.eventId()));
             cachePort.evict(budget.id());
+            publishAlert(budget.id(), command);
         }
         budgetRepository.markEventProcessed(
                 command.eventId(), command.topic(), command.partitionId(), command.offsetValue(), HANDLER_NAME);
         log.info("[ACTION] Complete TentativeCommitBudget | prId={} | budgetId={}",
                 LogMaskingUtil.maskId(command.purchaseRequestId()),
                 LogMaskingUtil.maskId(budget.id()));
+    }
+
+    private void publishAlert(UUID budgetId, RecordBudgetCommitmentCommand command) {
+        budgetRepository.findSummaryById(budgetId)
+                .ifPresent(summary -> budgetAlertService.publishIfNeeded(
+                        summary,
+                        command.amount(),
+                        REFERENCE_TYPE,
+                        command.purchaseRequestId(),
+                        command.eventId(),
+                        "Budget is below policy threshold after tentative commitment"));
     }
 }

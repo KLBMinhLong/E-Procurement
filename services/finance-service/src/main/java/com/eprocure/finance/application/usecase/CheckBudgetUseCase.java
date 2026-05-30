@@ -1,6 +1,7 @@
 package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.CheckBudgetCommand;
+import com.eprocure.finance.application.service.BudgetAlertService;
 import com.eprocure.finance.application.service.BudgetCheckView;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
@@ -21,9 +22,11 @@ public class CheckBudgetUseCase {
     private static final Logger log = LogManager.getLogger(CheckBudgetUseCase.class);
 
     private final BudgetRepository budgetRepository;
+    private final BudgetAlertService budgetAlertService;
 
-    public CheckBudgetUseCase(BudgetRepository budgetRepository) {
+    public CheckBudgetUseCase(BudgetRepository budgetRepository, BudgetAlertService budgetAlertService) {
         this.budgetRepository = budgetRepository;
+        this.budgetAlertService = budgetAlertService;
     }
 
     @Transactional(readOnly = true)
@@ -46,6 +49,7 @@ public class CheckBudgetUseCase {
         BudgetCheckStatus status = summary.check(command.requestAmount());
         Money available = summary.available();
         String warningMessage = warningMessage(status, available, command.requestAmount());
+        budgetAlertService.publishCheckResultIfNeeded(summary, command.requestAmount(), warningMessage);
         log.info("[ACTION] Complete CheckBudget | departmentId={} | budgetId={} | status={}",
                 LogMaskingUtil.maskId(command.departmentId()),
                 LogMaskingUtil.maskId(summary.id()),

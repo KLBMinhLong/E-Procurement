@@ -2,6 +2,7 @@ package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.TransferBudgetCommand;
 import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
+import com.eprocure.finance.application.service.BudgetAlertService;
 import com.eprocure.finance.application.service.BudgetDashboardView;
 import com.eprocure.finance.application.service.BudgetTransferResult;
 import com.eprocure.finance.application.service.BudgetTransferView;
@@ -37,16 +38,19 @@ public class TransferBudgetUseCase {
     private final BudgetRepository budgetRepository;
     private final BudgetDashboardCachePort cachePort;
     private final IdempotencyService idempotencyService;
+    private final BudgetAlertService budgetAlertService;
     private final Clock clock;
 
     public TransferBudgetUseCase(
             BudgetRepository budgetRepository,
             BudgetDashboardCachePort cachePort,
             IdempotencyService idempotencyService,
+            BudgetAlertService budgetAlertService,
             Clock clock) {
         this.budgetRepository = budgetRepository;
         this.cachePort = cachePort;
         this.idempotencyService = idempotencyService;
+        this.budgetAlertService = budgetAlertService;
         this.clock = clock;
     }
 
@@ -104,6 +108,7 @@ public class TransferBudgetUseCase {
 
         cachePort.evict(source.id());
         cachePort.evict(target.id());
+        publishSourceAlert(transfer);
         BudgetTransferView view = toView(transfer);
         idempotencyService.save(IDEMPOTENCY_OPERATION, command.actorId(), idempotencyKey, view);
         log.info("[ACTION] Complete TransferBudget | transferId={} | sourceBudgetId={} | targetBudgetId={}",
@@ -179,6 +184,17 @@ public class TransferBudgetUseCase {
         BudgetDashboardView sourceDashboard = BudgetDashboardView.from(findBudget(transfer.sourceBudgetId()));
         BudgetDashboardView targetDashboard = BudgetDashboardView.from(findBudget(transfer.targetBudgetId()));
         return BudgetTransferView.from(transfer, sourceDashboard, targetDashboard);
+    }
+
+    private void publishSourceAlert(BudgetTransfer transfer) {
+        budgetRepository.findSummaryById(transfer.sourceBudgetId())
+                .ifPresent(summary -> budgetAlertService.publishIfNeeded(
+                        summary,
+                        transfer.money(),
+                        REFERENCE_TYPE,
+                        transfer.id(),
+                        transfer.idempotencyKey().toString(),
+                        "Source budget is below policy threshold after transfer"));
     }
 
     private Money negate(Money money) {

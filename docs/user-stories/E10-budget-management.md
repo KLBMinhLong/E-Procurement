@@ -124,7 +124,7 @@ Response data: allocated, committed, spent, available, status PASS|WARNING|FAIL,
    - PASS nếu availableAfter >= 20% allocated.
    - WARNING nếu availableAfter >= 0 và < 20% allocated.
    - FAIL nếu availableAfter < 0.
-6. Publish finance.budget.warning/exceeded only when policy says business alert is needed; budget check response itself stays sync.
+6. Publish `finance.budget.warning` / `finance.budget.exceeded` through `BudgetAlertService` when policy says business alert is needed; budget check response itself stays sync.
 ```
 
 **Alternate/error flows:**
@@ -319,9 +319,10 @@ This slice directly removes the highest-risk fake dependency in current PR submi
 ## 8. Readiness Checklist
 
 ```
-[ ] Finance OpenAPI internal budget check contract added.
+[x] Finance OpenAPI internal budget check contract added.
 [x] Decision made on POST vs PATCH for override/transfer actions: use `PATCH`.
-[ ] Error codes FIN_* for budget not found, insufficient budget, currency mismatch, duplicate commitment documented.
-[ ] Local seed budget data exists for requester department used in demo.
-[ ] Budget event idempotency key strategy is eventId-based.
+[x] Error codes FIN_* for budget not found, insufficient budget, currency mismatch, duplicate commitment documented.
+[x] Local seed budget data exists for requester department used in demo.
+[x] Budget event idempotency key strategy is eventId-based.
+[x] `finance.budget.warning` / `finance.budget.exceeded` publisher exists; notification-service consumption remains E11.
 ```
