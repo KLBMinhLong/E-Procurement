@@ -1,6 +1,7 @@
 package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.RecordBudgetCommitmentCommand;
+import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
@@ -24,9 +25,11 @@ public class TentativeCommitBudgetUseCase {
     private static final UUID SYSTEM_ACTOR_ID = UUID.fromString("00000000-0000-4000-8000-000000000010");
 
     private final BudgetRepository budgetRepository;
+    private final BudgetDashboardCachePort cachePort;
 
-    public TentativeCommitBudgetUseCase(BudgetRepository budgetRepository) {
+    public TentativeCommitBudgetUseCase(BudgetRepository budgetRepository, BudgetDashboardCachePort cachePort) {
         this.budgetRepository = budgetRepository;
+        this.cachePort = cachePort;
     }
 
     @Transactional
@@ -54,6 +57,7 @@ public class TentativeCommitBudgetUseCase {
                     SYSTEM_ACTOR_ID,
                     command.occurredAt(),
                     command.eventId()));
+            cachePort.evict(budget.id());
         }
         budgetRepository.markEventProcessed(
                 command.eventId(), command.topic(), command.partitionId(), command.offsetValue(), HANDLER_NAME);

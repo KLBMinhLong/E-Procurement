@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.finance.infrastructure.persistence.mapper.BudgetMapper">
+
+    <resultMap id="budgetLedgerSummaryResultMap"
+               type="com.eprocure.finance.infrastructure.persistence.entity.BudgetLedgerSummaryDbEntity">
+        <id property="id" column="id"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="fiscalYear" column="fiscal_year"/>
+        <result property="quarter" column="quarter"/>
+        <result property="glAccountCode" column="gl_account_code"/>
+        <result property="allocatedAmount" column="allocated_amount"/>
+        <result property="committedAmount" column="committed_amount"/>
+        <result property="spentAmount" column="spent_amount"/>
+        <result property="currency" column="currency"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <sql id="budgetDashboardColumns">
+        b.id,
+        b.department_id,
+        b.fiscal_year,
+        b.quarter,
+        b.gl_account_code,
+        b.allocated_amount,
+        b.currency,
+        b.status,
+        COALESCE(SUM(CASE
+            WHEN t.transaction_type IN ('COMMIT_TENTATIVE', 'COMMIT_FIRM') THEN t.amount
+            WHEN t.transaction_type = 'RELEASE' THEN -t.amount
+            ELSE 0
+        END), 0) AS committed_amount,
+        COALESCE(SUM(CASE
+            WHEN t.transaction_type = 'SPEND' THEN t.amount
+            ELSE 0
+        END), 0) AS spent_amount,
+        b.allocated_amount
+            - COALESCE(SUM(CASE
+                WHEN t.transaction_type IN ('COMMIT_TENTATIVE', 'COMMIT_FIRM') THEN t.amount
+                WHEN t.transaction_type = 'RELEASE' THEN -t.amount
+                ELSE 0
+            END), 0)
+            - COALESCE(SUM(CASE
+                WHEN t.transaction_type = 'SPEND' THEN t.amount
+                ELSE 0
+            END), 0) AS available_amount
+    </sql>
+
+    <sql id="budgetWhereClause">
+        WHERE b.is_deleted = FALSE
+        <if test="filter.departmentId != null">
+            AND b.department_id = #{filter.departmentId}
+        </if>
+        <if test="filter.fiscalYear != null">
+            AND b.fiscal_year = #{filter.fiscalYear}
+        </if>
+        <if test="filter.quarter != null">
+            AND b.quarter = #{filter.quarter}
+        </if>
+        <if test="filter.glAccountCode != null and filter.glAccountCode != ''">
+            AND b.gl_account_code = #{filter.glAccountCode}
+        </if>
+        <if test="filter.status != null">
+            AND b.status = #{filter.status}
+        </if>
+    </sql>
+
+    <sql id="budgetGroupByClause">
+        GROUP BY b.id, b.department_id, b.fiscal_year, b.quarter, b.gl_account_code,
+                 b.allocated_amount, b.currency, b.status
+    </sql>
+
+    <select id="findByFilter" resultMap="budgetLedgerSummaryResultMap">
+        SELECT
+            <include refid="budgetDashboardColumns"/>
+        FROM finance.budgets b
+        LEFT JOIN finance.budget_transactions t ON t.budget_id = b.id
+        <include refid="budgetWhereClause"/>
+        <include refid="budgetGroupByClause"/>
+        ORDER BY
+        <choose>
+            <when test="filter.sortField == 'departmentId'">b.department_id</when>
+            <when test="filter.sortField == 'quarter'">b.quarter</when>
+            <when test="filter.sortField == 'glAccountCode'">b.gl_account_code</when>
+            <when test="filter.sortField == 'status'">b.status</when>
+            <when test="filter.sortField == 'allocated'">b.allocated_amount</when>
+            <when test="filter.sortField == 'committed'">committed_amount</when>
+            <when test="filter.sortField == 'spent'">spent_amount</when>
+            <when test="filter.sortField == 'available'">available_amount</when>
+            <otherwise>b.fiscal_year</otherwise>
+        </choose>
+        <choose>
+            <when test="filter.sortDirection != null and filter.sortDirection.equalsIgnoreCase('asc')">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>,
+        b.gl_account_code ASC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        FROM finance.budgets b
+        <include refid="budgetWhereClause"/>
+    </select>
+
+    <select id="findSummaryById" resultMap="budgetLedgerSummaryResultMap">
+        SELECT
+            <include refid="budgetDashboardColumns"/>
+        FROM finance.budgets b
+        LEFT JOIN finance.budget_transactions t ON t.budget_id = b.id
+        WHERE b.id = #{budgetId}
+          AND b.is_deleted = FALSE
+        <include refid="budgetGroupByClause"/>
+    </select>
+</mapper>

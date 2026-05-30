@@ -5,10 +5,12 @@ import com.eprocure.finance.domain.model.BudgetCommitmentHold;
 import com.eprocure.finance.domain.model.BudgetLedgerSummary;
 import com.eprocure.finance.domain.model.BudgetTransaction;
 import com.eprocure.finance.domain.model.BudgetTransactionType;
+import com.eprocure.finance.domain.repository.BudgetFilter;
 import com.eprocure.finance.domain.repository.BudgetRepository;
 import com.eprocure.finance.infrastructure.persistence.entity.BudgetTransactionDbEntity;
 import com.eprocure.finance.infrastructure.persistence.mapper.BudgetMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +34,24 @@ public class BudgetRepositoryImpl implements BudgetRepository {
                         criteria.departmentId(),
                         criteria.fiscalYear(),
                         criteria.glAccountCode())
+                .map(entity -> objectMapper.convertValue(entity, BudgetLedgerSummary.class));
+    }
+
+    @Override
+    public List<BudgetLedgerSummary> findByFilter(BudgetFilter filter) {
+        return budgetMapper.findByFilter(filter).stream()
+                .map(entity -> objectMapper.convertValue(entity, BudgetLedgerSummary.class))
+                .toList();
+    }
+
+    @Override
+    public long countByFilter(BudgetFilter filter) {
+        return budgetMapper.countByFilter(filter);
+    }
+
+    @Override
+    public Optional<BudgetLedgerSummary> findSummaryById(UUID budgetId) {
+        return budgetMapper.findSummaryById(budgetId)
                 .map(entity -> objectMapper.convertValue(entity, BudgetLedgerSummary.class));
     }
 

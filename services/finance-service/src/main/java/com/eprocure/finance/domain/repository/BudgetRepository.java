@@ -5,11 +5,18 @@ import com.eprocure.finance.domain.model.BudgetCommitmentHold;
 import com.eprocure.finance.domain.model.BudgetLedgerSummary;
 import com.eprocure.finance.domain.model.BudgetTransaction;
 import com.eprocure.finance.domain.model.BudgetTransactionType;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface BudgetRepository {
     Optional<BudgetLedgerSummary> findActiveSummary(BudgetCheckCriteria criteria);
+
+    List<BudgetLedgerSummary> findByFilter(BudgetFilter filter);
+
+    long countByFilter(BudgetFilter filter);
+
+    Optional<BudgetLedgerSummary> findSummaryById(UUID budgetId);
 
     boolean existsProcessedEvent(String eventId);
 

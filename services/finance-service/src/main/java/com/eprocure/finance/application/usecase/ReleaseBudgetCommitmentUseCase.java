@@ -1,6 +1,7 @@
 package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.ReleaseBudgetCommitmentCommand;
+import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
 import com.eprocure.finance.common.util.LogMaskingUtil;
 import com.eprocure.finance.domain.model.BudgetCommitmentHold;
 import com.eprocure.finance.domain.model.BudgetTransaction;
@@ -21,9 +22,11 @@ public class ReleaseBudgetCommitmentUseCase {
     private static final UUID SYSTEM_ACTOR_ID = UUID.fromString("00000000-0000-4000-8000-000000000010");
 
     private final BudgetRepository budgetRepository;
+    private final BudgetDashboardCachePort cachePort;
 
-    public ReleaseBudgetCommitmentUseCase(BudgetRepository budgetRepository) {
+    public ReleaseBudgetCommitmentUseCase(BudgetRepository budgetRepository, BudgetDashboardCachePort cachePort) {
         this.budgetRepository = budgetRepository;
+        this.cachePort = cachePort;
     }
 
     @Transactional
@@ -38,16 +41,19 @@ public class ReleaseBudgetCommitmentUseCase {
                 .filter(BudgetCommitmentHold::hasHeldAmount)
                 .filter(hold -> !budgetRepository.existsTransaction(
                         hold.budgetId(), BudgetTransactionType.RELEASE, REFERENCE_TYPE, command.purchaseRequestId()))
-                .ifPresent(hold -> budgetRepository.insertTransaction(new BudgetTransaction(
-                        hold.budgetId(),
-                        BudgetTransactionType.RELEASE,
-                        hold.amount(),
-                        REFERENCE_TYPE,
-                        command.purchaseRequestId(),
-                        "Release commitment for " + command.prNumber(),
-                        SYSTEM_ACTOR_ID,
-                        command.occurredAt(),
-                        command.eventId())));
+                .ifPresent(hold -> {
+                    budgetRepository.insertTransaction(new BudgetTransaction(
+                            hold.budgetId(),
+                            BudgetTransactionType.RELEASE,
+                            hold.amount(),
+                            REFERENCE_TYPE,
+                            command.purchaseRequestId(),
+                            "Release commitment for " + command.prNumber(),
+                            SYSTEM_ACTOR_ID,
+                            command.occurredAt(),
+                            command.eventId()));
+                    cachePort.evict(hold.budgetId());
+                });
 
         budgetRepository.markEventProcessed(
                 command.eventId(), command.topic(), command.partitionId(), command.offsetValue(), HANDLER_NAME);

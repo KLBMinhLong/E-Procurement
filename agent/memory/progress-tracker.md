@@ -210,5 +210,5 @@
 | Internal budget check API | ✅ | `GET /internal/budgets/check` + use case tests |
 | PR service FinanceBudgetCheckAdapter | ✅ | Feature flag thay fallback; full reactor test xanh |
 | Kafka commit/release budget events | ✅ | Finance consumes submitted/approved/rejected/cancelled/changes-requested and writes idempotent ledger |
-| Budget dashboard/list API | ⬜ | Later E10 slice |
+| Budget dashboard/list API | ✅ | `GET /api/v1/budgets` + `GET /api/v1/budgets/{id}/dashboard`; scope quyền + Redis cache |
 | Override/transfer API | ⬜ | Later E10 slice |

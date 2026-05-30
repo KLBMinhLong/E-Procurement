@@ -34,6 +34,7 @@ public class ObjectMapperConfig {
                 .visibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
                 .visibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY)
                 .visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+                .visibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.PUBLIC_ONLY)
                 .build();
     }
 

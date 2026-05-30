@@ -75,7 +75,6 @@ components:
       properties:
         id:               { type: string, format: uuid }
         departmentId:     { type: string, format: uuid }
-        departmentName:   { type: string }
         fiscalYear:       { type: integer }
         quarter:          { type: integer, nullable: true }
         glAccountCode:    { type: string }
@@ -87,15 +86,6 @@ components:
         burnRatePerMonth: { type: string, nullable: true }
         forecastExhaustedAt: { type: string, format: date, nullable: true }
         status:           { type: string, enum: [PLANNING, SUBMITTED, APPROVED, ACTIVE, CLOSED] }
-        topCategories:
-          type: array
-          items:
-            type: object
-            properties:
-              categoryCode: { type: string }
-              categoryName: { type: string }
-              spent:        { type: string }
-              percent:      { type: number, format: float }
     Money:
       type: object
       properties:
@@ -268,7 +258,7 @@ paths:
       tags: [Budget]
       summary: Danh sách ngân sách
       operationId: listBudgets
-      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      x-required-permission: BUDGET_VIEW_OWN_DEPT | BUDGET_VIEW_ALL
       parameters:
         - name: department_id
           in: query
@@ -281,9 +271,36 @@ paths:
           schema: { type: integer, enum: [1, 2, 3, 4] }
         - name: status
           in: query
-          schema: { type: string }
+          schema: { type: string, enum: [PLANNING, SUBMITTED, APPROVED, ACTIVE, CLOSED] }
+        - name: gl_account_code
+          in: query
+          schema: { type: string, example: "6002" }
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/SizeParam'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: fiscalYear,desc
+            enum:
+              - departmentId,asc
+              - departmentId,desc
+              - fiscalYear,asc
+              - fiscalYear,desc
+              - quarter,asc
+              - quarter,desc
+              - glAccountCode,asc
+              - glAccountCode,desc
+              - status,asc
+              - status,desc
+              - allocated,asc
+              - allocated,desc
+              - committed,asc
+              - committed,desc
+              - spent,asc
+              - spent,desc
+              - available,asc
+              - available,desc
       responses:
         '200':
           description: Danh sách ngân sách
@@ -300,13 +317,19 @@ paths:
                           $ref: '#/components/schemas/BudgetDashboard'
                       meta:
                         $ref: '#/components/schemas/PageMeta'
+        '403':
+          description: Không có quyền xem ngân sách (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /budgets/{id}/dashboard:
     get:
       tags: [Budget]
       summary: Dashboard ngân sách real-time (từ Redis cache)
       operationId: getBudgetDashboard
-      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      x-required-permission: BUDGET_VIEW_OWN_DEPT | BUDGET_VIEW_ALL
       parameters:
         - name: id
           in: path
@@ -324,6 +347,18 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/BudgetDashboard'
+        '403':
+          description: Không có quyền xem ngân sách này (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Budget không tồn tại (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /budgets/{id}/override-approval:
     post:

@@ -40,3 +40,7 @@ mybatis:
     map-underscore-to-camel-case: true
     default-fetch-size: 100
     default-statement-timeout: 30
+
+eprocure:
+  finance:
+    budget-cache-ttl-minutes: ${BUDGET_CACHE_TTL_MINUTES:5}

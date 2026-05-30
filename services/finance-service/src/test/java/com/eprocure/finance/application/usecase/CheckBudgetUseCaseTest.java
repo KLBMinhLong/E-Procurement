@@ -13,9 +13,11 @@ import com.eprocure.finance.domain.model.BudgetLedgerSummary;
 import com.eprocure.finance.domain.model.BudgetStatus;
 import com.eprocure.finance.domain.model.BudgetTransaction;
 import com.eprocure.finance.domain.model.BudgetTransactionType;
+import com.eprocure.finance.domain.repository.BudgetFilter;
 import com.eprocure.finance.domain.model.vo.Money;
 import com.eprocure.finance.domain.repository.BudgetRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,6 +115,21 @@ class CheckBudgetUseCaseTest {
         public Optional<BudgetLedgerSummary> findActiveSummary(BudgetCheckCriteria criteria) {
             this.criteria = criteria;
             return Optional.ofNullable(summary);
+        }
+
+        @Override
+        public List<BudgetLedgerSummary> findByFilter(BudgetFilter filter) {
+            return List.of();
+        }
+
+        @Override
+        public long countByFilter(BudgetFilter filter) {
+            return 0;
+        }
+
+        @Override
+        public Optional<BudgetLedgerSummary> findSummaryById(UUID budgetId) {
+            return Optional.empty();
         }
 
         @Override

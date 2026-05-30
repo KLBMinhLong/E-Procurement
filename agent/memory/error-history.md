@@ -1,5 +1,12 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-30] Bug: Finance budget dashboard returned 500 after MyBatis aggregate query
+
+- Symptom: `GET /api/v1/budgets` and `/api/v1/budgets/{id}/dashboard` returned `SYS_001`/HTTP 500 after finance-service was rebuilt, while the aggregate SQL itself worked in PostgreSQL.
+- Root cause: `BudgetRepositoryImpl` used `domainObjectMapper.convertValue()` from `BudgetLedgerSummaryDbEntity` to `BudgetLedgerSummary`, but the finance `domainObjectMapper` was field-only and ignored the entity's public computed getters `getAllocated()`, `getCommitted()`, and `getSpent()`. The domain record constructor therefore received `null` `Money` values.
+- Fix: Allow public getters in the qualified `domainObjectMapper` and add a regression test proving `BudgetLedgerSummaryDbEntity` converts to the domain record with `Money` value objects intact.
+- Prevention: When infrastructure entities expose domain value objects through computed getters, keep the qualified domain ObjectMapper able to read those getters or add a focused conversion test before relying on runtime mapper behavior.
+
 ## [2026-05-30] Bug: PR detail UI showed `[object Object] VND` and incomplete line item values
 
 - Symptom: Purchase request detail rendered budget money as `[object Object] VND`, showed missing quantity/unit price values, and exposed long raw UUIDs in operational panels.

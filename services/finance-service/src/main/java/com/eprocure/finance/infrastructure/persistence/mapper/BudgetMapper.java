@@ -1,9 +1,11 @@
 package com.eprocure.finance.infrastructure.persistence.mapper;
 
 import com.eprocure.finance.domain.model.BudgetTransactionType;
+import com.eprocure.finance.domain.repository.BudgetFilter;
 import com.eprocure.finance.infrastructure.persistence.entity.BudgetCommitmentHoldDbEntity;
 import com.eprocure.finance.infrastructure.persistence.entity.BudgetLedgerSummaryDbEntity;
 import com.eprocure.finance.infrastructure.persistence.entity.BudgetTransactionDbEntity;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Insert;
@@ -66,6 +68,12 @@ public interface BudgetMapper {
             @Param("departmentId") UUID departmentId,
             @Param("fiscalYear") int fiscalYear,
             @Param("glAccountCode") String glAccountCode);
+
+    List<BudgetLedgerSummaryDbEntity> findByFilter(@Param("filter") BudgetFilter filter);
+
+    long countByFilter(@Param("filter") BudgetFilter filter);
+
+    Optional<BudgetLedgerSummaryDbEntity> findSummaryById(@Param("budgetId") UUID budgetId);
 
     @Select("""
             SELECT EXISTS (

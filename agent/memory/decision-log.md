@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-05-30] E10 budget dashboard/list read model
+
+- Decision: Implement public budget read APIs as read-only finance-service use cases with department-scoped filtering, aggregate ledger projections, and Redis dashboard cache evicted by budget ledger write use cases.
+- Reason: Finance and department managers need a stable read model for allocated/committed/spent/available before override/transfer workflows are added, and cached dashboards must not bypass permission checks or remain stale after PR lifecycle events.
+- Impact: `GET /api/v1/budgets` and `GET /api/v1/budgets/{id}/dashboard` are guarded by `BUDGET_VIEW_OWN_DEPT` or `BUDGET_VIEW_ALL`; own-department users cannot view other departments, while view-all users can filter all departments. MyBatis sorts through whitelist XML mapping.
+- Constraint: Department names/top-category analytics and budget override/transfer mutations remain later E10 slices.
+
 ## [2026-05-30] E10 finance-service budget check foundation
 
 - Decision: Start E10 with a narrow `finance-service` budget foundation and an internal `GET /internal/budgets/check` endpoint consumed by purchase-request-service.
