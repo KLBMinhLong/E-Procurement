@@ -211,4 +211,5 @@
 | PR service FinanceBudgetCheckAdapter | ✅ | Feature flag thay fallback; full reactor test xanh |
 | Kafka commit/release budget events | ✅ | Finance consumes submitted/approved/rejected/cancelled/changes-requested and writes idempotent ledger |
 | Budget dashboard/list API | ✅ | `GET /api/v1/budgets` + `GET /api/v1/budgets/{id}/dashboard`; scope quyền + Redis cache |
-| Override/transfer API | ⬜ | Later E10 slice |
+| Override/transfer API | ✅ | `PATCH /api/v1/budgets/{id}/override-approval` + `PATCH /api/v1/budgets/{id}/transfer`; idempotent audit/ledger + tests |
+| Budget warning/exceeded events | ⬜ | Wire `finance.budget.warning` / `finance.budget.exceeded` publisher when available drops below policy thresholds |

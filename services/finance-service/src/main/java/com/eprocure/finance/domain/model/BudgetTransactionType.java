@@ -4,5 +4,7 @@ public enum BudgetTransactionType {
     COMMIT_TENTATIVE,
     COMMIT_FIRM,
     RELEASE,
-    SPEND
+    SPEND,
+    TRANSFER_OUT,
+    TRANSFER_IN
 }

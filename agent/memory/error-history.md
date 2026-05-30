@@ -1,5 +1,12 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-05-30] Bug: Finance health failed when Kafka DNS was unavailable
+
+- Symptom: Finance container logged `SYS_001` on `/actuator/health` with `No WebApplicationContext found`, then the Spring context failed while starting `internalKafkaListenerEndpointRegistry`.
+- Root cause: Spring Kafka listener containers auto-started during application context startup. When Docker Kafka had exited and `kafka:9092` no longer resolved, constructing the Kafka consumer threw `ConfigException`, aborting the whole Finance Spring context.
+- Fix: Set `spring.kafka.listener.auto-startup=false`, start Finance Kafka listeners after `ApplicationReadyEvent` in a guarded background starter, catch startup failures, expose `FINANCE_KAFKA_AUTO_STARTUP`, and increase the Finance Docker health start period to match observed Java/OTel startup time.
+- Prevention: Non-critical Kafka consumers in dev/local must not be part of the blocking HTTP application startup path; verify `/actuator/health` with Kafka unavailable before accepting service container changes.
+
 ## [2026-05-30] Bug: Finance budget dashboard returned 500 after MyBatis aggregate query
 
 - Symptom: `GET /api/v1/budgets` and `/api/v1/budgets/{id}/dashboard` returned `SYS_001`/HTTP 500 after finance-service was rebuilt, while the aggregate SQL itself worked in PostgreSQL.

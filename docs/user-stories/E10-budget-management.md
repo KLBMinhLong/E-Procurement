@@ -41,8 +41,8 @@ chạy bằng service thật.
 | E10-US-005 | Là Finance Service, tôi muốn firm commit ngân sách khi PR được approve hoàn toàn. | P1 | `procurement.pr.approved` |
 | E10-US-006 | Là Finance Service, tôi muốn release commitment khi PR bị reject/cancel hoặc requester cần sửa lại. | P1 | `procurement.pr.rejected`, `procurement.pr.cancelled`, `procurement.pr.changes-requested` |
 | E10-US-007 | Là Finance Manager, tôi muốn nhận cảnh báo khi budget còn dưới 20% hoặc không đủ cho PR. | P1 | `finance.budget.warning`, `finance.budget.exceeded` |
-| E10-US-008 | Là Finance Manager, tôi muốn phê duyệt budget override khi nghiệp vụ cho phép vượt ngân sách. | P2 | `POST /budgets/{id}/override-approval` hiện có trong spec |
-| E10-US-009 | Là Finance Manager, tôi muốn điều chuyển ngân sách giữa budget lines để cân đối kế hoạch. | P2 | `POST /budgets/{id}/transfer` hiện có trong spec |
+| E10-US-008 | Là Finance Manager, tôi muốn phê duyệt budget override khi nghiệp vụ cho phép vượt ngân sách. | P2 | `PATCH /budgets/{id}/override-approval` |
+| E10-US-009 | Là Finance Manager, tôi muốn điều chuyển ngân sách giữa budget lines để cân đối kế hoạch. | P2 | `PATCH /budgets/{id}/transfer` |
 | E10-US-010 | Là Admin/Finance, tôi muốn có seed/demo active budgets để test end-to-end trên local. | P1 | Flyway seed/local profile |
 
 ---
@@ -215,9 +215,7 @@ Response data: allocated, committed, spent, available, status PASS|WARNING|FAIL,
 
 **Permission:** `BUDGET_OVERRIDE`.
 
-**Current spec:** `POST /budgets/{id}/override-approval`.
-
-**Implementation note:** This is a state-changing approval action. Before coding, prefer aligning the OpenAPI to `PATCH /budgets/{id}/override-approval` unless a stronger product/API reason keeps POST.
+**Endpoint:** `PATCH /budgets/{id}/override-approval`.
 
 **Main flow:**
 
@@ -244,7 +242,7 @@ Response data: allocated, committed, spent, available, status PASS|WARNING|FAIL,
 
 **Permission:** `BUDGET_TRANSFER_APPROVE`.
 
-**Current spec:** `POST /budgets/{id}/transfer`.
+**Endpoint:** `PATCH /budgets/{id}/transfer`.
 
 **Main flow:**
 
@@ -253,7 +251,7 @@ Response data: allocated, committed, spent, available, status PASS|WARNING|FAIL,
 2. Load source and target budget lines.
 3. Validate same currency/fiscal year unless policy allows cross-period transfer.
 4. Validate source available >= amount.
-5. Insert budget transfer record plus ledger transactions.
+5. Insert budget transfer record plus balanced ledger transactions (`TRANSFER_OUT` and `TRANSFER_IN`) and adjust source/target allocated amounts atomically.
 6. Return updated source/target dashboard.
 ```
 
@@ -322,7 +320,7 @@ This slice directly removes the highest-risk fake dependency in current PR submi
 
 ```
 [ ] Finance OpenAPI internal budget check contract added.
-[ ] Decision made on POST vs PATCH for override action before implementation.
+[x] Decision made on POST vs PATCH for override/transfer actions: use `PATCH`.
 [ ] Error codes FIN_* for budget not found, insufficient budget, currency mismatch, duplicate commitment documented.
 [ ] Local seed budget data exists for requester department used in demo.
 [ ] Budget event idempotency key strategy is eventId-based.

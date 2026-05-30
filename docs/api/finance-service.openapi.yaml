@@ -86,6 +86,31 @@ components:
         burnRatePerMonth: { type: string, nullable: true }
         forecastExhaustedAt: { type: string, format: date, nullable: true }
         status:           { type: string, enum: [PLANNING, SUBMITTED, APPROVED, ACTIVE, CLOSED] }
+    BudgetOverrideApproval:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        budgetId:        { type: string, format: uuid }
+        prId:            { type: string, format: uuid }
+        overrideAmount:  { type: string, example: "28000000.0000" }
+        currency:        { type: string, example: VND }
+        overrideReason:  { type: string }
+        approvedBy:      { type: string, format: uuid }
+        approvedAt:      { type: string, format: date-time }
+        status:          { type: string, enum: [APPROVED] }
+    BudgetTransfer:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        sourceBudgetId:  { type: string, format: uuid }
+        targetBudgetId:  { type: string, format: uuid }
+        amount:          { type: string, example: "10000000.0000" }
+        currency:        { type: string, example: VND }
+        reason:          { type: string }
+        approvedBy:      { type: string, format: uuid }
+        approvedAt:      { type: string, format: date-time }
+        sourceDashboard: { $ref: '#/components/schemas/BudgetDashboard' }
+        targetDashboard: { $ref: '#/components/schemas/BudgetDashboard' }
     Money:
       type: object
       properties:
@@ -361,7 +386,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /budgets/{id}/override-approval:
-    post:
+    patch:
       tags: [Budget]
       summary: Phê duyệt chi vượt ngân sách
       operationId: approveBudgetOverride
@@ -388,23 +413,44 @@ paths:
                   minLength: 50
                 overrideAmount:
                   type: string
-                  example: "28000000"
+                  example: "28000000.0000"
+                currency:
+                  type: string
+                  example: VND
+                  default: VND
       responses:
         '200':
           description: Override được phê duyệt
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BudgetOverrideApproval'
+        '400':
+          description: Idempotency-Key hoặc dữ liệu không hợp lệ (SYS_005, VAL_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Vượt 30% ngân sách, cần CEO duyệt (FIN_004)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Budget không tồn tại (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /budgets/{id}/transfer:
-    post:
+    patch:
       tags: [Budget]
       summary: Điều chuyển ngân sách giữa phòng ban
       operationId: transferBudget
@@ -424,7 +470,8 @@ paths:
               required: [targetBudgetId, amount, reason]
               properties:
                 targetBudgetId: { type: string, format: uuid }
-                amount:         { type: string, example: "10000000" }
+                amount:         { type: string, example: "10000000.0000" }
+                currency:       { type: string, example: VND, default: VND }
                 reason:         { type: string, minLength: 20 }
       responses:
         '200':
@@ -432,7 +479,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BudgetTransfer'
+        '400':
+          description: Idempotency-Key hoặc dữ liệu không hợp lệ (SYS_005, VAL_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Budget nguồn hoặc đích không tồn tại (FIN_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Budget chưa active, sai currency hoặc không đủ ngân sách nguồn (FIN_003, FIN_005, FIN_009)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /purchase-orders:
     get:

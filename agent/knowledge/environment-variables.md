@@ -32,6 +32,8 @@
 | KAFKA_BOOTSTRAP_SERVERS | kafka:9092 |
 | KAFKA_CONSUMER_GROUP_ID | {service-name}-group |
 | KAFKA_AUTO_OFFSET_RESET | earliest |
+| FINANCE_KAFKA_ENABLED | Enables Finance Kafka consumers/producers |
+| FINANCE_KAFKA_AUTO_STARTUP | Starts Finance Kafka listeners after ApplicationReady and keeps HTTP health independent from temporary broker DNS/startup failures |
 
 ## Keycloak (IAM only)
 | Variable | Notes |

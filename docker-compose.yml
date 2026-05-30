@@ -378,6 +378,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       FINANCE_INTERNAL_API_KEY: ${FINANCE_INTERNAL_API_KEY:-change-me-internal-api-key}
       FINANCE_KAFKA_ENABLED: ${FINANCE_KAFKA_ENABLED:-true}
+      FINANCE_KAFKA_AUTO_STARTUP: ${FINANCE_KAFKA_AUTO_STARTUP:-true}
       FINANCE_DEFAULT_GL_ACCOUNT_CODE: ${FINANCE_DEFAULT_GL_ACCOUNT_CODE:-6002}
     ports:
       - "${FINANCE_SERVICE_PORT:-8084}:8084"
@@ -405,7 +406,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 75s
+      start_period: 120s
     logging: *default-logging
 
   approval-service:

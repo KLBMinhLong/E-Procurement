@@ -1,5 +1,19 @@
 # Decision Log
 
+## [2026-05-30] Finance Kafka listener startup is non-fatal
+
+- Decision: Finance-service disables Spring Kafka listener auto-startup and starts listener containers after `ApplicationReadyEvent` through a guarded starter.
+- Reason: Finance APIs, Flyway, and `/actuator/health` must remain available when Kafka is temporarily unavailable or its Docker container exits after the application has been built.
+- Impact: Missing Kafka DNS/broker now logs `[KAFKA] Finance Kafka listeners not started` without aborting the Spring context; `FINANCE_KAFKA_AUTO_STARTUP=false` can disable the background listener start in local diagnostics.
+- Constraint: This preserves eventual Kafka integration semantics, but if Kafka is down the service will not consume PR budget events until the listener start is retried by restarting the service or toggling runtime deployment.
+
+## [2026-05-30] E10 budget override and transfer actions
+
+- Decision: Implement budget override and transfer as `PATCH` state-changing finance-service actions with required `Idempotency-Key`, Redis replay cache, DB idempotency keys, and auditable `budget_overrides`/`budget_transfers` tables.
+- Reason: These actions change approval/audit or allocation state and must follow the repo convention for state transitions while preventing duplicate mutation on retries.
+- Impact: Override approvals persist an audit record and do not mutate `allocated_amount`; override amounts above the configured threshold are rejected with `FIN_004`. Transfers lock source/target budget rows in stable UUID order, validate active same-year/same-currency budgets, adjust allocated amounts atomically, and write balanced `TRANSFER_OUT`/`TRANSFER_IN` ledger rows.
+- Constraint: High-threshold CEO/CFO approval is represented as a guarded failure path for now; notification publishing for `finance.budget.exceeded` remains a later integration slice.
+
 ## [2026-05-30] E10 budget dashboard/list read model
 
 - Decision: Implement public budget read APIs as read-only finance-service use cases with department-scoped filtering, aggregate ledger projections, and Redis dashboard cache evicted by budget ledger write use cases.

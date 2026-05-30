@@ -4,7 +4,10 @@ import com.eprocure.finance.domain.model.BudgetTransactionType;
 import com.eprocure.finance.domain.repository.BudgetFilter;
 import com.eprocure.finance.infrastructure.persistence.entity.BudgetCommitmentHoldDbEntity;
 import com.eprocure.finance.infrastructure.persistence.entity.BudgetLedgerSummaryDbEntity;
+import com.eprocure.finance.infrastructure.persistence.entity.BudgetOverrideApprovalDbEntity;
 import com.eprocure.finance.infrastructure.persistence.entity.BudgetTransactionDbEntity;
+import com.eprocure.finance.infrastructure.persistence.entity.BudgetTransferDbEntity;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +17,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface BudgetMapper {
@@ -74,6 +78,15 @@ public interface BudgetMapper {
     long countByFilter(@Param("filter") BudgetFilter filter);
 
     Optional<BudgetLedgerSummaryDbEntity> findSummaryById(@Param("budgetId") UUID budgetId);
+
+    @Select("""
+            SELECT id
+            FROM finance.budgets
+            WHERE id = #{budgetId}
+              AND is_deleted = FALSE
+            FOR UPDATE
+            """)
+    Optional<UUID> lockBudgetForUpdate(@Param("budgetId") UUID budgetId);
 
     @Select("""
             SELECT EXISTS (
@@ -163,4 +176,114 @@ public interface BudgetMapper {
     Optional<BudgetCommitmentHoldDbEntity> findHeldCommitment(
             @Param("referenceType") String referenceType,
             @Param("referenceId") UUID referenceId);
+
+    @Select("""
+            SELECT
+                id,
+                budget_id,
+                purchase_request_id,
+                override_amount AS amount,
+                currency,
+                override_reason AS reason,
+                approved_by,
+                approved_at,
+                idempotency_key,
+                status
+            FROM finance.budget_overrides
+            WHERE idempotency_key = #{idempotencyKey}
+              AND is_deleted = FALSE
+            """)
+    @Results(id = "budgetOverrideApprovalResult", value = {
+            @Result(property = "id", column = "id"),
+            @Result(property = "budgetId", column = "budget_id"),
+            @Result(property = "purchaseRequestId", column = "purchase_request_id"),
+            @Result(property = "amount", column = "amount"),
+            @Result(property = "currency", column = "currency"),
+            @Result(property = "reason", column = "reason"),
+            @Result(property = "approvedBy", column = "approved_by"),
+            @Result(property = "approvedAt", column = "approved_at"),
+            @Result(property = "idempotencyKey", column = "idempotency_key"),
+            @Result(property = "status", column = "status")
+    })
+    Optional<BudgetOverrideApprovalDbEntity> findOverrideApprovalByIdempotencyKey(
+            @Param("idempotencyKey") UUID idempotencyKey);
+
+    @Insert("""
+            INSERT INTO finance.budget_overrides (
+                id, budget_id, purchase_request_id, override_amount, currency, override_reason,
+                status, approved_by, approved_at, idempotency_key, created_by
+            ) VALUES (
+                #{entity.id},
+                #{entity.budgetId},
+                #{entity.purchaseRequestId},
+                #{entity.amount},
+                #{entity.currency},
+                #{entity.reason},
+                #{entity.status},
+                #{entity.approvedBy},
+                #{entity.approvedAt},
+                #{entity.idempotencyKey},
+                #{entity.approvedBy}
+            )
+            """)
+    void insertOverrideApproval(@Param("entity") BudgetOverrideApprovalDbEntity entity);
+
+    @Select("""
+            SELECT
+                id,
+                source_budget_id,
+                target_budget_id,
+                amount,
+                currency,
+                reason,
+                approved_by,
+                approved_at,
+                idempotency_key
+            FROM finance.budget_transfers
+            WHERE idempotency_key = #{idempotencyKey}
+              AND is_deleted = FALSE
+            """)
+    @Results(id = "budgetTransferResult", value = {
+            @Result(property = "id", column = "id"),
+            @Result(property = "sourceBudgetId", column = "source_budget_id"),
+            @Result(property = "targetBudgetId", column = "target_budget_id"),
+            @Result(property = "amount", column = "amount"),
+            @Result(property = "currency", column = "currency"),
+            @Result(property = "reason", column = "reason"),
+            @Result(property = "approvedBy", column = "approved_by"),
+            @Result(property = "approvedAt", column = "approved_at"),
+            @Result(property = "idempotencyKey", column = "idempotency_key")
+    })
+    Optional<BudgetTransferDbEntity> findTransferByIdempotencyKey(@Param("idempotencyKey") UUID idempotencyKey);
+
+    @Insert("""
+            INSERT INTO finance.budget_transfers (
+                id, source_budget_id, target_budget_id, amount, currency, reason,
+                approved_by, approved_at, idempotency_key, created_by
+            ) VALUES (
+                #{entity.id},
+                #{entity.sourceBudgetId},
+                #{entity.targetBudgetId},
+                #{entity.amount},
+                #{entity.currency},
+                #{entity.reason},
+                #{entity.approvedBy},
+                #{entity.approvedAt},
+                #{entity.idempotencyKey},
+                #{entity.approvedBy}
+            )
+            """)
+    void insertTransfer(@Param("entity") BudgetTransferDbEntity entity);
+
+    @Update("""
+            UPDATE finance.budgets
+            SET allocated_amount = allocated_amount + #{delta},
+                updated_by = #{actorId}
+            WHERE id = #{budgetId}
+              AND is_deleted = FALSE
+            """)
+    int adjustAllocatedAmount(
+            @Param("budgetId") UUID budgetId,
+            @Param("delta") BigDecimal delta,
+            @Param("actorId") UUID actorId);
 }

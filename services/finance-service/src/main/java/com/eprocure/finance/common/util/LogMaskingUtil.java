@@ -14,6 +14,13 @@ public final class LogMaskingUtil {
                 .orElse("***");
     }
 
+    public static String maskToken(String token) {
+        return Optional.ofNullable(token)
+                .filter(value -> value.length() >= 8)
+                .map(value -> value.substring(0, 8) + "...")
+                .orElse("***");
+    }
+
     public static String maskClientIp(String ipAddress) {
         return Optional.ofNullable(ipAddress)
                 .filter(value -> !value.isBlank())

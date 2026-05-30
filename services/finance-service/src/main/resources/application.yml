@@ -23,6 +23,10 @@ spring:
     baseline-on-migrate: true
   jackson:
     time-zone: UTC
+  kafka:
+    listener:
+      auto-startup: false
+      missing-topics-fatal: false
 
 management:
   endpoints:

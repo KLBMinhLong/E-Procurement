@@ -9,9 +9,11 @@ import com.eprocure.finance.application.service.BudgetDashboardView;
 import com.eprocure.finance.domain.model.BudgetCheckCriteria;
 import com.eprocure.finance.domain.model.BudgetCommitmentHold;
 import com.eprocure.finance.domain.model.BudgetLedgerSummary;
+import com.eprocure.finance.domain.model.BudgetOverrideApproval;
 import com.eprocure.finance.domain.model.BudgetStatus;
 import com.eprocure.finance.domain.model.BudgetTransaction;
 import com.eprocure.finance.domain.model.BudgetTransactionType;
+import com.eprocure.finance.domain.model.BudgetTransfer;
 import com.eprocure.finance.domain.model.vo.Money;
 import com.eprocure.finance.domain.repository.BudgetFilter;
 import com.eprocure.finance.domain.repository.BudgetRepository;
@@ -177,6 +179,11 @@ class BudgetCommitmentUseCaseTest {
         }
 
         @Override
+        public boolean lockBudgetForUpdate(UUID budgetId) {
+            return true;
+        }
+
+        @Override
         public boolean existsProcessedEvent(String eventId) {
             return processedEvents.contains(eventId);
         }
@@ -203,6 +210,28 @@ class BudgetCommitmentUseCaseTest {
         @Override
         public Optional<BudgetCommitmentHold> findHeldCommitment(String referenceType, UUID referenceId) {
             return Optional.ofNullable(hold);
+        }
+
+        @Override
+        public Optional<BudgetOverrideApproval> findOverrideApprovalByIdempotencyKey(UUID idempotencyKey) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void insertOverrideApproval(BudgetOverrideApproval approval) {
+        }
+
+        @Override
+        public Optional<BudgetTransfer> findTransferByIdempotencyKey(UUID idempotencyKey) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void insertTransfer(BudgetTransfer transfer) {
+        }
+
+        @Override
+        public void adjustAllocatedAmount(UUID budgetId, Money delta, UUID actorId) {
         }
     }
 }
