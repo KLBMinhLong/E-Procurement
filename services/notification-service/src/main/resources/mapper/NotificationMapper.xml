@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.notification.infrastructure.persistence.mapper.NotificationMapper">
+
+    <resultMap id="notificationResultMap"
+               type="com.eprocure.notification.infrastructure.persistence.entity.NotificationDbEntity">
+        <id property="id" column="id"/>
+        <result property="recipientId" column="recipient_id"/>
+        <result property="eventType" column="event_type"/>
+        <result property="channel" column="channel"/>
+        <result property="subject" column="subject"/>
+        <result property="body" column="body"/>
+        <result property="referenceType" column="reference_type"/>
+        <result property="referenceId" column="reference_id"/>
+        <result property="referenceNumber" column="reference_number"/>
+        <result property="actionUrl" column="action_url"/>
+        <result property="emailTo" column="email_to"/>
+        <result property="providerMessageId" column="provider_message_id"/>
+        <result property="status" column="status"/>
+        <result property="read" column="is_read"/>
+        <result property="readAt" column="read_at"/>
+        <result property="sentAt" column="sent_at"/>
+        <result property="retryCount" column="retry_count"/>
+        <result property="lastError" column="last_error"/>
+        <result property="lastAttemptAt" column="last_attempt_at"/>
+        <result property="nextAttemptAt" column="next_attempt_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="deleted" column="is_deleted"/>
+        <result property="deletedAt" column="deleted_at"/>
+        <result property="deletedBy" column="deleted_by"/>
+    </resultMap>
+
+    <sql id="notificationColumns">
+        id, recipient_id, event_type, channel, subject, body,
+        reference_type, reference_id, reference_number, action_url,
+        email_to, provider_message_id, status, is_read, read_at, sent_at,
+        retry_count, last_error, last_attempt_at, next_attempt_at,
+        created_at, updated_at, created_by, is_deleted, deleted_at, deleted_by
+    </sql>
+
+    <sql id="notificationWhereClause">
+        WHERE recipient_id = #{filter.recipientId}
+          AND is_deleted = FALSE
+        <if test="filter.read != null">
+            AND is_read = #{filter.read}
+        </if>
+        <if test="filter.eventType != null and filter.eventType != ''">
+            AND event_type = #{filter.eventType}
+        </if>
+    </sql>
+
+    <resultMap id="notificationTemplateResultMap"
+               type="com.eprocure.notification.infrastructure.persistence.entity.NotificationTemplateDbEntity">
+        <id property="code" column="code"/>
+        <result property="eventType" column="event_type"/>
+        <result property="channel" column="channel"/>
+        <result property="language" column="language"/>
+        <result property="subjectTemplate" column="subject_template"/>
+        <result property="bodyTemplate" column="body_template"/>
+        <result property="active" column="is_active"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="notificationTemplateColumns">
+        code, event_type, channel, language, subject_template, body_template, is_active, created_at, updated_at
+    </sql>
+
+    <select id="findByFilter" resultMap="notificationResultMap">
+        SELECT
+            <include refid="notificationColumns"/>
+        FROM notification.notifications
+        <include refid="notificationWhereClause"/>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="findEmailDispatchCandidates" resultMap="notificationResultMap">
+        SELECT
+            <include refid="notificationColumns"/>
+        FROM notification.notifications
+        WHERE channel = 'EMAIL'
+          AND status = 'PENDING'
+          AND retry_count &lt; #{maxAttempts}
+          AND (next_attempt_at IS NULL OR next_attempt_at &lt;= #{now})
+          AND is_deleted = FALSE
+        ORDER BY COALESCE(next_attempt_at, created_at), created_at, id
+        LIMIT #{limit}
+    </select>
+
+    <select id="findTemplateByCode" resultMap="notificationTemplateResultMap">
+        SELECT
+            <include refid="notificationTemplateColumns"/>
+        FROM notification.notification_templates
+        WHERE code = #{code}
+          AND is_deleted = FALSE
+    </select>
+
+    <select id="findTemplates" resultMap="notificationTemplateResultMap">
+        SELECT
+            <include refid="notificationTemplateColumns"/>
+        FROM notification.notification_templates
+        WHERE is_deleted = FALSE
+        <if test="channel != null and channel != ''">
+            AND channel = #{channel}
+        </if>
+        <if test="eventType != null and eventType != ''">
+            AND event_type = #{eventType}
+        </if>
+        <if test="language != null and language != ''">
+            AND language = #{language}
+        </if>
+        ORDER BY event_type ASC, channel ASC, language ASC, code ASC
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        FROM notification.notifications
+        <include refid="notificationWhereClause"/>
+    </select>
+</mapper>

@@ -1,5 +1,33 @@
 # Decision Log
 
+## [2026-06-01] E11 notification template admin
+
+- Decision: Manage notification templates through `SYSTEM_CONFIG` guarded list/update/preview APIs and an Angular admin page at `/admin/notification-templates`.
+- Reason: E11 needs a safe operational surface to change seeded EMAIL/IN_APP copy without altering historical notification rows or requiring database edits.
+- Impact: Admins can filter templates, edit subject/body/isActive with `Idempotency-Key`, and preview escaped rendered output using sample JSON; frontend navigation exposes the page only to users with `SYSTEM_CONFIG`.
+- Constraint: Template updates currently log action boundaries but do not yet write a separate immutable audit table; existing unread notification bodies remain unchanged because rendered rows store body snapshots.
+
+## [2026-05-30] E11 notification-service first backend slice
+
+- Decision: Scaffold `notification-service` as a Maven/Docker service on port 8088 with notification schema, in-app notification APIs, template rendering, Kafka business-event consumption, and event idempotency.
+- Reason: E10 now publishes `finance.budget.warning` and `finance.budget.exceeded`; E11 needs a durable receiver before adding frontend bell, real WebSocket/STOMP delivery, or email dispatch.
+- Impact: Notification-service persists `notifications`, `notification_templates`, and `event_processing_log`; users can list/count/read their own notifications using `NOTIFICATION_VIEW_OWN`; budget alerts route to configured finance recipients via `NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS`.
+- Constraint: Brevo/email and template-admin work remains later E11 slices. Runtime verification showed `notification-service` needs a 0.25 CPU dev limit and longer Docker health start period when OTel is enabled.
+
+## [2026-05-30] E11 realtime notification delivery
+
+- Decision: Deliver in-app notification events through Spring STOMP endpoint `/ws/notifications` and user destination `/user/queue/notifications`, with the Angular shell bell consuming count/feed APIs plus realtime messages.
+- Reason: Persisted notification APIs were already stable; realtime delivery should reuse gateway-authenticated user headers and keep push emission after transaction commit.
+- Impact: Frontend users with `NOTIFICATION_VIEW_OWN` can see unread count, latest feed, read/read-all actions, and live push toasts in the shell.
+- Constraint: WebSocket principal name is derived from gateway `X-User-ID`; direct service WebSocket calls without gateway headers are not a supported production auth path.
+
+## [2026-05-30] E11 email dispatch outbox
+
+- Decision: Handle `notification.email.send` as a Kafka-driven EMAIL outbox row in `notification.notifications`, then let a scheduled worker dispatch via a pluggable logging/Brevo `EmailSenderPort`.
+- Reason: Email delivery must not block PR/Approval/Finance transactions, and failed sends need durable retry state rather than transient adapter logs.
+- Impact: EMAIL notifications track `email_to`, provider message id, attempt timestamps, retry count, sanitized last error, and exhausted failures in `notification.email_dispatch_dead_letters`.
+- Constraint: Dev/local default provider is `logging`; production should set `NOTIFICATION_EMAIL_PROVIDER=brevo`, `BREVO_API_KEY`, and `EMAIL_FROM_ADDRESS` through ENV only.
+
 ## [2026-05-30] E10 budget alert event publisher
 
 - Decision: Add a finance `BudgetAlertService` with a `BudgetAlertEventPublisher` port, Kafka publisher, and logging fallback for `finance.budget.warning` and `finance.budget.exceeded`.

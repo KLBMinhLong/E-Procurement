@@ -31,7 +31,7 @@ Resource allocation dev environment:
 │ inventory-service       │ 0.25 │ 256MB  │ Stock management             │
 │ vendor-service          │ 0.25 │ 256MB  │ Vendor + RFQ                 │
 │ analytics-service       │ 0.25 │ 256MB  │ Dashboard + Reports          │
-│ notification-service    │ 0.10 │ 256MB  │ Email + WebSocket            │
+│ notification-service    │ 0.25 │ 256MB  │ Email + WebSocket            │
 │ admin-service           │ 0.10 │ 256MB  │ Config + Audit               │
 │ postgres                │ 0.50 │ 512MB  │ Tất cả DB (dev: 1 instance)  │
 │ redis                   │ 0.10 │ 128MB  │ Cache + Session              │

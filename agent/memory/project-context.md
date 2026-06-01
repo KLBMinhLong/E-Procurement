@@ -240,7 +240,8 @@ kafka             → 0.50 CPU, 512MB RAM
 keycloak          → 0.25 CPU, 512MB RAM
 inventory/vendor  → 0.25 CPU, 256MB RAM mỗi service
 redis             → 0.10 CPU, 128MB RAM
-notification/admin→ 0.10 CPU, 256MB RAM mỗi service
+notification     → 0.25 CPU, 256MB RAM
+admin-service    → 0.10 CPU, 256MB RAM
 monitoring stack  → dùng docker --profile monitoring (tắt khi thiếu RAM)
 ```
 

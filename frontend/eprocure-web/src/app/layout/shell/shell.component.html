@@ -58,9 +58,68 @@
 
       <div class="shell__topbar-right">
         <ep-lang-switcher></ep-lang-switcher>
-        <ep-button variant="ghost" [ariaLabel]="'notification.open' | translate">
-          <ep-icon name="bell"></ep-icon>
-        </ep-button>
+        @if (canViewNotifications()) {
+        <div class="shell__notifications" [class.is-open]="isNotificationOpen()">
+          <button
+            type="button"
+            class="notification-trigger"
+            [attr.aria-label]="'notification.open' | translate"
+            [attr.aria-expanded]="isNotificationOpen()"
+            aria-haspopup="dialog"
+            (click)="toggleNotifications()">
+            <ep-icon name="bell"></ep-icon>
+            @if (unreadCount() > 0) {
+            <span class="notification-trigger__badge">{{ notificationBadge() }}</span>
+            }
+          </button>
+
+          @if (isNotificationOpen()) {
+          <section class="notification-panel" [attr.aria-label]="'notification.panelLabel' | translate">
+            <header class="notification-panel__header">
+              <div>
+                <strong>{{ 'notification.title' | translate }}</strong>
+                <small>{{ 'notification.unreadCount' | translate:{ count: unreadCount() } }}</small>
+              </div>
+              <button
+                type="button"
+                class="notification-panel__mark-all"
+                [disabled]="unreadCount() === 0"
+                [attr.aria-label]="'notification.markAllRead' | translate"
+                (click)="markAllNotificationsRead()">
+                <ep-icon name="check-circle" [size]="16"></ep-icon>
+              </button>
+            </header>
+
+            @if (notificationsLoading()) {
+            <div class="notification-panel__state">{{ 'notification.loading' | translate }}</div>
+            } @else if (latestNotifications().length === 0) {
+            <div class="notification-panel__state">{{ 'notification.empty' | translate }}</div>
+            } @else {
+            <div class="notification-panel__list">
+              @for (notification of latestNotifications(); track notification.id) {
+              <article class="notification-item" [class.notification-item--unread]="!notification.isRead">
+                <button type="button" class="notification-item__content" (click)="openNotification(notification)">
+                  <span class="notification-item__subject">{{ notification.subject || notification.eventType }}</span>
+                  <span class="notification-item__body">{{ notification.body }}</span>
+                  <small>{{ notification.createdAt | date:'short' }}</small>
+                </button>
+                @if (!notification.isRead) {
+                <button
+                  type="button"
+                  class="notification-item__read"
+                  [attr.aria-label]="'notification.markRead' | translate"
+                  (click)="markNotificationRead(notification, $event)">
+                  <ep-icon name="check" [size]="15"></ep-icon>
+                </button>
+                }
+              </article>
+              }
+            </div>
+            }
+          </section>
+          }
+        </div>
+        }
         @if (user(); as currentUser) {
         <div class="shell__user" routerLink="/profile" style="cursor: pointer;">
           <ep-avatar [name]="currentUser.fullName" [imageUrl]="currentUser.avatarUrl"></ep-avatar>

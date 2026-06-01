@@ -144,6 +144,7 @@
     "adminRoles": "Role Manager",
     "adminRbac": "Permissions Matrix",
     "adminOrgChart": "Department Chart",
+    "notificationTemplates": "Notification Templates",
     "approvalRules": "Approval Rules",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
@@ -153,7 +154,14 @@
     "purchaseRequest": "Purchase Requests"
   },
   "notification": {
-    "open": "Open notifications"
+    "empty": "No notifications",
+    "loading": "Loading notifications",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "open": "Open notifications",
+    "panelLabel": "Notification panel",
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread"
   },
   "route": {
     "admin": {
@@ -161,7 +169,8 @@
       "users": "User Directory",
       "roles": "Role Manager",
       "rbac": "Permissions Matrix",
-      "orgChart": "Department Chart"
+      "orgChart": "Department Chart",
+      "notificationTemplates": "Notification Templates"
     },
     "approvals": {
       "self": "Approvals",
@@ -720,6 +729,96 @@
       "empty": {
         "title": "No departments found",
         "message": "Organizational tree chart could not be loaded."
+      }
+    },
+    "templates": {
+      "eyebrow": "Notification admin",
+      "title": "Notification Templates",
+      "subtitle": "Manage template content for email, in-app, and business notification channels.",
+      "stat": {
+        "total": "Total templates",
+        "totalHint": "Configured",
+        "active": "Active",
+        "activeHint": "Available to render",
+        "email": "Email",
+        "emailHint": "Used by dispatch",
+        "visible": "Visible",
+        "visibleHint": "After filters"
+      },
+      "filter": {
+        "searchPlaceholder": "Search code, event, channel, or content...",
+        "channel": "Channel",
+        "language": "Language",
+        "status": "Status",
+        "allLanguages": "All",
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "channel": {
+        "all": "All",
+        "EMAIL": "Email",
+        "IN_APP": "In-app",
+        "PUSH": "Push"
+      },
+      "list": {
+        "label": "Notification template list",
+        "title": "Templates",
+        "count": "{{count}} templates"
+      },
+      "editor": {
+        "label": "Template editor"
+      },
+      "col": {
+        "template": "Template",
+        "channel": "Channel",
+        "status": "Status",
+        "updatedAt": "Updated"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "field": {
+        "active": "Active",
+        "subject": "Subject",
+        "body": "Body template",
+        "sample": "Preview data"
+      },
+      "placeholder": {
+        "subject": "E.g. Notification {{prNumber}}",
+        "body": "Enter content with {{variable}} placeholders"
+      },
+      "preview": {
+        "title": "Preview",
+        "subject": "Subject",
+        "noSubject": "No subject",
+        "empty": "Run preview to inspect rendered content."
+      },
+      "action": {
+        "preview": "Preview",
+        "reset": "Reset",
+        "save": "Save template"
+      },
+      "toast": {
+        "loadFailed": "Could not load notification templates.",
+        "bodyRequired": "Body template is required.",
+        "invalidJson": "Preview data must be a valid JSON object.",
+        "previewFailed": "Could not render template preview.",
+        "updateSuccess": "Notification template updated.",
+        "updateFailed": "Could not update notification template."
+      },
+      "empty": {
+        "title": "No templates yet",
+        "message": "No notification templates were found."
+      },
+      "emptyFiltered": {
+        "title": "No matching templates",
+        "message": "Try adjusting the keyword or active filters."
+      },
+      "emptyEditor": {
+        "title": "No template selected",
+        "message": "Select a template from the list to edit or preview it."
       }
     }
   },

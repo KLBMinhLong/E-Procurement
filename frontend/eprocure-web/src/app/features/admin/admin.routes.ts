@@ -40,6 +40,14 @@ export const adminRoutes: Routes = [
     title: 'route.admin.orgChart'
   },
   {
+    path: 'notification-templates',
+    loadComponent: () =>
+      import('./pages/notification-templates/notification-templates.component').then((m) => m.NotificationTemplatesComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['SYSTEM_CONFIG'] },
+    title: 'route.admin.notificationTemplates'
+  },
+  {
     path: 'approval-rules',
     redirectTo: '/approvals/rules'
   }

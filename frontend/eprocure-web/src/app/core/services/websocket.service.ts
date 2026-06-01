@@ -15,7 +15,7 @@ export class WebsocketService {
     }
 
     this.client = new Client({
-      brokerURL: this.wsBaseUrl,
+      brokerURL: this.resolveBrokerUrl(),
       reconnectDelay: 5000,
       debug: () => undefined,
       onConnect: () => {
@@ -34,5 +34,16 @@ export class WebsocketService {
     this.client?.deactivate();
     this.client = null;
     this.isConnected.set(false);
+  }
+
+  private resolveBrokerUrl(): string {
+    const baseUrl = this.wsBaseUrl.trim();
+    if (/^wss?:\/\//i.test(baseUrl) || typeof window === 'undefined') {
+      return baseUrl;
+    }
+
+    const path = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}${path}`;
   }
 }

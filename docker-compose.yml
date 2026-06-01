@@ -409,6 +409,77 @@ services:
       start_period: 120s
     logging: *default-logging
 
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: eprocure-notification-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: notification-service
+      SERVER_PORT: 8088
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: notification-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
+      NOTIFICATION_DB_HOST: postgres
+      NOTIFICATION_DB_PORT: 5432
+      NOTIFICATION_DB_NAME: db_notification
+      NOTIFICATION_DB_SCHEMA: notification
+      NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER:-notification_user}
+      NOTIFICATION_DB_PASS: ${NOTIFICATION_DB_PASS:-notification_pass_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASS: ${REDIS_PASS:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      NOTIFICATION_INTERNAL_API_KEY: ${NOTIFICATION_INTERNAL_API_KEY:-change-me-internal-api-key}
+      NOTIFICATION_KAFKA_ENABLED: ${NOTIFICATION_KAFKA_ENABLED:-true}
+      NOTIFICATION_KAFKA_AUTO_STARTUP: ${NOTIFICATION_KAFKA_AUTO_STARTUP:-true}
+      NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS: ${NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS:-10000000-0000-4000-8000-000000000001}
+      NOTIFICATION_EMAIL_DISPATCH_ENABLED: ${NOTIFICATION_EMAIL_DISPATCH_ENABLED:-true}
+      NOTIFICATION_EMAIL_PROVIDER: ${NOTIFICATION_EMAIL_PROVIDER:-logging}
+      NOTIFICATION_EMAIL_BATCH_SIZE: ${NOTIFICATION_EMAIL_BATCH_SIZE:-25}
+      NOTIFICATION_EMAIL_RETRY_FIXED_DELAY_MS: ${NOTIFICATION_EMAIL_RETRY_FIXED_DELAY_MS:-60000}
+      EMAIL_RETRY_MAX: ${EMAIL_RETRY_MAX:-3}
+      EMAIL_RETRY_DELAY_SECONDS: ${EMAIL_RETRY_DELAY_SECONDS:-30}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-eProcure Dev}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-dev@eprocure.local}
+      BREVO_API_URL: ${BREVO_API_URL:-https://api.brevo.com/v3/smtp/email}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT:-8088}:8088"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    cpus: 0.25
+    mem_limit: 256m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8088/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+    logging: *default-logging
+
   approval-service:
     build:
       context: .
