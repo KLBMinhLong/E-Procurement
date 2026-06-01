@@ -350,6 +350,7 @@ This keeps E11 useful immediately for Approval tasks while avoiding early coupli
 [x] Real STOMP/WebSocket delivery adapter
 [x] Angular notification bell/feed in shell
 [x] Email dispatch + retry worker
+[x] IAM password reset delivery publishes `notification.email.send` with `templateEventType=PASSWORD_RESET`
 [x] Template admin API/UI
 ```
 ```

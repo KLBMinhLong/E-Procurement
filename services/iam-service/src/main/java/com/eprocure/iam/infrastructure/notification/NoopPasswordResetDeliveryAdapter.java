@@ -6,9 +6,14 @@ import com.eprocure.iam.domain.model.User;
 import java.time.Instant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(
+        name = "eprocure.iam.notification.password-reset.delivery-mode",
+        havingValue = "logging",
+        matchIfMissing = true)
 public class NoopPasswordResetDeliveryAdapter implements PasswordResetDeliveryPort {
     private static final Logger log = LogManager.getLogger(NoopPasswordResetDeliveryAdapter.class);
 

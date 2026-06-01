@@ -45,6 +45,8 @@ Cung cấp xác thực, opaque session token, RBAC permission cache, user/role m
 
 **Preconditions:** RSA key pair active trong IAM config.
 
+**Scope note:** E02 hardening covers public-key exposure and request-body decryption for auth payloads. Response-body encryption is deferred to E14 because it needs a frontend public-key/response wrapper contract.
+
 **Main flow:**
 
 ```
@@ -255,6 +257,7 @@ Domain: User, Role, Department, OrgNode, Delegation, Email, PhoneNumber
 UseCases: Login, Logout, GetMe, ManageUser, ManageRolePermission, ResolveApprover, ManageDelegation
 Redis adapters: SessionStore, PermissionCache, IdempotencyStore
 Keycloak adapter: CredentialVerificationPort + IAM internal provider endpoints
+Password reset delivery adapter: publish notification.email.send to notification-service in Docker/prod
 Controllers matching iam-service.openapi.yaml
 Unit tests for domain/application
 ```
@@ -270,6 +273,7 @@ Unit tests for domain/application
 [ ] Admin can create user and assign role.
 [ ] Approval Engine can resolve approver from org.
 [ ] No JWT token generation.
-[ ] No token/password/secret logs.
-[ ] POST/PUT/PATCH endpoints enforce Idempotency-Key except explicitly whitelisted auth flow.
+[x] No token/password/secret logs.
+[x] POST/PUT/PATCH endpoints enforce Idempotency-Key except explicitly whitelisted auth flow.
+[x] Forgot-password email delivery is routed through notification-service via `notification.email.send` outside local logging mode.
 ```
