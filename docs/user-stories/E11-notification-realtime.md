@@ -269,9 +269,9 @@ PreviewNotificationTemplateUseCase
 **Acceptance criteria:**
 
 ```
-[ ] Template updates do not break existing unread notification bodies.
-[ ] Preview does not persist notification rows.
-[ ] Visible admin UI text uses i18n keys.
+[x] Template updates do not break existing unread notification bodies.
+[x] Preview does not persist notification rows.
+[x] Visible admin UI text uses i18n keys.
 ```
 
 ---
@@ -320,6 +320,7 @@ Tests: event idempotency, template render, read/unread scope, retry handling
 3. [x] Consume approval/PR/finance notification topics and persist in-app notifications. Budget alerts are wired first because E10 now publishes them.
 4. [x] Add real WebSocket/STOMP adapter and frontend notification bell consuming count/feed and realtime messages.
 5. [x] Add email dispatch for notification.email.send after in-app path is stable.
+6. [x] Add template admin list/update/preview API and Angular admin page.
 ```
 
 This keeps E11 useful immediately for Approval tasks while avoiding early coupling to every future event type.
@@ -349,6 +350,6 @@ This keeps E11 useful immediately for Approval tasks while avoiding early coupli
 [x] Real STOMP/WebSocket delivery adapter
 [x] Angular notification bell/feed in shell
 [x] Email dispatch + retry worker
-[ ] Template admin API/UI
+[x] Template admin API/UI
 ```
 ```

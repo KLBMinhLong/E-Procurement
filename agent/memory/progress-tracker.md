@@ -195,7 +195,7 @@
 | E08: Goods Receipt & Inventory | ⬜ |
 | E09: Invoice & Payment | ⬜ |
 | E10: Budget Management | ✅ |
-| E11: Notification & Realtime | 🔄 |
+| E11: Notification & Realtime | ✅ |
 | E12: Analytics & Reports | ⬜ |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
@@ -224,6 +224,6 @@
 | Business event consumer foundation | ✅ | Consumes approval/PR/finance notification topics; budget alerts route to configured finance recipients |
 | WebSocket realtime delivery | ✅ | STOMP endpoint `/ws/notifications`, user queue `/user/queue/notifications`, after-commit `SimpMessagingTemplate` delivery |
 | Email dispatch + retry/DLQ | ✅ | `notification.email.send` creates EMAIL outbox rows; scheduled dispatch uses logging/Brevo provider, retry attempts, and dead-letter persistence |
-| Template admin API/UI | ⬜ | Template management and preview pending |
+| Template admin API/UI | ✅ | `SYSTEM_CONFIG` guarded list/update/preview APIs plus Angular `/admin/notification-templates` UI |
 | Frontend notification bell/feed | ✅ | Shell bell dropdown loads count/feed, marks read/all-read, and subscribes to realtime STOMP messages |
-| Unit tests | 🔄 | Budget/email consume, email retry/DLQ, and WebSocket adapter tests pass; API/repository integration tests pending |
+| Unit tests | ✅ | Budget/email consume, email retry/DLQ, template admin update/preview, and WebSocket adapter tests pass |

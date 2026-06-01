@@ -25,6 +25,17 @@ public interface NotificationRepository {
 
     Optional<NotificationTemplate> findActiveTemplate(String eventType, NotificationChannel channel, String language);
 
+    Optional<NotificationTemplate> findTemplateByCode(String code);
+
+    List<NotificationTemplate> findTemplates(NotificationChannel channel, String eventType, String language);
+
+    int updateTemplate(
+            String code,
+            String subjectTemplate,
+            String bodyTemplate,
+            boolean active,
+            Instant updatedAt);
+
     List<Notification> findEmailDispatchCandidates(Instant now, int limit, short maxAttempts);
 
     int markEmailSent(UUID id, Instant sentAt, String providerMessageId);

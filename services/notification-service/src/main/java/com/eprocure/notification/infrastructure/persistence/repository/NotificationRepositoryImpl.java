@@ -82,6 +82,38 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
+    public Optional<NotificationTemplate> findTemplateByCode(String code) {
+        log.debug("[REPO] findTemplateByCode notification_template | code={}", code);
+        return mapper.findTemplateByCode(code).map(this::toTemplate);
+    }
+
+    @Override
+    public List<NotificationTemplate> findTemplates(NotificationChannel channel, String eventType, String language) {
+        log.debug("[REPO] findTemplates notification_template | channel={} | eventType={} | language={}",
+                channel,
+                eventType,
+                language);
+        return mapper.findTemplates(
+                        channel == null ? null : channel.name(),
+                        eventType,
+                        language)
+                .stream()
+                .map(this::toTemplate)
+                .toList();
+    }
+
+    @Override
+    public int updateTemplate(
+            String code,
+            String subjectTemplate,
+            String bodyTemplate,
+            boolean active,
+            Instant updatedAt) {
+        log.debug("[REPO] updateTemplate notification_template | code={}", code);
+        return mapper.updateTemplate(code, subjectTemplate, bodyTemplate, active, updatedAt);
+    }
+
+    @Override
     public List<Notification> findEmailDispatchCandidates(Instant now, int limit, short maxAttempts) {
         return mapper.findEmailDispatchCandidates(now, limit, maxAttempts).stream()
                 .map(entity -> objectMapper.convertValue(entity, Notification.class))

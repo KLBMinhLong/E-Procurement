@@ -1,0 +1,233 @@
+<section class="template-admin-page" aria-labelledby="template-admin-heading">
+  <ep-breadcrumb />
+
+  <header class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'admin.templates.eyebrow' | translate }}</span>
+      <h1 id="template-admin-heading" class="page-header__title">{{ 'admin.templates.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'admin.templates.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        variant="secondary"
+        icon="refresh-cw"
+        [disabled]="isLoading()"
+        (click)="loadTemplates()">
+        {{ 'action.refresh' | translate }}
+      </ep-button>
+    </div>
+  </header>
+
+  <div class="template-overview">
+    <ep-stat-card
+      icon="file-code-2"
+      [title]="'admin.templates.stat.total' | translate"
+      [value]="totalTemplates().toString()"
+      [hint]="'admin.templates.stat.totalHint' | translate" />
+    <ep-stat-card
+      icon="check-circle-2"
+      [title]="'admin.templates.stat.active' | translate"
+      [value]="activeTemplates().toString()"
+      [hint]="'admin.templates.stat.activeHint' | translate" />
+    <ep-stat-card
+      icon="mail"
+      [title]="'admin.templates.stat.email' | translate"
+      [value]="emailTemplates().toString()"
+      [hint]="'admin.templates.stat.emailHint' | translate" />
+    <ep-stat-card
+      icon="filter"
+      [title]="'admin.templates.stat.visible' | translate"
+      [value]="visibleTemplates().toString()"
+      [hint]="'admin.templates.stat.visibleHint' | translate" />
+  </div>
+
+  <div class="template-toolbar">
+    <label class="template-search">
+      <ep-icon name="search" [size]="18"></ep-icon>
+      <input
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearchChange($event)"
+        [placeholder]="'admin.templates.filter.searchPlaceholder' | translate"
+        autocomplete="off"
+        spellcheck="false" />
+    </label>
+
+    <div class="template-toolbar__filters">
+      <label class="template-select">
+        <span>{{ 'admin.templates.filter.channel' | translate }}</span>
+        <select [value]="channelFilter()" (change)="setChannelFilter($event)">
+          @for (channel of channelOptions; track channel) {
+            <option [value]="channel">{{ 'admin.templates.channel.' + channel | translate }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="template-select">
+        <span>{{ 'admin.templates.filter.language' | translate }}</span>
+        <select [value]="languageFilter()" (change)="setLanguageFilter($event)">
+          <option value="all">{{ 'admin.templates.filter.allLanguages' | translate }}</option>
+          @for (language of languages(); track language) {
+            <option [value]="language">{{ language }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="template-select">
+        <span>{{ 'admin.templates.filter.status' | translate }}</span>
+        <select [value]="activeFilter()" (change)="setActiveFilter($event)">
+          @for (status of activeOptions; track status) {
+            <option [value]="status">{{ 'admin.templates.filter.' + status | translate }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (templates().length === 0) {
+    <ep-empty-state
+      icon="file-code-2"
+      [title]="'admin.templates.empty.title' | translate"
+      [message]="'admin.templates.empty.message' | translate" />
+  } @else {
+    <div class="template-workspace">
+      <section class="template-list-panel" [attr.aria-label]="'admin.templates.list.label' | translate">
+        <div class="template-list-panel__header">
+          <strong>{{ 'admin.templates.list.title' | translate }}</strong>
+          <span>{{ 'admin.templates.list.count' | translate: { count: filteredTemplates().length } }}</span>
+        </div>
+
+        @if (filteredTemplates().length === 0) {
+          <ep-empty-state
+            icon="filter"
+            [title]="'admin.templates.emptyFiltered.title' | translate"
+            [message]="'admin.templates.emptyFiltered.message' | translate" />
+        } @else {
+          <div class="template-table-wrap">
+            <table class="template-table">
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'admin.templates.col.template' | translate }}</th>
+                  <th scope="col">{{ 'admin.templates.col.channel' | translate }}</th>
+                  <th scope="col">{{ 'admin.templates.col.status' | translate }}</th>
+                  <th scope="col">{{ 'admin.templates.col.updatedAt' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (template of filteredTemplates(); track template.code) {
+                  <tr [class.is-selected]="selectedTemplate()?.code === template.code">
+                    <td>
+                      <button type="button" class="template-link" (click)="selectTemplate(template)">
+                        <span class="template-link__code">{{ template.code }}</span>
+                        <span class="template-link__event">{{ template.eventType }} / {{ template.language }}</span>
+                      </button>
+                    </td>
+                    <td>
+                      <span class="template-channel">{{ template.channel }}</span>
+                    </td>
+                    <td>
+                      <ep-badge
+                        [tone]="template.isActive ? 'success' : 'neutral'"
+                        [labelKey]="template.isActive ? 'admin.templates.status.active' : 'admin.templates.status.inactive'" />
+                    </td>
+                    <td class="template-updated">{{ template.updatedAt | date:'short' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="template-editor-panel" [attr.aria-label]="'admin.templates.editor.label' | translate">
+        @if (selectedTemplate(); as template) {
+          <div class="editor-heading">
+            <div>
+              <span class="editor-heading__eyebrow">{{ template.channel }} / {{ template.language }}</span>
+              <h2>{{ template.code }}</h2>
+            </div>
+            <label class="template-toggle">
+              <input type="checkbox" [checked]="draftActive()" (change)="setDraftActive($event)" />
+              <span>{{ 'admin.templates.field.active' | translate }}</span>
+            </label>
+          </div>
+
+          <div class="editor-grid">
+            <label class="template-field">
+              <span>{{ 'admin.templates.field.subject' | translate }}</span>
+              <input
+                type="text"
+                [value]="draftSubject()"
+                (input)="setDraftSubject($event)"
+                [placeholder]="'admin.templates.placeholder.subject' | translate" />
+            </label>
+
+            <label class="template-field template-field--body">
+              <span>{{ 'admin.templates.field.body' | translate }}</span>
+              <textarea
+                [value]="draftBody()"
+                (input)="setDraftBody($event)"
+                [placeholder]="'admin.templates.placeholder.body' | translate"></textarea>
+            </label>
+
+            <label class="template-field template-field--sample">
+              <span>{{ 'admin.templates.field.sample' | translate }}</span>
+              <textarea
+                [value]="sampleJson()"
+                (input)="setSampleJson($event)"
+                spellcheck="false"></textarea>
+            </label>
+
+            <section class="template-preview" aria-live="polite">
+              <div class="template-preview__header">
+                <strong>{{ 'admin.templates.preview.title' | translate }}</strong>
+                <ep-button
+                  variant="secondary"
+                  size="sm"
+                  icon="eye"
+                  [loading]="isPreviewing()"
+                  (click)="previewTemplate()">
+                  {{ 'admin.templates.action.preview' | translate }}
+                </ep-button>
+              </div>
+              @if (preview(); as previewData) {
+                <div class="template-preview__subject">
+                  <span>{{ 'admin.templates.preview.subject' | translate }}</span>
+                  <strong>{{ previewData.subject || ('admin.templates.preview.noSubject' | translate) }}</strong>
+                </div>
+                <div class="template-preview__body">{{ previewData.htmlBody }}</div>
+              } @else {
+                <p class="template-preview__empty">{{ 'admin.templates.preview.empty' | translate }}</p>
+              }
+            </section>
+          </div>
+
+          <footer class="editor-actions">
+            <ep-button
+              variant="secondary"
+              icon="rotate-ccw"
+              [disabled]="!hasDirtyDraft() || isSaving()"
+              (click)="resetDraft()">
+              {{ 'admin.templates.action.reset' | translate }}
+            </ep-button>
+            <ep-button
+              variant="primary"
+              icon="save"
+              [loading]="isSaving()"
+              [disabled]="!hasDirtyDraft()"
+              (click)="saveTemplate()">
+              {{ 'admin.templates.action.save' | translate }}
+            </ep-button>
+          </footer>
+        } @else {
+          <ep-empty-state
+            icon="file-pen-line"
+            [title]="'admin.templates.emptyEditor.title' | translate"
+            [message]="'admin.templates.emptyEditor.message' | translate" />
+        }
+      </section>
+    </div>
+  }
+</section>

@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-06-01] E11 notification template admin
+
+- Decision: Manage notification templates through `SYSTEM_CONFIG` guarded list/update/preview APIs and an Angular admin page at `/admin/notification-templates`.
+- Reason: E11 needs a safe operational surface to change seeded EMAIL/IN_APP copy without altering historical notification rows or requiring database edits.
+- Impact: Admins can filter templates, edit subject/body/isActive with `Idempotency-Key`, and preview escaped rendered output using sample JSON; frontend navigation exposes the page only to users with `SYSTEM_CONFIG`.
+- Constraint: Template updates currently log action boundaries but do not yet write a separate immutable audit table; existing unread notification bodies remain unchanged because rendered rows store body snapshots.
+
 ## [2026-05-30] E11 notification-service first backend slice
 
 - Decision: Scaffold `notification-service` as a Maven/Docker service on port 8088 with notification schema, in-app notification APIs, template rendering, Kafka business-event consumption, and event idempotency.

@@ -144,6 +144,7 @@
     "adminRoles": "Quản lý vai trò",
     "adminRbac": "Ma trận phân quyền",
     "adminOrgChart": "Sơ đồ phòng ban",
+    "notificationTemplates": "Mẫu thông báo",
     "approvalRules": "Quy tắc phê duyệt",
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
@@ -168,7 +169,8 @@
       "users": "Danh mục người dùng",
       "roles": "Quản lý vai trò",
       "rbac": "Ma trận phân quyền",
-      "orgChart": "Sơ đồ phòng ban"
+      "orgChart": "Sơ đồ phòng ban",
+      "notificationTemplates": "Mẫu thông báo"
     },
     "approvals": {
       "self": "Phê duyệt",
@@ -727,6 +729,96 @@
       "empty": {
         "title": "Không tìm thấy phòng ban",
         "message": "Không thể tải cây sơ đồ tổ chức phòng ban."
+      }
+    },
+    "templates": {
+      "eyebrow": "Quản trị notification",
+      "title": "Mẫu thông báo",
+      "subtitle": "Quản lý nội dung template cho email, in-app và các kênh thông báo nghiệp vụ.",
+      "stat": {
+        "total": "Tổng template",
+        "totalHint": "Đang cấu hình",
+        "active": "Đang bật",
+        "activeHint": "Có thể render",
+        "email": "Email",
+        "emailHint": "Dùng cho dispatch",
+        "visible": "Đang hiển thị",
+        "visibleHint": "Theo bộ lọc"
+      },
+      "filter": {
+        "searchPlaceholder": "Tìm code, event, channel hoặc nội dung...",
+        "channel": "Kênh",
+        "language": "Ngôn ngữ",
+        "status": "Trạng thái",
+        "allLanguages": "Tất cả",
+        "all": "Tất cả",
+        "active": "Đang bật",
+        "inactive": "Đã tắt"
+      },
+      "channel": {
+        "all": "Tất cả",
+        "EMAIL": "Email",
+        "IN_APP": "In-app",
+        "PUSH": "Push"
+      },
+      "list": {
+        "label": "Danh sách template thông báo",
+        "title": "Template",
+        "count": "{{count}} mẫu"
+      },
+      "editor": {
+        "label": "Trình chỉnh sửa template"
+      },
+      "col": {
+        "template": "Template",
+        "channel": "Kênh",
+        "status": "Trạng thái",
+        "updatedAt": "Cập nhật"
+      },
+      "status": {
+        "active": "Đang bật",
+        "inactive": "Đã tắt"
+      },
+      "field": {
+        "active": "Đang hoạt động",
+        "subject": "Subject",
+        "body": "Body template",
+        "sample": "Dữ liệu preview"
+      },
+      "placeholder": {
+        "subject": "VD: Thông báo {{prNumber}}",
+        "body": "Nhập nội dung với biến {{variable}}"
+      },
+      "preview": {
+        "title": "Preview",
+        "subject": "Subject",
+        "noSubject": "Không có subject",
+        "empty": "Chạy preview để xem nội dung sau khi render."
+      },
+      "action": {
+        "preview": "Preview",
+        "reset": "Hoàn tác",
+        "save": "Lưu template"
+      },
+      "toast": {
+        "loadFailed": "Không thể tải template thông báo.",
+        "bodyRequired": "Body template không được để trống.",
+        "invalidJson": "Dữ liệu preview phải là JSON object hợp lệ.",
+        "previewFailed": "Không thể render preview template.",
+        "updateSuccess": "Đã cập nhật template thông báo.",
+        "updateFailed": "Không thể cập nhật template thông báo."
+      },
+      "empty": {
+        "title": "Chưa có template",
+        "message": "Chưa tìm thấy template thông báo trong hệ thống."
+      },
+      "emptyFiltered": {
+        "title": "Không có template phù hợp",
+        "message": "Thử thay đổi từ khóa hoặc bộ lọc đang áp dụng."
+      },
+      "emptyEditor": {
+        "title": "Chưa chọn template",
+        "message": "Chọn một template trong danh sách để chỉnh sửa hoặc preview."
       }
     }
   },

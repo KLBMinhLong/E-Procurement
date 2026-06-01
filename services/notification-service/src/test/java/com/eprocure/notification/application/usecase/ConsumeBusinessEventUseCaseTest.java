@@ -219,6 +219,26 @@ class ConsumeBusinessEventUseCaseTest {
         }
 
         @Override
+        public Optional<NotificationTemplate> findTemplateByCode(String code) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<NotificationTemplate> findTemplates(NotificationChannel channel, String eventType, String language) {
+            return List.of();
+        }
+
+        @Override
+        public int updateTemplate(
+                String code,
+                String subjectTemplate,
+                String bodyTemplate,
+                boolean active,
+                Instant updatedAt) {
+            return 0;
+        }
+
+        @Override
         public List<Notification> findEmailDispatchCandidates(Instant now, int limit, short maxAttempts) {
             return List.of();
         }

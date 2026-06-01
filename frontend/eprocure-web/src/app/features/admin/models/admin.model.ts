@@ -77,6 +77,36 @@ export interface AdminPermission {
   module: string;
 }
 
+export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'PUSH';
+
+export interface NotificationTemplate {
+  code: string;
+  eventType: string;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subjectTemplate: string | null;
+  bodyTemplate: string;
+  isActive: boolean;
+  updatedAt: string;
+}
+
+export interface NotificationTemplateFilter {
+  channel?: NotificationTemplateChannel | '';
+  eventType?: string;
+  language?: string;
+}
+
+export interface UpdateNotificationTemplateRequest {
+  subjectTemplate: string | null;
+  bodyTemplate: string;
+  isActive: boolean;
+}
+
+export interface NotificationTemplatePreview {
+  subject: string | null;
+  htmlBody: string;
+}
+
 export interface AdminDepartment {
   id: string;
   code: string;

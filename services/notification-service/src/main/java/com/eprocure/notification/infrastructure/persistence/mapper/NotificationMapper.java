@@ -144,6 +144,29 @@ public interface NotificationMapper {
             @Param("channel") String channel,
             @Param("language") String language);
 
+    Optional<NotificationTemplateDbEntity> findTemplateByCode(@Param("code") String code);
+
+    List<NotificationTemplateDbEntity> findTemplates(
+            @Param("channel") String channel,
+            @Param("eventType") String eventType,
+            @Param("language") String language);
+
+    @Update("""
+            UPDATE notification.notification_templates
+            SET subject_template = #{subjectTemplate},
+                body_template = #{bodyTemplate},
+                is_active = #{active},
+                updated_at = #{updatedAt}
+            WHERE code = #{code}
+              AND is_deleted = FALSE
+            """)
+    int updateTemplate(
+            @Param("code") String code,
+            @Param("subjectTemplate") String subjectTemplate,
+            @Param("bodyTemplate") String bodyTemplate,
+            @Param("active") boolean active,
+            @Param("updatedAt") Instant updatedAt);
+
     List<NotificationDbEntity> findEmailDispatchCandidates(
             @Param("now") Instant now,
             @Param("limit") int limit,

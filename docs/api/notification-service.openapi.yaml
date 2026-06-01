@@ -257,6 +257,7 @@ paths:
                 subjectTemplate: { type: string, nullable: true }
                 bodyTemplate:    { type: string }
                 isActive:        { type: boolean }
+              required: [bodyTemplate, isActive]
       responses:
         '200':
           description: Template đã cập nhật
@@ -281,6 +282,7 @@ paths:
           in: path
           required: true
           schema: { type: string }
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:

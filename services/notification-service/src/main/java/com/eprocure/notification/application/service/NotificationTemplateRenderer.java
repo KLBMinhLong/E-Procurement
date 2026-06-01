@@ -42,9 +42,13 @@ public class NotificationTemplateRenderer {
             log.warn("[ACTION] Notification template missing | eventType={} | channel={}", eventType, channel);
             return defaultRendered(eventType, variables);
         }
+        return render(template.get(), variables);
+    }
+
+    public RenderedNotification render(NotificationTemplate template, Map<String, String> variables) {
         return new RenderedNotification(
-                renderTemplate(template.get().subjectTemplate(), variables),
-                renderTemplate(template.get().bodyTemplate(), variables));
+                renderTemplate(template.subjectTemplate(), variables),
+                renderTemplate(template.bodyTemplate(), variables));
     }
 
     private RenderedNotification defaultRendered(String eventType, Map<String, String> variables) {
