@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${VENDOR_DB_HOST:postgres}:${VENDOR_DB_PORT:5432}/${VENDOR_DB_NAME:db_vendor}
+    username: ${VENDOR_DB_USER:vendor_user}
+    password: ${VENDOR_DB_PASS:vendor_pass_dev}
+    hikari:
+      connection-init-sql: SET search_path TO ${VENDOR_DB_SCHEMA:vendor}
+  flyway:
+    schemas: ${VENDOR_DB_SCHEMA:vendor}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      database: ${REDIS_DB:0}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eprocure:
+  internal:
+    api-key: ${VENDOR_INTERNAL_API_KEY:change-me-internal-api-key}
+  vendor:
+    integration:
+      kafka-enabled: ${VENDOR_KAFKA_ENABLED:true}
+      pr:
+        base-url: ${PR_SERVICE_URL:http://pr-service:8082}
+        internal-api-key: ${PR_INTERNAL_API_KEY:change-me-internal-api-key}
+    kafka:
+      topics:
+        rfq-awarded: ${VENDOR_KAFKA_TOPIC_RFQ_AWARDED:procurement.rfq.awarded}

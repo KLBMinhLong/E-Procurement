@@ -3,6 +3,7 @@ package com.eprocure.pr.application.usecase;
 import com.eprocure.pr.application.port.in.GetPurchaseRequestQuery;
 import com.eprocure.pr.application.service.PurchaseRequestDetailView;
 import com.eprocure.pr.application.service.PurchaseRequestSummaryView;
+import com.eprocure.pr.application.service.RfqSourceView;
 import com.eprocure.pr.common.exception.BusinessException;
 import com.eprocure.pr.common.exception.ErrorCode;
 import com.eprocure.pr.common.util.LogMaskingUtil;
@@ -57,6 +58,22 @@ public class GetPurchaseRequestUseCase {
                 LogMaskingUtil.maskId(pr.getId()), pr.getPrNumber());
 
         return PurchaseRequestDetailView.from(pr);
+    }
+
+    @Transactional(readOnly = true)
+    public RfqSourceView getRfqSource(UUID purchaseRequestId) {
+        Objects.requireNonNull(purchaseRequestId, "purchaseRequestId must not be null");
+
+        log.info("[ACTION] Start GetPurchaseRequestRfqSource | prId={}",
+                LogMaskingUtil.maskId(purchaseRequestId));
+
+        PurchaseRequest pr = purchaseRequestRepository.findById(purchaseRequestId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PR_001));
+
+        log.info("[ACTION] Complete GetPurchaseRequestRfqSource | prId={} | status={}",
+                LogMaskingUtil.maskId(pr.getId()),
+                pr.getStatus());
+        return RfqSourceView.from(pr);
     }
 
     /**

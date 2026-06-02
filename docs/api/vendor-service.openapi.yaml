@@ -478,6 +478,9 @@ paths:
         - name: pr_id
           in: query
           schema: { type: string, format: uuid }
+        - name: sort
+          in: query
+          schema: { type: string, example: createdAt,desc }
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/SizeParam'
       responses:
@@ -526,7 +529,7 @@ paths:
                   items: { type: string, format: uuid }
       responses:
         '201':
-          description: RFQ đã tạo và email đã gửi cho vendors
+          description: RFQ đã tạo và invitations đã ghi nhận
           content:
             application/json:
               schema:
@@ -581,6 +584,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
+  /rfq/{id}/quotes:
+    post:
+      tags: [Quotes]
+      summary: Ghi nhận báo giá vendor cho RFQ
+      operationId: submitVendorQuote
+      x-required-permission: RFQ_CREATE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vendorId, currency, validUntil, lineItems]
+              properties:
+                vendorId:   { type: string, format: uuid }
+                currency:   { type: string, minLength: 3, maxLength: 3, example: VND }
+                validUntil: { type: string, format: date }
+                lineItems:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [rfqLineItemId, unitPrice]
+                    properties:
+                      rfqLineItemId: { type: string, format: uuid }
+                      unitPrice:     { type: string, example: "12500000.0000" }
+                      deliveryDays:  { type: integer, minimum: 0, nullable: true }
+                      warranty:      { type: string, nullable: true }
+                paymentTerms: { type: string, nullable: true }
+                notes:        { type: string, nullable: true }
+      responses:
+        '201':
+          description: Báo giá đã được ghi nhận
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VendorQuote'
+        '409':
+          description: Vendor đã gửi báo giá cho RFQ này (VND_010)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Hết hạn nộp báo giá (VND_007) hoặc line items không hợp lệ (VND_011)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /rfq/{id}/quotes/{quoteId}/evaluate:
     post:
       tags: [Quotes]
@@ -613,7 +677,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VendorQuote'
 
   /rfq/{id}/award:
     post:
@@ -642,7 +711,7 @@ paths:
                   example: "Giá tốt nhất, năng lực phù hợp, đã có hợp tác trước"
       responses:
         '200':
-          description: Kết quả đã được chốt — vendor thắng và thua đều được thông báo
+          description: Kết quả đã được chốt để chuẩn bị tạo PO
           content:
             application/json:
               schema:
@@ -660,7 +729,7 @@ paths:
                               name: { type: string }
                           awardedQuote: { $ref: '#/components/schemas/VendorQuote' }
         '422':
-          description: Chưa có báo giá (VND_006) hoặc RFQ đã đóng (VND_005)
+          description: Chưa có báo giá hợp lệ (VND_006), vendor không hợp lệ (VND_008), hoặc award reason không hợp lệ (VND_011)
           content:
             application/json:
               schema:

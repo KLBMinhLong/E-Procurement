@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.vendor.infrastructure.persistence.mapper.VendorMapper">
+
+    <resultMap id="vendorResultMap" type="com.eprocure.vendor.infrastructure.persistence.entity.VendorDbEntity">
+        <id property="id" column="id"/>
+        <result property="vendorCode" column="vendor_code"/>
+        <result property="name" column="name"/>
+        <result property="taxCode" column="tax_code"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="addressStreet" column="address_street"/>
+        <result property="addressDistrict" column="address_district"/>
+        <result property="addressCity" column="address_city"/>
+        <result property="addressCountry" column="address_country"/>
+        <result property="categories" column="categories"
+                typeHandler="com.eprocure.vendor.infrastructure.persistence.typehandler.StringListJsonTypeHandler"/>
+        <result property="status" column="status"/>
+        <result property="onApprovedVendorList" column="is_on_approved_vendor_list"/>
+        <result property="notes" column="notes"/>
+        <result property="approvedBy" column="approved_by"/>
+        <result property="approvedAt" column="approved_at"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+
+    <sql id="vendorColumns">
+        v.id,
+        v.vendor_code,
+        v.name,
+        v.tax_code,
+        v.email,
+        v.phone,
+        v.address_street,
+        v.address_district,
+        v.address_city,
+        v.address_country,
+        v.categories::text AS categories,
+        v.status,
+        v.is_on_approved_vendor_list,
+        v.notes,
+        v.approved_by,
+        v.approved_at,
+        v.idempotency_key,
+        v.created_at,
+        v.created_by,
+        v.updated_by
+    </sql>
+
+    <sql id="vendorWhereClause">
+        WHERE v.is_deleted = FALSE
+        <if test="filter.status != null">
+            AND v.status = #{filter.status}
+        </if>
+        <if test="filter.category != null and filter.category != ''">
+            AND jsonb_exists(v.categories, #{filter.category})
+        </if>
+        <if test="filter.onAvlOnly != null and filter.onAvlOnly">
+            AND v.status = 'APPROVED'
+            AND v.is_on_approved_vendor_list = TRUE
+        </if>
+        <if test="filter.query != null and filter.query != ''">
+            AND (
+                lower(v.name) LIKE concat('%', lower(#{filter.query}), '%')
+                OR lower(v.tax_code) LIKE concat('%', lower(#{filter.query}), '%')
+                OR lower(v.vendor_code) LIKE concat('%', lower(#{filter.query}), '%')
+            )
+        </if>
+    </sql>
+
+    <select id="findVendorById" resultMap="vendorResultMap">
+        SELECT
+            <include refid="vendorColumns"/>
+        FROM vendor.vendors v
+        WHERE v.id = #{id}
+          AND v.is_deleted = FALSE
+    </select>
+
+    <select id="findVendorByIdempotencyKey" resultMap="vendorResultMap">
+        SELECT
+            <include refid="vendorColumns"/>
+        FROM vendor.vendors v
+        WHERE v.idempotency_key = #{idempotencyKey}
+          AND v.is_deleted = FALSE
+    </select>
+
+    <select id="findByFilter" resultMap="vendorResultMap">
+        SELECT
+            <include refid="vendorColumns"/>
+        FROM vendor.vendors v
+        LEFT JOIN vendor.vendor_scores s
+            ON s.vendor_id = v.id
+           AND s.is_deleted = FALSE
+        <include refid="vendorWhereClause"/>
+        ORDER BY
+        <choose>
+            <when test="filter.sortField == 'vendorCode'">v.vendor_code</when>
+            <when test="filter.sortField == 'name'">v.name</when>
+            <when test="filter.sortField == 'status'">v.status</when>
+            <when test="filter.sortField == 'overallScore'">COALESCE(s.overall_score, 0)</when>
+            <otherwise>v.created_at</otherwise>
+        </choose>
+        <choose>
+            <when test="filter.sortDirection != null and filter.sortDirection.equalsIgnoreCase('asc')">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>,
+        v.vendor_code ASC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        FROM vendor.vendors v
+        <include refid="vendorWhereClause"/>
+    </select>
+</mapper>

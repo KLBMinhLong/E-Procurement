@@ -34,6 +34,7 @@
 | user-stories/E03-ui-shell-design-system.md | ✅ | User story/use case chi tiết MVP |
 | user-stories/E04-purchase-request-service.md | ✅ | User story/use case chi tiết MVP |
 | user-stories/E05-approval-engine.md | ✅ | User story/use case chi tiết MVP |
+| user-stories/E06-rfq-vendor.md | ✅ | User story/use case chi tiết chuẩn bị vendor-service foundation |
 | user-stories/E10-budget-management.md | ✅ | User story/use case chi tiết chuẩn bị finance-service budget foundation |
 | user-stories/E11-notification-realtime.md | ✅ | User story/use case chi tiết chuẩn bị notification-service |
 
@@ -190,7 +191,7 @@
 | Epic | Status |
 |---|---|
 | E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
-| E06: RFQ & Vendor | ⬜ |
+| E06: RFQ & Vendor | 🔄 |
 | E07: Purchase Order | ⬜ |
 | E08: Goods Receipt & Inventory | ⬜ |
 | E09: Invoice & Payment | ⬜ |
@@ -227,3 +228,16 @@
 | Template admin API/UI | ✅ | `SYSTEM_CONFIG` guarded list/update/preview APIs plus Angular `/admin/notification-templates` UI |
 | Frontend notification bell/feed | ✅ | Shell bell dropdown loads count/feed, marks read/all-read, and subscribes to realtime STOMP messages |
 | Unit tests | ✅ | Budget/email consume, email retry/DLQ, template admin update/preview, and WebSocket adapter tests pass |
+
+### E06: RFQ & Vendor
+| Task | Status | Ghi chú |
+|---|---|---|
+| User story/use case chi tiết | ✅ | `docs/user-stories/E06-rfq-vendor.md` |
+| Spring Boot vendor-service module setup | ✅ | Maven module + Docker/compose service on port 8086 |
+| Flyway migrations (vendors, vendor_contacts, vendor_scores) | ✅ | Vendor master + AVL status + score seed |
+| Vendor list/create/detail/approve API | ✅ | `GET/POST /api/v1/vendors`, `GET /api/v1/vendors/{id}`, `PATCH /approve`; permission + idempotency |
+| RFQ schema + PR source contract | ✅ | `rfqs`, `rfq_line_items`, `rfq_invitations`; PR internal `GET /internal/purchase-requests/{id}/rfq-source` |
+| RFQ create/list/detail/close API | ✅ | `GET/POST /api/v1/rfq`, `GET /api/v1/rfq/{id}`, `PATCH /api/v1/rfq/{id}/close`; PR approved + AVL validation |
+| RFQ quote submit/evaluate/award | ✅ | `vendor_quotes`, `vendor_quote_line_items`; `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award` |
+| PO handoff after award event | ✅ | `procurement.rfq.awarded` published after award commit; finance PO consumer/API remains next slice |
+| Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |

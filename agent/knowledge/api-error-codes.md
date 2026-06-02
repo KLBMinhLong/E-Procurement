@@ -125,6 +125,10 @@
 | VND_005 | 409 | RFQ da dong hoac da co ket qua |
 | VND_006 | 422 | Chua co bao gia nao de chon |
 | VND_007 | 422 | Han nop bao gia da het |
+| VND_008 | 422 | Vendor chua nam trong AVL hoac chua duoc approve |
+| VND_009 | 422 | Purchase request chua du dieu kien tao RFQ |
+| VND_010 | 409 | Vendor da gui bao gia cho RFQ nay |
+| VND_011 | 422 | Line item bao gia RFQ khong hop le |
 
 ### Notification (NTF_)
 | Code | HTTP | Description |
