@@ -16,6 +16,11 @@ export const routes: Routes = [
       .then((m) => m.ForgotPasswordComponent)
   },
   {
+    path: 'reset-password',
+    loadComponent: () => import('./features/auth/reset-password/reset-password.component')
+      .then((m) => m.ResetPasswordComponent)
+  },
+  {
     path: 'ui-showcase',
     title: 'route.uiShowcase',
     loadComponent: () => import('./ui-showcase/ui-showcase.component').then((m) => m.UiShowcaseComponent)

@@ -129,6 +129,9 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `PASSWORD_MIN_LENGTH` | `8` | `8` | Độ dài mật khẩu tối thiểu |
 | `RESET_TOKEN_TTL_MINUTES` | `15` | `15` | TTL của forgot-password token |
 | `PASSWORD_RESET_FRONTEND_URL` | `http://localhost:4200/reset-password` | FE domain | URL FE nhận reset token từ email |
+| `IAM_PASSWORD_RESET_DELIVERY_MODE` | `logging` local / `kafka` Docker | `kafka` | Adapter gửi reset password: `logging` để chỉ log masked metadata, `kafka` để publish `notification.email.send` |
+| `IAM_PASSWORD_RESET_TOPIC` | `notification.email.send` | `notification.email.send` | Kafka topic notification-service consume để tạo email outbox |
+| `IAM_PASSWORD_RESET_LANGUAGE` | `vi` | `vi` | Ngôn ngữ template email reset password |
 | `TWO_FACTOR_ISSUER` | `eProcure Dev` | `eProcure` | Tên hiển thị trong Authenticator app |
 | `TOTP_SECRET_ENCRYPTION_KEY` | `MDEy...` | `***SENSITIVE***` | Base64 AES key dùng để mã hóa TOTP secret trong DB |
 | `TWO_FACTOR_CHALLENGE_TTL_MINUTES` | `5` | `5` | TTL cookie challenge trước khi xác minh 2FA |
@@ -355,6 +358,7 @@ kafka-topics --create --topic procurement.pr.rejected       --partitions 3 --rep
 kafka-topics --create --topic approval.step.assigned        --partitions 3 --replication-factor 1
 kafka-topics --create --topic approval.sla.breached         --partitions 3 --replication-factor 1
 kafka-topics --create --topic finance.budget.warning        --partitions 3 --replication-factor 1
+kafka-topics --create --topic notification.email.send       --partitions 3 --replication-factor 1
 kafka-topics --create --topic procurement.po.issued         --partitions 3 --replication-factor 1
 kafka-topics --create --topic inventory.gr.created          --partitions 3 --replication-factor 1
 kafka-topics --create --topic finance.invoice.matched       --partitions 3 --replication-factor 1

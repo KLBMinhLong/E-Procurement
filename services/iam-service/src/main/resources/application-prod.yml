@@ -15,6 +15,8 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASS}
       database: ${REDIS_DB:0}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
 
 eprocure:
   security:
@@ -39,6 +41,12 @@ eprocure:
     admin-password: ${KEYCLOAK_ADMIN_PASS}
   password-reset:
     frontend-url: ${PASSWORD_RESET_FRONTEND_URL}
+  iam:
+    notification:
+      password-reset:
+        delivery-mode: ${IAM_PASSWORD_RESET_DELIVERY_MODE:kafka}
+        topic: ${IAM_PASSWORD_RESET_TOPIC:notification.email.send}
+        language: ${IAM_PASSWORD_RESET_LANGUAGE:vi}
   google-oauth:
     client-id: ${GOOGLE_CLIENT_ID}
     client-secret: ${GOOGLE_CLIENT_SECRET}

@@ -359,3 +359,10 @@
 - Reason: E05 frontend had inbox/detail/actions, but the story map also required `ApprovalRuleAdminPage` to operate the backend rule CRUD added for E05 closure.
 - Impact: Admin users can list, search, create, update, and deactivate approval rules with condition and step editors. The approvals module route guard now admits either approver permissions or `ADMIN_APPROVAL_RULE`; child routes still enforce their own narrower permissions. Frontend build passes.
 - Constraint: Visual browser QA was not run because no Browser MCP tool was available in this session; verification is limited to Angular production build.
+
+## [2026-06-01] E02 IAM password reset notification adapter
+
+- Decision: Replace the Docker/prod password reset email stub path with a Kafka delivery adapter that publishes `notification.email.send` events carrying `templateEventType=PASSWORD_RESET` for notification-service email outbox/dispatch.
+- Reason: E11 notification-service now owns transactional email rendering and retry, so IAM should only issue/reset tokens and publish a delivery request after transaction commit.
+- Impact: `IAM_PASSWORD_RESET_DELIVERY_MODE=kafka` enables the adapter in Docker/prod; local remains `logging` by default. The adapter publishes after commit, masks logs, and avoids logging the raw reset token or reset URL.
+- Constraint: Reset URL necessarily carries the raw reset token inside the Kafka payload for email delivery; logs and error messages must continue to mask token-like values. Response encryption remains deferred to E14 because E02 only has the backend request-decryption/public-key contract.

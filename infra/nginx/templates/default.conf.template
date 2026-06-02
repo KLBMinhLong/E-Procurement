@@ -152,6 +152,12 @@ server {
         include /etc/nginx/conf.d/proxy-protected;
     }
 
+    location /api/v1/notification-templates {
+        set $upstream "${NOTIFICATION_SERVICE_URL}";
+        proxy_pass $upstream;
+        include /etc/nginx/conf.d/proxy-protected;
+    }
+
     location /api/v1/notifications {
         set $upstream "${NOTIFICATION_SERVICE_URL}";
         proxy_pass $upstream;

@@ -49,6 +49,25 @@
       "title": "Forgot password",
       "validation": "Enter a valid email."
     },
+    "resetPassword": {
+      "backToLogin": "Back to sign in",
+      "confirmPassword": "Confirm new password",
+      "description": "Create a new password for your account.",
+      "eyebrow": "Account security",
+      "failed": "Could not reset the password. Try again.",
+      "hidePassword": "Hide password",
+      "missingToken": "The reset password link is invalid.",
+      "newPassword": "New password",
+      "passwordMismatch": "The confirmation password does not match.",
+      "passwordPolicy": "Password must be 8-128 characters with uppercase, lowercase, number, and special character.",
+      "required": "This field is required.",
+      "showPassword": "Show password",
+      "submit": "Reset password",
+      "success": "Password has been reset. You can sign in with the new password.",
+      "title": "Reset password",
+      "tokenExpired": "The reset password link has expired or was already used.",
+      "validation": "Check the new password."
+    },
     "login": {
       "eyebrow": "Secure IAM",
       "accountLocked": "Your account has been locked. Please contact your administrator.",

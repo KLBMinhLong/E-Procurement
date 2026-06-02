@@ -98,11 +98,11 @@
 | MyBatis mappers | ✅ |
 | Login + Keycloak integration | ✅ |
 | Opaque token generation + Redis session | ✅ |
-| RSA+AES encryption interceptor | 🔄 |
+| RSA+AES encryption interceptor | ✅ |
 | HttpOnly Cookie management | ✅ |
 | Single session enforcement | ✅ |
 | Forgot/reset password token + IAM credential reset | ✅ |
-| Password reset email delivery adapter | 🔄 |
+| Password reset email delivery adapter | ✅ |
 | RBAC permission loading | ✅ |
 | Admin user CRUD API | ✅ |
 | Admin role/permission API | ✅ |
@@ -111,7 +111,7 @@
 | Forgot password flow | ✅ |
 | Delegation API | ✅ |
 | Org chart API | ✅ |
-| Unit tests | 🔄 |
+| Unit tests | ✅ |
 
 ### E03: UI Shell & Design System (Angular)
 | Task | Status |
