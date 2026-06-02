@@ -6,9 +6,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.eprocure.vendor.application.port.in.AwardRfqCommand;
 import com.eprocure.vendor.application.port.in.EvaluateQuoteCommand;
 import com.eprocure.vendor.application.port.in.SubmitVendorQuoteCommand;
+import com.eprocure.vendor.application.port.out.RfqAwardedEventPublisher;
 import com.eprocure.vendor.application.service.IdempotencyService;
 import com.eprocure.vendor.common.exception.BusinessException;
 import com.eprocure.vendor.common.exception.ErrorCode;
+import com.eprocure.vendor.domain.event.RfqAwardedEvent;
 import com.eprocure.vendor.domain.model.Rfq;
 import com.eprocure.vendor.domain.model.RfqInvitation;
 import com.eprocure.vendor.domain.model.RfqLineItem;
@@ -111,11 +113,13 @@ class RfqQuoteUseCaseTest {
         FakeVendorQuoteRepository quoteRepository = new FakeVendorQuoteRepository();
         VendorQuote quote = sampleQuote();
         quoteRepository.save(quote);
+        FakeRfqAwardedEventPublisher eventPublisher = new FakeRfqAwardedEventPublisher();
         AwardRfqUseCase useCase = new AwardRfqUseCase(
                 rfqRepository,
                 quoteRepository,
                 vendorRepository,
                 new FakeIdempotencyService(),
+                eventPublisher,
                 CLOCK);
 
         var result = useCase.execute(
@@ -125,6 +129,10 @@ class RfqQuoteUseCaseTest {
         assertThat(result.awardedVendor().id()).isEqualTo(VENDOR_ID);
         assertThat(rfqRepository.current.status()).isEqualTo(RfqStatus.AWARDED);
         assertThat(rfqRepository.current.awardedQuoteId()).isEqualTo(quote.id());
+        assertThat(eventPublisher.lastEvent.payload().rfqId()).isEqualTo(RFQ_ID);
+        assertThat(eventPublisher.lastEvent.payload().lineItems()).hasSize(1);
+        assertThat(eventPublisher.lastEvent.payload().lineItems().get(0).prLineItemId())
+                .isEqualTo(UUID.fromString("51000000-0000-0000-0000-000000000001"));
     }
 
     private SubmitVendorQuoteCommand validSubmitCommand() {
@@ -232,6 +240,15 @@ class RfqQuoteUseCaseTest {
 
         @Override
         public void save(String operation, UUID actorId, String idempotencyKey, Object response) {
+        }
+    }
+
+    private static final class FakeRfqAwardedEventPublisher implements RfqAwardedEventPublisher {
+        private RfqAwardedEvent lastEvent;
+
+        @Override
+        public void publish(RfqAwardedEvent event) {
+            this.lastEvent = event;
         }
     }
 

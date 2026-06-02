@@ -387,3 +387,10 @@
 - Reason: RFQ evaluation and award need auditable quote line items with monetary precision; evaluating/awarding without persisted quotes would require stubs and break the PO handoff path.
 - Impact: `POST /rfq/{id}/quotes` records a vendor quote, `POST /rfq/{id}/quotes/{quoteId}/evaluate` stores score/note, and `POST /rfq/{id}/award` sets RFQ `AWARDED` with awarded vendor/quote. Submit quote requires open RFQ, invited AVL vendor, matching RFQ line items, and unexpired submission deadline.
 - Constraint: PO creation/event publication after award is deferred to the next E06/finance-inventory handoff slice.
+
+## [2026-06-02] E06 RFQ award handoff event
+
+- Decision: Publish `procurement.rfq.awarded` from `vendor-service` after RFQ award commits, using a logging fallback locally and Kafka when `VENDOR_KAFKA_ENABLED=true`.
+- Reason: Finance PO creation needs an auditable event payload, but implementing full PO persistence/API in finance-service is a separate slice from RFQ award.
+- Impact: The event carries RFQ/PR ids, awarded vendor/quote, amount/currency, payment terms, award reason, and line item snapshot including PR line item id, category, quantity, unit price, and total price.
+- Constraint: finance-service consumer and PO persistence/API remain the next implementation step.

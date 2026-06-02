@@ -1,6 +1,7 @@
 package com.eprocure.vendor.application.usecase;
 
 import com.eprocure.vendor.application.port.in.AwardRfqCommand;
+import com.eprocure.vendor.application.port.out.RfqAwardedEventPublisher;
 import com.eprocure.vendor.application.service.AwardRfqResult;
 import com.eprocure.vendor.application.service.AwardRfqResult.AwardedVendorView;
 import com.eprocure.vendor.application.service.IdempotencyService;
@@ -12,6 +13,7 @@ import com.eprocure.vendor.domain.model.Rfq;
 import com.eprocure.vendor.domain.model.Vendor;
 import com.eprocure.vendor.domain.model.VendorQuote;
 import com.eprocure.vendor.domain.model.VendorStatus;
+import com.eprocure.vendor.domain.event.RfqAwardedEvent;
 import com.eprocure.vendor.domain.repository.RfqRepository;
 import com.eprocure.vendor.domain.repository.VendorQuoteRepository;
 import com.eprocure.vendor.domain.repository.VendorRepository;
@@ -32,6 +34,7 @@ public class AwardRfqUseCase {
     private final VendorQuoteRepository quoteRepository;
     private final VendorRepository vendorRepository;
     private final IdempotencyService idempotencyService;
+    private final RfqAwardedEventPublisher eventPublisher;
     private final Clock clock;
 
     public AwardRfqUseCase(
@@ -39,11 +42,13 @@ public class AwardRfqUseCase {
             VendorQuoteRepository quoteRepository,
             VendorRepository vendorRepository,
             IdempotencyService idempotencyService,
+            RfqAwardedEventPublisher eventPublisher,
             Clock clock) {
         this.rfqRepository = rfqRepository;
         this.quoteRepository = quoteRepository;
         this.vendorRepository = vendorRepository;
         this.idempotencyService = idempotencyService;
+        this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
 
@@ -80,8 +85,10 @@ public class AwardRfqUseCase {
                 LogMaskingUtil.maskId(rfq.id()),
                 LogMaskingUtil.maskId(quote.id()),
                 LogMaskingUtil.maskId(command.actorId()));
-        Rfq awarded = award(rfq, quote, command, Instant.now(clock));
+        Instant now = Instant.now(clock);
+        Rfq awarded = award(rfq, quote, command, now);
         rfqRepository.updateStatus(awarded);
+        eventPublisher.publish(RfqAwardedEvent.create(awarded, quote, vendor, command.actorId(), now));
 
         AwardRfqResult result = AwardRfqResult.fresh(
                 new AwardedVendorView(vendor.id(), vendor.name()),

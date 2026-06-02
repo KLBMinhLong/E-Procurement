@@ -330,7 +330,7 @@ RFQ award và quote evaluation sẽ làm sau khi Vendor master và AVL chạy �
 2. Load RFQ CLOSED hoặc PUBLISHED đã hết hạn.
 3. Validate quoteId thuộc RFQ và vendor không bị blacklist tại thời điểm award.
 4. Set awardedVendorId, awardedQuoteId, awardReason, status=AWARDED.
-5. Publish event chuẩn bị cho PO service.
+5. Publish `procurement.rfq.awarded` event chuẩn bị cho PO service.
 ```
 
 **Acceptance criteria:**
@@ -339,6 +339,7 @@ RFQ award và quote evaluation sẽ làm sau khi Vendor master và AVL chạy �
 [ ] Không award RFQ chưa có quote hợp lệ.
 [ ] Không award vendor BLACKLISTED.
 [ ] Award idempotent theo Idempotency-Key.
+[ ] Publish event sau transaction commit, không publish lại khi idempotency replay.
 ```
 
 ---

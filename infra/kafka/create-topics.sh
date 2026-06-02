@@ -11,6 +11,7 @@ topics=(
   "procurement.pr.rejected"
   "procurement.pr.changes-requested"
   "procurement.pr.cancelled"
+  "procurement.rfq.awarded"
   "approval.step.assigned"
   "approval.step.completed"
   "approval.sla.warning"

@@ -441,6 +441,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASS: ${REDIS_PASS:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      VENDOR_KAFKA_ENABLED: ${VENDOR_KAFKA_ENABLED:-true}
       VENDOR_INTERNAL_API_KEY: ${VENDOR_INTERNAL_API_KEY:-change-me-internal-api-key}
       PR_SERVICE_URL: http://pr-service:8082
       PR_INTERNAL_API_KEY: ${PR_INTERNAL_API_KEY:-change-me-internal-api-key}
@@ -452,6 +454,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       pr-service:
         condition: service_healthy

@@ -7,6 +7,7 @@
 | procurement.pr.rejected | pr-service (after approval callback) | finance-service, notification-service | PR rejected |
 | procurement.pr.changes-requested | pr-service (after approval callback) | finance-service, notification-service | PR changes requested |
 | procurement.pr.cancelled | pr-service | approval-service, finance-service, notification-service | PR cancelled |
+| procurement.rfq.awarded | vendor-service | finance-service, notification-service | RFQ awarded to vendor quote |
 | approval.step.assigned | approval-service | notification-service | Step assigned |
 | approval.step.completed | approval-service | approval-service (next step), pr-service | Step completed |
 | approval.sla.warning | approval-service | notification-service | SLA warning (50%, 75%) |

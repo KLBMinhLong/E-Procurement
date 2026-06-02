@@ -239,5 +239,5 @@
 | RFQ schema + PR source contract | ✅ | `rfqs`, `rfq_line_items`, `rfq_invitations`; PR internal `GET /internal/purchase-requests/{id}/rfq-source` |
 | RFQ create/list/detail/close API | ✅ | `GET/POST /api/v1/rfq`, `GET /api/v1/rfq/{id}`, `PATCH /api/v1/rfq/{id}/close`; PR approved + AVL validation |
 | RFQ quote submit/evaluate/award | ✅ | `vendor_quotes`, `vendor_quote_line_items`; `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award` |
-| PO handoff after award | ⬜ | Next E06 slice: publish/bridge awarded RFQ to PO creation flow |
+| PO handoff after award event | ✅ | `procurement.rfq.awarded` published after award commit; finance PO consumer/API remains next slice |
 | Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |
