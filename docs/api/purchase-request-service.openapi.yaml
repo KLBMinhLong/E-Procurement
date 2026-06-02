@@ -400,8 +400,70 @@ components:
         unitPrice:      { $ref: '#/components/schemas/Money' }
         quantityOnHand: { type: string, nullable: true }
         isActive:       { type: boolean }
+    RfqSourceLineItem:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        itemName:     { type: string }
+        categoryCode: { type: string }
+        quantity:     { type: string }
+        unit:         { type: string }
+        specifications: { type: string, nullable: true }
+    RfqSourceView:
+      type: object
+      properties:
+        id:       { type: string, format: uuid }
+        prNumber: { type: string }
+        status:   { $ref: '#/components/schemas/PrStatus' }
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/RfqSourceLineItem'
 
 paths:
+  /internal/purchase-requests/{id}/rfq-source:
+    get:
+      tags: [Internal Purchase Requests]
+      summary: Lấy snapshot PR phục vụ tạo RFQ
+      operationId: getPurchaseRequestRfqSource
+      description: Endpoint nội bộ cho vendor-service. Bắt buộc `X-Internal-Api-Key`.
+      servers:
+        - url: https://{host}
+          variables:
+            host:
+              default: pr-service.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Snapshot PR gồm trạng thái và line items để vendor-service validate RFQ.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RfqSourceView'
+        '403':
+          description: Internal API key không hợp lệ (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: PR không tồn tại (PR_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /internal/purchase-requests/{id}/pending-approval:
     patch:
       tags: [Internal Purchase Requests]

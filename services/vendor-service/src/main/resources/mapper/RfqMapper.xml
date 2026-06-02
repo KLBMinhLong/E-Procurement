@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.vendor.infrastructure.persistence.mapper.RfqMapper">
+
+    <resultMap id="rfqResultMap" type="com.eprocure.vendor.infrastructure.persistence.entity.RfqDbEntity">
+        <id property="id" column="id"/>
+        <result property="rfqNumber" column="rfq_number"/>
+        <result property="prId" column="pr_id"/>
+        <result property="prNumber" column="pr_number"/>
+        <result property="title" column="title"/>
+        <result property="status" column="status"/>
+        <result property="submissionDeadline" column="submission_deadline"/>
+        <result property="awardedVendorId" column="awarded_vendor_id"/>
+        <result property="awardedQuoteId" column="awarded_quote_id"/>
+        <result property="awardReason" column="award_reason"/>
+        <result property="requirements" column="requirements"/>
+        <result property="closedAt" column="closed_at"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+
+    <sql id="rfqColumns">
+        r.id,
+        r.rfq_number,
+        r.pr_id,
+        r.pr_number,
+        r.title,
+        r.status,
+        r.submission_deadline,
+        r.awarded_vendor_id,
+        r.awarded_quote_id,
+        r.award_reason,
+        r.requirements,
+        r.closed_at,
+        r.idempotency_key,
+        r.created_at,
+        r.created_by,
+        r.updated_by
+    </sql>
+
+    <sql id="rfqWhereClause">
+        WHERE r.is_deleted = FALSE
+        <if test="filter.status != null">
+            AND r.status = #{filter.status}
+        </if>
+        <if test="filter.prId != null">
+            AND r.pr_id = #{filter.prId}
+        </if>
+    </sql>
+
+    <select id="findRfqById" resultMap="rfqResultMap">
+        SELECT
+            <include refid="rfqColumns"/>
+        FROM vendor.rfqs r
+        WHERE r.id = #{id}
+          AND r.is_deleted = FALSE
+    </select>
+
+    <select id="findRfqByIdempotencyKey" resultMap="rfqResultMap">
+        SELECT
+            <include refid="rfqColumns"/>
+        FROM vendor.rfqs r
+        WHERE r.idempotency_key = #{idempotencyKey}
+          AND r.is_deleted = FALSE
+    </select>
+
+    <select id="findByFilter" resultMap="rfqResultMap">
+        SELECT
+            <include refid="rfqColumns"/>
+        FROM vendor.rfqs r
+        <include refid="rfqWhereClause"/>
+        ORDER BY
+        <choose>
+            <when test="filter.sortField == 'rfqNumber'">r.rfq_number</when>
+            <when test="filter.sortField == 'status'">r.status</when>
+            <when test="filter.sortField == 'submissionDeadline'">r.submission_deadline</when>
+            <otherwise>r.created_at</otherwise>
+        </choose>
+        <choose>
+            <when test="filter.sortDirection != null and filter.sortDirection.equalsIgnoreCase('asc')">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>,
+        r.rfq_number ASC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        FROM vendor.rfqs r
+        <include refid="rfqWhereClause"/>
+    </select>
+</mapper>

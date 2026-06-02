@@ -5,7 +5,9 @@ import com.eprocure.pr.application.port.in.MarkPurchaseRequestPendingApprovalCom
 import com.eprocure.pr.application.service.AppliedApprovalResultView;
 import com.eprocure.pr.application.service.InternalApiKeyGuard;
 import com.eprocure.pr.application.service.MarkedPendingApprovalView;
+import com.eprocure.pr.application.service.RfqSourceView;
 import com.eprocure.pr.application.usecase.ApplyPurchaseRequestApprovalResultUseCase;
+import com.eprocure.pr.application.usecase.GetPurchaseRequestUseCase;
 import com.eprocure.pr.application.usecase.MarkPurchaseRequestPendingApprovalUseCase;
 import com.eprocure.pr.common.api.ApiResponse;
 import com.eprocure.pr.common.api.RequestIdUtil;
@@ -17,6 +19,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,14 +36,30 @@ public class InternalPurchaseRequestController {
     private final InternalApiKeyGuard internalApiKeyGuard;
     private final MarkPurchaseRequestPendingApprovalUseCase markPendingApprovalUseCase;
     private final ApplyPurchaseRequestApprovalResultUseCase applyApprovalResultUseCase;
+    private final GetPurchaseRequestUseCase getPurchaseRequestUseCase;
 
     public InternalPurchaseRequestController(
             InternalApiKeyGuard internalApiKeyGuard,
             MarkPurchaseRequestPendingApprovalUseCase markPendingApprovalUseCase,
-            ApplyPurchaseRequestApprovalResultUseCase applyApprovalResultUseCase) {
+            ApplyPurchaseRequestApprovalResultUseCase applyApprovalResultUseCase,
+            GetPurchaseRequestUseCase getPurchaseRequestUseCase) {
         this.internalApiKeyGuard = internalApiKeyGuard;
         this.markPendingApprovalUseCase = markPendingApprovalUseCase;
         this.applyApprovalResultUseCase = applyApprovalResultUseCase;
+        this.getPurchaseRequestUseCase = getPurchaseRequestUseCase;
+    }
+
+    @GetMapping("/{id}/rfq-source")
+    public ResponseEntity<ApiResponse<RfqSourceView>> getRfqSource(
+            @PathVariable UUID id,
+            @RequestHeader(value = INTERNAL_API_KEY_HEADER, required = false) String internalApiKey,
+            HttpServletRequest request) {
+        internalApiKeyGuard.verify(internalApiKey);
+        log.info("[CONTROLLER] GET /internal/purchase-requests/{}/rfq-source | userId=internal",
+                LogMaskingUtil.maskId(id));
+        return ResponseEntity.ok(ApiResponse.success(
+                getPurchaseRequestUseCase.getRfqSource(id),
+                RequestIdUtil.resolve(request)));
     }
 
     @PatchMapping("/{id}/pending-approval")

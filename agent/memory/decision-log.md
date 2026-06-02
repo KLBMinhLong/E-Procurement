@@ -373,3 +373,10 @@
 - Reason: RFQ creation depends on a reliable approved-vendor list and category filtering; implementing RFQ before Vendor master would require stubs or duplicated validation.
 - Impact: `vendor-service` owns `vendors`, `vendor_contacts`, and `vendor_scores`; API foundation exposes list/create/detail/approve vendor endpoints guarded by `VENDOR_VIEW`, `VENDOR_CREATE`, and `VENDOR_APPROVE`. Docker Compose adds service port 8086 with light-service resource limits.
 - Constraint: RFQ tables/use cases and PR-service validation port remain deferred to the next E06 slice.
+
+## [2026-06-02] E06 RFQ source validation contract
+
+- Decision: Let `purchase-request-service` expose internal `GET /internal/purchase-requests/{id}/rfq-source`, and let `vendor-service` validate `APPROVED` PR status plus AVL vendors before creating RFQ snapshots.
+- Reason: RFQ must be created from canonical PR data without duplicating PR state in vendor-service or trusting client-provided line items.
+- Impact: RFQ create now snapshots PR line items into `vendor.rfq_line_items`, stores vendor invitations in `vendor.rfq_invitations`, and exposes create/list/detail/close RFQ APIs guarded by `RFQ_CREATE`, `RFQ_VIEW`, and `RFQ_EVALUATE`.
+- Constraint: Quote submission, scoring/evaluation, and award remain the next E06 implementation slice.

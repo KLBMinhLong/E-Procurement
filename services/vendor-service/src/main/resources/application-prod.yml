@@ -17,3 +17,8 @@ spring:
 eprocure:
   internal:
     api-key: ${VENDOR_INTERNAL_API_KEY}
+  vendor:
+    integration:
+      pr:
+        base-url: ${PR_SERVICE_URL}
+        internal-api-key: ${PR_INTERNAL_API_KEY}

@@ -236,5 +236,7 @@
 | Spring Boot vendor-service module setup | ✅ | Maven module + Docker/compose service on port 8086 |
 | Flyway migrations (vendors, vendor_contacts, vendor_scores) | ✅ | Vendor master + AVL status + score seed |
 | Vendor list/create/detail/approve API | ✅ | `GET/POST /api/v1/vendors`, `GET /api/v1/vendors/{id}`, `PATCH /approve`; permission + idempotency |
-| RFQ create/list/detail/close/evaluate/award | ⬜ | Chờ Vendor master + AVL foundation |
-| Unit tests | ✅ | 6 vendor-service tests pass |
+| RFQ schema + PR source contract | ✅ | `rfqs`, `rfq_line_items`, `rfq_invitations`; PR internal `GET /internal/purchase-requests/{id}/rfq-source` |
+| RFQ create/list/detail/close API | ✅ | `GET/POST /api/v1/rfq`, `GET /api/v1/rfq/{id}`, `PATCH /api/v1/rfq/{id}/close`; PR approved + AVL validation |
+| RFQ quote evaluate/award | ⬜ | Next E06 slice after RFQ foundation |
+| Unit tests | ✅ | Vendor master + RFQ domain/use-case tests pass |

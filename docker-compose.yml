@@ -442,6 +442,8 @@ services:
       REDIS_PORT: 6379
       REDIS_PASS: ${REDIS_PASS:-}
       VENDOR_INTERNAL_API_KEY: ${VENDOR_INTERNAL_API_KEY:-change-me-internal-api-key}
+      PR_SERVICE_URL: http://pr-service:8082
+      PR_INTERNAL_API_KEY: ${PR_INTERNAL_API_KEY:-change-me-internal-api-key}
     ports:
       - "${VENDOR_SERVICE_PORT:-8086}:8086"
     networks:
@@ -450,6 +452,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      pr-service:
         condition: service_healthy
     cpus: 0.25
     mem_limit: 256m

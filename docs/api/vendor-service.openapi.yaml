@@ -478,6 +478,9 @@ paths:
         - name: pr_id
           in: query
           schema: { type: string, format: uuid }
+        - name: sort
+          in: query
+          schema: { type: string, example: createdAt,desc }
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/SizeParam'
       responses:
@@ -526,7 +529,7 @@ paths:
                   items: { type: string, format: uuid }
       responses:
         '201':
-          description: RFQ đã tạo và email đã gửi cho vendors
+          description: RFQ đã tạo và invitations đã ghi nhận
           content:
             application/json:
               schema:
