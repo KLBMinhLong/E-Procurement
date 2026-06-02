@@ -152,9 +152,27 @@ public interface RfqMapper {
             UPDATE vendor.rfqs
             SET status = #{entity.status},
                 closed_at = #{entity.closedAt},
+                awarded_vendor_id = #{entity.awardedVendorId},
+                awarded_quote_id = #{entity.awardedQuoteId},
+                award_reason = #{entity.awardReason},
                 updated_by = #{entity.updatedBy}
             WHERE id = #{entity.id}
               AND is_deleted = FALSE
             """)
     int updateStatus(@Param("entity") RfqDbEntity entity);
+
+    @Update("""
+            UPDATE vendor.rfq_invitations
+            SET has_submitted = TRUE,
+                submitted_at = #{submittedAt},
+                updated_by = #{actorId}
+            WHERE rfq_id = #{rfqId}
+              AND vendor_id = #{vendorId}
+              AND is_deleted = FALSE
+            """)
+    int markInvitationSubmitted(
+            @Param("rfqId") UUID rfqId,
+            @Param("vendorId") UUID vendorId,
+            @Param("submittedAt") java.time.Instant submittedAt,
+            @Param("actorId") UUID actorId);
 }

@@ -7,6 +7,7 @@ import com.eprocure.vendor.application.service.RfqDetailView;
 import com.eprocure.vendor.common.util.LogMaskingUtil;
 import com.eprocure.vendor.domain.repository.RfqFilter;
 import com.eprocure.vendor.domain.repository.RfqRepository;
+import com.eprocure.vendor.domain.repository.VendorQuoteRepository;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,9 +19,11 @@ public class ListRfqsUseCase {
     private static final Logger log = LogManager.getLogger(ListRfqsUseCase.class);
 
     private final RfqRepository rfqRepository;
+    private final VendorQuoteRepository quoteRepository;
 
-    public ListRfqsUseCase(RfqRepository rfqRepository) {
+    public ListRfqsUseCase(RfqRepository rfqRepository, VendorQuoteRepository quoteRepository) {
         this.rfqRepository = rfqRepository;
+        this.quoteRepository = quoteRepository;
     }
 
     @Transactional(readOnly = true)
@@ -44,7 +47,7 @@ public class ListRfqsUseCase {
                 sort.field(),
                 sort.direction());
         var items = rfqRepository.findByFilter(filter).stream()
-                .map(RfqDetailView::from)
+                .map(rfq -> RfqDetailView.from(rfq, quoteRepository.findByRfqId(rfq.id())))
                 .toList();
         long total = rfqRepository.countByFilter(filter);
         log.info("[ACTION] Complete ListRfqs | userId={} | totalCount={}",

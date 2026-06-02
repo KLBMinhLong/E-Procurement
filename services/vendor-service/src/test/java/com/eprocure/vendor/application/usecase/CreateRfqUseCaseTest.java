@@ -197,6 +197,10 @@ class CreateRfqUseCaseTest {
         public void updateStatus(Rfq rfq) {
             this.saved = rfq;
         }
+
+        @Override
+        public void markInvitationSubmitted(UUID rfqId, UUID vendorId, Instant submittedAt, UUID actorId) {
+        }
     }
 
     private static final class FakeVendorRepository implements VendorRepository {

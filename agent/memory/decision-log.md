@@ -380,3 +380,10 @@
 - Reason: RFQ must be created from canonical PR data without duplicating PR state in vendor-service or trusting client-provided line items.
 - Impact: RFQ create now snapshots PR line items into `vendor.rfq_line_items`, stores vendor invitations in `vendor.rfq_invitations`, and exposes create/list/detail/close RFQ APIs guarded by `RFQ_CREATE`, `RFQ_VIEW`, and `RFQ_EVALUATE`.
 - Constraint: Quote submission, scoring/evaluation, and award remain the next E06 implementation slice.
+
+## [2026-06-02] E06 RFQ quote and award foundation
+
+- Decision: Add `vendor_quotes` plus `vendor_quote_line_items` as structured quote persistence, and expose quote submit/evaluate/award endpoints under `/api/v1/rfq`.
+- Reason: RFQ evaluation and award need auditable quote line items with monetary precision; evaluating/awarding without persisted quotes would require stubs and break the PO handoff path.
+- Impact: `POST /rfq/{id}/quotes` records a vendor quote, `POST /rfq/{id}/quotes/{quoteId}/evaluate` stores score/note, and `POST /rfq/{id}/award` sets RFQ `AWARDED` with awarded vendor/quote. Submit quote requires open RFQ, invited AVL vendor, matching RFQ line items, and unexpired submission deadline.
+- Constraint: PO creation/event publication after award is deferred to the next E06/finance-inventory handoff slice.

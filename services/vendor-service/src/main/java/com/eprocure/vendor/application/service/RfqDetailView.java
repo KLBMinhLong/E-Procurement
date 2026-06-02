@@ -23,6 +23,10 @@ public record RfqDetailView(
         Instant createdAt) {
 
     public static RfqDetailView from(Rfq rfq) {
+        return from(rfq, List.of());
+    }
+
+    public static RfqDetailView from(Rfq rfq, List<com.eprocure.vendor.domain.model.VendorQuote> quotes) {
         return new RfqDetailView(
                 rfq.id(),
                 rfq.rfqNumber(),
@@ -33,7 +37,7 @@ public record RfqDetailView(
                 rfq.submissionDeadline(),
                 rfq.lineItems().stream().map(RfqLineItemView::from).toList(),
                 rfq.invitations().stream().map(RfqInvitationView::from).toList(),
-                List.of(),
+                quotes.stream().map(VendorQuoteView::from).toList(),
                 rfq.awardedVendorId(),
                 rfq.awardedQuoteId(),
                 rfq.awardReason(),

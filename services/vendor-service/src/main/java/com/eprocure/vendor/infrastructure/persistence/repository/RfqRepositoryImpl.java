@@ -8,6 +8,7 @@ import com.eprocure.vendor.infrastructure.persistence.entity.RfqInvitationDbEnti
 import com.eprocure.vendor.infrastructure.persistence.entity.RfqLineItemDbEntity;
 import com.eprocure.vendor.infrastructure.persistence.mapper.RfqMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -67,6 +68,11 @@ public class RfqRepositoryImpl implements RfqRepository {
     @Override
     public void updateStatus(Rfq rfq) {
         rfqMapper.updateStatus(RfqDbEntity.from(rfq));
+    }
+
+    @Override
+    public void markInvitationSubmitted(UUID rfqId, UUID vendorId, Instant submittedAt, UUID actorId) {
+        rfqMapper.markInvitationSubmitted(rfqId, vendorId, submittedAt, actorId);
     }
 
     private Rfq hydrate(RfqDbEntity entity) {

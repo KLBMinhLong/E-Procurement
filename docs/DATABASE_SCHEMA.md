@@ -68,6 +68,7 @@ PostgreSQL Cluster
 │       ├── rfqs
 │       ├── rfq_invitations
 │       ├── vendor_quotes
+│       ├── vendor_quote_line_items
 │       └── vendor_scores
 │
 ├── db_notification

@@ -114,6 +114,38 @@ public record Rfq(
                 actorId);
     }
 
+    public Rfq award(UUID quoteId, UUID vendorId, String reason, UUID actorId, Instant awardedAt) {
+        Objects.requireNonNull(quoteId, "quoteId must not be null");
+        Objects.requireNonNull(vendorId, "vendorId must not be null");
+        Objects.requireNonNull(actorId, "actorId must not be null");
+        Objects.requireNonNull(awardedAt, "awardedAt must not be null");
+        if (status == RfqStatus.AWARDED && quoteId.equals(awardedQuoteId)) {
+            return this;
+        }
+        if (status != RfqStatus.CLOSED && !(status == RfqStatus.PUBLISHED && !submissionDeadline.isAfter(awardedAt))) {
+            throw new IllegalStateException("only CLOSED or expired PUBLISHED RFQ can be awarded");
+        }
+        return new Rfq(
+                id,
+                rfqNumber,
+                prId,
+                prNumber,
+                title,
+                RfqStatus.AWARDED,
+                submissionDeadline,
+                lineItems,
+                invitations,
+                vendorId,
+                quoteId,
+                requireText(reason, "awardReason"),
+                requirements,
+                closedAt == null ? awardedAt : closedAt,
+                idempotencyKey,
+                createdAt,
+                createdBy,
+                actorId);
+    }
+
     private static String requireText(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " must not be blank");

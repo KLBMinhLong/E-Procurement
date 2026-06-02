@@ -9,8 +9,12 @@ public enum ErrorCode {
     VND_003("VND_003", "Vendor is blacklisted", HttpStatus.UNPROCESSABLE_ENTITY),
     VND_004("VND_004", "RFQ not found", HttpStatus.NOT_FOUND),
     VND_005("VND_005", "RFQ is not changeable in current status", HttpStatus.CONFLICT),
+    VND_006("VND_006", "No vendor quote available", HttpStatus.UNPROCESSABLE_ENTITY),
+    VND_007("VND_007", "RFQ quote submission deadline has expired", HttpStatus.UNPROCESSABLE_ENTITY),
     VND_008("VND_008", "Vendor is not on approved vendor list", HttpStatus.UNPROCESSABLE_ENTITY),
     VND_009("VND_009", "Purchase request is not approved for RFQ", HttpStatus.UNPROCESSABLE_ENTITY),
+    VND_010("VND_010", "RFQ quote already submitted by vendor", HttpStatus.CONFLICT),
+    VND_011("VND_011", "RFQ quote line items are invalid", HttpStatus.UNPROCESSABLE_ENTITY),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
     VAL_001("VAL_001", "Validation failed", HttpStatus.BAD_REQUEST);

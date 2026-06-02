@@ -1,19 +1,29 @@
 package com.eprocure.vendor.presentation.controller;
 
 import com.eprocure.vendor.application.service.PageResult;
+import com.eprocure.vendor.application.service.AwardRfqResult;
 import com.eprocure.vendor.application.service.RfqMutationResult;
+import com.eprocure.vendor.application.service.VendorQuoteMutationResult;
+import com.eprocure.vendor.application.usecase.AwardRfqUseCase;
 import com.eprocure.vendor.application.usecase.CloseRfqUseCase;
 import com.eprocure.vendor.application.usecase.CreateRfqUseCase;
+import com.eprocure.vendor.application.usecase.EvaluateQuoteUseCase;
 import com.eprocure.vendor.application.usecase.GetRfqDetailUseCase;
 import com.eprocure.vendor.application.usecase.ListRfqsUseCase;
+import com.eprocure.vendor.application.usecase.SubmitVendorQuoteUseCase;
 import com.eprocure.vendor.common.api.ApiResponse;
 import com.eprocure.vendor.common.api.RequestIdUtil;
 import com.eprocure.vendor.common.security.UserPrincipal;
 import com.eprocure.vendor.common.util.LogMaskingUtil;
 import com.eprocure.vendor.domain.model.RfqStatus;
 import com.eprocure.vendor.presentation.mapper.RfqPresentationMapper;
+import com.eprocure.vendor.presentation.request.AwardRfqRequest;
 import com.eprocure.vendor.presentation.request.CreateRfqRequest;
+import com.eprocure.vendor.presentation.request.EvaluateQuoteRequest;
+import com.eprocure.vendor.presentation.request.SubmitVendorQuoteRequest;
+import com.eprocure.vendor.presentation.response.AwardRfqResponse;
 import com.eprocure.vendor.presentation.response.RfqDetailResponse;
+import com.eprocure.vendor.presentation.response.VendorQuoteResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -43,6 +53,9 @@ public class RfqController {
     private final CreateRfqUseCase createRfqUseCase;
     private final GetRfqDetailUseCase getRfqDetailUseCase;
     private final CloseRfqUseCase closeRfqUseCase;
+    private final SubmitVendorQuoteUseCase submitVendorQuoteUseCase;
+    private final EvaluateQuoteUseCase evaluateQuoteUseCase;
+    private final AwardRfqUseCase awardRfqUseCase;
     private final RfqPresentationMapper mapper;
 
     public RfqController(
@@ -50,11 +63,17 @@ public class RfqController {
             CreateRfqUseCase createRfqUseCase,
             GetRfqDetailUseCase getRfqDetailUseCase,
             CloseRfqUseCase closeRfqUseCase,
+            SubmitVendorQuoteUseCase submitVendorQuoteUseCase,
+            EvaluateQuoteUseCase evaluateQuoteUseCase,
+            AwardRfqUseCase awardRfqUseCase,
             RfqPresentationMapper mapper) {
         this.listRfqsUseCase = listRfqsUseCase;
         this.createRfqUseCase = createRfqUseCase;
         this.getRfqDetailUseCase = getRfqDetailUseCase;
         this.closeRfqUseCase = closeRfqUseCase;
+        this.submitVendorQuoteUseCase = submitVendorQuoteUseCase;
+        this.evaluateQuoteUseCase = evaluateQuoteUseCase;
+        this.awardRfqUseCase = awardRfqUseCase;
         this.mapper = mapper;
     }
 
@@ -128,5 +147,71 @@ public class RfqController {
             builder.header("Idempotency-Replayed", "true");
         }
         return builder.body(ApiResponse.<Void>success(null, RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{id}/quotes")
+    @PreAuthorize("hasAuthority('RFQ_CREATE')")
+    public ResponseEntity<ApiResponse<VendorQuoteResponse>> submitQuote(
+            @PathVariable UUID id,
+            @Valid @RequestBody SubmitVendorQuoteRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/rfq/{}/quotes | userId={}",
+                LogMaskingUtil.maskId(id),
+                LogMaskingUtil.maskId(principal.getId()));
+
+        VendorQuoteMutationResult result = submitVendorQuoteUseCase.execute(
+                mapper.toSubmitQuoteCommand(principal, id, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.status(HttpStatus.CREATED);
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result.view()), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{id}/quotes/{quoteId}/evaluate")
+    @PreAuthorize("hasAuthority('RFQ_EVALUATE')")
+    public ResponseEntity<ApiResponse<VendorQuoteResponse>> evaluateQuote(
+            @PathVariable UUID id,
+            @PathVariable UUID quoteId,
+            @Valid @RequestBody EvaluateQuoteRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/rfq/{}/quotes/{}/evaluate | userId={}",
+                LogMaskingUtil.maskId(id),
+                LogMaskingUtil.maskId(quoteId),
+                LogMaskingUtil.maskId(principal.getId()));
+
+        VendorQuoteMutationResult result = evaluateQuoteUseCase.execute(
+                mapper.toEvaluateQuoteCommand(principal, id, quoteId, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result.view()), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{id}/award")
+    @PreAuthorize("hasAuthority('RFQ_AWARD')")
+    public ResponseEntity<ApiResponse<AwardRfqResponse>> award(
+            @PathVariable UUID id,
+            @Valid @RequestBody AwardRfqRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/rfq/{}/award | userId={}",
+                LogMaskingUtil.maskId(id),
+                LogMaskingUtil.maskId(principal.getId()));
+
+        AwardRfqResult result = awardRfqUseCase.execute(mapper.toAwardCommand(principal, id, body), idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
     }
 }

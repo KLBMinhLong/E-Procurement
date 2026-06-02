@@ -238,5 +238,6 @@
 | Vendor list/create/detail/approve API | ✅ | `GET/POST /api/v1/vendors`, `GET /api/v1/vendors/{id}`, `PATCH /approve`; permission + idempotency |
 | RFQ schema + PR source contract | ✅ | `rfqs`, `rfq_line_items`, `rfq_invitations`; PR internal `GET /internal/purchase-requests/{id}/rfq-source` |
 | RFQ create/list/detail/close API | ✅ | `GET/POST /api/v1/rfq`, `GET /api/v1/rfq/{id}`, `PATCH /api/v1/rfq/{id}/close`; PR approved + AVL validation |
-| RFQ quote evaluate/award | ⬜ | Next E06 slice after RFQ foundation |
-| Unit tests | ✅ | Vendor master + RFQ domain/use-case tests pass |
+| RFQ quote submit/evaluate/award | ✅ | `vendor_quotes`, `vendor_quote_line_items`; `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award` |
+| PO handoff after award | ⬜ | Next E06 slice: publish/bridge awarded RFQ to PO creation flow |
+| Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |

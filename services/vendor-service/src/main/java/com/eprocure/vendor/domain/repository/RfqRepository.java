@@ -4,6 +4,7 @@ import com.eprocure.vendor.domain.model.Rfq;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
 
 public interface RfqRepository {
     String nextRfqNumber();
@@ -19,4 +20,6 @@ public interface RfqRepository {
     void save(Rfq rfq);
 
     void updateStatus(Rfq rfq);
+
+    void markInvitationSubmitted(UUID rfqId, UUID vendorId, Instant submittedAt, UUID actorId);
 }

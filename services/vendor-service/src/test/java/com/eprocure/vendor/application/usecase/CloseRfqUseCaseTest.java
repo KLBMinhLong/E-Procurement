@@ -132,5 +132,9 @@ class CloseRfqUseCaseTest {
         public void updateStatus(Rfq rfq) {
             this.current = rfq;
         }
+
+        @Override
+        public void markInvitationSubmitted(UUID rfqId, UUID vendorId, Instant submittedAt, UUID actorId) {
+        }
     }
 }
