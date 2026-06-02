@@ -366,3 +366,10 @@
 - Reason: E11 notification-service now owns transactional email rendering and retry, so IAM should only issue/reset tokens and publish a delivery request after transaction commit.
 - Impact: `IAM_PASSWORD_RESET_DELIVERY_MODE=kafka` enables the adapter in Docker/prod; local remains `logging` by default. The adapter publishes after commit, masks logs, and avoids logging the raw reset token or reset URL.
 - Constraint: Reset URL necessarily carries the raw reset token inside the Kafka payload for email delivery; logs and error messages must continue to mask token-like values. Response encryption remains deferred to E14 because E02 only has the backend request-decryption/public-key contract.
+
+## [2026-06-02] E06 Vendor master foundation
+
+- Decision: Implement `vendor-service` first as Vendor master + AVL foundation before RFQ, with vendor categories stored as JSONB array and exposed as the OpenAPI `categories` array.
+- Reason: RFQ creation depends on a reliable approved-vendor list and category filtering; implementing RFQ before Vendor master would require stubs or duplicated validation.
+- Impact: `vendor-service` owns `vendors`, `vendor_contacts`, and `vendor_scores`; API foundation exposes list/create/detail/approve vendor endpoints guarded by `VENDOR_VIEW`, `VENDOR_CREATE`, and `VENDOR_APPROVE`. Docker Compose adds service port 8086 with light-service resource limits.
+- Constraint: RFQ tables/use cases and PR-service validation port remain deferred to the next E06 slice.

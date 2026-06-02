@@ -21,13 +21,13 @@ eProcure Enterprise là hệ thống mua sắm nội bộ cho doanh nghiệp 200
 
 Hiện trạng triển khai:
 
-- Maven reactor: `services/iam-service`, `services/purchase-request-service`, `services/approval-service`, `services/finance-service`, `services/notification-service`, `infra/keycloak/eprocure-keycloak-provider`.
+- Maven reactor: `services/iam-service`, `services/purchase-request-service`, `services/approval-service`, `services/finance-service`, `services/vendor-service`, `services/notification-service`, `infra/keycloak/eprocure-keycloak-provider`.
 - Frontend: Angular 21 standalone app tại `frontend/eprocure-web`.
 - Infra: Docker Compose có PostgreSQL 15, Redis 7, Kafka KRaft, Keycloak, NGINX gateway, Prometheus, Grafana, Loki, Tempo.
 - Epics đã đóng theo tracker: E01 infrastructure, E03 UI shell/design system, E04 PR service, E05 Approval Engine, E13-A Admin Portal UI.
 - E02 IAM đã hoàn thiện business/API surface và hardening tracker hiện tại: RSA+AES request decryption interceptor, password reset delivery qua `notification.email.send`, opaque session/RBAC/org/delegation/2FA/OAuth/reset-password, và unit tests.
-- `finance-service` đã có budget foundation, dashboard/list, override/transfer, PR budget event ledger, và budget alert publisher. `notification-service` đã có in-app notifications, business-event consumption, STOMP realtime delivery, Angular shell notification bell/feed, email dispatch outbox/retry/DLQ, và template admin API/UI. `inventory-service`, `vendor-service`, `analytics-service`, `admin-service` chưa có backend riêng ngoài docs/OpenAPI.
-- Việc nên ưu tiên tiếp theo sau E10/E11 foundation: chuyển sang E06 RFQ/Vendor hoặc E02 hardening còn dở tùy tracker. User stories chi tiết đã có tại `docs/user-stories/E10-budget-management.md` và `docs/user-stories/E11-notification-realtime.md`.
+- `finance-service` đã có budget foundation, dashboard/list, override/transfer, PR budget event ledger, và budget alert publisher. `notification-service` đã có in-app notifications, business-event consumption, STOMP realtime delivery, Angular shell notification bell/feed, email dispatch outbox/retry/DLQ, và template admin API/UI. `vendor-service` đã có E06 Vendor master + AVL foundation (`GET/POST /vendors`, `GET /vendors/{id}`, `PATCH /vendors/{id}/approve`, Flyway `vendors/vendor_contacts/vendor_scores`, Docker Compose port 8086). `inventory-service`, `analytics-service`, `admin-service` chưa có backend riêng ngoài docs/OpenAPI.
+- Việc nên ưu tiên tiếp theo trong E06: RFQ tables/use cases và PR-service validation port để tạo RFQ từ PR đã approved. User stories chi tiết đã có tại `docs/user-stories/E06-rfq-vendor.md`, `docs/user-stories/E10-budget-management.md`, và `docs/user-stories/E11-notification-realtime.md`.
 
 ## Non-Negotiable Invariants
 
@@ -85,6 +85,7 @@ mvn -pl services/purchase-request-service test
 mvn -pl services/approval-service test
 mvn -pl infra/keycloak/eprocure-keycloak-provider test
 mvn -pl services/finance-service test
+mvn -pl services/vendor-service test
 mvn -pl services/notification-service test
 ```
 

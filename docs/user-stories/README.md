@@ -18,11 +18,12 @@ E02-iam-service.md
 E03-ui-shell-design-system.md
 E04-purchase-request-service.md
 E05-approval-engine.md
+E06-rfq-vendor.md
 E10-budget-management.md
 E11-notification-realtime.md
 ```
 
-Các epic E06-E09 và E12-E15 vẫn chỉ được story map ở mức roadmap. Khi bắt đầu code từng epic còn lại, tạo file chi tiết riêng theo format E01-E05/E10-E11.
+Các epic E07-E09 và E12-E15 vẫn chỉ được story map ở mức roadmap. Khi bắt đầu code từng epic còn lại, tạo file chi tiết riêng theo format E01-E06/E10-E11.
 
 ---
 

@@ -414,6 +414,61 @@ services:
       start_period: 120s
     logging: *default-logging
 
+  vendor-service:
+    build:
+      context: .
+      dockerfile: services/vendor-service/Dockerfile
+    container_name: eprocure-vendor-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: vendor-service
+      SERVER_PORT: 8086
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: vendor-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
+      VENDOR_DB_HOST: postgres
+      VENDOR_DB_PORT: 5432
+      VENDOR_DB_NAME: db_vendor
+      VENDOR_DB_SCHEMA: vendor
+      VENDOR_DB_USER: ${VENDOR_DB_USER:-vendor_user}
+      VENDOR_DB_PASS: ${VENDOR_DB_PASS:-vendor_pass_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASS: ${REDIS_PASS:-}
+      VENDOR_INTERNAL_API_KEY: ${VENDOR_INTERNAL_API_KEY:-change-me-internal-api-key}
+    ports:
+      - "${VENDOR_SERVICE_PORT:-8086}:8086"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    cpus: 0.25
+    mem_limit: 256m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8086/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 75s
+    logging: *default-logging
+
   notification-service:
     build:
       context: .

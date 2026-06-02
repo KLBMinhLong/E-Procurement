@@ -1,0 +1,20 @@
+package com.eprocure.vendor.presentation.response;
+
+import com.eprocure.vendor.domain.model.VendorStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import java.util.UUID;
+
+public record VendorSummaryResponse(
+        UUID id,
+        String vendorCode,
+        String name,
+        String taxCode,
+        String email,
+        String phone,
+        VendorStatus status,
+        @JsonProperty("isOnApprovedVendorList")
+        boolean onApprovedVendorList,
+        List<String> categories,
+        Integer overallScore) {
+}
