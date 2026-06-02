@@ -1,5 +1,19 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-06-01] Bug: Reset password email link opened frontend not-found
+
+- Symptom: Brevo delivered forgot-password email, but opening `http://localhost:4200/reset-password?token=...` showed the Angular not-found page even though the HTTP request returned 200.
+- Root cause: The IAM password reset email used `/reset-password`, but Angular only defined `/forgot-password`; the SPA served `index.html`, then the wildcard route rendered not-found.
+- Fix: Add a public `/reset-password` Angular route and reset password form that posts `resetToken`, `newPassword`, and `confirmPassword` to `POST /api/v1/auth/reset-password`.
+- Prevention: Any email deep link produced by backend configuration must have a matching public Angular route and should be verified with the generated URL before accepting the flow.
+
+## [2026-06-01] Bug: Notification email consumer rejected IAM password reset events
+
+- Symptom: Forgot-password mail flow produced repeated notification-service logs: `[KAFKA] Skip invalid notification event | topic=notification.email.send | reason=timestamp is required`, followed by `KafkaMessageListenerContainer - Error handler threw an exception`.
+- Root cause: IAM published `PasswordResetEmailEvent.timestamp` as `Instant`; Spring Kafka serialized it as numeric epoch seconds with fractional nanos, while notification-service required `timestamp` to be a textual ISO instant and rethrew malformed events, causing retry/error-handler noise.
+- Fix: Make IAM password reset event timestamp a string ISO instant, allow notification consumer to parse legacy numeric epoch-second timestamps, and skip malformed notification events without rethrowing so poison records do not block the partition.
+- Prevention: Kafka event envelope tests must verify serialized field shape for cross-service events, especially time fields and other non-primitive Java types.
+
 ## [2026-05-30] Bug: Notification-service startup failed while parsing MyBatis UUID mappings
 
 - Symptom: Notification container stayed unhealthy and restarted; logs showed `Failed to parse mapping resource [mapper/NotificationMapper.xml]` and `No typehandler found for property id`.

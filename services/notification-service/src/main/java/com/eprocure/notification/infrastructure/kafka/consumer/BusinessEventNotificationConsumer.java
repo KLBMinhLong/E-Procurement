@@ -4,7 +4,10 @@ import com.eprocure.notification.application.port.in.BusinessEventCommand;
 import com.eprocure.notification.application.usecase.ConsumeBusinessEventUseCase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.Optional;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +42,11 @@ public class BusinessEventNotificationConsumer {
             "${eprocure.notification.kafka.topics.email-send:notification.email.send}"
     })
     public void consume(ConsumerRecord<String, String> record) {
-        BusinessEventCommand command = toCommand(record);
+        Optional<BusinessEventCommand> parsed = toCommand(record);
+        if (parsed.isEmpty()) {
+            return;
+        }
+        BusinessEventCommand command = parsed.get();
         int created = consumeBusinessEventUseCase.execute(command);
         log.info("[KAFKA] Consumed business event for notification | topic={} | eventId={} | created={}",
                 record.topic(),
@@ -47,28 +54,50 @@ public class BusinessEventNotificationConsumer {
                 created);
     }
 
-    private BusinessEventCommand toCommand(ConsumerRecord<String, String> record) {
+    Optional<BusinessEventCommand> toCommand(ConsumerRecord<String, String> record) {
         try {
             JsonNode root = objectMapper.readTree(record.value());
             JsonNode payload = root.path("payload");
             if (payload.isMissingNode() || payload.isNull()) {
                 throw new IllegalArgumentException("Kafka event payload is required");
             }
-            return new BusinessEventCommand(
+            return Optional.of(new BusinessEventCommand(
                     requiredText(root, "eventId"),
                     requiredText(root, "eventType"),
                     requiredText(root, "source"),
-                    Instant.parse(requiredText(root, "timestamp")),
+                    requiredTimestamp(root),
                     record.topic(),
                     record.partition(),
                     record.offset(),
-                    payload);
+                    payload));
         } catch (Exception exception) {
             log.warn("[KAFKA] Skip invalid notification event | topic={} | reason={}",
                     record.topic(),
                     exception.getMessage());
-            throw new IllegalArgumentException("Invalid notification event", exception);
+            return Optional.empty();
         }
+    }
+
+    private Instant requiredTimestamp(JsonNode root) {
+        JsonNode value = root.get("timestamp");
+        if (value == null || value.isNull()) {
+            throw new IllegalArgumentException("timestamp is required");
+        }
+        if (value.isTextual() && !value.asText().isBlank()) {
+            return Instant.parse(value.asText());
+        }
+        if (value.isNumber()) {
+            return parseNumericEpochSeconds(value.decimalValue());
+        }
+        throw new IllegalArgumentException("timestamp is required");
+    }
+
+    private Instant parseNumericEpochSeconds(BigDecimal value) {
+        BigDecimal secondsPart = value.setScale(0, RoundingMode.DOWN);
+        BigDecimal nanosPart = value.subtract(secondsPart)
+                .movePointRight(9)
+                .setScale(0, RoundingMode.DOWN);
+        return Instant.ofEpochSecond(secondsPart.longValue(), nanosPart.longValue());
     }
 
     private String requiredText(JsonNode root, String fieldName) {

@@ -10,7 +10,7 @@ public record PasswordResetEmailEvent(
         String eventId,
         String eventType,
         String source,
-        Instant timestamp,
+        String timestamp,
         Payload payload) {
     private static final String EMAIL_SEND_EVENT_TYPE = "notification.email.send";
     private static final String PASSWORD_RESET_TEMPLATE_EVENT_TYPE = "PASSWORD_RESET";
@@ -20,7 +20,7 @@ public record PasswordResetEmailEvent(
         eventId = requireText(eventId, "eventId");
         eventType = requireText(eventType, "eventType");
         source = requireText(source, "source");
-        timestamp = Objects.requireNonNull(timestamp, "timestamp must not be null");
+        timestamp = requireText(timestamp, "timestamp");
         payload = Objects.requireNonNull(payload, "payload must not be null");
     }
 
@@ -35,7 +35,7 @@ public record PasswordResetEmailEvent(
                 UUID.randomUUID().toString(),
                 EMAIL_SEND_EVENT_TYPE,
                 SOURCE,
-                Objects.requireNonNull(occurredAt, "occurredAt must not be null"),
+                Objects.requireNonNull(occurredAt, "occurredAt must not be null").toString(),
                 new Payload(
                         PASSWORD_RESET_TEMPLATE_EVENT_TYPE,
                         user.getId().toString(),

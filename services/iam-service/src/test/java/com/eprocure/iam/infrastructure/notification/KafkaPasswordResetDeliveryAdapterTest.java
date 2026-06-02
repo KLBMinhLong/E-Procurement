@@ -35,7 +35,7 @@ class KafkaPasswordResetDeliveryAdapterTest {
         PasswordResetEmailEvent event = (PasswordResetEmailEvent) publisher.event;
         assertThat(event.eventType()).isEqualTo("notification.email.send");
         assertThat(event.source()).isEqualTo("iam-service");
-        assertThat(event.timestamp()).isEqualTo(CLOCK.instant());
+        assertThat(event.timestamp()).isEqualTo(CLOCK.instant().toString());
         assertThat(event.payload().templateEventType()).isEqualTo("PASSWORD_RESET");
         assertThat(event.payload().recipientId()).isEqualTo(USER_ID.toString());
         assertThat(event.payload().recipientEmail()).isEqualTo("requester@eprocure.local");

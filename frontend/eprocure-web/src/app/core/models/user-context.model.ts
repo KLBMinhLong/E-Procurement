@@ -28,6 +28,12 @@ export interface ForgotPasswordRequest {
   email: string;
 }
 
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface EncryptedRequest {
   encryptedPayload: string;
   encryptedAesKey: string;

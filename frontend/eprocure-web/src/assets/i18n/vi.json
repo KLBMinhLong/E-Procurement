@@ -49,6 +49,25 @@
       "title": "Quên mật khẩu",
       "validation": "Vui lòng nhập email hợp lệ."
     },
+    "resetPassword": {
+      "backToLogin": "Quay lại đăng nhập",
+      "confirmPassword": "Xác nhận mật khẩu mới",
+      "description": "Tạo mật khẩu mới cho tài khoản của bạn.",
+      "eyebrow": "Bảo mật tài khoản",
+      "failed": "Chưa thể đặt lại mật khẩu. Vui lòng thử lại.",
+      "hidePassword": "Ẩn mật khẩu",
+      "missingToken": "Liên kết đặt lại mật khẩu không hợp lệ.",
+      "newPassword": "Mật khẩu mới",
+      "passwordMismatch": "Mật khẩu xác nhận chưa khớp.",
+      "passwordPolicy": "Mật khẩu phải dài 8-128 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.",
+      "required": "Trường này là bắt buộc.",
+      "showPassword": "Hiện mật khẩu",
+      "submit": "Đặt lại mật khẩu",
+      "success": "Mật khẩu đã được đặt lại. Bạn có thể đăng nhập bằng mật khẩu mới.",
+      "title": "Đặt lại mật khẩu",
+      "tokenExpired": "Liên kết đặt lại mật khẩu đã hết hạn hoặc đã được sử dụng.",
+      "validation": "Vui lòng kiểm tra mật khẩu mới."
+    },
     "login": {
       "eyebrow": "IAM bảo mật",
       "accountLocked": "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.",

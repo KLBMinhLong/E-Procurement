@@ -2,7 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
-import { ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, PublicKeyResponse, UserContext, LoginResponse, UserSummaryView } from '../models/user-context.model';
+import { ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, PublicKeyResponse, ResetPasswordRequest, UserContext, LoginResponse, UserSummaryView } from '../models/user-context.model';
 import { ApiService } from '../http/api.service';
 import { API_BASE_URL } from '../http/api-tokens';
 import { EncryptionService } from '../http/encryption.service';
@@ -109,6 +109,12 @@ export class AuthService {
 
   forgotPassword(request: ForgotPasswordRequest): Observable<ApiResponse<null>> {
     return this.api.post<null>('/auth/forgot-password', request);
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<ApiResponse<null>> {
+    return this.api.post<null>('/auth/reset-password', request, undefined, {
+      context: BYPASS_ERROR_INTERCEPTOR
+    });
   }
 
   enableTwoFactor(): Observable<ApiResponse<{ secret: string; qrCodeUrl: string; manualEntryKey: string }>> {

@@ -22,9 +22,15 @@ export class ApiService {
     });
   }
 
-  post<T>(path: string, body: unknown, idempotencyKey?: string): Observable<ApiResponse<T>> {
+  post<T>(
+    path: string,
+    body: unknown,
+    idempotencyKey?: string,
+    options?: ApiRequestOptions
+  ): Observable<ApiResponse<T>> {
     return this.http.post<ApiResponse<T>>(this.url(path), body, {
-      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+      context: options?.context
     });
   }
 

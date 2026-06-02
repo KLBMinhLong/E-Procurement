@@ -196,7 +196,10 @@ public interface NotificationMapper {
                 retry_count = retry_count + 1,
                 last_error = #{lastError},
                 last_attempt_at = #{attemptedAt},
-                next_attempt_at = CASE WHEN retry_count + 1 >= #{maxAttempts} THEN NULL ELSE #{nextAttemptAt} END,
+                next_attempt_at = CASE
+                    WHEN retry_count + 1 >= #{maxAttempts} THEN NULL
+                    ELSE CAST(#{nextAttemptAt} AS TIMESTAMPTZ)
+                END,
                 updated_at = #{attemptedAt}
             WHERE id = #{id}
               AND channel = 'EMAIL'
