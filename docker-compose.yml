@@ -220,8 +220,7 @@ services:
       OTEL_SERVICE_NAME: iam-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      # OTEL_TRACES_EXPORTER: otlp (if you want to export traces to tempo)
-      OTEL_TRACES_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
@@ -297,8 +296,7 @@ services:
       OTEL_SERVICE_NAME: purchase-request-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      # OTEL_TRACES_EXPORTER: otlp
-      OTEL_TRACES_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
@@ -366,8 +364,7 @@ services:
       OTEL_SERVICE_NAME: finance-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      # OTEL_TRACES_EXPORTER: otlp
-      OTEL_TRACES_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
@@ -428,7 +425,7 @@ services:
       OTEL_SERVICE_NAME: vendor-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      OTEL_TRACES_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
@@ -491,7 +488,7 @@ services:
       OTEL_SERVICE_NAME: notification-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      OTEL_TRACES_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
@@ -562,8 +559,7 @@ services:
       OTEL_SERVICE_NAME: approval-service
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      # OTEL_TRACES_EXPORTER: otlp
-      OTEL_TRACES_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_PROPAGATORS: tracecontext,baggage
