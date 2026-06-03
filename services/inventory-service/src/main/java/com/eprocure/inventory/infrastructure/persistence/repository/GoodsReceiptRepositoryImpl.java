@@ -2,12 +2,17 @@ package com.eprocure.inventory.infrastructure.persistence.repository;
 
 import com.eprocure.inventory.domain.model.GoodsReceipt;
 import com.eprocure.inventory.domain.model.GoodsReceiptLineItem;
+import com.eprocure.inventory.domain.model.GoodsReceiptStatus;
+import com.eprocure.inventory.domain.model.StockMovement;
 import com.eprocure.inventory.domain.repository.GoodsReceiptFilter;
 import com.eprocure.inventory.domain.repository.GoodsReceiptRepository;
 import com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptLineItemDbEntity;
+import com.eprocure.inventory.infrastructure.persistence.entity.StockMovementDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.mapper.GoodsReceiptMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +41,11 @@ public class GoodsReceiptRepositoryImpl implements GoodsReceiptRepository {
     @Override
     public Optional<GoodsReceipt> findByIdempotencyKey(UUID idempotencyKey) {
         return goodsReceiptMapper.findHeaderByIdempotencyKey(idempotencyKey).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<GoodsReceipt> findByIdAndCompleteIdempotencyKey(UUID id, UUID idempotencyKey) {
+        return goodsReceiptMapper.findHeaderByIdAndCompleteIdempotencyKey(id, idempotencyKey).map(this::toDomain);
     }
 
     @Override
@@ -76,6 +86,55 @@ public class GoodsReceiptRepositoryImpl implements GoodsReceiptRepository {
         goodsReceipt.lineItems().stream()
                 .map(lineItem -> toLineEntity(goodsReceipt, lineItem))
                 .forEach(goodsReceiptMapper::insertLineItem);
+    }
+
+    @Override
+    public Optional<String> findActiveItemCodeForPoLineItem(UUID poLineItemId) {
+        return goodsReceiptMapper.findActiveItemCodeForPoLineItem(poLineItemId);
+    }
+
+    @Override
+    public void updateLineItemCode(UUID lineItemId, String itemCode, UUID actorId) {
+        goodsReceiptMapper.updateLineItemCode(lineItemId, itemCode, actorId);
+    }
+
+    @Override
+    public BigDecimal receiveStock(
+            String itemCode,
+            UUID warehouseId,
+            BigDecimal quantity,
+            String unit,
+            UUID actorId,
+            Instant occurredAt) {
+        return goodsReceiptMapper.receiveStock(itemCode, warehouseId, quantity, unit, actorId, occurredAt);
+    }
+
+    @Override
+    public void insertStockMovement(StockMovement stockMovement) {
+        goodsReceiptMapper.insertStockMovement(
+                domainObjectMapper.convertValue(stockMovement, StockMovementDbEntity.class));
+    }
+
+    @Override
+    public boolean markCompleted(
+            UUID id,
+            GoodsReceiptStatus status,
+            UUID actorId,
+            Instant completedAt,
+            UUID idempotencyKey) {
+        return goodsReceiptMapper.markCompleted(id, status, actorId, completedAt, idempotencyKey) > 0;
+    }
+
+    @Override
+    public int countReceiptMovements(UUID goodsReceiptId) {
+        return goodsReceiptMapper.countReceiptMovements(goodsReceiptId);
+    }
+
+    @Override
+    public List<StockBalance> findStockBalancesByReceipt(UUID goodsReceiptId) {
+        return goodsReceiptMapper.findStockBalancesByReceipt(goodsReceiptId).stream()
+                .map(entity -> new StockBalance(entity.getItemCode(), entity.getQuantityOnHand()))
+                .toList();
     }
 
     private GoodsReceipt toDomain(GoodsReceiptDbEntity header) {

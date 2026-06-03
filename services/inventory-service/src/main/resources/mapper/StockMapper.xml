@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.inventory.infrastructure.persistence.mapper.StockMapper">
+
+    <resultMap id="stockEntryResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.StockEntryViewDbEntity">
+        <result property="itemCode" column="item_code"/>
+        <result property="itemName" column="item_name"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="warehouseName" column="warehouse_name"/>
+        <result property="quantityOnHand" column="quantity_on_hand"/>
+        <result property="unit" column="unit"/>
+        <result property="reorderPoint" column="reorder_point"/>
+        <result property="belowReorder" column="below_reorder"/>
+        <result property="lastUpdated" column="last_updated"/>
+    </resultMap>
+
+    <resultMap id="stockMovementHistoryResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.StockMovementHistoryDbEntity">
+        <id property="id" column="id"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="itemName" column="item_name"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="movementType" column="movement_type"/>
+        <result property="quantity" column="quantity"/>
+        <result property="unit" column="unit"/>
+        <result property="balanceAfter" column="balance_after"/>
+        <result property="sourceRefType" column="source_ref_type"/>
+        <result property="sourceRefId" column="source_ref_id"/>
+        <result property="performedBy" column="performed_by"/>
+        <result property="performedByFullName" column="performed_by_full_name"/>
+        <result property="performedAt" column="performed_at"/>
+        <result property="notes" column="notes"/>
+    </resultMap>
+
+    <sql id="stockEntryFrom">
+        FROM inventory.stock_entries se
+        JOIN inventory.items item
+          ON item.item_code = se.item_code
+         AND item.is_active = TRUE
+         AND item.is_deleted = FALSE
+        JOIN inventory.warehouses wh
+          ON wh.id = se.warehouse_id
+         AND wh.is_active = TRUE
+         AND wh.is_deleted = FALSE
+    </sql>
+
+    <sql id="stockEntryWhereClause">
+        WHERE se.is_deleted = FALSE
+        <if test="filter.itemCode != null">
+            AND se.item_code = #{filter.itemCode}
+        </if>
+        <if test="filter.warehouseId != null">
+            AND se.warehouse_id = #{filter.warehouseId}
+        </if>
+        <if test="filter.belowReorder != null and filter.belowReorder == true">
+            AND item.reorder_point IS NOT NULL
+            AND se.quantity_on_hand &lt; item.reorder_point
+        </if>
+        <if test="filter.belowReorder != null and filter.belowReorder == false">
+            AND (
+                item.reorder_point IS NULL
+                OR se.quantity_on_hand &gt;= item.reorder_point
+            )
+        </if>
+    </sql>
+
+    <select id="findStockEntries" resultMap="stockEntryResultMap">
+        SELECT
+            se.item_code,
+            item.name AS item_name,
+            se.warehouse_id,
+            wh.name AS warehouse_name,
+            se.quantity_on_hand,
+            se.unit,
+            item.reorder_point,
+            CASE
+                WHEN item.reorder_point IS NOT NULL
+                 AND se.quantity_on_hand &lt; item.reorder_point
+                THEN TRUE
+                ELSE FALSE
+            END AS below_reorder,
+            se.last_updated
+        <include refid="stockEntryFrom"/>
+        <include refid="stockEntryWhereClause"/>
+        ORDER BY item.name ASC, se.item_code ASC, wh.name ASC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countStockEntries" resultType="long">
+        SELECT COUNT(*)
+        <include refid="stockEntryFrom"/>
+        <include refid="stockEntryWhereClause"/>
+    </select>
+
+    <sql id="stockMovementFrom">
+        FROM inventory.stock_movements sm
+        LEFT JOIN inventory.items item
+          ON item.item_code = sm.item_code
+         AND item.is_deleted = FALSE
+    </sql>
+
+    <sql id="stockMovementWhereClause">
+        WHERE 1 = 1
+        <if test="filter.itemCode != null">
+            AND sm.item_code = #{filter.itemCode}
+        </if>
+        <if test="filter.warehouseId != null">
+            AND sm.warehouse_id = #{filter.warehouseId}
+        </if>
+        <if test="filter.movementType != null">
+            AND sm.movement_type = #{filter.movementType}
+        </if>
+        <if test="filter.fromPerformedAt != null">
+            AND sm.performed_at &gt;= #{filter.fromPerformedAt}
+        </if>
+        <if test="filter.toPerformedAtExclusive != null">
+            AND sm.performed_at &lt; #{filter.toPerformedAtExclusive}
+        </if>
+    </sql>
+
+    <select id="findMovements" resultMap="stockMovementHistoryResultMap">
+        SELECT
+            sm.id,
+            sm.item_code,
+            COALESCE(item.name, sm.item_code) AS item_name,
+            sm.warehouse_id,
+            sm.movement_type,
+            sm.quantity,
+            sm.unit,
+            sm.balance_after,
+            sm.source_ref_type,
+            sm.source_ref_id,
+            sm.performed_by,
+            sm.performed_by::text AS performed_by_full_name,
+            sm.performed_at,
+            sm.notes
+        <include refid="stockMovementFrom"/>
+        <include refid="stockMovementWhereClause"/>
+        ORDER BY sm.performed_at DESC, sm.id DESC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countMovements" resultType="long">
+        SELECT COUNT(*)
+        <include refid="stockMovementFrom"/>
+        <include refid="stockMovementWhereClause"/>
+    </select>
+</mapper>

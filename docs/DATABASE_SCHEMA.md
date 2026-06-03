@@ -858,11 +858,14 @@ inventory.purchase_order_line_snapshots
 inventory.goods_receipts
   id UUID PK, gr_number VARCHAR(30), po_id UUID, warehouse_id UUID FK warehouses(id),
   warehouse_keeper_id UUID, warehouse_keeper_full_name VARCHAR(200),
-  received_at TIMESTAMPTZ, status VARCHAR(30), notes TEXT, idempotency_key UUID
+  received_at TIMESTAMPTZ, status VARCHAR(30), notes TEXT, idempotency_key UUID,
+  completed_at TIMESTAMPTZ, completed_by UUID, completed_idempotency_key UUID
   status IN ('DRAFT','PARTIAL','COMPLETE','DISCREPANCY')
   ux_goods_receipts_idempotency_active(idempotency_key) WHERE idempotency_key IS NOT NULL AND is_deleted = FALSE
+  ux_goods_receipts_completed_idempotency_active(completed_idempotency_key) WHERE completed_idempotency_key IS NOT NULL AND is_deleted = FALSE
   ix_goods_receipts_received_at_active(received_at) WHERE is_deleted = FALSE
   ix_goods_receipts_created_at_active(created_at DESC, gr_number DESC) WHERE is_deleted = FALSE
+  ix_goods_receipts_completed_at_active(completed_at DESC) WHERE completed_at IS NOT NULL AND is_deleted = FALSE
   inventory.gr_number_seq generates GR numbers in GR-YYYY-000001 format
 
 inventory.goods_receipt_line_items
@@ -877,6 +880,8 @@ inventory.stock_movements -- immutable, no soft delete
   balance_after NUMERIC(19,4), source_ref_type VARCHAR(50), source_ref_id UUID,
   performed_by UUID, performed_at TIMESTAMPTZ, notes TEXT
   movement_type IN ('RECEIPT_IN','ISSUE_OUT','ADJUSTMENT','TRANSFER')
+  Complete GR writes RECEIPT_IN rows with source_ref_type = 'GOODS_RECEIPT'
+  ix_stock_movements_type_performed(movement_type, performed_at DESC)
 
 inventory.event_processing_log -- immutable Kafka idempotency log
   event_id VARCHAR(100) PK, topic VARCHAR(200), partition_id INTEGER,

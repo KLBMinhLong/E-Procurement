@@ -257,6 +257,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `INVENTORY_KAFKA_ENABLED` | `true` | `true` | Bật/tắt Kafka integration của Inventory |
 | `INVENTORY_KAFKA_AUTO_STARTUP` | `true` | `true` | Khi `true`, Inventory start Kafka listeners sau khi app ready |
 | `INVENTORY_KAFKA_TOPIC_PO_ISSUED` | `procurement.po.issued` | `procurement.po.issued` | Topic nhận PO issued snapshot từ Finance |
+| `INVENTORY_KAFKA_TOPIC_GR_CREATED` | `inventory.gr.created` | `inventory.gr.created` | Topic phát GR completed cho Finance/Notification |
 
 ---
 

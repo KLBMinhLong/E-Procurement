@@ -38,6 +38,12 @@
         <result property="createdBy" column="created_by"/>
     </resultMap>
 
+    <resultMap id="stockBalanceResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.StockBalanceDbEntity">
+        <result property="itemCode" column="item_code"/>
+        <result property="quantityOnHand" column="quantity_on_hand"/>
+    </resultMap>
+
     <sql id="goodsReceiptColumns">
         gr.id,
         gr.gr_number,
@@ -101,6 +107,15 @@
           AND gr.is_deleted = FALSE
     </select>
 
+    <select id="findHeaderByIdAndCompleteIdempotencyKey" resultMap="goodsReceiptHeaderResultMap">
+        SELECT
+            <include refid="goodsReceiptColumns"/>
+        <include refid="goodsReceiptFrom"/>
+        WHERE gr.id = #{id}
+          AND gr.completed_idempotency_key = #{idempotencyKey}
+          AND gr.is_deleted = FALSE
+    </select>
+
     <select id="findHeadersByFilter" resultMap="goodsReceiptHeaderResultMap">
         SELECT
             <include refid="goodsReceiptColumns"/>
@@ -134,5 +149,19 @@
         WHERE goods_receipt_id = #{goodsReceiptId}
           AND is_deleted = FALSE
         ORDER BY id ASC
+    </select>
+
+    <select id="findStockBalancesByReceipt" resultMap="stockBalanceResultMap">
+        SELECT DISTINCT
+            se.item_code,
+            se.quantity_on_hand
+        FROM inventory.stock_movements sm
+        JOIN inventory.stock_entries se
+          ON se.item_code = sm.item_code
+         AND se.warehouse_id = sm.warehouse_id
+         AND se.is_deleted = FALSE
+        WHERE sm.source_ref_type = 'GOODS_RECEIPT'
+          AND sm.source_ref_id = #{goodsReceiptId}
+        ORDER BY se.item_code ASC
     </select>
 </mapper>

@@ -2,6 +2,7 @@ package com.eprocure.inventory.presentation.controller;
 
 import com.eprocure.inventory.application.service.GoodsReceiptMutationResult;
 import com.eprocure.inventory.application.service.PageResult;
+import com.eprocure.inventory.application.usecase.CompleteGoodsReceiptUseCase;
 import com.eprocure.inventory.application.usecase.CreateGoodsReceiptUseCase;
 import com.eprocure.inventory.application.usecase.GetGoodsReceiptUseCase;
 import com.eprocure.inventory.application.usecase.ListGoodsReceiptsUseCase;
@@ -12,6 +13,7 @@ import com.eprocure.inventory.common.util.LogMaskingUtil;
 import com.eprocure.inventory.domain.model.GoodsReceiptStatus;
 import com.eprocure.inventory.presentation.mapper.GoodsReceiptPresentationMapper;
 import com.eprocure.inventory.presentation.request.CreateGoodsReceiptRequest;
+import com.eprocure.inventory.presentation.response.CompleteGoodsReceiptResponse;
 import com.eprocure.inventory.presentation.response.GoodsReceiptResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -42,16 +44,19 @@ public class GoodsReceiptController {
     private final ListGoodsReceiptsUseCase listGoodsReceiptsUseCase;
     private final CreateGoodsReceiptUseCase createGoodsReceiptUseCase;
     private final GetGoodsReceiptUseCase getGoodsReceiptUseCase;
+    private final CompleteGoodsReceiptUseCase completeGoodsReceiptUseCase;
     private final GoodsReceiptPresentationMapper mapper;
 
     public GoodsReceiptController(
             ListGoodsReceiptsUseCase listGoodsReceiptsUseCase,
             CreateGoodsReceiptUseCase createGoodsReceiptUseCase,
             GetGoodsReceiptUseCase getGoodsReceiptUseCase,
+            CompleteGoodsReceiptUseCase completeGoodsReceiptUseCase,
             GoodsReceiptPresentationMapper mapper) {
         this.listGoodsReceiptsUseCase = listGoodsReceiptsUseCase;
         this.createGoodsReceiptUseCase = createGoodsReceiptUseCase;
         this.getGoodsReceiptUseCase = getGoodsReceiptUseCase;
+        this.completeGoodsReceiptUseCase = completeGoodsReceiptUseCase;
         this.mapper = mapper;
     }
 
@@ -119,5 +124,25 @@ public class GoodsReceiptController {
         GoodsReceiptResponse response = mapper.toResponse(
                 getGoodsReceiptUseCase.execute(mapper.toGetQuery(principal, id)));
         return ResponseEntity.ok(ApiResponse.success(response, RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("hasAuthority('GR_CREATE')")
+    public ResponseEntity<ApiResponse<CompleteGoodsReceiptResponse>> complete(
+            @PathVariable UUID id,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/goods-receipts/{}/complete | userId={}",
+                LogMaskingUtil.maskId(id),
+                LogMaskingUtil.maskId(principal.getId()));
+        var result = completeGoodsReceiptUseCase.execute(
+                mapper.toCompleteCommand(principal, id),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
     }
 }

@@ -34,6 +34,7 @@
 | KAFKA_AUTO_OFFSET_RESET | earliest |
 | FINANCE_KAFKA_ENABLED | Enables Finance Kafka consumers/producers |
 | FINANCE_KAFKA_AUTO_STARTUP | Starts Finance Kafka listeners after ApplicationReady and keeps HTTP health independent from temporary broker DNS/startup failures |
+| INVENTORY_KAFKA_TOPIC_GR_CREATED | Topic used by inventory-service to publish completed Goods Receipts |
 
 ## Keycloak (IAM only)
 | Variable | Notes |
