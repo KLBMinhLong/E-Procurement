@@ -175,7 +175,7 @@ components:
             $ref: '#/components/schemas/PoLineItem'
         totalAmount:      { type: string }
         currency:         { type: string }
-        deliveryAddress:  { type: string }
+        deliveryAddress:  { type: string, nullable: true }
         deliveryDeadline: { type: string, format: date, nullable: true }
         paymentTerms:     { type: string, nullable: true }
         issuedAt:         { type: string, format: date-time, nullable: true }

@@ -684,22 +684,32 @@ CREATE INDEX idx_budget_transfers_target ON finance.budget_transfers(target_budg
 ```sql
 CREATE TABLE finance.purchase_orders (
     id                      UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    po_number               VARCHAR(20)     NOT NULL UNIQUE,
+    po_number               VARCHAR(30)     NOT NULL UNIQUE,
     pr_id                   UUID            NOT NULL,
+    pr_number               VARCHAR(40)     NOT NULL,
+    rfq_id                  UUID,
+    rfq_number              VARCHAR(40),
+    awarded_quote_id        UUID,
     vendor_id               UUID            NOT NULL,
+    vendor_name             VARCHAR(255)    NOT NULL,
+    vendor_email            VARCHAR(255),
+    vendor_tax_code         VARCHAR(50),
     purchasing_officer_id   UUID            NOT NULL,
+    purchasing_officer_full_name VARCHAR(255),
     status                  VARCHAR(30)     NOT NULL DEFAULT 'DRAFT',
     total_amount            NUMERIC(19,4)   NOT NULL DEFAULT 0,
     currency                VARCHAR(3)      NOT NULL DEFAULT 'VND',
-    delivery_address        TEXT            NOT NULL,
+    delivery_address        TEXT,
     delivery_deadline       DATE,
     payment_terms           VARCHAR(100),
     is_blanket_release      BOOLEAN         NOT NULL DEFAULT FALSE,
     issued_at               TIMESTAMPTZ,
     sent_to_vendor_at       TIMESTAMPTZ,
+    source_event_id         VARCHAR(80),
     created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     created_by              UUID            NOT NULL,
+    updated_by              UUID,
     is_deleted              BOOLEAN         NOT NULL DEFAULT FALSE,
     deleted_at              TIMESTAMPTZ,
     deleted_by              UUID,
@@ -709,12 +719,50 @@ CREATE TABLE finance.purchase_orders (
         'PARTIALLY_RECEIVED','FULLY_RECEIVED','INVOICED','PAID','CLOSED','CANCELLED'
     ))
 );
-CREATE INDEX idx_po_pr ON finance.purchase_orders(pr_id);
-CREATE INDEX idx_po_vendor ON finance.purchase_orders(vendor_id);
+CREATE UNIQUE INDEX ux_purchase_orders_rfq_active
+    ON finance.purchase_orders(rfq_id)
+    WHERE rfq_id IS NOT NULL AND is_deleted = FALSE;
+CREATE UNIQUE INDEX ux_purchase_orders_source_event_active
+    ON finance.purchase_orders(source_event_id)
+    WHERE source_event_id IS NOT NULL AND is_deleted = FALSE;
+CREATE INDEX idx_po_pr ON finance.purchase_orders(pr_id) WHERE is_deleted = FALSE;
+CREATE INDEX idx_po_vendor ON finance.purchase_orders(vendor_id) WHERE is_deleted = FALSE;
 CREATE INDEX idx_po_status ON finance.purchase_orders(status) WHERE is_deleted = FALSE;
 ```
 
-### 5.7 invoices
+### 5.7 po_line_items
+
+```sql
+CREATE TABLE finance.po_line_items (
+    id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
+    po_id           UUID            NOT NULL REFERENCES finance.purchase_orders(id),
+    line_number     INTEGER         NOT NULL,
+    rfq_line_item_id UUID,
+    pr_line_item_id UUID            NOT NULL,
+    item_name       VARCHAR(255)    NOT NULL,
+    category_code   VARCHAR(80)     NOT NULL,
+    quantity        NUMERIC(19,4)   NOT NULL,
+    unit            VARCHAR(30)     NOT NULL,
+    unit_price      NUMERIC(19,4)   NOT NULL,
+    total_price     NUMERIC(19,4)   NOT NULL,
+    currency        VARCHAR(3)      NOT NULL DEFAULT 'VND',
+    delivery_days   INTEGER,
+    warranty        TEXT,
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by      UUID            NOT NULL,
+    updated_by      UUID,
+    is_deleted      BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMPTZ,
+    deleted_by      UUID
+);
+CREATE UNIQUE INDEX ux_po_line_items_line_active
+    ON finance.po_line_items(po_id, line_number)
+    WHERE is_deleted = FALSE;
+CREATE INDEX idx_po_line_items_po_active ON finance.po_line_items(po_id) WHERE is_deleted = FALSE;
+```
+
+### 5.8 invoices
 
 ```sql
 CREATE TABLE finance.invoices (

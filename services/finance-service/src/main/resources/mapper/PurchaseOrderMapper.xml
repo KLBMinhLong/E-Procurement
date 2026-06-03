@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.finance.infrastructure.persistence.mapper.PurchaseOrderMapper">
+
+    <resultMap id="purchaseOrderHeaderResultMap"
+               type="com.eprocure.finance.infrastructure.persistence.entity.PurchaseOrderDbEntity">
+        <id property="id" column="id"/>
+        <result property="poNumber" column="po_number"/>
+        <result property="prId" column="pr_id"/>
+        <result property="prNumber" column="pr_number"/>
+        <result property="rfqId" column="rfq_id"/>
+        <result property="rfqNumber" column="rfq_number"/>
+        <result property="awardedQuoteId" column="awarded_quote_id"/>
+        <result property="vendorId" column="vendor_id"/>
+        <result property="vendorName" column="vendor_name"/>
+        <result property="vendorEmail" column="vendor_email"/>
+        <result property="vendorTaxCode" column="vendor_tax_code"/>
+        <result property="purchasingOfficerId" column="purchasing_officer_id"/>
+        <result property="purchasingOfficerFullName" column="purchasing_officer_full_name"/>
+        <result property="status" column="status"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="currency" column="currency"/>
+        <result property="deliveryAddress" column="delivery_address"/>
+        <result property="deliveryDeadline" column="delivery_deadline"/>
+        <result property="paymentTerms" column="payment_terms"/>
+        <result property="issuedAt" column="issued_at"/>
+        <result property="sentToVendorAt" column="sent_to_vendor_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="sourceEventId" column="source_event_id"/>
+    </resultMap>
+
+    <resultMap id="purchaseOrderLineItemResultMap"
+               type="com.eprocure.finance.infrastructure.persistence.entity.PurchaseOrderLineItemDbEntity">
+        <id property="id" column="id"/>
+        <result property="poId" column="po_id"/>
+        <result property="lineNumber" column="line_number"/>
+        <result property="rfqLineItemId" column="rfq_line_item_id"/>
+        <result property="prLineItemId" column="pr_line_item_id"/>
+        <result property="itemName" column="item_name"/>
+        <result property="categoryCode" column="category_code"/>
+        <result property="quantity" column="quantity"/>
+        <result property="unit" column="unit"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="currency" column="currency"/>
+        <result property="deliveryDays" column="delivery_days"/>
+        <result property="warranty" column="warranty"/>
+    </resultMap>
+
+    <sql id="purchaseOrderColumns">
+        po.id,
+        po.po_number,
+        po.pr_id,
+        po.pr_number,
+        po.rfq_id,
+        po.rfq_number,
+        po.awarded_quote_id,
+        po.vendor_id,
+        po.vendor_name,
+        po.vendor_email,
+        po.vendor_tax_code,
+        po.purchasing_officer_id,
+        po.purchasing_officer_full_name,
+        po.status,
+        po.total_amount,
+        po.currency,
+        po.delivery_address,
+        po.delivery_deadline,
+        po.payment_terms,
+        po.issued_at,
+        po.sent_to_vendor_at,
+        po.created_at,
+        po.source_event_id
+    </sql>
+
+    <sql id="purchaseOrderWhereClause">
+        WHERE po.is_deleted = FALSE
+        <if test="filter.purchasingOfficerId != null">
+            AND po.purchasing_officer_id = #{filter.purchasingOfficerId}
+        </if>
+        <if test="filter.status != null">
+            AND po.status = #{filter.status}
+        </if>
+        <if test="filter.vendorId != null">
+            AND po.vendor_id = #{filter.vendorId}
+        </if>
+        <if test="filter.fromCreatedAt != null">
+            AND po.created_at &gt;= #{filter.fromCreatedAt}
+        </if>
+        <if test="filter.toCreatedAtExclusive != null">
+            AND po.created_at &lt; #{filter.toCreatedAtExclusive}
+        </if>
+    </sql>
+
+    <select id="findHeaderById" resultMap="purchaseOrderHeaderResultMap">
+        SELECT
+            <include refid="purchaseOrderColumns"/>
+        FROM finance.purchase_orders po
+        WHERE po.id = #{poId}
+          AND po.is_deleted = FALSE
+    </select>
+
+    <select id="findHeaderBySourceEventId" resultMap="purchaseOrderHeaderResultMap">
+        SELECT
+            <include refid="purchaseOrderColumns"/>
+        FROM finance.purchase_orders po
+        WHERE po.source_event_id = #{sourceEventId}
+          AND po.is_deleted = FALSE
+    </select>
+
+    <select id="findHeaderByRfqId" resultMap="purchaseOrderHeaderResultMap">
+        SELECT
+            <include refid="purchaseOrderColumns"/>
+        FROM finance.purchase_orders po
+        WHERE po.rfq_id = #{rfqId}
+          AND po.is_deleted = FALSE
+        ORDER BY po.created_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="findHeadersByFilter" resultMap="purchaseOrderHeaderResultMap">
+        SELECT
+            <include refid="purchaseOrderColumns"/>
+        FROM finance.purchase_orders po
+        <include refid="purchaseOrderWhereClause"/>
+        ORDER BY
+        <choose>
+            <when test="filter.sortField == 'poNumber'">po.po_number</when>
+            <when test="filter.sortField == 'status'">po.status</when>
+            <when test="filter.sortField == 'vendorName'">po.vendor_name</when>
+            <when test="filter.sortField == 'totalAmount'">po.total_amount</when>
+            <otherwise>po.created_at</otherwise>
+        </choose>
+        <choose>
+            <when test="filter.sortDirection != null and filter.sortDirection.equalsIgnoreCase('asc')">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>,
+        po.po_number DESC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        FROM finance.purchase_orders po
+        <include refid="purchaseOrderWhereClause"/>
+    </select>
+
+    <select id="findLineItemsByPoId" resultMap="purchaseOrderLineItemResultMap">
+        SELECT
+            id,
+            po_id,
+            line_number,
+            rfq_line_item_id,
+            pr_line_item_id,
+            item_name,
+            category_code,
+            quantity,
+            unit,
+            unit_price,
+            total_price,
+            currency,
+            delivery_days,
+            warranty
+        FROM finance.po_line_items
+        WHERE po_id = #{poId}
+          AND is_deleted = FALSE
+        ORDER BY line_number ASC
+    </select>
+
+    <select id="findLineItemsByPoIds" resultMap="purchaseOrderLineItemResultMap">
+        SELECT
+            id,
+            po_id,
+            line_number,
+            rfq_line_item_id,
+            pr_line_item_id,
+            item_name,
+            category_code,
+            quantity,
+            unit,
+            unit_price,
+            total_price,
+            currency,
+            delivery_days,
+            warranty
+        FROM finance.po_line_items
+        WHERE is_deleted = FALSE
+          AND po_id IN
+          <foreach collection="poIds" item="poId" open="(" separator="," close=")">
+              #{poId}
+          </foreach>
+        ORDER BY po_id ASC, line_number ASC
+    </select>
+</mapper>

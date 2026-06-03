@@ -394,3 +394,10 @@
 - Reason: Finance PO creation needs an auditable event payload, but implementing full PO persistence/API in finance-service is a separate slice from RFQ award.
 - Impact: The event carries RFQ/PR ids, awarded vendor/quote, amount/currency, payment terms, award reason, and line item snapshot including PR line item id, category, quantity, unit price, and total price.
 - Constraint: finance-service consumer and PO persistence/API remain the next implementation step.
+
+## [2026-06-03] E07 PO foundation from RFQ award
+
+- Decision: Let `finance-service` consume `procurement.rfq.awarded` and create a DRAFT PO snapshot with nullable delivery details, using `finance.event_processing_log` and unique RFQ/source-event indexes for idempotency.
+- Reason: RFQ award events do not carry delivery address/deadline, but the system needs an inspectable PO record before the purchasing workflow can complete send/issue actions.
+- Impact: `finance.purchase_orders` and `finance.po_line_items` persist RFQ/PR/vendor/quote snapshots; `GET /api/v1/purchase-orders` and `GET /api/v1/purchase-orders/{id}` expose the generated PO under `PO_VIEW_OWN`/`PO_VIEW_ALL`.
+- Constraint: Manual PO create/edit, send/cancel, and `procurement.po.issued` publication remain E07 follow-up work.
