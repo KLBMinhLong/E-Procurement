@@ -435,3 +435,9 @@
 - Decision: Stock read APIs use a dedicated `StockRepository` and read projections for current stock and movement history, exposed with `GR_VIEW` on `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, and `GET /api/v1/stock/movements`.
 - Reason: Querying stock should not expand the Goods Receipt repository responsibility, and FE needs a stable read contract before implementing issue-out workflows.
 - Constraint: `stock_movements` currently stores only `performed_by`, so `performedBy.fullName` falls back to the UUID string until IAM/user snapshot integration is added. Issue-out remains the next E08 slice.
+
+## [2026-06-03] E08 Issue-out stock API
+
+- Decision: `POST /api/v1/stock/issue-out` records an idempotent `inventory.stock_issue_out_requests` header, atomically decrements `stock_entries`, and appends `ISSUE_OUT` rows in `stock_movements` with negative ledger quantities.
+- Reason: Multi-line issue-out needs replay-safe request grouping and must fail/rollback when any line lacks sufficient stock.
+- Constraint: The API validates active item and warehouse locally; recipient identity is captured as a UUID snapshot and can be enriched by IAM integration later.

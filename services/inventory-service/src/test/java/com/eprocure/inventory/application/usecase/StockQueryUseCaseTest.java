@@ -9,6 +9,8 @@ import com.eprocure.inventory.application.port.in.ListWarehouseStockQuery;
 import com.eprocure.inventory.common.exception.BusinessException;
 import com.eprocure.inventory.common.exception.ErrorCode;
 import com.eprocure.inventory.domain.model.StockEntry;
+import com.eprocure.inventory.domain.model.StockIssueOutRequest;
+import com.eprocure.inventory.domain.model.StockMovement;
 import com.eprocure.inventory.domain.model.StockMovementHistory;
 import com.eprocure.inventory.domain.model.StockMovementType;
 import com.eprocure.inventory.domain.repository.StockEntryFilter;
@@ -20,6 +22,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -230,6 +233,37 @@ class StockQueryUseCaseTest {
         @Override
         public long countMovements(StockMovementFilter filter) {
             return filterMovements(filter).size();
+        }
+
+        @Override
+        public Optional<StockIssueOutRequest> findIssueOutRequestByIdempotencyKey(UUID idempotencyKey) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public void insertIssueOutRequest(StockIssueOutRequest issueOutRequest) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public Optional<BigDecimal> issueStock(
+                String itemCode,
+                UUID warehouseId,
+                BigDecimal quantity,
+                String unit,
+                UUID actorId,
+                Instant occurredAt) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public void insertStockMovement(StockMovement stockMovement) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public List<StockMovementHistory> findMovementsBySource(String sourceRefType, UUID sourceRefId) {
+            throw new UnsupportedOperationException("not used");
         }
 
         private List<StockEntry> filterStockEntries(StockEntryFilter filter) {

@@ -34,6 +34,18 @@
         <result property="notes" column="notes"/>
     </resultMap>
 
+    <resultMap id="stockIssueOutRequestResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.StockIssueOutRequestDbEntity">
+        <id property="id" column="id"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="prId" column="pr_id"/>
+        <result property="recipientId" column="recipient_id"/>
+        <result property="issuedBy" column="issued_by"/>
+        <result property="issuedAt" column="issued_at"/>
+        <result property="notes" column="notes"/>
+    </resultMap>
+
     <sql id="stockEntryFrom">
         FROM inventory.stock_entries se
         JOIN inventory.items item
@@ -146,5 +158,42 @@
         SELECT COUNT(*)
         <include refid="stockMovementFrom"/>
         <include refid="stockMovementWhereClause"/>
+    </select>
+
+    <select id="findIssueOutRequestByIdempotencyKey" resultMap="stockIssueOutRequestResultMap">
+        SELECT
+            id,
+            idempotency_key,
+            warehouse_id,
+            pr_id,
+            recipient_id,
+            issued_by,
+            issued_at,
+            notes
+        FROM inventory.stock_issue_out_requests
+        WHERE idempotency_key = #{idempotencyKey}
+          AND is_deleted = FALSE
+    </select>
+
+    <select id="findMovementsBySource" resultMap="stockMovementHistoryResultMap">
+        SELECT
+            sm.id,
+            sm.item_code,
+            COALESCE(item.name, sm.item_code) AS item_name,
+            sm.warehouse_id,
+            sm.movement_type,
+            sm.quantity,
+            sm.unit,
+            sm.balance_after,
+            sm.source_ref_type,
+            sm.source_ref_id,
+            sm.performed_by,
+            sm.performed_by::text AS performed_by_full_name,
+            sm.performed_at,
+            sm.notes
+        <include refid="stockMovementFrom"/>
+        WHERE sm.source_ref_type = #{sourceRefType}
+          AND sm.source_ref_id = #{sourceRefId}
+        ORDER BY sm.performed_at ASC, sm.id ASC
     </select>
 </mapper>
