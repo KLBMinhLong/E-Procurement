@@ -115,6 +115,8 @@
 | INV_005 | 409 | GR da hoan tat, khong the chinh sua |
 | INV_006 | 422 | So luong nhan thuc te khong the vuot 10% |
 | INV_007 | 422 | Item code da ton tai |
+| INV_009 | 404 | Issued Purchase Order snapshot khong ton tai |
+| INV_010 | 422 | PO line item khong thuoc snapshot |
 
 ### Vendor (VND_)
 | Code | HTTP | Description |

@@ -415,3 +415,10 @@
 - Reason: Goods Receipt needs a durable issued-PO source before stock receipt can be implemented, while the PO issued event currently carries item name/category snapshots but not canonical inventory item codes.
 - Impact: `inventory-service` is now a Maven/Docker/Compose service on port 8085 with Flyway V1 inventory foundation, Kafka listener delayed until application ready, and unit-tested idempotent PO snapshot recording.
 - Constraint: GR create/complete APIs must resolve or capture catalog item codes in the next slice before updating `stock_entries` and publishing `inventory.gr.created`.
+
+## [2026-06-03] E08 Goods Receipt draft API from PO snapshots
+
+- Decision: Add DRAFT Goods Receipt create/list/detail APIs backed by issued PO snapshots, with DB-level `idempotency_key` on `inventory.goods_receipts`.
+- Reason: Warehouse users need a persisted GR draft before stock receipt-in can safely update inventory balances. PO issued events still do not carry canonical `itemCode`, so GR line `itemCode` remains nullable until the complete/stock slice resolves catalog mapping.
+- Impact: `POST /api/v1/goods-receipts` validates PO snapshot, active warehouse, line membership, duplicate lines, and quantity tolerance. `GET /api/v1/goods-receipts` and `GET /api/v1/goods-receipts/{id}` expose DRAFT GR data under `GR_VIEW`.
+- Constraint: Complete GR, stock entry updates, `RECEIPT_IN` stock movements, and `inventory.gr.created` publication remain the next E08 slice.

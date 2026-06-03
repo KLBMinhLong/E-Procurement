@@ -133,7 +133,7 @@ components:
       properties:
         id:                { type: string, format: uuid }
         poLineItemId:      { type: string, format: uuid }
-        itemCode:          { type: string }
+        itemCode:          { type: string, nullable: true }
         itemName:          { type: string }
         orderedQuantity:   { type: string }
         receivedQuantity:  { type: string }
@@ -632,6 +632,18 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/GoodsReceiptDetail'
+        '404':
+          description: Issued PO snapshot hoặc warehouse không tìm thấy (INV_009/INV_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Line item không thuộc PO hoặc số lượng vượt tolerance (INV_010/INV_006)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /goods-receipts/{id}:
     get:
@@ -656,6 +668,12 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/GoodsReceiptDetail'
+        '404':
+          description: GR không tìm thấy (INV_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
     put:
       tags: [Goods Receipt]
