@@ -23,6 +23,14 @@ public interface InvoiceMapper {
             @Param("invoiceId") UUID invoiceId,
             @Param("idempotencyKey") UUID idempotencyKey);
 
+    Optional<InvoiceDbEntity> findHeaderByIdAndApprovalIdempotencyKey(
+            @Param("invoiceId") UUID invoiceId,
+            @Param("idempotencyKey") UUID idempotencyKey);
+
+    Optional<InvoiceDbEntity> findHeaderByIdAndDisputeIdempotencyKey(
+            @Param("invoiceId") UUID invoiceId,
+            @Param("idempotencyKey") UUID idempotencyKey);
+
     Optional<InvoiceDbEntity> findHeaderByVendorIdAndInvoiceNumber(
             @Param("vendorId") UUID vendorId,
             @Param("invoiceNumber") String invoiceNumber);
@@ -89,4 +97,52 @@ public interface InvoiceMapper {
             @Param("matchedAt") java.time.Instant matchedAt,
             @Param("matchedBy") UUID matchedBy,
             @Param("idempotencyKey") UUID idempotencyKey);
+
+    @Update("""
+            UPDATE finance.invoices
+            SET status = 'APPROVED',
+                approved_by = #{approvedBy},
+                approved_at = #{approvedAt},
+                approval_idempotency_key = #{idempotencyKey},
+                updated_by = #{approvedBy}
+            WHERE id = #{invoiceId}
+              AND is_deleted = FALSE
+            """)
+    void markApproved(
+            @Param("invoiceId") UUID invoiceId,
+            @Param("approvedBy") UUID approvedBy,
+            @Param("approvedAt") java.time.Instant approvedAt,
+            @Param("idempotencyKey") UUID idempotencyKey);
+
+    @Update("""
+            UPDATE finance.invoices
+            SET status = 'DISPUTED',
+                dispute_reason = #{reason},
+                disputed_by = #{disputedBy},
+                disputed_at = #{disputedAt},
+                dispute_idempotency_key = #{idempotencyKey},
+                updated_by = #{disputedBy}
+            WHERE id = #{invoiceId}
+              AND is_deleted = FALSE
+            """)
+    void markDisputed(
+            @Param("invoiceId") UUID invoiceId,
+            @Param("reason") String reason,
+            @Param("disputedBy") UUID disputedBy,
+            @Param("disputedAt") java.time.Instant disputedAt,
+            @Param("idempotencyKey") UUID idempotencyKey);
+
+    @Update("""
+            UPDATE finance.invoices
+            SET status = 'PAID',
+                paid_by = #{paidBy},
+                paid_at = #{paidAt},
+                updated_by = #{paidBy}
+            WHERE id = #{invoiceId}
+              AND is_deleted = FALSE
+            """)
+    void markPaid(
+            @Param("invoiceId") UUID invoiceId,
+            @Param("paidBy") UUID paidBy,
+            @Param("paidAt") java.time.Instant paidAt);
 }

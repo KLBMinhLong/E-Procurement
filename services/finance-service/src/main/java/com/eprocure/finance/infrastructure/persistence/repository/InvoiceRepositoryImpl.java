@@ -41,6 +41,16 @@ public class InvoiceRepositoryImpl implements InvoiceRepository {
     }
 
     @Override
+    public Optional<Invoice> findByIdAndApprovalIdempotencyKey(UUID invoiceId, UUID idempotencyKey) {
+        return invoiceMapper.findHeaderByIdAndApprovalIdempotencyKey(invoiceId, idempotencyKey).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<Invoice> findByIdAndDisputeIdempotencyKey(UUID invoiceId, UUID idempotencyKey) {
+        return invoiceMapper.findHeaderByIdAndDisputeIdempotencyKey(invoiceId, idempotencyKey).map(this::toDomain);
+    }
+
+    @Override
     public Optional<Invoice> findByVendorIdAndInvoiceNumber(UUID vendorId, String invoiceNumber) {
         return invoiceMapper.findHeaderByVendorIdAndInvoiceNumber(vendorId, invoiceNumber).map(this::toDomain);
     }
@@ -94,6 +104,21 @@ public class InvoiceRepositoryImpl implements InvoiceRepository {
                 matchedAt,
                 matchedBy,
                 idempotencyKey);
+    }
+
+    @Override
+    public void markApproved(UUID invoiceId, UUID approvedBy, java.time.Instant approvedAt, UUID idempotencyKey) {
+        invoiceMapper.markApproved(invoiceId, approvedBy, approvedAt, idempotencyKey);
+    }
+
+    @Override
+    public void markDisputed(UUID invoiceId, String reason, UUID disputedBy, java.time.Instant disputedAt, UUID idempotencyKey) {
+        invoiceMapper.markDisputed(invoiceId, reason, disputedBy, disputedAt, idempotencyKey);
+    }
+
+    @Override
+    public void markPaid(UUID invoiceId, UUID paidBy, java.time.Instant paidAt) {
+        invoiceMapper.markPaid(invoiceId, paidBy, paidAt);
     }
 
     private Invoice toDomain(InvoiceDbEntity header) {

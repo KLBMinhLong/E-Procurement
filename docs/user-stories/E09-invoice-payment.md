@@ -59,12 +59,16 @@ As finance, I want to approve, dispute, and confirm payment for invoices so that
 
 Acceptance:
 - Approve requires `INVOICE_APPROVE`.
-- Dispute requires a reason.
+- Approve is allowed only after 3-way match status is `MATCHED`.
+- Dispute requires a reason and is allowed only when invoice status is `MISMATCHED`.
 - Confirm payment requires `PAYMENT_CONFIRM`, payment date, and payment reference.
-- Paid invoices update finance spend ledger.
+- Confirm payment is allowed only for `APPROVED` invoices and records a `finance.payments` row.
+- The MVP payment action requires paid amount to equal invoice total amount before marking the invoice `PAID`.
+- Budget spent ledger update remains deferred until PO/invoice carries a reliable budget reference.
 
 ## Next Coding Slices
 
 1. Invoice create/list/detail foundation.
-2. Invoice approve/dispute actions.
-3. Payment confirmation and budget spent ledger update.
+2. 3-way match and `finance.invoice.matched` publication.
+3. Invoice approve/dispute/payment actions.
+4. Budget spent ledger link once the PO/invoice budget reference contract is available.

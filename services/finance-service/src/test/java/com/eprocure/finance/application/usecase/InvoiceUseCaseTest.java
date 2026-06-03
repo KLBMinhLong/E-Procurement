@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.finance.application.port.in.CreateInvoiceCommand;
+import com.eprocure.finance.application.port.in.ApproveInvoiceCommand;
+import com.eprocure.finance.application.port.in.ConfirmPaymentCommand;
+import com.eprocure.finance.application.port.in.DisputeInvoiceCommand;
 import com.eprocure.finance.application.port.in.GetInvoiceQuery;
 import com.eprocure.finance.application.port.in.ListInvoicesQuery;
 import com.eprocure.finance.application.port.in.MatchInvoiceCommand;
@@ -15,6 +18,7 @@ import com.eprocure.finance.domain.event.InvoiceMatchedEvent;
 import com.eprocure.finance.domain.model.Invoice;
 import com.eprocure.finance.domain.model.InvoiceStatus;
 import com.eprocure.finance.domain.model.MatchStatus;
+import com.eprocure.finance.domain.model.Payment;
 import com.eprocure.finance.domain.model.PurchaseOrder;
 import com.eprocure.finance.domain.model.PurchaseOrderLineItem;
 import com.eprocure.finance.domain.model.PurchaseOrderStatus;
@@ -22,6 +26,7 @@ import com.eprocure.finance.domain.model.vo.Money;
 import com.eprocure.finance.domain.repository.GoodsReceiptSnapshotRepository;
 import com.eprocure.finance.domain.repository.InvoiceFilter;
 import com.eprocure.finance.domain.repository.InvoiceRepository;
+import com.eprocure.finance.domain.repository.PaymentRepository;
 import com.eprocure.finance.domain.repository.PurchaseOrderFilter;
 import com.eprocure.finance.domain.repository.PurchaseOrderRepository;
 import java.math.BigDecimal;
@@ -52,11 +57,15 @@ class InvoiceUseCaseTest {
     private static final UUID PR_LINE_ITEM_ID = UUID.fromString("95000000-0000-4000-8000-000000000001");
     private static final String IDEMPOTENCY_KEY = "55555555-5555-4555-8555-555555555555";
     private static final String MATCH_IDEMPOTENCY_KEY = "66666666-6666-4666-8666-666666666666";
+    private static final String APPROVE_IDEMPOTENCY_KEY = "77777777-7777-4777-8777-777777777777";
+    private static final String DISPUTE_IDEMPOTENCY_KEY = "88888888-8888-4888-8888-888888888888";
+    private static final String PAYMENT_IDEMPOTENCY_KEY = "99999999-9999-4999-8999-999999999999";
 
     private FakeInvoiceRepository invoiceRepository;
     private FakePurchaseOrderRepository purchaseOrderRepository;
     private FakeGoodsReceiptSnapshotRepository goodsReceiptSnapshotRepository;
     private FakeInvoiceMatchedEventPublisher invoiceMatchedEventPublisher;
+    private FakePaymentRepository paymentRepository;
 
     @BeforeEach
     void setUp() {
@@ -64,6 +73,7 @@ class InvoiceUseCaseTest {
         purchaseOrderRepository = new FakePurchaseOrderRepository();
         goodsReceiptSnapshotRepository = new FakeGoodsReceiptSnapshotRepository();
         invoiceMatchedEventPublisher = new FakeInvoiceMatchedEventPublisher();
+        paymentRepository = new FakePaymentRepository();
         purchaseOrderRepository.purchaseOrders.add(purchaseOrder());
     }
 
@@ -177,6 +187,68 @@ class InvoiceUseCaseTest {
         assertThat(invoiceMatchedEventPublisher.events).isEmpty();
     }
 
+    @Test
+    void should_approve_invoice_when_invoice_is_matched() {
+        Invoice invoice = matchedInvoice();
+        var useCase = new ApproveInvoiceUseCase(
+                invoiceRepository,
+                new FakeIdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+
+        var result = useCase.execute(
+                new ApproveInvoiceCommand(ACTOR_ID, invoice.id(), "ready to pay"),
+                APPROVE_IDEMPOTENCY_KEY);
+
+        assertThat(result.replayed()).isFalse();
+        assertThat(result.status()).isEqualTo(InvoiceStatus.APPROVED);
+        assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.APPROVED);
+    }
+
+    @Test
+    void should_dispute_invoice_when_invoice_is_mismatched() {
+        createUseCase().execute(command(VENDOR_ID), IDEMPOTENCY_KEY);
+        Invoice invoice = invoiceRepository.invoices.get(0);
+        matchUseCase().execute(new MatchInvoiceCommand(ACTOR_ID, invoice.id()), MATCH_IDEMPOTENCY_KEY);
+        var useCase = new DisputeInvoiceUseCase(
+                invoiceRepository,
+                new FakeIdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+
+        var result = useCase.execute(
+                new DisputeInvoiceCommand(ACTOR_ID, invoice.id(), "Received quantity is missing for this supplier invoice"),
+                DISPUTE_IDEMPOTENCY_KEY);
+
+        assertThat(result.status()).isEqualTo(InvoiceStatus.DISPUTED);
+        assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.DISPUTED);
+    }
+
+    @Test
+    void should_confirm_payment_when_invoice_is_approved() {
+        Invoice invoice = matchedInvoice();
+        new ApproveInvoiceUseCase(invoiceRepository, new FakeIdempotencyService(), Clock.fixed(NOW, ZoneOffset.UTC))
+                .execute(new ApproveInvoiceCommand(ACTOR_ID, invoice.id(), null), APPROVE_IDEMPOTENCY_KEY);
+        var useCase = new ConfirmPaymentUseCase(
+                invoiceRepository,
+                paymentRepository,
+                new FakeIdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+
+        var result = useCase.execute(
+                new ConfirmPaymentCommand(
+                        ACTOR_ID,
+                        invoice.id(),
+                        LocalDate.parse("2026-06-10"),
+                        "BANK-REF-001",
+                        new BigDecimal("1100.0000"),
+                        "paid by transfer"),
+                PAYMENT_IDEMPOTENCY_KEY);
+
+        assertThat(result.replayed()).isFalse();
+        assertThat(result.payment().paidAmount().amount()).isEqualByComparingTo("1100.0000");
+        assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.PAID);
+        assertThat(paymentRepository.payments).hasSize(1);
+    }
+
     private CreateInvoiceUseCase createUseCase() {
         return new CreateInvoiceUseCase(
                 invoiceRepository,
@@ -193,6 +265,14 @@ class InvoiceUseCaseTest {
                 invoiceMatchedEventPublisher,
                 new FakeIdempotencyService(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
+    }
+
+    private Invoice matchedInvoice() {
+        createUseCase().execute(command(VENDOR_ID), IDEMPOTENCY_KEY);
+        Invoice invoice = invoiceRepository.invoices.get(0);
+        goodsReceiptSnapshotRepository.receivedQuantities.put(PO_LINE_ITEM_ID, new BigDecimal("2.0000"));
+        matchUseCase().execute(new MatchInvoiceCommand(ACTOR_ID, invoice.id()), MATCH_IDEMPOTENCY_KEY);
+        return invoiceRepository.findById(invoice.id()).orElseThrow();
     }
 
     private static CreateInvoiceCommand command(UUID vendorId) {
@@ -256,6 +336,8 @@ class InvoiceUseCaseTest {
 
     private static final class FakeInvoiceRepository implements InvoiceRepository {
         private final List<Invoice> invoices = new ArrayList<>();
+        private final Map<UUID, UUID> approvalIdempotencyKeys = new LinkedHashMap<>();
+        private final Map<UUID, UUID> disputeIdempotencyKeys = new LinkedHashMap<>();
 
         @Override
         public Optional<Invoice> findById(UUID invoiceId) {
@@ -273,6 +355,22 @@ class InvoiceUseCaseTest {
                     .filter(invoice -> invoice.id().equals(invoiceId))
                     .filter(invoice -> idempotencyKey.equals(invoice.matchIdempotencyKey()))
                     .findFirst();
+        }
+
+        @Override
+        public Optional<Invoice> findByIdAndApprovalIdempotencyKey(UUID invoiceId, UUID idempotencyKey) {
+            if (!idempotencyKey.equals(approvalIdempotencyKeys.get(invoiceId))) {
+                return Optional.empty();
+            }
+            return findById(invoiceId);
+        }
+
+        @Override
+        public Optional<Invoice> findByIdAndDisputeIdempotencyKey(UUID invoiceId, UUID idempotencyKey) {
+            if (!idempotencyKey.equals(disputeIdempotencyKeys.get(invoiceId))) {
+                return Optional.empty();
+            }
+            return findById(invoiceId);
         }
 
         @Override
@@ -355,6 +453,101 @@ class InvoiceUseCaseTest {
                     idempotencyKey));
         }
 
+        @Override
+        public void markApproved(UUID invoiceId, UUID approvedBy, Instant approvedAt, UUID idempotencyKey) {
+            Invoice invoice = findById(invoiceId).orElseThrow();
+            approvalIdempotencyKeys.put(invoiceId, idempotencyKey);
+            replaceInvoice(new Invoice(
+                    invoice.id(),
+                    invoice.invoiceNumber(),
+                    invoice.vendorId(),
+                    invoice.vendorName(),
+                    invoice.poId(),
+                    invoice.poNumber(),
+                    invoice.lineItems(),
+                    invoice.subtotal(),
+                    invoice.taxAmount(),
+                    invoice.totalAmount(),
+                    invoice.invoiceDate(),
+                    invoice.dueDate(),
+                    InvoiceStatus.APPROVED,
+                    invoice.poMatchStatus(),
+                    invoice.grMatchStatus(),
+                    invoice.qtyVariance(),
+                    invoice.priceVariance(),
+                    invoice.matchedAt(),
+                    invoice.matchedBy(),
+                    approvedBy,
+                    approvedAt,
+                    invoice.createdAt(),
+                    invoice.createdBy(),
+                    invoice.idempotencyKey(),
+                    invoice.matchIdempotencyKey()));
+        }
+
+        @Override
+        public void markDisputed(UUID invoiceId, String reason, UUID disputedBy, Instant disputedAt, UUID idempotencyKey) {
+            Invoice invoice = findById(invoiceId).orElseThrow();
+            disputeIdempotencyKeys.put(invoiceId, idempotencyKey);
+            replaceInvoice(new Invoice(
+                    invoice.id(),
+                    invoice.invoiceNumber(),
+                    invoice.vendorId(),
+                    invoice.vendorName(),
+                    invoice.poId(),
+                    invoice.poNumber(),
+                    invoice.lineItems(),
+                    invoice.subtotal(),
+                    invoice.taxAmount(),
+                    invoice.totalAmount(),
+                    invoice.invoiceDate(),
+                    invoice.dueDate(),
+                    InvoiceStatus.DISPUTED,
+                    invoice.poMatchStatus(),
+                    invoice.grMatchStatus(),
+                    invoice.qtyVariance(),
+                    invoice.priceVariance(),
+                    invoice.matchedAt(),
+                    invoice.matchedBy(),
+                    invoice.approvedBy(),
+                    invoice.approvedAt(),
+                    invoice.createdAt(),
+                    invoice.createdBy(),
+                    invoice.idempotencyKey(),
+                    invoice.matchIdempotencyKey()));
+        }
+
+        @Override
+        public void markPaid(UUID invoiceId, UUID paidBy, Instant paidAt) {
+            Invoice invoice = findById(invoiceId).orElseThrow();
+            replaceInvoice(new Invoice(
+                    invoice.id(),
+                    invoice.invoiceNumber(),
+                    invoice.vendorId(),
+                    invoice.vendorName(),
+                    invoice.poId(),
+                    invoice.poNumber(),
+                    invoice.lineItems(),
+                    invoice.subtotal(),
+                    invoice.taxAmount(),
+                    invoice.totalAmount(),
+                    invoice.invoiceDate(),
+                    invoice.dueDate(),
+                    InvoiceStatus.PAID,
+                    invoice.poMatchStatus(),
+                    invoice.grMatchStatus(),
+                    invoice.qtyVariance(),
+                    invoice.priceVariance(),
+                    invoice.matchedAt(),
+                    invoice.matchedBy(),
+                    invoice.approvedBy(),
+                    invoice.approvedAt(),
+                    invoice.createdAt(),
+                    invoice.createdBy(),
+                    invoice.idempotencyKey(),
+                    invoice.matchIdempotencyKey()));
+        }
+
         private void replaceInvoice(Invoice replacement) {
             invoices.removeIf(invoice -> invoice.id().equals(replacement.id()));
             invoices.add(replacement);
@@ -393,6 +586,29 @@ class InvoiceUseCaseTest {
         @Override
         public void publish(InvoiceMatchedEvent event) {
             events.add(event);
+        }
+    }
+
+    private static final class FakePaymentRepository implements PaymentRepository {
+        private final List<Payment> payments = new ArrayList<>();
+
+        @Override
+        public Optional<Payment> findByIdempotencyKey(UUID idempotencyKey) {
+            return payments.stream()
+                    .filter(payment -> payment.idempotencyKey().equals(idempotencyKey))
+                    .findFirst();
+        }
+
+        @Override
+        public Optional<Payment> findByInvoiceId(UUID invoiceId) {
+            return payments.stream()
+                    .filter(payment -> payment.invoiceId().equals(invoiceId))
+                    .findFirst();
+        }
+
+        @Override
+        public void insert(Payment payment) {
+            payments.add(payment);
         }
     }
 

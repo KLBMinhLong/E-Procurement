@@ -1,19 +1,29 @@
 package com.eprocure.finance.presentation.mapper;
 
 import com.eprocure.finance.application.port.in.CreateInvoiceCommand;
+import com.eprocure.finance.application.port.in.ApproveInvoiceCommand;
+import com.eprocure.finance.application.port.in.ConfirmPaymentCommand;
+import com.eprocure.finance.application.port.in.DisputeInvoiceCommand;
 import com.eprocure.finance.application.port.in.GetInvoiceQuery;
 import com.eprocure.finance.application.port.in.ListInvoicesQuery;
 import com.eprocure.finance.application.port.in.MatchInvoiceCommand;
+import com.eprocure.finance.application.service.InvoiceActionResult;
 import com.eprocure.finance.application.service.InvoiceLineItemView;
 import com.eprocure.finance.application.service.InvoiceMatchResult;
 import com.eprocure.finance.application.service.InvoiceView;
+import com.eprocure.finance.application.service.PaymentView;
 import com.eprocure.finance.common.security.UserPrincipal;
 import com.eprocure.finance.domain.model.InvoiceStatus;
 import com.eprocure.finance.domain.model.vo.Money;
+import com.eprocure.finance.presentation.request.ApproveInvoiceRequest;
+import com.eprocure.finance.presentation.request.ConfirmPaymentRequest;
 import com.eprocure.finance.presentation.request.CreateInvoiceRequest;
+import com.eprocure.finance.presentation.request.DisputeInvoiceRequest;
+import com.eprocure.finance.presentation.response.InvoiceActionResponse;
 import com.eprocure.finance.presentation.response.InvoiceLineItemResponse;
 import com.eprocure.finance.presentation.response.InvoiceMatchResponse;
 import com.eprocure.finance.presentation.response.InvoiceResponse;
+import com.eprocure.finance.presentation.response.PaymentResponse;
 import java.math.BigDecimal;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -65,6 +75,27 @@ public class InvoicePresentationMapper {
         return new MatchInvoiceCommand(principal.getId(), invoiceId);
     }
 
+    public ApproveInvoiceCommand toApproveCommand(UserPrincipal principal, UUID invoiceId, ApproveInvoiceRequest request) {
+        return new ApproveInvoiceCommand(principal.getId(), invoiceId, request == null ? null : request.comment());
+    }
+
+    public DisputeInvoiceCommand toDisputeCommand(UserPrincipal principal, UUID invoiceId, DisputeInvoiceRequest request) {
+        return new DisputeInvoiceCommand(principal.getId(), invoiceId, request.reason());
+    }
+
+    public ConfirmPaymentCommand toConfirmPaymentCommand(
+            UserPrincipal principal,
+            UUID invoiceId,
+            ConfirmPaymentRequest request) {
+        return new ConfirmPaymentCommand(
+                principal.getId(),
+                invoiceId,
+                request.paymentDate(),
+                request.paymentReference(),
+                request.paidAmount(),
+                request.notes());
+    }
+
     public InvoiceResponse toResponse(InvoiceView view) {
         return new InvoiceResponse(
                 view.id(),
@@ -102,6 +133,24 @@ public class InvoicePresentationMapper {
                         toPlainString(result.qtyVariance()),
                         format(result.priceVariance())),
                 result.requiresManualReview());
+    }
+
+    public InvoiceActionResponse toResponse(InvoiceActionResult result) {
+        return new InvoiceActionResponse(result.invoiceId(), result.status());
+    }
+
+    public PaymentResponse toResponse(PaymentView view) {
+        return new PaymentResponse(
+                view.id(),
+                view.invoiceId(),
+                view.paymentDate(),
+                view.paymentReference(),
+                format(view.paidAmount()),
+                view.paidAmount().currency(),
+                view.notes(),
+                view.status(),
+                view.confirmedAt(),
+                view.confirmedBy());
     }
 
     private InvoiceResponse.MatchResultResponse toResponse(InvoiceView.MatchResultView view) {

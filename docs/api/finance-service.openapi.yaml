@@ -226,6 +226,26 @@ components:
             priceVariance:  { type: string, nullable: true }
             matchedAt:      { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
+    InvoiceActionResult:
+      type: object
+      properties:
+        invoiceId: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [APPROVED, DISPUTED]
+    PaymentConfirmation:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        invoiceId:        { type: string, format: uuid }
+        paymentDate:      { type: string, format: date }
+        paymentReference: { type: string }
+        paidAmount:       { type: string, example: "1100.0000" }
+        currency:         { type: string, example: VND }
+        notes:            { type: string, nullable: true }
+        status:           { type: string, enum: [CONFIRMED] }
+        confirmedAt:      { type: string, format: date-time }
+        confirmedBy:      { type: string, format: uuid }
 
 paths:
   /internal/budgets/check:
@@ -908,7 +928,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceActionResult'
+        '404':
+          description: Invoice không tồn tại (FIN_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Invoice chưa ở trạng thái MATCHED để approve (FIN_013)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /invoices/{id}/dispute:
     post:
@@ -937,7 +974,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceActionResult'
+        '404':
+          description: Invoice không tồn tại (FIN_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Invoice chưa ở trạng thái MISMATCHED để dispute (FIN_014)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /invoices/{id}/confirm-payment:
     post:
@@ -969,4 +1023,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentConfirmation'
+        '404':
+          description: Invoice không tồn tại (FIN_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Invoice chưa approved hoặc số tiền thanh toán không bằng tổng hóa đơn (FIN_015, FIN_016)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

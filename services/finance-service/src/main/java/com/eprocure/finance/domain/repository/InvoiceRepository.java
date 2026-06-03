@@ -17,6 +17,10 @@ public interface InvoiceRepository {
 
     Optional<Invoice> findByIdAndMatchIdempotencyKey(UUID invoiceId, UUID idempotencyKey);
 
+    Optional<Invoice> findByIdAndApprovalIdempotencyKey(UUID invoiceId, UUID idempotencyKey);
+
+    Optional<Invoice> findByIdAndDisputeIdempotencyKey(UUID invoiceId, UUID idempotencyKey);
+
     Optional<Invoice> findByVendorIdAndInvoiceNumber(UUID vendorId, String invoiceNumber);
 
     List<Invoice> findByFilter(InvoiceFilter filter);
@@ -35,4 +39,10 @@ public interface InvoiceRepository {
             Instant matchedAt,
             UUID matchedBy,
             UUID idempotencyKey);
+
+    void markApproved(UUID invoiceId, UUID approvedBy, Instant approvedAt, UUID idempotencyKey);
+
+    void markDisputed(UUID invoiceId, String reason, UUID disputedBy, Instant disputedAt, UUID idempotencyKey);
+
+    void markPaid(UUID invoiceId, UUID paidBy, Instant paidAt);
 }

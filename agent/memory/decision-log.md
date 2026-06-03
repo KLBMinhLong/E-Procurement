@@ -454,3 +454,10 @@
 - Reason: 3-way match must be deterministic and should not query inventory-service storage directly across service boundaries.
 - Impact: `POST /api/v1/invoices/{id}/match` is idempotent with `match_idempotency_key`, returns `MATCHED`/`MISMATCHED`/`PARTIAL`, updates invoice match fields, and publishes `finance.invoice.matched` only for fully matched invoices.
 - Constraint: Invoice create now requires each line to carry `poLineItemId`; approve/dispute/payment actions remain follow-up E09 slices.
+
+## [2026-06-03] E09 Invoice approve, dispute, and payment actions
+
+- Decision: Add idempotent invoice approve/dispute/payment actions in finance-service with dedicated action idempotency keys and a `finance.payments` audit table.
+- Reason: Payment state must be replay-safe and auditable after 3-way match, while approval/dispute transitions need explicit state guards before an invoice can be paid.
+- Impact: `POST /api/v1/invoices/{id}/approve` moves `MATCHED` invoices to `APPROVED`; `POST /api/v1/invoices/{id}/dispute` moves `MISMATCHED` invoices to `DISPUTED`; `POST /api/v1/invoices/{id}/confirm-payment` records a confirmed payment and marks the invoice `PAID`.
+- Constraint: Confirm payment currently requires paid amount to equal invoice total amount and does not update budget spent ledger until PO/invoice carries a reliable budget reference.

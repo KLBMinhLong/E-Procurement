@@ -2,7 +2,10 @@ package com.eprocure.finance.presentation.controller;
 
 import com.eprocure.finance.application.service.InvoiceMutationResult;
 import com.eprocure.finance.application.service.PageResult;
+import com.eprocure.finance.application.usecase.ApproveInvoiceUseCase;
+import com.eprocure.finance.application.usecase.ConfirmPaymentUseCase;
 import com.eprocure.finance.application.usecase.CreateInvoiceUseCase;
+import com.eprocure.finance.application.usecase.DisputeInvoiceUseCase;
 import com.eprocure.finance.application.usecase.GetInvoiceUseCase;
 import com.eprocure.finance.application.usecase.ListInvoicesUseCase;
 import com.eprocure.finance.application.usecase.MatchInvoiceUseCase;
@@ -12,9 +15,14 @@ import com.eprocure.finance.common.security.UserPrincipal;
 import com.eprocure.finance.common.util.LogMaskingUtil;
 import com.eprocure.finance.domain.model.InvoiceStatus;
 import com.eprocure.finance.presentation.mapper.InvoicePresentationMapper;
+import com.eprocure.finance.presentation.request.ApproveInvoiceRequest;
+import com.eprocure.finance.presentation.request.ConfirmPaymentRequest;
 import com.eprocure.finance.presentation.request.CreateInvoiceRequest;
+import com.eprocure.finance.presentation.request.DisputeInvoiceRequest;
+import com.eprocure.finance.presentation.response.InvoiceActionResponse;
 import com.eprocure.finance.presentation.response.InvoiceResponse;
 import com.eprocure.finance.presentation.response.InvoiceMatchResponse;
+import com.eprocure.finance.presentation.response.PaymentResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -43,6 +51,9 @@ public class InvoiceController {
     private final GetInvoiceUseCase getInvoiceUseCase;
     private final CreateInvoiceUseCase createInvoiceUseCase;
     private final MatchInvoiceUseCase matchInvoiceUseCase;
+    private final ApproveInvoiceUseCase approveInvoiceUseCase;
+    private final DisputeInvoiceUseCase disputeInvoiceUseCase;
+    private final ConfirmPaymentUseCase confirmPaymentUseCase;
     private final InvoicePresentationMapper mapper;
 
     public InvoiceController(
@@ -50,11 +61,17 @@ public class InvoiceController {
             GetInvoiceUseCase getInvoiceUseCase,
             CreateInvoiceUseCase createInvoiceUseCase,
             MatchInvoiceUseCase matchInvoiceUseCase,
+            ApproveInvoiceUseCase approveInvoiceUseCase,
+            DisputeInvoiceUseCase disputeInvoiceUseCase,
+            ConfirmPaymentUseCase confirmPaymentUseCase,
             InvoicePresentationMapper mapper) {
         this.listInvoicesUseCase = listInvoicesUseCase;
         this.getInvoiceUseCase = getInvoiceUseCase;
         this.createInvoiceUseCase = createInvoiceUseCase;
         this.matchInvoiceUseCase = matchInvoiceUseCase;
+        this.approveInvoiceUseCase = approveInvoiceUseCase;
+        this.disputeInvoiceUseCase = disputeInvoiceUseCase;
+        this.confirmPaymentUseCase = confirmPaymentUseCase;
         this.mapper = mapper;
     }
 
@@ -139,5 +156,68 @@ public class InvoiceController {
             builder.header("Idempotency-Replayed", "true");
         }
         return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{invoiceId}/approve")
+    @PreAuthorize("hasAuthority('INVOICE_APPROVE')")
+    public ResponseEntity<ApiResponse<InvoiceActionResponse>> approve(
+            @PathVariable UUID invoiceId,
+            @Valid @RequestBody(required = false) ApproveInvoiceRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/invoices/{}/approve | userId={}",
+                LogMaskingUtil.maskId(invoiceId),
+                LogMaskingUtil.maskId(principal.getId()));
+        var result = approveInvoiceUseCase.execute(
+                mapper.toApproveCommand(principal, invoiceId, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{invoiceId}/dispute")
+    @PreAuthorize("hasAuthority('INVOICE_APPROVE')")
+    public ResponseEntity<ApiResponse<InvoiceActionResponse>> dispute(
+            @PathVariable UUID invoiceId,
+            @Valid @RequestBody DisputeInvoiceRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/invoices/{}/dispute | userId={}",
+                LogMaskingUtil.maskId(invoiceId),
+                LogMaskingUtil.maskId(principal.getId()));
+        var result = disputeInvoiceUseCase.execute(
+                mapper.toDisputeCommand(principal, invoiceId, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{invoiceId}/confirm-payment")
+    @PreAuthorize("hasAuthority('PAYMENT_CONFIRM')")
+    public ResponseEntity<ApiResponse<PaymentResponse>> confirmPayment(
+            @PathVariable UUID invoiceId,
+            @Valid @RequestBody ConfirmPaymentRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/invoices/{}/confirm-payment | userId={}",
+                LogMaskingUtil.maskId(invoiceId),
+                LogMaskingUtil.maskId(principal.getId()));
+        var result = confirmPaymentUseCase.execute(
+                mapper.toConfirmPaymentCommand(principal, invoiceId, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result.payment()), RequestIdUtil.resolve(request)));
     }
 }

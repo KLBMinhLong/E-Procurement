@@ -124,6 +124,24 @@
           AND inv.is_deleted = FALSE
     </select>
 
+    <select id="findHeaderByIdAndApprovalIdempotencyKey" resultMap="invoiceHeaderResultMap">
+        SELECT
+            <include refid="invoiceColumns"/>
+        <include refid="invoiceFrom"/>
+        WHERE inv.id = #{invoiceId}
+          AND inv.approval_idempotency_key = #{idempotencyKey}
+          AND inv.is_deleted = FALSE
+    </select>
+
+    <select id="findHeaderByIdAndDisputeIdempotencyKey" resultMap="invoiceHeaderResultMap">
+        SELECT
+            <include refid="invoiceColumns"/>
+        <include refid="invoiceFrom"/>
+        WHERE inv.id = #{invoiceId}
+          AND inv.dispute_idempotency_key = #{idempotencyKey}
+          AND inv.is_deleted = FALSE
+    </select>
+
     <select id="findHeaderByVendorIdAndInvoiceNumber" resultMap="invoiceHeaderResultMap">
         SELECT
             <include refid="invoiceColumns"/>

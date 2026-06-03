@@ -16,6 +16,10 @@ public enum ErrorCode {
     FIN_010("FIN_010", "Invoice does not match Purchase Order", HttpStatus.UNPROCESSABLE_ENTITY),
     FIN_011("FIN_011", "Invalid Purchase Order status transition", HttpStatus.UNPROCESSABLE_ENTITY),
     FIN_012("FIN_012", "Invoice status does not allow matching", HttpStatus.UNPROCESSABLE_ENTITY),
+    FIN_013("FIN_013", "Invoice is not ready for approval", HttpStatus.UNPROCESSABLE_ENTITY),
+    FIN_014("FIN_014", "Invoice is not ready for dispute", HttpStatus.UNPROCESSABLE_ENTITY),
+    FIN_015("FIN_015", "Invoice is not ready for payment", HttpStatus.UNPROCESSABLE_ENTITY),
+    FIN_016("FIN_016", "Payment amount must match invoice total", HttpStatus.UNPROCESSABLE_ENTITY),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
     VAL_001("VAL_001", "Validation failed", HttpStatus.BAD_REQUEST);
