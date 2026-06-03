@@ -429,3 +429,9 @@
 - Reason: `procurement.po.issued` currently carries PO line item name/category/unit but not canonical inventory `itemCode`, while `stock_entries` and immutable `stock_movements` require non-null `item_code`.
 - Impact: `POST /api/v1/goods-receipts/{id}/complete` is idempotent through `completed_idempotency_key`, only completes DRAFT GR, updates `stock_entries`, writes `RECEIPT_IN` movements, captures resolved GR line `item_code`, and publishes `inventory.gr.created` after commit.
 - Constraint: If no active catalog item can be resolved, completion fails with `INV_001` instead of writing ambiguous stock. Stock list/movement and issue-out APIs remain the next E08 slice.
+
+## [2026-06-03] E08 Stock query API projections
+
+- Decision: Stock read APIs use a dedicated `StockRepository` and read projections for current stock and movement history, exposed with `GR_VIEW` on `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, and `GET /api/v1/stock/movements`.
+- Reason: Querying stock should not expand the Goods Receipt repository responsibility, and FE needs a stable read contract before implementing issue-out workflows.
+- Constraint: `stock_movements` currently stores only `performed_by`, so `performedBy.fullName` falls back to the UUID string until IAM/user snapshot integration is added. Issue-out remains the next E08 slice.

@@ -334,6 +334,7 @@ paths:
       tags: [Stock]
       summary: Kiểm tra tồn kho theo mã hàng
       operationId: getItemStock
+      x-required-permission: GR_VIEW
       description: Dùng khi FE cần check tồn kho trước khi tạo PR (inventory check).
       parameters:
         - name: itemCode
@@ -358,6 +359,12 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/StockEntry'
+        '404':
+          description: Item hoặc warehouse không tìm thấy (INV_001/INV_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Warehouses ────────────────────────────────────────────────
   /warehouses:
@@ -391,6 +398,7 @@ paths:
       tags: [Warehouses]
       summary: Tồn kho tổng hợp của một kho
       operationId: getWarehouseStock
+      x-required-permission: GR_VIEW
       parameters:
         - name: id
           in: path
@@ -417,6 +425,12 @@ paths:
                           $ref: '#/components/schemas/StockEntry'
                       meta:
                         $ref: '#/components/schemas/PageMeta'
+        '404':
+          description: Warehouse không tìm thấy (INV_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Stock Movements ───────────────────────────────────────────
   /stock/movements:
@@ -424,6 +438,7 @@ paths:
       tags: [Stock]
       summary: Lịch sử di chuyển tồn kho
       operationId: listStockMovements
+      x-required-permission: GR_VIEW
       parameters:
         - name: item_code
           in: query
@@ -458,6 +473,12 @@ paths:
                           $ref: '#/components/schemas/StockMovement'
                       meta:
                         $ref: '#/components/schemas/PageMeta'
+        '404':
+          description: Item hoặc warehouse filter không tìm thấy (INV_001/INV_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /stock/issue-out:
     post:

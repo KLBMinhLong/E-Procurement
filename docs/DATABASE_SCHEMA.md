@@ -881,6 +881,7 @@ inventory.stock_movements -- immutable, no soft delete
   performed_by UUID, performed_at TIMESTAMPTZ, notes TEXT
   movement_type IN ('RECEIPT_IN','ISSUE_OUT','ADJUSTMENT','TRANSFER')
   Complete GR writes RECEIPT_IN rows with source_ref_type = 'GOODS_RECEIPT'
+  ix_stock_movements_type_performed(movement_type, performed_at DESC)
 
 inventory.event_processing_log -- immutable Kafka idempotency log
   event_id VARCHAR(100) PK, topic VARCHAR(200), partition_id INTEGER,
