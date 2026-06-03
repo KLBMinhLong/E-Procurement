@@ -813,6 +813,12 @@ CREATE INDEX idx_invoices_status ON finance.invoices(status) WHERE is_deleted = 
 CREATE INDEX idx_invoices_due_date ON finance.invoices(due_date) WHERE status NOT IN ('PAID','CANCELLED');
 ```
 
+Implementation note:
+- `finance.invoices` adds `idempotency_key UUID NOT NULL`, `updated_by UUID`, and partial unique indexes:
+  - `ux_invoices_vendor_number_active(vendor_id, invoice_number) WHERE is_deleted = FALSE`
+  - `ux_invoices_idempotency_active(idempotency_key) WHERE is_deleted = FALSE`
+- `finance.invoice_line_items` stores invoice line snapshots with `quantity`, `unit_price`, `tax_rate`, `tax_amount`, `total_price`, all as `NUMERIC(19,4)` except `tax_rate NUMERIC(7,4)`.
+
 ---
 
 ## 6. db_inventory — Schema INVENTORY

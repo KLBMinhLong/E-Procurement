@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.finance.infrastructure.persistence.mapper.InvoiceMapper">
+
+    <resultMap id="invoiceHeaderResultMap"
+               type="com.eprocure.finance.infrastructure.persistence.entity.InvoiceDbEntity">
+        <id property="id" column="id"/>
+        <result property="invoiceNumber" column="invoice_number"/>
+        <result property="vendorId" column="vendor_id"/>
+        <result property="vendorName" column="vendor_name"/>
+        <result property="poId" column="po_id"/>
+        <result property="poNumber" column="po_number"/>
+        <result property="subtotal" column="subtotal"/>
+        <result property="taxAmount" column="tax_amount"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="currency" column="currency"/>
+        <result property="invoiceDate" column="invoice_date"/>
+        <result property="dueDate" column="due_date"/>
+        <result property="status" column="status"/>
+        <result property="poMatchStatus" column="po_match_status"/>
+        <result property="grMatchStatus" column="gr_match_status"/>
+        <result property="qtyVariance" column="qty_variance"/>
+        <result property="priceVariance" column="price_variance"/>
+        <result property="matchedAt" column="matched_at"/>
+        <result property="matchedBy" column="matched_by"/>
+        <result property="approvedBy" column="approved_by"/>
+        <result property="approvedAt" column="approved_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+    </resultMap>
+
+    <resultMap id="invoiceLineItemResultMap"
+               type="com.eprocure.finance.infrastructure.persistence.entity.InvoiceLineItemDbEntity">
+        <id property="id" column="id"/>
+        <result property="invoiceId" column="invoice_id"/>
+        <result property="lineNumber" column="line_number"/>
+        <result property="description" column="description"/>
+        <result property="quantity" column="quantity"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="taxRate" column="tax_rate"/>
+        <result property="taxAmount" column="tax_amount"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="currency" column="currency"/>
+    </resultMap>
+
+    <sql id="invoiceColumns">
+        inv.id,
+        inv.invoice_number,
+        inv.vendor_id,
+        po.vendor_name,
+        inv.po_id,
+        po.po_number,
+        inv.subtotal,
+        inv.tax_amount,
+        inv.total_amount,
+        inv.currency,
+        inv.invoice_date,
+        inv.due_date,
+        inv.status,
+        inv.po_match_status,
+        inv.gr_match_status,
+        inv.qty_variance,
+        inv.price_variance,
+        inv.matched_at,
+        inv.matched_by,
+        inv.approved_by,
+        inv.approved_at,
+        inv.created_at,
+        inv.created_by,
+        inv.idempotency_key
+    </sql>
+
+    <sql id="invoiceFrom">
+        FROM finance.invoices inv
+        JOIN finance.purchase_orders po
+          ON po.id = inv.po_id
+         AND po.is_deleted = FALSE
+    </sql>
+
+    <sql id="invoiceWhereClause">
+        WHERE inv.is_deleted = FALSE
+        <if test="filter.status != null">
+            AND inv.status = #{filter.status}
+        </if>
+        <if test="filter.vendorId != null">
+            AND inv.vendor_id = #{filter.vendorId}
+        </if>
+        <if test="filter.poId != null">
+            AND inv.po_id = #{filter.poId}
+        </if>
+        <if test="filter.overdueOnly != null and filter.overdueOnly == true">
+            AND inv.due_date &lt; #{filter.overdueAsOf}
+            AND inv.status NOT IN ('PAID','CANCELLED')
+        </if>
+    </sql>
+
+    <select id="findHeaderById" resultMap="invoiceHeaderResultMap">
+        SELECT
+            <include refid="invoiceColumns"/>
+        <include refid="invoiceFrom"/>
+        WHERE inv.id = #{invoiceId}
+          AND inv.is_deleted = FALSE
+    </select>
+
+    <select id="findHeaderByIdempotencyKey" resultMap="invoiceHeaderResultMap">
+        SELECT
+            <include refid="invoiceColumns"/>
+        <include refid="invoiceFrom"/>
+        WHERE inv.idempotency_key = #{idempotencyKey}
+          AND inv.is_deleted = FALSE
+    </select>
+
+    <select id="findHeaderByVendorIdAndInvoiceNumber" resultMap="invoiceHeaderResultMap">
+        SELECT
+            <include refid="invoiceColumns"/>
+        <include refid="invoiceFrom"/>
+        WHERE inv.vendor_id = #{vendorId}
+          AND inv.invoice_number = #{invoiceNumber}
+          AND inv.is_deleted = FALSE
+    </select>
+
+    <select id="findHeadersByFilter" resultMap="invoiceHeaderResultMap">
+        SELECT
+            <include refid="invoiceColumns"/>
+        <include refid="invoiceFrom"/>
+        <include refid="invoiceWhereClause"/>
+        ORDER BY inv.created_at DESC, inv.invoice_number DESC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        <include refid="invoiceFrom"/>
+        <include refid="invoiceWhereClause"/>
+    </select>
+
+    <select id="findLineItemsByInvoiceId" resultMap="invoiceLineItemResultMap">
+        SELECT
+            id,
+            invoice_id,
+            line_number,
+            description,
+            quantity,
+            unit_price,
+            tax_rate,
+            tax_amount,
+            total_price,
+            currency
+        FROM finance.invoice_line_items
+        WHERE invoice_id = #{invoiceId}
+          AND is_deleted = FALSE
+        ORDER BY line_number ASC
+    </select>
+
+    <select id="findLineItemsByInvoiceIds" resultMap="invoiceLineItemResultMap">
+        SELECT
+            id,
+            invoice_id,
+            line_number,
+            description,
+            quantity,
+            unit_price,
+            tax_rate,
+            tax_amount,
+            total_price,
+            currency
+        FROM finance.invoice_line_items
+        WHERE is_deleted = FALSE
+          AND invoice_id IN
+          <foreach collection="invoiceIds" item="invoiceId" open="(" separator="," close=")">
+              #{invoiceId}
+          </foreach>
+        ORDER BY invoice_id ASC, line_number ASC
+    </select>
+</mapper>

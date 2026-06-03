@@ -441,3 +441,9 @@
 - Decision: `POST /api/v1/stock/issue-out` records an idempotent `inventory.stock_issue_out_requests` header, atomically decrements `stock_entries`, and appends `ISSUE_OUT` rows in `stock_movements` with negative ledger quantities.
 - Reason: Multi-line issue-out needs replay-safe request grouping and must fail/rollback when any line lacks sufficient stock.
 - Constraint: The API validates active item and warehouse locally; recipient identity is captured as a UUID snapshot and can be enriched by IAM integration later.
+
+## [2026-06-03] E09 Invoice foundation
+
+- Decision: Start E09 in finance-service with idempotent invoice create/list/detail, backed by `finance.invoices` and `finance.invoice_line_items`.
+- Reason: 3-way match needs a durable invoice aggregate before comparing PO, GR, and invoice amounts/quantities.
+- Constraint: Invoice creation validates PO existence and vendor match, but does not run 3-way match yet. Match/approve/dispute/payment remain follow-up E09 slices.

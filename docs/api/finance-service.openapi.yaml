@@ -785,6 +785,54 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/InvoiceDetail'
+        '404':
+          description: Purchase Order không tìm thấy (FIN_006)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Hóa đơn đã tồn tại theo vendor + invoiceNumber (FIN_008)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Vendor không khớp Purchase Order (FIN_010)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /invoices/{id}:
+    get:
+      tags: [Invoices]
+      summary: Chi tiết hóa đơn
+      operationId: getInvoice
+      x-required-permission: INVOICE_VIEW
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Chi tiết hóa đơn
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceDetail'
+        '404':
+          description: Hóa đơn không tìm thấy (FIN_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /invoices/{id}/match:
     post:
