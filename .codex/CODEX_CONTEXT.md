@@ -21,13 +21,13 @@ eProcure Enterprise là hệ thống mua sắm nội bộ cho doanh nghiệp 200
 
 Hiện trạng triển khai:
 
-- Maven reactor: `services/iam-service`, `services/purchase-request-service`, `services/approval-service`, `services/finance-service`, `services/vendor-service`, `services/notification-service`, `infra/keycloak/eprocure-keycloak-provider`.
+- Maven reactor: `services/iam-service`, `services/purchase-request-service`, `services/approval-service`, `services/finance-service`, `services/inventory-service`, `services/vendor-service`, `services/notification-service`, `infra/keycloak/eprocure-keycloak-provider`.
 - Frontend: Angular 21 standalone app tại `frontend/eprocure-web`.
 - Infra: Docker Compose có PostgreSQL 15, Redis 7, Kafka KRaft, Keycloak, NGINX gateway, Prometheus, Grafana, Loki, Tempo.
 - Epics đã đóng theo tracker: E01 infrastructure, E03 UI shell/design system, E04 PR service, E05 Approval Engine, E13-A Admin Portal UI.
 - E02 IAM đã hoàn thiện business/API surface và hardening tracker hiện tại: RSA+AES request decryption interceptor, password reset delivery qua `notification.email.send`, opaque session/RBAC/org/delegation/2FA/OAuth/reset-password, và unit tests.
-- `finance-service` đã có budget foundation, dashboard/list, override/transfer, PR budget event ledger, và budget alert publisher. `notification-service` đã có in-app notifications, business-event consumption, STOMP realtime delivery, Angular shell notification bell/feed, email dispatch outbox/retry/DLQ, và template admin API/UI. `vendor-service` đã có E06 Vendor master + AVL foundation (`GET/POST /vendors`, `GET /vendors/{id}`, `PATCH /vendors/{id}/approve`, Flyway `vendors/vendor_contacts/vendor_scores`, Docker Compose port 8086), RFQ foundation (`rfqs/rfq_line_items/rfq_invitations`, `GET/POST /rfq`, `GET /rfq/{id}`, `PATCH /rfq/{id}/close`) và quote/award foundation (`vendor_quotes/vendor_quote_line_items`, `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award`). `inventory-service`, `analytics-service`, `admin-service` chưa có backend riêng ngoài docs/OpenAPI.
-- Việc nên ưu tiên tiếp theo: nếu muốn đóng nốt E07 thì làm direct/manual `POST /purchase-orders` từ PR đã approved; nếu ưu tiên luồng end-to-end sau PO đã phát hành thì bắt đầu E08 inventory-service với consumer `procurement.po.issued` và Goods Receipt foundation. User stories chi tiết đã có tại `docs/user-stories/E06-rfq-vendor.md`, `docs/user-stories/E10-budget-management.md`, và `docs/user-stories/E11-notification-realtime.md`.
+- `finance-service` đã có budget foundation, dashboard/list, override/transfer, PR budget event ledger, budget alert publisher, PO foundation từ RFQ award, draft edit/send/cancel, `procurement.po.issued`, và vendor email handoff. `notification-service` đã có in-app notifications, business-event consumption, STOMP realtime delivery, Angular shell notification bell/feed, email dispatch outbox/retry/DLQ, template admin API/UI, và PO issued notification handling. `vendor-service` đã có E06 Vendor master + AVL foundation (`GET/POST /vendors`, `GET /vendors/{id}`, `PATCH /vendors/{id}/approve`, Flyway `vendors/vendor_contacts/vendor_scores`, Docker Compose port 8086), RFQ foundation (`rfqs/rfq_line_items/rfq_invitations`, `GET/POST /rfq`, `GET /rfq/{id}`, `PATCH /rfq/{id}/close`) và quote/award foundation (`vendor_quotes/vendor_quote_line_items`, `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award`). `inventory-service` đã có E08 foundation: Maven/Docker/Compose service port 8085, Flyway inventory base schema, consumer `procurement.po.issued`, PO snapshot persistence và idempotency log. `analytics-service`, `admin-service` chưa có backend riêng ngoài docs/OpenAPI.
+- Việc nên ưu tiên tiếp theo: E08 Goods Receipt create/list/detail API từ issued PO snapshot, sau đó complete GR để cập nhật stock và publish `inventory.gr.created`. Direct/manual `POST /purchase-orders` của E07 vẫn deferred đến khi approved-PR direct-PO source contract rõ ràng. User stories chi tiết đã có tại `docs/user-stories/E06-rfq-vendor.md`, `docs/user-stories/E10-budget-management.md`, và `docs/user-stories/E11-notification-realtime.md`.
 
 ## Non-Negotiable Invariants
 
@@ -85,6 +85,7 @@ mvn -pl services/purchase-request-service test
 mvn -pl services/approval-service test
 mvn -pl infra/keycloak/eprocure-keycloak-provider test
 mvn -pl services/finance-service test
+mvn -pl services/inventory-service test
 mvn -pl services/vendor-service test
 mvn -pl services/notification-service test
 ```

@@ -249,11 +249,14 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `INVENTORY_DB_NAME` | `db_inventory` | `db_inventory` | |
 | `INVENTORY_DB_SCHEMA` | `inventory` | `inventory` | |
 | `INVENTORY_DB_USER` | `inventory_user` | `inventory_user` | |
-| `INVENTORY_DB_PASS` | `inv_pass_dev` | `***SENSITIVE***` | |
+| `INVENTORY_DB_PASS` | `inventory_pass_dev` | `***SENSITIVE***` | |
 | `INVENTORY_DB_POOL_MIN` | `2` | `3` | |
 | `INVENTORY_DB_POOL_MAX` | `5` | `10` | |
 | `STOCK_LOCK_TIMEOUT_MS` | `5000` | `5000` | Timeout pessimistic lock khi update stock |
 | `GR_QUANTITY_TOLERANCE_PCT` | `10` | `10` | Dung sai số lượng GR so với PO |
+| `INVENTORY_KAFKA_ENABLED` | `true` | `true` | Bật/tắt Kafka integration của Inventory |
+| `INVENTORY_KAFKA_AUTO_STARTUP` | `true` | `true` | Khi `true`, Inventory start Kafka listeners sau khi app ready |
+| `INVENTORY_KAFKA_TOPIC_PO_ISSUED` | `procurement.po.issued` | `procurement.po.issued` | Topic nhận PO issued snapshot từ Finance |
 
 ---
 
@@ -457,7 +460,7 @@ FINANCE_DB_PASS=finance_pass_dev
 # Inventory DB
 INVENTORY_DB_NAME=db_inventory
 INVENTORY_DB_USER=inventory_user
-INVENTORY_DB_PASS=inv_pass_dev
+INVENTORY_DB_PASS=inventory_pass_dev
 
 # Vendor DB
 VENDOR_DB_NAME=db_vendor

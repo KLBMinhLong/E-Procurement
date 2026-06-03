@@ -193,7 +193,7 @@
 | E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
 | E06: RFQ & Vendor | ✅ |
 | E07: Purchase Order | 🔄 |
-| E08: Goods Receipt & Inventory | ⬜ |
+| E08: Goods Receipt & Inventory | 🔄 |
 | E09: Invoice & Payment | ⬜ |
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
@@ -252,3 +252,14 @@
 | PO issue event | ✅ | Finance publishes `procurement.po.issued`; Notification subscribes and creates `PO_ISSUED` in-app notification |
 | Vendor email handoff on PO send | ✅ | Finance publishes `notification.email.send` with rendered subject/body for vendor email dispatch |
 | Manual PO create API | ⬜ | `POST /api/v1/purchase-orders` from approved PR remains deferred until PR line source for direct PO is finalized |
+
+### E08: Goods Receipt & Inventory
+| Task | Status | Ghi chú |
+|---|---|---|
+| Spring Boot inventory-service module setup | ✅ | Maven module + Docker/compose service on port 8085 |
+| Flyway migration inventory foundation | ✅ | `warehouses`, `items`, `stock_entries`, `goods_receipts`, `goods_receipt_line_items`, `stock_movements`, PO snapshots, Kafka event log |
+| PO issued consumer + snapshot persistence | ✅ | inventory-service consumes `procurement.po.issued`, dedups via `inventory.event_processing_log`, stores issued PO header/line snapshots |
+| Unit tests | ✅ | PO issued snapshot idempotency/use-case tests pass |
+| Goods Receipt create/list/detail API | ⬜ | Next slice: create DRAFT GR from issued PO snapshot |
+| Complete GR + stock receipt movement | ⬜ | Next slice: update stock_entries, create RECEIPT_IN movements, publish `inventory.gr.created` |
+| Stock list/movement/issue-out API | ⬜ | Deferred until GR receipt-in foundation is complete |
