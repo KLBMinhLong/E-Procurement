@@ -814,11 +814,28 @@ CREATE INDEX idx_invoices_due_date ON finance.invoices(due_date) WHERE status NO
 ```
 
 Implementation note:
-- `finance.invoices` adds `idempotency_key UUID NOT NULL`, `match_idempotency_key UUID`, `updated_by UUID`, and partial unique indexes:
+- `finance.invoices` adds `idempotency_key UUID NOT NULL`, `match_idempotency_key UUID`, `approval_idempotency_key UUID`, `dispute_idempotency_key UUID`, dispute/payment audit columns, `updated_by UUID`, and partial unique indexes:
   - `ux_invoices_vendor_number_active(vendor_id, invoice_number) WHERE is_deleted = FALSE`
   - `ux_invoices_idempotency_active(idempotency_key) WHERE is_deleted = FALSE`
   - `ux_invoices_match_idempotency_active(match_idempotency_key) WHERE match_idempotency_key IS NOT NULL AND is_deleted = FALSE`
+  - `ux_invoices_approval_idempotency_active(approval_idempotency_key) WHERE approval_idempotency_key IS NOT NULL AND is_deleted = FALSE`
+  - `ux_invoices_dispute_idempotency_active(dispute_idempotency_key) WHERE dispute_idempotency_key IS NOT NULL AND is_deleted = FALSE`
 - `finance.invoice_line_items` stores invoice line snapshots with `po_line_item_id`, `quantity`, `unit_price`, `tax_rate`, `tax_amount`, `total_price`, all as `NUMERIC(19,4)` except `tax_rate NUMERIC(7,4)`.
+
+### 5.8.1 payments
+
+```sql
+finance.payments
+  id UUID PK, invoice_id UUID FK invoices,
+  payment_date DATE, payment_reference VARCHAR(120),
+  paid_amount NUMERIC(19,4), currency VARCHAR(3),
+  status VARCHAR(30) CHECK (status IN ('CONFIRMED','VOIDED')),
+  idempotency_key UUID NOT NULL,
+  confirmed_at TIMESTAMPTZ, confirmed_by UUID,
+  created_at/updated_at TIMESTAMPTZ, created_by/updated_by UUID,
+  is_deleted BOOLEAN DEFAULT FALSE, deleted_at/deleted_by
+  ux_payments_idempotency_active(idempotency_key) WHERE is_deleted = FALSE
+```
 
 ### 5.9 goods_receipt_snapshots
 

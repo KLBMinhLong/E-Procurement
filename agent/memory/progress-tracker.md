@@ -273,4 +273,5 @@
 | Invoice create/list/detail API | ✅ | `GET/POST /api/v1/invoices`, `GET /api/v1/invoices/{id}`; creates `PENDING_MATCH` invoices from existing PO snapshot |
 | Unit tests | ✅ | Invoice create/list/detail + idempotency/missing PO/vendor mismatch tests pass |
 | 3-way match API | ✅ | `POST /api/v1/invoices/{id}/match`; consumes `inventory.gr.created` into finance GR snapshots, compares PO + GR + Invoice, publishes `finance.invoice.matched` when matched |
-| Approve/dispute/payment actions | ⬜ | Next E09 slice: `POST /approve`, `/dispute`, `/confirm-payment` |
+| Approve/dispute/payment actions | ✅ | `POST /approve`, `/dispute`, `/confirm-payment`; stores `finance.payments` and marks invoice `PAID` |
+| Budget spent ledger link | ⬜ | Deferred until PO/invoice carries a reliable budget reference for payment posting |
