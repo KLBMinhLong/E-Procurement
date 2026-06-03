@@ -1,13 +1,20 @@
 package com.eprocure.inventory.infrastructure.persistence.repository;
 
 import com.eprocure.inventory.domain.model.StockEntry;
+import com.eprocure.inventory.domain.model.StockIssueOutRequest;
+import com.eprocure.inventory.domain.model.StockMovement;
 import com.eprocure.inventory.domain.model.StockMovementHistory;
 import com.eprocure.inventory.domain.repository.StockEntryFilter;
 import com.eprocure.inventory.domain.repository.StockMovementFilter;
 import com.eprocure.inventory.domain.repository.StockRepository;
+import com.eprocure.inventory.infrastructure.persistence.entity.StockIssueOutRequestDbEntity;
+import com.eprocure.inventory.infrastructure.persistence.entity.StockMovementDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.mapper.StockMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
@@ -56,5 +63,41 @@ public class StockRepositoryImpl implements StockRepository {
     @Override
     public long countMovements(StockMovementFilter filter) {
         return stockMapper.countMovements(filter);
+    }
+
+    @Override
+    public Optional<StockIssueOutRequest> findIssueOutRequestByIdempotencyKey(UUID idempotencyKey) {
+        return stockMapper.findIssueOutRequestByIdempotencyKey(idempotencyKey)
+                .map(entity -> domainObjectMapper.convertValue(entity, StockIssueOutRequest.class));
+    }
+
+    @Override
+    public void insertIssueOutRequest(StockIssueOutRequest issueOutRequest) {
+        stockMapper.insertIssueOutRequest(
+                domainObjectMapper.convertValue(issueOutRequest, StockIssueOutRequestDbEntity.class));
+    }
+
+    @Override
+    public Optional<BigDecimal> issueStock(
+            String itemCode,
+            UUID warehouseId,
+            BigDecimal quantity,
+            String unit,
+            UUID actorId,
+            Instant occurredAt) {
+        return stockMapper.issueStock(itemCode, warehouseId, quantity, unit, actorId, occurredAt);
+    }
+
+    @Override
+    public void insertStockMovement(StockMovement stockMovement) {
+        stockMapper.insertStockMovement(
+                domainObjectMapper.convertValue(stockMovement, StockMovementDbEntity.class));
+    }
+
+    @Override
+    public List<StockMovementHistory> findMovementsBySource(String sourceRefType, UUID sourceRefId) {
+        return stockMapper.findMovementsBySource(sourceRefType, sourceRefId).stream()
+                .map(entity -> domainObjectMapper.convertValue(entity, StockMovementHistory.class))
+                .toList();
     }
 }

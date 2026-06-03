@@ -6,6 +6,7 @@ public enum ErrorCode {
     IAM_004("IAM_004", "Permission denied", HttpStatus.FORBIDDEN),
     INV_001("INV_001", "Item not found", HttpStatus.NOT_FOUND),
     INV_002("INV_002", "Warehouse not found", HttpStatus.NOT_FOUND),
+    INV_003("INV_003", "Insufficient stock quantity", HttpStatus.UNPROCESSABLE_ENTITY),
     INV_004("INV_004", "Goods Receipt not found", HttpStatus.NOT_FOUND),
     INV_005("INV_005", "Goods Receipt has already been completed", HttpStatus.CONFLICT),
     INV_006("INV_006", "Received quantity exceeds configured tolerance", HttpStatus.UNPROCESSABLE_ENTITY),

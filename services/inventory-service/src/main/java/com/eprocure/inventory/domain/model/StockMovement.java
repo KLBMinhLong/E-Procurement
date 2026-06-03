@@ -59,6 +59,32 @@ public record StockMovement(
                 notes);
     }
 
+    public static StockMovement issueOut(
+            String itemCode,
+            UUID warehouseId,
+            BigDecimal quantity,
+            String unit,
+            BigDecimal balanceAfter,
+            UUID issueOutRequestId,
+            UUID actorId,
+            Instant performedAt,
+            String notes) {
+        BigDecimal checkedQuantity = requirePositive(quantity, "quantity");
+        return new StockMovement(
+                UUID.randomUUID(),
+                itemCode,
+                warehouseId,
+                StockMovementType.ISSUE_OUT,
+                checkedQuantity.negate(),
+                unit,
+                balanceAfter,
+                "STOCK_ISSUE_OUT",
+                issueOutRequestId,
+                actorId,
+                performedAt,
+                notes);
+    }
+
     private static String requireText(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " must not be blank");
@@ -74,6 +100,14 @@ public record StockMovement(
         BigDecimal checked = Objects.requireNonNull(value, fieldName + " must not be null");
         if (checked.compareTo(BigDecimal.ZERO) == 0) {
             throw new IllegalArgumentException(fieldName + " must not be zero");
+        }
+        return checked;
+    }
+
+    private static BigDecimal requirePositive(BigDecimal value, String fieldName) {
+        BigDecimal checked = Objects.requireNonNull(value, fieldName + " must not be null");
+        if (checked.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(fieldName + " must be greater than zero");
         }
         return checked;
     }

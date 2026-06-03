@@ -193,7 +193,7 @@
 | E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
 | E06: RFQ & Vendor | ✅ |
 | E07: Purchase Order | 🔄 |
-| E08: Goods Receipt & Inventory | 🔄 |
+| E08: Goods Receipt & Inventory | ✅ |
 | E09: Invoice & Payment | ⬜ |
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
@@ -259,8 +259,8 @@
 | Spring Boot inventory-service module setup | ✅ | Maven module + Docker/compose service on port 8085 |
 | Flyway migration inventory foundation | ✅ | `warehouses`, `items`, `stock_entries`, `goods_receipts`, `goods_receipt_line_items`, `stock_movements`, PO snapshots, Kafka event log |
 | PO issued consumer + snapshot persistence | ✅ | inventory-service consumes `procurement.po.issued`, dedups via `inventory.event_processing_log`, stores issued PO header/line snapshots |
-| Unit tests | ✅ | PO issued snapshot + GR create/list/get/complete + stock query use-case tests pass |
+| Unit tests | ✅ | PO issued snapshot + GR create/list/get/complete + stock query + issue-out use-case tests pass |
 | Goods Receipt create/list/detail API | ✅ | `GET/POST /api/v1/goods-receipts`, `GET /api/v1/goods-receipts/{id}`; creates DRAFT GR from issued PO snapshot with DB idempotency |
 | Complete GR + stock receipt movement | ✅ | `POST /api/v1/goods-receipts/{id}/complete`; resolves catalog `itemCode`, updates `stock_entries`, creates `RECEIPT_IN` movements, publishes `inventory.gr.created` |
 | Stock list/movement API | ✅ | `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, `GET /api/v1/stock/movements`; read-only stock projections with `GR_VIEW` |
-| Issue-out API | ⬜ | Next E08 slice: `POST /api/v1/stock/issue-out` with stock sufficiency, idempotency, and `ISSUE_OUT` movements |
+| Issue-out API | ✅ | `POST /api/v1/stock/issue-out`; validates active item/warehouse, decrements stock atomically, stores idempotent request header, creates `ISSUE_OUT` movements |

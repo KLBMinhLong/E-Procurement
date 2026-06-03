@@ -2,6 +2,7 @@ package com.eprocure.inventory.presentation.controller;
 
 import com.eprocure.inventory.application.service.PageResult;
 import com.eprocure.inventory.application.usecase.GetItemStockUseCase;
+import com.eprocure.inventory.application.usecase.IssueOutStockUseCase;
 import com.eprocure.inventory.application.usecase.ListStockMovementsUseCase;
 import com.eprocure.inventory.application.usecase.ListWarehouseStockUseCase;
 import com.eprocure.inventory.common.api.ApiResponse;
@@ -10,9 +11,12 @@ import com.eprocure.inventory.common.security.UserPrincipal;
 import com.eprocure.inventory.common.util.LogMaskingUtil;
 import com.eprocure.inventory.domain.model.StockMovementType;
 import com.eprocure.inventory.presentation.mapper.StockPresentationMapper;
+import com.eprocure.inventory.presentation.request.IssueOutStockRequest;
+import com.eprocure.inventory.presentation.response.IssueOutStockResponse;
 import com.eprocure.inventory.presentation.response.StockEntryResponse;
 import com.eprocure.inventory.presentation.response.StockMovementResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +28,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,16 +43,19 @@ public class StockController {
     private final GetItemStockUseCase getItemStockUseCase;
     private final ListWarehouseStockUseCase listWarehouseStockUseCase;
     private final ListStockMovementsUseCase listStockMovementsUseCase;
+    private final IssueOutStockUseCase issueOutStockUseCase;
     private final StockPresentationMapper mapper;
 
     public StockController(
             GetItemStockUseCase getItemStockUseCase,
             ListWarehouseStockUseCase listWarehouseStockUseCase,
             ListStockMovementsUseCase listStockMovementsUseCase,
+            IssueOutStockUseCase issueOutStockUseCase,
             StockPresentationMapper mapper) {
         this.getItemStockUseCase = getItemStockUseCase;
         this.listWarehouseStockUseCase = listWarehouseStockUseCase;
         this.listStockMovementsUseCase = listStockMovementsUseCase;
+        this.issueOutStockUseCase = issueOutStockUseCase;
         this.mapper = mapper;
     }
 
@@ -126,5 +136,26 @@ public class StockController {
                 .map(mapper::toResponse)
                 .toList();
         return ResponseEntity.ok(ApiResponse.successWithMeta(data, result.meta(), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/stock/issue-out")
+    @PreAuthorize("hasAuthority('GR_ISSUE_OUT')")
+    public ResponseEntity<ApiResponse<IssueOutStockResponse>> issueOut(
+            @Valid @RequestBody IssueOutStockRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/stock/issue-out | userId={} | warehouseId={} | lineCount={}",
+                LogMaskingUtil.maskId(principal.getId()),
+                LogMaskingUtil.maskId(body.warehouseId()),
+                body.items().size());
+        var result = issueOutStockUseCase.execute(
+                mapper.toIssueOutCommand(principal, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
     }
 }

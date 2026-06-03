@@ -1,12 +1,16 @@
 package com.eprocure.inventory.presentation.mapper;
 
 import com.eprocure.inventory.application.port.in.GetItemStockQuery;
+import com.eprocure.inventory.application.port.in.IssueOutStockCommand;
 import com.eprocure.inventory.application.port.in.ListStockMovementsQuery;
 import com.eprocure.inventory.application.port.in.ListWarehouseStockQuery;
+import com.eprocure.inventory.application.service.IssueOutStockResult;
 import com.eprocure.inventory.application.service.StockEntryView;
 import com.eprocure.inventory.application.service.StockMovementView;
 import com.eprocure.inventory.common.security.UserPrincipal;
 import com.eprocure.inventory.domain.model.StockMovementType;
+import com.eprocure.inventory.presentation.request.IssueOutStockRequest;
+import com.eprocure.inventory.presentation.response.IssueOutStockResponse;
 import com.eprocure.inventory.presentation.response.StockEntryResponse;
 import com.eprocure.inventory.presentation.response.StockMovementResponse;
 import java.math.BigDecimal;
@@ -58,6 +62,21 @@ public class StockPresentationMapper {
                 size);
     }
 
+    public IssueOutStockCommand toIssueOutCommand(UserPrincipal principal, IssueOutStockRequest request) {
+        return new IssueOutStockCommand(
+                principal.getId(),
+                request.warehouseId(),
+                request.prId(),
+                request.recipientId(),
+                request.items().stream()
+                        .map(item -> new IssueOutStockCommand.LineItem(
+                                item.itemCode(),
+                                item.quantity(),
+                                item.unit()))
+                        .toList(),
+                request.notes());
+    }
+
     public StockEntryResponse toResponse(StockEntryView view) {
         return new StockEntryResponse(
                 view.itemCode(),
@@ -88,6 +107,12 @@ public class StockPresentationMapper {
                         view.performedBy().fullName()),
                 view.performedAt(),
                 view.notes());
+    }
+
+    public IssueOutStockResponse toResponse(IssueOutStockResult result) {
+        return new IssueOutStockResponse(result.movements().stream()
+                .map(this::toResponse)
+                .toList());
     }
 
     private String toPlainString(BigDecimal value) {
