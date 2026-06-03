@@ -77,6 +77,26 @@ public record GoodsReceipt(
                 idempotencyKey);
     }
 
+    public GoodsReceiptStatus completionStatus() {
+        boolean anyRejected = lineItems.stream()
+                .anyMatch(lineItem -> lineItem.rejectedQuantity().compareTo(java.math.BigDecimal.ZERO) > 0);
+        boolean anyOverReceived = lineItems.stream()
+                .anyMatch(lineItem -> lineItem.receivedQuantity().compareTo(lineItem.orderedQuantity()) > 0);
+        if (anyRejected || anyOverReceived) {
+            return GoodsReceiptStatus.DISCREPANCY;
+        }
+        boolean allFullyReceived = lineItems.stream()
+                .allMatch(lineItem -> lineItem.receivedQuantity().compareTo(lineItem.orderedQuantity()) == 0);
+        if (allFullyReceived) {
+            return GoodsReceiptStatus.COMPLETE;
+        }
+        return GoodsReceiptStatus.PARTIAL;
+    }
+
+    public boolean canComplete() {
+        return status == GoodsReceiptStatus.DRAFT;
+    }
+
     private static String requireText(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " must not be blank");

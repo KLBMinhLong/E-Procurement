@@ -259,7 +259,7 @@
 | Spring Boot inventory-service module setup | ✅ | Maven module + Docker/compose service on port 8085 |
 | Flyway migration inventory foundation | ✅ | `warehouses`, `items`, `stock_entries`, `goods_receipts`, `goods_receipt_line_items`, `stock_movements`, PO snapshots, Kafka event log |
 | PO issued consumer + snapshot persistence | ✅ | inventory-service consumes `procurement.po.issued`, dedups via `inventory.event_processing_log`, stores issued PO header/line snapshots |
-| Unit tests | ✅ | PO issued snapshot + GR create/list/get use-case tests pass |
+| Unit tests | ✅ | PO issued snapshot + GR create/list/get/complete use-case tests pass |
 | Goods Receipt create/list/detail API | ✅ | `GET/POST /api/v1/goods-receipts`, `GET /api/v1/goods-receipts/{id}`; creates DRAFT GR from issued PO snapshot with DB idempotency |
-| Complete GR + stock receipt movement | ⬜ | Next slice: update stock_entries, create RECEIPT_IN movements, publish `inventory.gr.created` |
+| Complete GR + stock receipt movement | ✅ | `POST /api/v1/goods-receipts/{id}/complete`; resolves catalog `itemCode`, updates `stock_entries`, creates `RECEIPT_IN` movements, publishes `inventory.gr.created` |
 | Stock list/movement/issue-out API | ⬜ | Deferred until GR receipt-in foundation is complete |

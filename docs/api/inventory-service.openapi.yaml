@@ -725,9 +725,10 @@ paths:
       x-required-permission: GR_CREATE
       description: |
         Sau khi complete:
-        1. Tạo stock movement RECEIPT_IN cho mỗi line item
-        2. Cập nhật stock_entries (quantity_on_hand)
-        3. Publish GrCreatedEvent lên Kafka → Finance Service trigger 3-way match
+        1. Resolve/capture catalog itemCode từ PO line snapshot
+        2. Tạo stock movement RECEIPT_IN cho mỗi line có receivedQuantity > 0
+        3. Cập nhật stock_entries (quantity_on_hand)
+        4. Publish GrCreatedEvent lên Kafka → Finance Service trigger 3-way match
       parameters:
         - name: id
           in: path
@@ -747,7 +748,10 @@ paths:
                       data:
                         type: object
                         properties:
-                          grStatus:      { type: string, example: COMPLETE }
+                          grStatus:
+                            type: string
+                            enum: [PARTIAL, COMPLETE, DISCREPANCY]
+                            example: COMPLETE
                           movementsCreated: { type: integer }
                           updatedStocks:
                             type: array
@@ -756,6 +760,12 @@ paths:
                               properties:
                                 itemCode:        { type: string }
                                 newQuantityOnHand: { type: string }
+        '404':
+          description: GR hoặc catalog item không tìm thấy (INV_004/INV_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: GR đã được hoàn tất (INV_005)
           content:

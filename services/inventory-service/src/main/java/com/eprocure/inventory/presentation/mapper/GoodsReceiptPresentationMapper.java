@@ -1,13 +1,16 @@
 package com.eprocure.inventory.presentation.mapper;
 
+import com.eprocure.inventory.application.port.in.CompleteGoodsReceiptCommand;
 import com.eprocure.inventory.application.port.in.CreateGoodsReceiptCommand;
 import com.eprocure.inventory.application.port.in.GetGoodsReceiptQuery;
 import com.eprocure.inventory.application.port.in.ListGoodsReceiptsQuery;
+import com.eprocure.inventory.application.service.CompleteGoodsReceiptResult;
 import com.eprocure.inventory.application.service.GoodsReceiptLineItemView;
 import com.eprocure.inventory.application.service.GoodsReceiptView;
 import com.eprocure.inventory.common.security.UserPrincipal;
 import com.eprocure.inventory.domain.model.GoodsReceiptStatus;
 import com.eprocure.inventory.presentation.request.CreateGoodsReceiptRequest;
+import com.eprocure.inventory.presentation.response.CompleteGoodsReceiptResponse;
 import com.eprocure.inventory.presentation.response.GoodsReceiptLineItemResponse;
 import com.eprocure.inventory.presentation.response.GoodsReceiptResponse;
 import com.eprocure.inventory.presentation.response.PoSnapshotResponse;
@@ -45,6 +48,10 @@ public class GoodsReceiptPresentationMapper {
         return new GetGoodsReceiptQuery(principal.getId(), goodsReceiptId);
     }
 
+    public CompleteGoodsReceiptCommand toCompleteCommand(UserPrincipal principal, UUID goodsReceiptId) {
+        return new CompleteGoodsReceiptCommand(principal.getId(), goodsReceiptId);
+    }
+
     public CreateGoodsReceiptCommand toCreateCommand(UserPrincipal principal, CreateGoodsReceiptRequest request) {
         return new CreateGoodsReceiptCommand(
                 principal.getId(),
@@ -72,6 +79,17 @@ public class GoodsReceiptPresentationMapper {
                         .toList(),
                 view.notes(),
                 view.createdAt());
+    }
+
+    public CompleteGoodsReceiptResponse toResponse(CompleteGoodsReceiptResult result) {
+        return new CompleteGoodsReceiptResponse(
+                result.grStatus(),
+                result.movementsCreated(),
+                result.updatedStocks().stream()
+                        .map(stock -> new CompleteGoodsReceiptResponse.StockUpdateResponse(
+                                stock.itemCode(),
+                                stock.newQuantityOnHand().toPlainString()))
+                        .toList());
     }
 
     private CreateGoodsReceiptCommand.LineItem toCommandLine(CreateGoodsReceiptRequest.LineItem request) {

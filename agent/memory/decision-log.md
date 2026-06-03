@@ -422,3 +422,10 @@
 - Reason: Warehouse users need a persisted GR draft before stock receipt-in can safely update inventory balances. PO issued events still do not carry canonical `itemCode`, so GR line `itemCode` remains nullable until the complete/stock slice resolves catalog mapping.
 - Impact: `POST /api/v1/goods-receipts` validates PO snapshot, active warehouse, line membership, duplicate lines, and quantity tolerance. `GET /api/v1/goods-receipts` and `GET /api/v1/goods-receipts/{id}` expose DRAFT GR data under `GR_VIEW`.
 - Constraint: Complete GR, stock entry updates, `RECEIPT_IN` stock movements, and `inventory.gr.created` publication remain the next E08 slice.
+
+## [2026-06-03] E08 Complete Goods Receipt receipt-in
+
+- Decision: Complete GR resolves missing catalog `itemCode` from active inventory items by exact PO line snapshot match (`itemName`, `categoryCode`, `unit`) before stock posting.
+- Reason: `procurement.po.issued` currently carries PO line item name/category/unit but not canonical inventory `itemCode`, while `stock_entries` and immutable `stock_movements` require non-null `item_code`.
+- Impact: `POST /api/v1/goods-receipts/{id}/complete` is idempotent through `completed_idempotency_key`, only completes DRAFT GR, updates `stock_entries`, writes `RECEIPT_IN` movements, captures resolved GR line `item_code`, and publishes `inventory.gr.created` after commit.
+- Constraint: If no active catalog item can be resolved, completion fails with `INV_001` instead of writing ambiguous stock. Stock list/movement and issue-out APIs remain the next E08 slice.

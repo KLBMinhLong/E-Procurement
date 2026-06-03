@@ -28,3 +28,4 @@ eprocure:
     kafka:
       topics:
         po-issued: ${INVENTORY_KAFKA_TOPIC_PO_ISSUED:procurement.po.issued}
+        gr-created: ${INVENTORY_KAFKA_TOPIC_GR_CREATED:inventory.gr.created}
