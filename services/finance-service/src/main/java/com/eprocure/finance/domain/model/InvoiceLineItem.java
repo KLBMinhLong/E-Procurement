@@ -9,6 +9,7 @@ import java.util.UUID;
 public record InvoiceLineItem(
         UUID id,
         int lineNumber,
+        UUID poLineItemId,
         String description,
         BigDecimal quantity,
         Money unitPrice,
@@ -21,6 +22,7 @@ public record InvoiceLineItem(
         if (lineNumber < 1) {
             throw new IllegalArgumentException("lineNumber must be positive");
         }
+        poLineItemId = Objects.requireNonNull(poLineItemId, "poLineItemId must not be null");
         description = requireText(description, "description");
         quantity = Objects.requireNonNull(quantity, "quantity must not be null").setScale(4, RoundingMode.HALF_UP);
         if (quantity.signum() <= 0) {
@@ -40,6 +42,7 @@ public record InvoiceLineItem(
 
     public static InvoiceLineItem create(
             int lineNumber,
+            UUID poLineItemId,
             String description,
             BigDecimal quantity,
             BigDecimal unitPrice,
@@ -59,6 +62,7 @@ public record InvoiceLineItem(
         return new InvoiceLineItem(
                 UUID.randomUUID(),
                 lineNumber,
+                poLineItemId,
                 description,
                 normalizedQuantity,
                 new Money(normalizedUnitPrice, currency),

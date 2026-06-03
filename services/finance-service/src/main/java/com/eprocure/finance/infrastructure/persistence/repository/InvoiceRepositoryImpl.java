@@ -2,6 +2,8 @@ package com.eprocure.finance.infrastructure.persistence.repository;
 
 import com.eprocure.finance.domain.model.Invoice;
 import com.eprocure.finance.domain.model.InvoiceLineItem;
+import com.eprocure.finance.domain.model.InvoiceStatus;
+import com.eprocure.finance.domain.model.MatchStatus;
 import com.eprocure.finance.domain.model.vo.Money;
 import com.eprocure.finance.domain.repository.InvoiceFilter;
 import com.eprocure.finance.domain.repository.InvoiceRepository;
@@ -31,6 +33,11 @@ public class InvoiceRepositoryImpl implements InvoiceRepository {
     @Override
     public Optional<Invoice> findByIdempotencyKey(UUID idempotencyKey) {
         return invoiceMapper.findHeaderByIdempotencyKey(idempotencyKey).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<Invoice> findByIdAndMatchIdempotencyKey(UUID invoiceId, UUID idempotencyKey) {
+        return invoiceMapper.findHeaderByIdAndMatchIdempotencyKey(invoiceId, idempotencyKey).map(this::toDomain);
     }
 
     @Override
@@ -66,6 +73,29 @@ public class InvoiceRepositoryImpl implements InvoiceRepository {
                 .forEach(entity -> invoiceMapper.insertLineItem(entity, invoice.createdBy()));
     }
 
+    @Override
+    public void updateMatchResult(
+            UUID invoiceId,
+            InvoiceStatus status,
+            MatchStatus poMatchStatus,
+            MatchStatus grMatchStatus,
+            java.math.BigDecimal qtyVariance,
+            Money priceVariance,
+            java.time.Instant matchedAt,
+            UUID matchedBy,
+            UUID idempotencyKey) {
+        invoiceMapper.updateMatchResult(
+                invoiceId,
+                status,
+                poMatchStatus,
+                grMatchStatus,
+                qtyVariance,
+                priceVariance == null ? null : priceVariance.amount(),
+                matchedAt,
+                matchedBy,
+                idempotencyKey);
+    }
+
     private Invoice toDomain(InvoiceDbEntity header) {
         return toDomain(header, invoiceMapper.findLineItemsByInvoiceId(header.getId()));
     }
@@ -95,13 +125,15 @@ public class InvoiceRepositoryImpl implements InvoiceRepository {
                 header.getApprovedAt(),
                 header.getCreatedAt(),
                 header.getCreatedBy(),
-                header.getIdempotencyKey());
+                header.getIdempotencyKey(),
+                header.getMatchIdempotencyKey());
     }
 
     private InvoiceLineItem toDomainLineItem(InvoiceLineItemDbEntity entity) {
         return new InvoiceLineItem(
                 entity.getId(),
                 entity.getLineNumber(),
+                entity.getPoLineItemId(),
                 entity.getDescription(),
                 entity.getQuantity(),
                 new Money(entity.getUnitPrice(), entity.getCurrency()),

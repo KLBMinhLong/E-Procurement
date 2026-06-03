@@ -8,6 +8,7 @@ public class InvoiceLineItemDbEntity {
     private UUID id;
     private UUID invoiceId;
     private int lineNumber;
+    private UUID poLineItemId;
     private String description;
     private BigDecimal quantity;
     private BigDecimal unitPrice;
@@ -21,6 +22,7 @@ public class InvoiceLineItemDbEntity {
         entity.id = lineItem.id();
         entity.invoiceId = invoiceId;
         entity.lineNumber = lineItem.lineNumber();
+        entity.poLineItemId = lineItem.poLineItemId();
         entity.description = lineItem.description();
         entity.quantity = lineItem.quantity();
         entity.unitPrice = lineItem.unitPrice().amount();
@@ -37,6 +39,8 @@ public class InvoiceLineItemDbEntity {
     public void setInvoiceId(UUID invoiceId) { this.invoiceId = invoiceId; }
     public int getLineNumber() { return lineNumber; }
     public void setLineNumber(int lineNumber) { this.lineNumber = lineNumber; }
+    public UUID getPoLineItemId() { return poLineItemId; }
+    public void setPoLineItemId(UUID poLineItemId) { this.poLineItemId = poLineItemId; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public BigDecimal getQuantity() { return quantity; }

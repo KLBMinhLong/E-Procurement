@@ -29,6 +29,7 @@
         <result property="createdAt" column="created_at"/>
         <result property="createdBy" column="created_by"/>
         <result property="idempotencyKey" column="idempotency_key"/>
+        <result property="matchIdempotencyKey" column="match_idempotency_key"/>
     </resultMap>
 
     <resultMap id="invoiceLineItemResultMap"
@@ -36,6 +37,7 @@
         <id property="id" column="id"/>
         <result property="invoiceId" column="invoice_id"/>
         <result property="lineNumber" column="line_number"/>
+        <result property="poLineItemId" column="po_line_item_id"/>
         <result property="description" column="description"/>
         <result property="quantity" column="quantity"/>
         <result property="unitPrice" column="unit_price"/>
@@ -69,7 +71,8 @@
         inv.approved_at,
         inv.created_at,
         inv.created_by,
-        inv.idempotency_key
+        inv.idempotency_key,
+        inv.match_idempotency_key
     </sql>
 
     <sql id="invoiceFrom">
@@ -112,6 +115,15 @@
           AND inv.is_deleted = FALSE
     </select>
 
+    <select id="findHeaderByIdAndMatchIdempotencyKey" resultMap="invoiceHeaderResultMap">
+        SELECT
+            <include refid="invoiceColumns"/>
+        <include refid="invoiceFrom"/>
+        WHERE inv.id = #{invoiceId}
+          AND inv.match_idempotency_key = #{idempotencyKey}
+          AND inv.is_deleted = FALSE
+    </select>
+
     <select id="findHeaderByVendorIdAndInvoiceNumber" resultMap="invoiceHeaderResultMap">
         SELECT
             <include refid="invoiceColumns"/>
@@ -141,6 +153,7 @@
             id,
             invoice_id,
             line_number,
+            po_line_item_id,
             description,
             quantity,
             unit_price,
@@ -159,6 +172,7 @@
             id,
             invoice_id,
             line_number,
+            po_line_item_id,
             description,
             quantity,
             unit_price,

@@ -29,12 +29,14 @@ public record CreateInvoiceCommand(
     }
 
     public record LineItem(
+            UUID poLineItemId,
             String description,
             BigDecimal quantity,
             BigDecimal unitPrice,
             BigDecimal taxRate) {
 
         public LineItem {
+            poLineItemId = Objects.requireNonNull(poLineItemId, "poLineItemId must not be null");
             description = requireText(description, "description");
             quantity = requirePositive(quantity, "quantity");
             unitPrice = requireNonNegative(unitPrice, "unitPrice");

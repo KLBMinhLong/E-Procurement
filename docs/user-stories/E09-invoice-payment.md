@@ -20,6 +20,7 @@ Acceptance:
 - `POST /api/v1/invoices` requires `INVOICE_CREATE` and `Idempotency-Key`.
 - Request must include invoice number, vendor id, PO id, invoice date, due date, and at least one line.
 - PO must exist and vendor must match the PO vendor.
+- Each line must include `poLineItemId` from the selected PO so matching can compare invoice, PO, and GR quantities by the same line key.
 - Created invoice starts in `PENDING_MATCH`.
 - Money uses string JSON, `BigDecimal` Java, `NUMERIC(19,4)` DB.
 
@@ -47,7 +48,8 @@ As an accountant, I want to match invoice lines against PO and GR records so tha
 
 Acceptance:
 - `POST /api/v1/invoices/{id}/match` requires `INVOICE_MATCH` and `Idempotency-Key`.
-- Match checks PO amount/lines and GR received quantities.
+- Match checks invoice subtotal, unit price, and quantity against PO lines.
+- Match checks invoice quantities against finance-side GR snapshots consumed from `inventory.gr.created`.
 - Result can be `MATCHED`, `MISMATCHED`, or `PARTIAL`.
 - Matched invoices publish `finance.invoice.matched`.
 
@@ -64,6 +66,5 @@ Acceptance:
 ## Next Coding Slices
 
 1. Invoice create/list/detail foundation.
-2. 3-way match read model and `inventory.gr.created` consumption.
-3. Invoice approve/dispute actions.
-4. Payment confirmation and budget spent ledger update.
+2. Invoice approve/dispute actions.
+3. Payment confirmation and budget spent ledger update.

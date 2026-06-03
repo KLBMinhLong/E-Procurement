@@ -40,6 +40,7 @@ public class BusinessEventNotificationConsumer {
             "${eprocure.notification.kafka.topics.budget-warning:finance.budget.warning}",
             "${eprocure.notification.kafka.topics.budget-exceeded:finance.budget.exceeded}",
             "${eprocure.notification.kafka.topics.po-issued:procurement.po.issued}",
+            "${eprocure.notification.kafka.topics.invoice-matched:finance.invoice.matched}",
             "${eprocure.notification.kafka.topics.email-send:notification.email.send}"
     })
     public void consume(ConsumerRecord<String, String> record) {

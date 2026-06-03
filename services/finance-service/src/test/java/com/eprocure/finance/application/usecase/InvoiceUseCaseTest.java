@@ -6,15 +6,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.eprocure.finance.application.port.in.CreateInvoiceCommand;
 import com.eprocure.finance.application.port.in.GetInvoiceQuery;
 import com.eprocure.finance.application.port.in.ListInvoicesQuery;
+import com.eprocure.finance.application.port.in.MatchInvoiceCommand;
+import com.eprocure.finance.application.port.out.InvoiceMatchedEventPublisher;
 import com.eprocure.finance.application.service.IdempotencyService;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
+import com.eprocure.finance.domain.event.InvoiceMatchedEvent;
 import com.eprocure.finance.domain.model.Invoice;
 import com.eprocure.finance.domain.model.InvoiceStatus;
+import com.eprocure.finance.domain.model.MatchStatus;
 import com.eprocure.finance.domain.model.PurchaseOrder;
 import com.eprocure.finance.domain.model.PurchaseOrderLineItem;
 import com.eprocure.finance.domain.model.PurchaseOrderStatus;
 import com.eprocure.finance.domain.model.vo.Money;
+import com.eprocure.finance.domain.repository.GoodsReceiptSnapshotRepository;
 import com.eprocure.finance.domain.repository.InvoiceFilter;
 import com.eprocure.finance.domain.repository.InvoiceRepository;
 import com.eprocure.finance.domain.repository.PurchaseOrderFilter;
@@ -26,7 +31,9 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,14 +51,19 @@ class InvoiceUseCaseTest {
     private static final UUID PO_LINE_ITEM_ID = UUID.fromString("73000000-0000-4000-8000-000000000001");
     private static final UUID PR_LINE_ITEM_ID = UUID.fromString("95000000-0000-4000-8000-000000000001");
     private static final String IDEMPOTENCY_KEY = "55555555-5555-4555-8555-555555555555";
+    private static final String MATCH_IDEMPOTENCY_KEY = "66666666-6666-4666-8666-666666666666";
 
     private FakeInvoiceRepository invoiceRepository;
     private FakePurchaseOrderRepository purchaseOrderRepository;
+    private FakeGoodsReceiptSnapshotRepository goodsReceiptSnapshotRepository;
+    private FakeInvoiceMatchedEventPublisher invoiceMatchedEventPublisher;
 
     @BeforeEach
     void setUp() {
         invoiceRepository = new FakeInvoiceRepository();
         purchaseOrderRepository = new FakePurchaseOrderRepository();
+        goodsReceiptSnapshotRepository = new FakeGoodsReceiptSnapshotRepository();
+        invoiceMatchedEventPublisher = new FakeInvoiceMatchedEventPublisher();
         purchaseOrderRepository.purchaseOrders.add(purchaseOrder());
     }
 
@@ -136,10 +148,49 @@ class InvoiceUseCaseTest {
         assertThat(result.meta().sort()).isEqualTo("createdAt,desc");
     }
 
+    @Test
+    void should_match_invoice_when_po_and_gr_quantities_match() {
+        createUseCase().execute(command(VENDOR_ID), IDEMPOTENCY_KEY);
+        Invoice invoice = invoiceRepository.invoices.get(0);
+        goodsReceiptSnapshotRepository.receivedQuantities.put(PO_LINE_ITEM_ID, new BigDecimal("2.0000"));
+        var useCase = matchUseCase();
+
+        var result = useCase.execute(new MatchInvoiceCommand(ACTOR_ID, invoice.id()), MATCH_IDEMPOTENCY_KEY);
+
+        assertThat(result.matchStatus()).isEqualTo(MatchStatus.MATCHED);
+        assertThat(result.requiresManualReview()).isFalse();
+        assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.MATCHED);
+        assertThat(invoiceMatchedEventPublisher.events).hasSize(1);
+    }
+
+    @Test
+    void should_mark_invoice_mismatched_when_gr_quantity_missing() {
+        createUseCase().execute(command(VENDOR_ID), IDEMPOTENCY_KEY);
+        Invoice invoice = invoiceRepository.invoices.get(0);
+        var useCase = matchUseCase();
+
+        var result = useCase.execute(new MatchInvoiceCommand(ACTOR_ID, invoice.id()), MATCH_IDEMPOTENCY_KEY);
+
+        assertThat(result.matchStatus()).isEqualTo(MatchStatus.MISMATCHED);
+        assertThat(result.requiresManualReview()).isTrue();
+        assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.MISMATCHED);
+        assertThat(invoiceMatchedEventPublisher.events).isEmpty();
+    }
+
     private CreateInvoiceUseCase createUseCase() {
         return new CreateInvoiceUseCase(
                 invoiceRepository,
                 purchaseOrderRepository,
+                new FakeIdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+    }
+
+    private MatchInvoiceUseCase matchUseCase() {
+        return new MatchInvoiceUseCase(
+                invoiceRepository,
+                purchaseOrderRepository,
+                goodsReceiptSnapshotRepository,
+                invoiceMatchedEventPublisher,
                 new FakeIdempotencyService(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
@@ -153,6 +204,7 @@ class InvoiceUseCaseTest {
                 LocalDate.parse("2026-06-03"),
                 LocalDate.parse("2026-06-30"),
                 List.of(new CreateInvoiceCommand.LineItem(
+                        PO_LINE_ITEM_ID,
                         "Laptop",
                         new BigDecimal("2.0000"),
                         new BigDecimal("500.0000"),
@@ -216,6 +268,14 @@ class InvoiceUseCaseTest {
         }
 
         @Override
+        public Optional<Invoice> findByIdAndMatchIdempotencyKey(UUID invoiceId, UUID idempotencyKey) {
+            return invoices.stream()
+                    .filter(invoice -> invoice.id().equals(invoiceId))
+                    .filter(invoice -> idempotencyKey.equals(invoice.matchIdempotencyKey()))
+                    .findFirst();
+        }
+
+        @Override
         public Optional<Invoice> findByVendorIdAndInvoiceNumber(UUID vendorId, String invoiceNumber) {
             return invoices.stream()
                     .filter(invoice -> invoice.vendorId().equals(vendorId))
@@ -253,6 +313,86 @@ class InvoiceUseCaseTest {
         @Override
         public void insert(Invoice invoice) {
             invoices.add(invoice);
+        }
+
+        @Override
+        public void updateMatchResult(
+                UUID invoiceId,
+                InvoiceStatus status,
+                MatchStatus poMatchStatus,
+                MatchStatus grMatchStatus,
+                BigDecimal qtyVariance,
+                Money priceVariance,
+                Instant matchedAt,
+                UUID matchedBy,
+                UUID idempotencyKey) {
+            Invoice invoice = findById(invoiceId).orElseThrow();
+            replaceInvoice(new Invoice(
+                    invoice.id(),
+                    invoice.invoiceNumber(),
+                    invoice.vendorId(),
+                    invoice.vendorName(),
+                    invoice.poId(),
+                    invoice.poNumber(),
+                    invoice.lineItems(),
+                    invoice.subtotal(),
+                    invoice.taxAmount(),
+                    invoice.totalAmount(),
+                    invoice.invoiceDate(),
+                    invoice.dueDate(),
+                    status,
+                    poMatchStatus,
+                    grMatchStatus,
+                    qtyVariance,
+                    priceVariance,
+                    matchedAt,
+                    matchedBy,
+                    invoice.approvedBy(),
+                    invoice.approvedAt(),
+                    invoice.createdAt(),
+                    invoice.createdBy(),
+                    invoice.idempotencyKey(),
+                    idempotencyKey));
+        }
+
+        private void replaceInvoice(Invoice replacement) {
+            invoices.removeIf(invoice -> invoice.id().equals(replacement.id()));
+            invoices.add(replacement);
+        }
+    }
+
+    private static final class FakeGoodsReceiptSnapshotRepository implements GoodsReceiptSnapshotRepository {
+        private final Map<UUID, BigDecimal> receivedQuantities = new LinkedHashMap<>();
+
+        @Override
+        public boolean existsProcessedEvent(String eventId) {
+            return false;
+        }
+
+        @Override
+        public void upsert(com.eprocure.finance.domain.model.GoodsReceiptSnapshot snapshot) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public void markEventProcessed(String eventId, String topic, Integer partitionId, Long offsetValue, String handlerName) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public List<ReceivedQuantity> findReceivedQuantitiesByPoId(UUID poId) {
+            return receivedQuantities.entrySet().stream()
+                    .map(entry -> new ReceivedQuantity(entry.getKey(), entry.getValue()))
+                    .toList();
+        }
+    }
+
+    private static final class FakeInvoiceMatchedEventPublisher implements InvoiceMatchedEventPublisher {
+        private final List<InvoiceMatchedEvent> events = new ArrayList<>();
+
+        @Override
+        public void publish(InvoiceMatchedEvent event) {
+            events.add(event);
         }
     }
 

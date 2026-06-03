@@ -109,6 +109,7 @@ public class ConsumeBusinessEventUseCase {
             case "finance.budget.warning" -> "BUDGET_WARNING";
             case "finance.budget.exceeded" -> "BUDGET_EXCEEDED";
             case "procurement.po.issued" -> "PO_ISSUED";
+            case "finance.invoice.matched" -> "INVOICE_MATCHED";
             case "approval.step.assigned" -> "APPROVAL_TASK_ASSIGNED";
             case "approval.sla.warning" -> "SLA_WARNING";
             case "approval.sla.breached" -> "SLA_BREACHED";
@@ -231,6 +232,9 @@ public class ConsumeBusinessEventUseCase {
         if (eventType.startsWith("PR_") || variables.containsKey("purchaseRequestId")) {
             return "PURCHASE_REQUEST";
         }
+        if (eventType.startsWith("INVOICE_") || variables.containsKey("invoiceId")) {
+            return "INVOICE";
+        }
         if (eventType.startsWith("PO_") || variables.containsKey("poId")) {
             return "PURCHASE_ORDER";
         }
@@ -243,7 +247,7 @@ public class ConsumeBusinessEventUseCase {
     private UUID referenceId(String eventType, Map<String, String> variables) {
         String value = eventType.startsWith("BUDGET_")
                 ? firstPresent(variables, "budgetId", "referenceId")
-                : firstPresent(variables, "referenceId", "poId", "purchaseRequestId", "taskId", "budgetId");
+                : firstPresent(variables, "referenceId", "invoiceId", "poId", "purchaseRequestId", "taskId", "budgetId");
         if (value == null || !UUID_PATTERN.matcher(value).matches()) {
             return null;
         }
@@ -279,6 +283,9 @@ public class ConsumeBusinessEventUseCase {
         }
         if (eventType.startsWith("PO_") && variables.containsKey("poId")) {
             return "/finance/purchase-orders/" + variables.get("poId");
+        }
+        if (eventType.startsWith("INVOICE_") && variables.containsKey("invoiceId")) {
+            return "/finance/invoices/" + variables.get("invoiceId");
         }
         return "/notifications";
     }

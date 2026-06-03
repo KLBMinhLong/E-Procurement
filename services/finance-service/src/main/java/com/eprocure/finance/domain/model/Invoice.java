@@ -31,7 +31,8 @@ public record Invoice(
         Instant approvedAt,
         Instant createdAt,
         UUID createdBy,
-        UUID idempotencyKey) {
+        UUID idempotencyKey,
+        UUID matchIdempotencyKey) {
 
     public Invoice {
         id = Objects.requireNonNull(id, "id must not be null");
@@ -105,7 +106,8 @@ public record Invoice(
                 null,
                 createdAt,
                 createdBy,
-                idempotencyKey);
+                idempotencyKey,
+                null);
     }
 
     private static void verifyTotals(

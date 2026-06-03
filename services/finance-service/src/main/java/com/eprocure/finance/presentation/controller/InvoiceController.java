@@ -5,6 +5,7 @@ import com.eprocure.finance.application.service.PageResult;
 import com.eprocure.finance.application.usecase.CreateInvoiceUseCase;
 import com.eprocure.finance.application.usecase.GetInvoiceUseCase;
 import com.eprocure.finance.application.usecase.ListInvoicesUseCase;
+import com.eprocure.finance.application.usecase.MatchInvoiceUseCase;
 import com.eprocure.finance.common.api.ApiResponse;
 import com.eprocure.finance.common.api.RequestIdUtil;
 import com.eprocure.finance.common.security.UserPrincipal;
@@ -13,6 +14,7 @@ import com.eprocure.finance.domain.model.InvoiceStatus;
 import com.eprocure.finance.presentation.mapper.InvoicePresentationMapper;
 import com.eprocure.finance.presentation.request.CreateInvoiceRequest;
 import com.eprocure.finance.presentation.response.InvoiceResponse;
+import com.eprocure.finance.presentation.response.InvoiceMatchResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -40,16 +42,19 @@ public class InvoiceController {
     private final ListInvoicesUseCase listInvoicesUseCase;
     private final GetInvoiceUseCase getInvoiceUseCase;
     private final CreateInvoiceUseCase createInvoiceUseCase;
+    private final MatchInvoiceUseCase matchInvoiceUseCase;
     private final InvoicePresentationMapper mapper;
 
     public InvoiceController(
             ListInvoicesUseCase listInvoicesUseCase,
             GetInvoiceUseCase getInvoiceUseCase,
             CreateInvoiceUseCase createInvoiceUseCase,
+            MatchInvoiceUseCase matchInvoiceUseCase,
             InvoicePresentationMapper mapper) {
         this.listInvoicesUseCase = listInvoicesUseCase;
         this.getInvoiceUseCase = getInvoiceUseCase;
         this.createInvoiceUseCase = createInvoiceUseCase;
+        this.matchInvoiceUseCase = matchInvoiceUseCase;
         this.mapper = mapper;
     }
 
@@ -114,5 +119,25 @@ public class InvoiceController {
             builder.header("Idempotency-Replayed", "true");
         }
         return builder.body(ApiResponse.success(mapper.toResponse(result.view()), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/{invoiceId}/match")
+    @PreAuthorize("hasAuthority('INVOICE_MATCH')")
+    public ResponseEntity<ApiResponse<InvoiceMatchResponse>> match(
+            @PathVariable UUID invoiceId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/invoices/{}/match | userId={}",
+                LogMaskingUtil.maskId(invoiceId),
+                LogMaskingUtil.maskId(principal.getId()));
+        var result = matchInvoiceUseCase.execute(
+                mapper.toMatchCommand(principal, invoiceId),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
     }
 }

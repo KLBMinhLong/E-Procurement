@@ -447,3 +447,10 @@
 - Decision: Start E09 in finance-service with idempotent invoice create/list/detail, backed by `finance.invoices` and `finance.invoice_line_items`.
 - Reason: 3-way match needs a durable invoice aggregate before comparing PO, GR, and invoice amounts/quantities.
 - Constraint: Invoice creation validates PO existence and vendor match, but does not run 3-way match yet. Match/approve/dispute/payment remain follow-up E09 slices.
+
+## [2026-06-03] E09 Invoice 3-way match foundation
+
+- Decision: Finance stores `inventory.gr.created` as `finance.goods_receipt_snapshots` and `finance.goods_receipt_line_snapshots`, then matches invoice lines by `poLineItemId` against PO lines and aggregated GR received quantities.
+- Reason: 3-way match must be deterministic and should not query inventory-service storage directly across service boundaries.
+- Impact: `POST /api/v1/invoices/{id}/match` is idempotent with `match_idempotency_key`, returns `MATCHED`/`MISMATCHED`/`PARTIAL`, updates invoice match fields, and publishes `finance.invoice.matched` only for fully matched invoices.
+- Constraint: Invoice create now requires each line to carry `poLineItemId`; approve/dispute/payment actions remain follow-up E09 slices.

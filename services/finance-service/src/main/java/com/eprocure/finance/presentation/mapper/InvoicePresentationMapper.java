@@ -3,13 +3,16 @@ package com.eprocure.finance.presentation.mapper;
 import com.eprocure.finance.application.port.in.CreateInvoiceCommand;
 import com.eprocure.finance.application.port.in.GetInvoiceQuery;
 import com.eprocure.finance.application.port.in.ListInvoicesQuery;
+import com.eprocure.finance.application.port.in.MatchInvoiceCommand;
 import com.eprocure.finance.application.service.InvoiceLineItemView;
+import com.eprocure.finance.application.service.InvoiceMatchResult;
 import com.eprocure.finance.application.service.InvoiceView;
 import com.eprocure.finance.common.security.UserPrincipal;
 import com.eprocure.finance.domain.model.InvoiceStatus;
 import com.eprocure.finance.domain.model.vo.Money;
 import com.eprocure.finance.presentation.request.CreateInvoiceRequest;
 import com.eprocure.finance.presentation.response.InvoiceLineItemResponse;
+import com.eprocure.finance.presentation.response.InvoiceMatchResponse;
 import com.eprocure.finance.presentation.response.InvoiceResponse;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -50,11 +53,16 @@ public class InvoicePresentationMapper {
                 request.dueDate(),
                 request.lineItems().stream()
                         .map(line -> new CreateInvoiceCommand.LineItem(
+                                line.poLineItemId(),
                                 line.description(),
                                 line.quantity(),
                                 line.unitPrice(),
                                 line.taxRate()))
                         .toList());
+    }
+
+    public MatchInvoiceCommand toMatchCommand(UserPrincipal principal, UUID invoiceId) {
+        return new MatchInvoiceCommand(principal.getId(), invoiceId);
     }
 
     public InvoiceResponse toResponse(InvoiceView view) {
@@ -78,10 +86,22 @@ public class InvoicePresentationMapper {
     private InvoiceLineItemResponse toResponse(InvoiceLineItemView view) {
         return new InvoiceLineItemResponse(
                 view.lineNumber(),
+                view.poLineItemId(),
                 view.description(),
                 view.quantity().toPlainString(),
                 format(view.unitPrice()),
                 format(view.totalPrice()));
+    }
+
+    public InvoiceMatchResponse toResponse(InvoiceMatchResult result) {
+        return new InvoiceMatchResponse(
+                result.matchStatus(),
+                new InvoiceMatchResponse.MatchResultResponse(
+                        result.poMatchStatus(),
+                        result.grMatchStatus(),
+                        toPlainString(result.qtyVariance()),
+                        format(result.priceVariance())),
+                result.requiresManualReview());
     }
 
     private InvoiceResponse.MatchResultResponse toResponse(InvoiceView.MatchResultView view) {

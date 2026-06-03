@@ -23,6 +23,7 @@ public record CreateInvoiceRequest(
         List<UUID> attachmentIds) {
 
     public record LineItem(
+            @NotNull UUID poLineItemId,
             @NotBlank @Size(max = 500) String description,
             @NotNull @Positive BigDecimal quantity,
             @NotNull @DecimalMin("0.0000") BigDecimal unitPrice,

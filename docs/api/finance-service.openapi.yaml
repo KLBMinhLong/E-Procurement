@@ -202,6 +202,7 @@ components:
             type: object
             properties:
               lineNumber:  { type: integer }
+              poLineItemId: { type: string, format: uuid }
               description: { type: string }
               quantity:    { type: string }
               unitPrice:   { type: string }
@@ -764,8 +765,9 @@ paths:
                   minItems: 1
                   items:
                     type: object
-                    required: [description, quantity, unitPrice]
+                    required: [poLineItemId, description, quantity, unitPrice]
                     properties:
+                      poLineItemId: { type: string, format: uuid }
                       description: { type: string }
                       quantity:    { type: string }
                       unitPrice:   { type: string }
@@ -868,6 +870,18 @@ paths:
                               qtyVariance:    { type: string, nullable: true }
                               priceVariance:  { type: string, nullable: true }
                           requiresManualReview: { type: boolean }
+        '404':
+          description: Invoice hoặc Purchase Order không tìm thấy (FIN_007/FIN_006)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Invoice đang ở trạng thái không cho phép chạy match (FIN_012)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /invoices/{id}/approve:
     post:

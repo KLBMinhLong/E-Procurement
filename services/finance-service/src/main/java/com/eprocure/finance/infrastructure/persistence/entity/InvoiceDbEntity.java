@@ -33,6 +33,7 @@ public class InvoiceDbEntity {
     private Instant createdAt;
     private UUID createdBy;
     private UUID idempotencyKey;
+    private UUID matchIdempotencyKey;
 
     public static InvoiceDbEntity from(Invoice invoice) {
         InvoiceDbEntity entity = new InvoiceDbEntity();
@@ -60,6 +61,7 @@ public class InvoiceDbEntity {
         entity.createdAt = invoice.createdAt();
         entity.createdBy = invoice.createdBy();
         entity.idempotencyKey = invoice.idempotencyKey();
+        entity.matchIdempotencyKey = invoice.matchIdempotencyKey();
         return entity;
     }
 
@@ -111,4 +113,6 @@ public class InvoiceDbEntity {
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public UUID getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(UUID idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+    public UUID getMatchIdempotencyKey() { return matchIdempotencyKey; }
+    public void setMatchIdempotencyKey(UUID matchIdempotencyKey) { this.matchIdempotencyKey = matchIdempotencyKey; }
 }

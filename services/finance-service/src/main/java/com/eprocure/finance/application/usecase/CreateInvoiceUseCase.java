@@ -10,10 +10,13 @@ import com.eprocure.finance.common.util.LogMaskingUtil;
 import com.eprocure.finance.domain.model.Invoice;
 import com.eprocure.finance.domain.model.InvoiceLineItem;
 import com.eprocure.finance.domain.model.PurchaseOrder;
+import com.eprocure.finance.domain.model.PurchaseOrderLineItem;
 import com.eprocure.finance.domain.repository.InvoiceRepository;
 import com.eprocure.finance.domain.repository.PurchaseOrderRepository;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,15 +71,28 @@ public class CreateInvoiceUseCase {
             throw new BusinessException(ErrorCode.FIN_010);
         }
 
+        Map<UUID, PurchaseOrderLineItem> poLineItems = purchaseOrder.lineItems().stream()
+                .collect(java.util.stream.Collectors.toMap(PurchaseOrderLineItem::id, item -> item));
+        HashSet<UUID> usedPoLineItemIds = new HashSet<>();
         AtomicInteger lineNumber = new AtomicInteger(1);
         var lineItems = command.lineItems().stream()
-                .map(item -> InvoiceLineItem.create(
-                        lineNumber.getAndIncrement(),
-                        item.description(),
-                        item.quantity(),
-                        item.unitPrice(),
-                        item.taxRate(),
-                        purchaseOrder.totalAmount().currency()))
+                .map(item -> {
+                    if (!usedPoLineItemIds.add(item.poLineItemId())) {
+                        throw new BusinessException(ErrorCode.FIN_010);
+                    }
+                    PurchaseOrderLineItem poLineItem = poLineItems.get(item.poLineItemId());
+                    if (poLineItem == null) {
+                        throw new BusinessException(ErrorCode.FIN_010);
+                    }
+                    return InvoiceLineItem.create(
+                            lineNumber.getAndIncrement(),
+                            item.poLineItemId(),
+                            item.description(),
+                            item.quantity(),
+                            item.unitPrice(),
+                            item.taxRate(),
+                            purchaseOrder.totalAmount().currency());
+                })
                 .toList();
         Invoice invoice = Invoice.create(
                 command.invoiceNumber(),
