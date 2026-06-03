@@ -191,8 +191,8 @@
 | Epic | Status |
 |---|---|
 | E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
-| E06: RFQ & Vendor | 🔄 |
-| E07: Purchase Order | ⬜ |
+| E06: RFQ & Vendor | ✅ |
+| E07: Purchase Order | 🔄 |
 | E08: Goods Receipt & Inventory | ⬜ |
 | E09: Invoice & Payment | ⬜ |
 | E10: Budget Management | ✅ |
@@ -239,5 +239,14 @@
 | RFQ schema + PR source contract | ✅ | `rfqs`, `rfq_line_items`, `rfq_invitations`; PR internal `GET /internal/purchase-requests/{id}/rfq-source` |
 | RFQ create/list/detail/close API | ✅ | `GET/POST /api/v1/rfq`, `GET /api/v1/rfq/{id}`, `PATCH /api/v1/rfq/{id}/close`; PR approved + AVL validation |
 | RFQ quote submit/evaluate/award | ✅ | `vendor_quotes`, `vendor_quote_line_items`; `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award` |
-| PO handoff after award event | ✅ | `procurement.rfq.awarded` published after award commit; finance PO consumer/API remains next slice |
+| PO handoff after award event | ✅ | `procurement.rfq.awarded` published after award commit; finance-service consumes it and creates/list/detail DRAFT PO |
 | Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |
+
+### E07: Purchase Order
+| Task | Status | Ghi chú |
+|---|---|---|
+| RFQ award consumer + PO persistence | ✅ | finance-service consumes `procurement.rfq.awarded`, dedups via `finance.event_processing_log`, creates `finance.purchase_orders` + `finance.po_line_items` |
+| PO list/detail API | ✅ | `GET /api/v1/purchase-orders`, `GET /api/v1/purchase-orders/{id}` guarded by `PO_VIEW_OWN`/`PO_VIEW_ALL` |
+| PO create/edit before send | ⬜ | Manual API path in OpenAPI remains deferred |
+| PO send/cancel actions | ⬜ | Requires HTTP idempotency + notification handoff |
+| PO issue event | ⬜ | Publish `procurement.po.issued` for Inventory/Notification after send/issue workflow |

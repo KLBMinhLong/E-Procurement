@@ -9,6 +9,7 @@ public enum ErrorCode {
     FIN_003("FIN_003", "Budget currency mismatch", HttpStatus.UNPROCESSABLE_ENTITY),
     FIN_004("FIN_004", "Budget override exceeds configured threshold", HttpStatus.FORBIDDEN),
     FIN_005("FIN_005", "Budget is not active", HttpStatus.UNPROCESSABLE_ENTITY),
+    FIN_006("FIN_006", "Purchase Order not found", HttpStatus.NOT_FOUND),
     FIN_009("FIN_009", "Source budget is insufficient for transfer", HttpStatus.UNPROCESSABLE_ENTITY),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
