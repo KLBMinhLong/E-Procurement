@@ -27,8 +27,12 @@ public class PurchaseOrderDbEntity {
     private String deliveryAddress;
     private LocalDate deliveryDeadline;
     private String paymentTerms;
+    private String vendorNote;
     private Instant issuedAt;
     private Instant sentToVendorAt;
+    private Instant cancelledAt;
+    private UUID cancelledBy;
+    private String cancelReason;
     private Instant createdAt;
     private String sourceEventId;
 
@@ -53,8 +57,12 @@ public class PurchaseOrderDbEntity {
         entity.deliveryAddress = purchaseOrder.deliveryAddress();
         entity.deliveryDeadline = purchaseOrder.deliveryDeadline();
         entity.paymentTerms = purchaseOrder.paymentTerms();
+        entity.vendorNote = purchaseOrder.vendorNote();
         entity.issuedAt = purchaseOrder.issuedAt();
         entity.sentToVendorAt = purchaseOrder.sentToVendorAt();
+        entity.cancelledAt = purchaseOrder.cancelledAt();
+        entity.cancelledBy = purchaseOrder.cancelledBy();
+        entity.cancelReason = purchaseOrder.cancelReason();
         entity.createdAt = purchaseOrder.createdAt();
         entity.sourceEventId = purchaseOrder.sourceEventId();
         return entity;
@@ -136,12 +144,28 @@ public class PurchaseOrderDbEntity {
         return paymentTerms;
     }
 
+    public String getVendorNote() {
+        return vendorNote;
+    }
+
     public Instant getIssuedAt() {
         return issuedAt;
     }
 
     public Instant getSentToVendorAt() {
         return sentToVendorAt;
+    }
+
+    public Instant getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public UUID getCancelledBy() {
+        return cancelledBy;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
     }
 
     public Instant getCreatedAt() {
@@ -228,12 +252,28 @@ public class PurchaseOrderDbEntity {
         this.paymentTerms = paymentTerms;
     }
 
+    public void setVendorNote(String vendorNote) {
+        this.vendorNote = vendorNote;
+    }
+
     public void setIssuedAt(Instant issuedAt) {
         this.issuedAt = issuedAt;
     }
 
     public void setSentToVendorAt(Instant sentToVendorAt) {
         this.sentToVendorAt = sentToVendorAt;
+    }
+
+    public void setCancelledAt(Instant cancelledAt) {
+        this.cancelledAt = cancelledAt;
+    }
+
+    public void setCancelledBy(UUID cancelledBy) {
+        this.cancelledBy = cancelledBy;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 
     public void setCreatedAt(Instant createdAt) {

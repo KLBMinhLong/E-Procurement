@@ -401,3 +401,10 @@
 - Reason: RFQ award events do not carry delivery address/deadline, but the system needs an inspectable PO record before the purchasing workflow can complete send/issue actions.
 - Impact: `finance.purchase_orders` and `finance.po_line_items` persist RFQ/PR/vendor/quote snapshots; `GET /api/v1/purchase-orders` and `GET /api/v1/purchase-orders/{id}` expose the generated PO under `PO_VIEW_OWN`/`PO_VIEW_ALL`.
 - Constraint: Manual PO create/edit, send/cancel, and `procurement.po.issued` publication remain E07 follow-up work.
+
+## [2026-06-03] E07 PO action workflow
+
+- Decision: Add draft edit, send, and cancel actions to `finance-service`; send publishes `procurement.po.issued` plus a `notification.email.send` request for vendor email dispatch.
+- Reason: RFQ-award-created DRAFT POs need delivery details before issue, and Inventory/Notification need a durable PO issued event after send.
+- Impact: `PATCH /api/v1/purchase-orders/{id}`, `POST /api/v1/purchase-orders/{id}/send`, and `PATCH /api/v1/purchase-orders/{id}/cancel` are idempotent via `Idempotency-Key`. Notification-service now subscribes to `procurement.po.issued` and seeds an IN_APP `PO_ISSUED` template.
+- Constraint: Direct/manual `POST /api/v1/purchase-orders` remains deferred until the approved-PR direct-PO source contract is finalized.

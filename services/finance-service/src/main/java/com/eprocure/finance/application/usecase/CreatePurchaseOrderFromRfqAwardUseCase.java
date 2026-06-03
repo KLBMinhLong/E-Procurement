@@ -74,6 +74,10 @@ public class CreatePurchaseOrderFromRfqAwardUseCase {
                 command.paymentTerms(),
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
                 createdAt,
                 command.eventId());
         purchaseOrderRepository.insert(purchaseOrder);

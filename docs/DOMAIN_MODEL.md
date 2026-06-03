@@ -550,7 +550,7 @@ Các domain event được publish lên Kafka khi có thay đổi trạng thái 
 | `ApprovalStepAssignedEvent` | `approval.step.assigned` | Approval Engine | Notification |
 | `ApprovalEscalatedEvent` | `approval.escalated` | Approval Engine | Notification, Admin |
 | `BudgetExceededWarningEvent` | `finance.budget.warning` | Finance | Notification |
-| `PoIssuedEvent` | `procurement.po.issued` | PR Service | Inventory, Finance |
+| `PoIssuedEvent` | `procurement.po.issued` | Finance | Inventory, Notification |
 | `GrCreatedEvent` | `inventory.gr.created` | Inventory | Finance (3-way match trigger) |
 | `InvoiceMatchedEvent` | `finance.invoice.matched` | Finance | Notification |
 | `SlaBreachedEvent` | `approval.sla.breached` | Approval Engine | Notification, Admin |

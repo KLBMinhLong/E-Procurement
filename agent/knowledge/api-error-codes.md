@@ -103,6 +103,7 @@
 | FIN_008 | 409 | Hoa don da duoc xu ly |
 | FIN_009 | 422 | Phong ban nguon khong du ngan sach de chuyen |
 | FIN_010 | 422 | So tien hoa don vuot qua so tien PO cho phep |
+| FIN_011 | 422 | Trang thai Purchase Order khong cho phep thao tac |
 
 ### Inventory (INV_)
 | Code | HTTP | Description |

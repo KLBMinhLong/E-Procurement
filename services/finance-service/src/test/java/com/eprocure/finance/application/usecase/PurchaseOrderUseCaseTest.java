@@ -4,10 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eprocure.finance.application.port.in.CreatePurchaseOrderFromRfqAwardCommand;
+import com.eprocure.finance.application.port.in.CancelPurchaseOrderCommand;
 import com.eprocure.finance.application.port.in.GetPurchaseOrderQuery;
 import com.eprocure.finance.application.port.in.ListPurchaseOrdersQuery;
+import com.eprocure.finance.application.port.in.SendPurchaseOrderCommand;
+import com.eprocure.finance.application.port.in.UpdatePurchaseOrderDraftCommand;
+import com.eprocure.finance.application.port.out.PurchaseOrderEmailEventPublisher;
+import com.eprocure.finance.application.port.out.PurchaseOrderIssuedEventPublisher;
+import com.eprocure.finance.application.service.IdempotencyService;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
+import com.eprocure.finance.domain.event.PurchaseOrderEmailRequestedEvent;
+import com.eprocure.finance.domain.event.PurchaseOrderIssuedEvent;
 import com.eprocure.finance.domain.model.PurchaseOrder;
 import com.eprocure.finance.domain.model.PurchaseOrderLineItem;
 import com.eprocure.finance.domain.model.PurchaseOrderStatus;
@@ -17,11 +25,14 @@ import com.eprocure.finance.domain.repository.PurchaseOrderRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -127,6 +138,78 @@ class PurchaseOrderUseCaseTest {
                 .isEqualTo(ErrorCode.IAM_004);
     }
 
+    @Test
+    void should_update_draft_purchase_order_details_when_valid_command() {
+        PurchaseOrder purchaseOrder = purchaseOrder(ACTOR_ID, VENDOR_ID);
+        purchaseOrderRepository.purchaseOrders.add(purchaseOrder);
+        var idempotencyService = new FakeIdempotencyService();
+        var useCase = new UpdatePurchaseOrderDraftUseCase(purchaseOrderRepository, idempotencyService);
+
+        var result = useCase.execute(new UpdatePurchaseOrderDraftCommand(
+                        ACTOR_ID,
+                        purchaseOrder.id(),
+                        "Floor 10, eProcure Tower",
+                        LocalDate.parse("2026-06-30"),
+                        "NET45"),
+                "11111111-1111-4111-8111-111111111111");
+
+        assertThat(result.replayed()).isFalse();
+        assertThat(result.view().deliveryAddress()).isEqualTo("Floor 10, eProcure Tower");
+        assertThat(result.view().paymentTerms()).isEqualTo("NET45");
+        assertThat(purchaseOrderRepository.findById(purchaseOrder.id()).orElseThrow().deliveryDeadline())
+                .isEqualTo(LocalDate.parse("2026-06-30"));
+    }
+
+    @Test
+    void should_send_purchase_order_and_publish_issue_and_email_events_when_ready() {
+        PurchaseOrder purchaseOrder = purchaseOrder(ACTOR_ID, VENDOR_ID)
+                .updateDraftDetails("Floor 10, eProcure Tower", LocalDate.parse("2026-06-30"), "NET45", ACTOR_ID);
+        purchaseOrderRepository.purchaseOrders.add(purchaseOrder);
+        var idempotencyService = new FakeIdempotencyService();
+        var issuedPublisher = new FakePurchaseOrderIssuedEventPublisher();
+        var emailPublisher = new FakePurchaseOrderEmailEventPublisher();
+        var useCase = new SendPurchaseOrderUseCase(
+                purchaseOrderRepository,
+                issuedPublisher,
+                emailPublisher,
+                idempotencyService,
+                Clock.fixed(NOW, ZoneOffset.UTC));
+
+        var result = useCase.execute(new SendPurchaseOrderCommand(
+                        ACTOR_ID,
+                        purchaseOrder.id(),
+                        "Please confirm receipt"),
+                "22222222-2222-4222-8222-222222222222");
+
+        assertThat(result.view().status()).isEqualTo(PurchaseOrderStatus.SENT_TO_VENDOR);
+        assertThat(purchaseOrderRepository.findById(purchaseOrder.id()).orElseThrow().sentToVendorAt()).isEqualTo(NOW);
+        assertThat(issuedPublisher.events).hasSize(1);
+        assertThat(issuedPublisher.events.get(0).payload().poId()).isEqualTo(purchaseOrder.id());
+        assertThat(emailPublisher.events).hasSize(1);
+        assertThat(emailPublisher.events.get(0).payload().recipientEmail()).isEqualTo("sales@acme.example");
+    }
+
+    @Test
+    void should_cancel_purchase_order_when_fulfillment_has_not_started() {
+        PurchaseOrder purchaseOrder = purchaseOrder(ACTOR_ID, VENDOR_ID);
+        purchaseOrderRepository.purchaseOrders.add(purchaseOrder);
+        var useCase = new CancelPurchaseOrderUseCase(
+                purchaseOrderRepository,
+                new FakeIdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+
+        var result = useCase.execute(new CancelPurchaseOrderCommand(
+                        ACTOR_ID,
+                        purchaseOrder.id(),
+                        "Vendor cannot deliver on required schedule"),
+                "33333333-3333-4333-8333-333333333333");
+
+        assertThat(result.view().status()).isEqualTo(PurchaseOrderStatus.CANCELLED);
+        PurchaseOrder cancelled = purchaseOrderRepository.findById(purchaseOrder.id()).orElseThrow();
+        assertThat(cancelled.cancelReason()).isEqualTo("Vendor cannot deliver on required schedule");
+        assertThat(cancelled.cancelledBy()).isEqualTo(ACTOR_ID);
+    }
+
     private static CreatePurchaseOrderFromRfqAwardCommand command(String eventId) {
         return new CreatePurchaseOrderFromRfqAwardCommand(
                 eventId,
@@ -193,6 +276,10 @@ class PurchaseOrderUseCaseTest {
                 null,
                 null,
                 "NET30",
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 NOW,
@@ -269,6 +356,16 @@ class PurchaseOrderUseCaseTest {
         }
 
         @Override
+        public void updateDraftDetails(PurchaseOrder purchaseOrder, UUID actorId) {
+            replace(purchaseOrder);
+        }
+
+        @Override
+        public void updateActionState(PurchaseOrder purchaseOrder, UUID actorId) {
+            replace(purchaseOrder);
+        }
+
+        @Override
         public boolean existsProcessedEvent(String eventId) {
             return processedEvents.contains(eventId);
         }
@@ -276,6 +373,53 @@ class PurchaseOrderUseCaseTest {
         @Override
         public void markEventProcessed(String eventId, String topic, Integer partitionId, Long offsetValue, String handlerName) {
             processedEvents.add(eventId);
+        }
+
+        private void replace(PurchaseOrder purchaseOrder) {
+            purchaseOrders.removeIf(existing -> existing.id().equals(purchaseOrder.id()));
+            purchaseOrders.add(purchaseOrder);
+        }
+    }
+
+    private static final class FakeIdempotencyService extends IdempotencyService {
+        private final Map<String, Object> cache = new HashMap<>();
+
+        private FakeIdempotencyService() {
+            super(null, null);
+        }
+
+        @Override
+        public void verify(String idempotencyKey) {
+            assertThat(idempotencyKey).isNotBlank();
+        }
+
+        @Override
+        public <T> Optional<T> find(String operation, UUID actorId, String idempotencyKey, Class<T> type) {
+            Object value = cache.get(operation + actorId + idempotencyKey);
+            return value == null ? Optional.empty() : Optional.of(type.cast(value));
+        }
+
+        @Override
+        public void save(String operation, UUID actorId, String idempotencyKey, Object response) {
+            cache.put(operation + actorId + idempotencyKey, response);
+        }
+    }
+
+    private static final class FakePurchaseOrderIssuedEventPublisher implements PurchaseOrderIssuedEventPublisher {
+        private final List<PurchaseOrderIssuedEvent> events = new ArrayList<>();
+
+        @Override
+        public void publish(PurchaseOrderIssuedEvent event) {
+            events.add(event);
+        }
+    }
+
+    private static final class FakePurchaseOrderEmailEventPublisher implements PurchaseOrderEmailEventPublisher {
+        private final List<PurchaseOrderEmailRequestedEvent> events = new ArrayList<>();
+
+        @Override
+        public void publish(PurchaseOrderEmailRequestedEvent event) {
+            events.add(event);
         }
     }
 }

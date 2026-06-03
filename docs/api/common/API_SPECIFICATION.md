@@ -593,6 +593,12 @@ Query: ?priority=URGENT&minAmount=5000000&page=1&size=20
 { "prId": "uuid", "vendorId": "uuid", "deliveryDeadline": "2025-02-20", "paymentTerms": "NET30" }
 ```
 
+#### PATCH /api/v1/purchase-orders/{id}
+*Cập nhật PO nháp trước khi gửi. Requires: PO_EDIT*
+```jsonc
+{ "deliveryAddress": "Kho Hà Nội", "deliveryDeadline": "2025-02-20", "paymentTerms": "NET30" }
+```
+
 #### POST /api/v1/purchase-orders/{id}/send
 *Gửi PO cho vendor (email). Requires: PO_SEND_TO_VENDOR*
 

@@ -600,6 +600,41 @@ paths:
                       data:
                         $ref: '#/components/schemas/PurchaseOrderDetail'
 
+    patch:
+      tags: [Purchase Orders]
+      summary: Cập nhật thông tin PO nháp trước khi gửi
+      operationId: updatePurchaseOrderDraft
+      x-required-permission: PO_EDIT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deliveryAddress]
+              properties:
+                deliveryAddress:  { type: string, minLength: 1, maxLength: 1000 }
+                deliveryDeadline: { type: string, format: date, nullable: true }
+                paymentTerms:     { type: string, nullable: true, maxLength: 100, example: NET30 }
+      responses:
+        '200':
+          description: PO nháp được cập nhật
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PurchaseOrderDetail'
+
   /purchase-orders/{id}/send:
     post:
       tags: [Purchase Orders]
@@ -621,11 +656,16 @@ paths:
                 additionalNote: { type: string, nullable: true }
       responses:
         '200':
-          description: PO đã được gửi qua Brevo SMTP
+          description: PO đã được phát hành và yêu cầu gửi email cho vendor
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PurchaseOrderDetail'
 
   /purchase-orders/{id}/cancel:
     patch:
@@ -654,7 +694,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PurchaseOrderDetail'
 
   /invoices:
     get:

@@ -247,6 +247,8 @@
 |---|---|---|
 | RFQ award consumer + PO persistence | ✅ | finance-service consumes `procurement.rfq.awarded`, dedups via `finance.event_processing_log`, creates `finance.purchase_orders` + `finance.po_line_items` |
 | PO list/detail API | ✅ | `GET /api/v1/purchase-orders`, `GET /api/v1/purchase-orders/{id}` guarded by `PO_VIEW_OWN`/`PO_VIEW_ALL` |
-| PO create/edit before send | ⬜ | Manual API path in OpenAPI remains deferred |
-| PO send/cancel actions | ⬜ | Requires HTTP idempotency + notification handoff |
-| PO issue event | ⬜ | Publish `procurement.po.issued` for Inventory/Notification after send/issue workflow |
+| PO draft edit before send | ✅ | `PATCH /api/v1/purchase-orders/{id}` updates delivery details/payment terms for DRAFT PO with `PO_EDIT` + Idempotency-Key |
+| PO send/cancel actions | ✅ | `POST /api/v1/purchase-orders/{id}/send` and `PATCH /api/v1/purchase-orders/{id}/cancel`; idempotent Redis replay + status fallback |
+| PO issue event | ✅ | Finance publishes `procurement.po.issued`; Notification subscribes and creates `PO_ISSUED` in-app notification |
+| Vendor email handoff on PO send | ✅ | Finance publishes `notification.email.send` with rendered subject/body for vendor email dispatch |
+| Manual PO create API | ⬜ | `POST /api/v1/purchase-orders` from approved PR remains deferred until PR line source for direct PO is finalized |
