@@ -48,9 +48,6 @@ CREATE TABLE IF NOT EXISTS finance.payments (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_payments_idempotency_active
     ON finance.payments (idempotency_key)
     WHERE is_deleted = FALSE;
-CREATE UNIQUE INDEX IF NOT EXISTS ux_payments_reference_active
-    ON finance.payments (payment_reference)
-    WHERE is_deleted = FALSE;
 CREATE INDEX IF NOT EXISTS ix_payments_invoice_active
     ON finance.payments (invoice_id)
     WHERE is_deleted = FALSE;
