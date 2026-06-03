@@ -31,6 +31,7 @@ eprocure:
     kafka:
       topics:
         po-issued: ${NOTIFICATION_KAFKA_TOPIC_PO_ISSUED:procurement.po.issued}
+        invoice-matched: ${NOTIFICATION_KAFKA_TOPIC_INVOICE_MATCHED:finance.invoice.matched}
     budget-alert-recipient-ids: ${NOTIFICATION_BUDGET_ALERT_RECIPIENT_IDS:}
     email:
       provider: ${NOTIFICATION_EMAIL_PROVIDER:brevo}

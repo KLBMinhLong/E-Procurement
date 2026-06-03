@@ -813,6 +813,30 @@ CREATE INDEX idx_invoices_status ON finance.invoices(status) WHERE is_deleted = 
 CREATE INDEX idx_invoices_due_date ON finance.invoices(due_date) WHERE status NOT IN ('PAID','CANCELLED');
 ```
 
+Implementation note:
+- `finance.invoices` adds `idempotency_key UUID NOT NULL`, `match_idempotency_key UUID`, `updated_by UUID`, and partial unique indexes:
+  - `ux_invoices_vendor_number_active(vendor_id, invoice_number) WHERE is_deleted = FALSE`
+  - `ux_invoices_idempotency_active(idempotency_key) WHERE is_deleted = FALSE`
+  - `ux_invoices_match_idempotency_active(match_idempotency_key) WHERE match_idempotency_key IS NOT NULL AND is_deleted = FALSE`
+- `finance.invoice_line_items` stores invoice line snapshots with `po_line_item_id`, `quantity`, `unit_price`, `tax_rate`, `tax_amount`, `total_price`, all as `NUMERIC(19,4)` except `tax_rate NUMERIC(7,4)`.
+
+### 5.9 goods_receipt_snapshots
+
+Finance stores a local read model from `inventory.gr.created` for invoice 3-way match. It does not query inventory-service tables directly.
+
+```sql
+finance.goods_receipt_snapshots
+  id UUID PK, gr_number VARCHAR(50), po_id UUID FK purchase_orders, status VARCHAR(30),
+  received_at TIMESTAMPTZ, completed_at TIMESTAMPTZ, source_event_id VARCHAR(80)
+  ux_goods_receipt_snapshots_source_event_active(source_event_id) WHERE is_deleted = FALSE
+
+finance.goods_receipt_line_snapshots
+  gr_line_item_id UUID PK, gr_id UUID FK goods_receipt_snapshots,
+  po_line_item_id UUID FK po_line_items, received_quantity NUMERIC(19,4),
+  rejected_quantity NUMERIC(19,4), unit VARCHAR(50)
+  ix_goods_receipt_line_snapshots_po_line_active(po_line_item_id) WHERE is_deleted = FALSE
+```
+
 ---
 
 ## 6. db_inventory — Schema INVENTORY

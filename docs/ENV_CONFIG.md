@@ -238,6 +238,8 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `BUDGET_CACHE_TTL_MINUTES` | `5` | `5` | Cache ngân sách dashboard (phút) |
 | `FINANCE_KAFKA_ENABLED` | `true` | `true` | Bật/tắt Kafka integration của Finance |
 | `FINANCE_KAFKA_AUTO_STARTUP` | `true` | `true` | Khi `true`, Finance start Kafka listeners sau khi app ready; lỗi broker tạm thời không làm fail `/actuator/health` |
+| `FINANCE_KAFKA_TOPIC_GR_CREATED` | `inventory.gr.created` | `inventory.gr.created` | Topic nhận GR completed snapshot từ Inventory cho 3-way match |
+| `FINANCE_KAFKA_TOPIC_INVOICE_MATCHED` | `finance.invoice.matched` | `finance.invoice.matched` | Topic phát invoice matched cho Notification |
 
 ---
 
@@ -304,6 +306,9 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `NOTIFICATION_DB_PASS` | `notif_pass_dev` | `***SENSITIVE***` | |
 | `NOTIFICATION_DB_POOL_MIN` | `1` | `2` | |
 | `NOTIFICATION_DB_POOL_MAX` | `3` | `10` | |
+| `NOTIFICATION_KAFKA_ENABLED` | `true` | `true` | Bật/tắt Kafka business event consumer |
+| `NOTIFICATION_KAFKA_AUTO_STARTUP` | `true` | `true` | Khi `true`, Notification start Kafka listeners sau khi app ready |
+| `NOTIFICATION_KAFKA_TOPIC_INVOICE_MATCHED` | `finance.invoice.matched` | `finance.invoice.matched` | Topic nhận invoice matched từ Finance |
 | `NOTIFICATION_EMAIL_DISPATCH_ENABLED` | `true` | `true` | Bật worker gửi email async |
 | `NOTIFICATION_EMAIL_PROVIDER` | `logging` | `brevo` | `logging` cho dev, `brevo` cho gửi thật |
 | `NOTIFICATION_EMAIL_BATCH_SIZE` | `25` | `50` | Số email xử lý mỗi batch |

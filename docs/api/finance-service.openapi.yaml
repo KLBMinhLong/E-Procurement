@@ -202,6 +202,7 @@ components:
             type: object
             properties:
               lineNumber:  { type: integer }
+              poLineItemId: { type: string, format: uuid }
               description: { type: string }
               quantity:    { type: string }
               unitPrice:   { type: string }
@@ -764,8 +765,9 @@ paths:
                   minItems: 1
                   items:
                     type: object
-                    required: [description, quantity, unitPrice]
+                    required: [poLineItemId, description, quantity, unitPrice]
                     properties:
+                      poLineItemId: { type: string, format: uuid }
                       description: { type: string }
                       quantity:    { type: string }
                       unitPrice:   { type: string }
@@ -785,6 +787,54 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/InvoiceDetail'
+        '404':
+          description: Purchase Order không tìm thấy (FIN_006)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Hóa đơn đã tồn tại theo vendor + invoiceNumber (FIN_008)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Vendor không khớp Purchase Order (FIN_010)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /invoices/{id}:
+    get:
+      tags: [Invoices]
+      summary: Chi tiết hóa đơn
+      operationId: getInvoice
+      x-required-permission: INVOICE_VIEW
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Chi tiết hóa đơn
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceDetail'
+        '404':
+          description: Hóa đơn không tìm thấy (FIN_007)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /invoices/{id}/match:
     post:
@@ -820,6 +870,18 @@ paths:
                               qtyVariance:    { type: string, nullable: true }
                               priceVariance:  { type: string, nullable: true }
                           requiresManualReview: { type: boolean }
+        '404':
+          description: Invoice hoặc Purchase Order không tìm thấy (FIN_007/FIN_006)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Invoice đang ở trạng thái không cho phép chạy match (FIN_012)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /invoices/{id}/approve:
     post:

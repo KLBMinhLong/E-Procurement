@@ -32,3 +32,5 @@ eprocure:
         rfq-awarded: ${FINANCE_KAFKA_TOPIC_RFQ_AWARDED:procurement.rfq.awarded}
         po-issued: ${FINANCE_KAFKA_TOPIC_PO_ISSUED:procurement.po.issued}
         email-send: ${FINANCE_KAFKA_TOPIC_EMAIL_SEND:notification.email.send}
+        gr-created: ${FINANCE_KAFKA_TOPIC_GR_CREATED:inventory.gr.created}
+        invoice-matched: ${FINANCE_KAFKA_TOPIC_INVOICE_MATCHED:finance.invoice.matched}

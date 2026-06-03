@@ -194,7 +194,7 @@
 | E06: RFQ & Vendor | ✅ |
 | E07: Purchase Order | 🔄 |
 | E08: Goods Receipt & Inventory | ✅ |
-| E09: Invoice & Payment | ⬜ |
+| E09: Invoice & Payment | 🔄 |
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
 | E12: Analytics & Reports | ⬜ |
@@ -264,3 +264,13 @@
 | Complete GR + stock receipt movement | ✅ | `POST /api/v1/goods-receipts/{id}/complete`; resolves catalog `itemCode`, updates `stock_entries`, creates `RECEIPT_IN` movements, publishes `inventory.gr.created` |
 | Stock list/movement API | ✅ | `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, `GET /api/v1/stock/movements`; read-only stock projections with `GR_VIEW` |
 | Issue-out API | ✅ | `POST /api/v1/stock/issue-out`; validates active item/warehouse, decrements stock atomically, stores idempotent request header, creates `ISSUE_OUT` movements |
+
+### E09: Invoice & Payment
+| Task | Status | Ghi chú |
+|---|---|---|
+| User story/use case chi tiết | ✅ | `docs/user-stories/E09-invoice-payment.md` |
+| Invoice schema foundation | ✅ | `finance.invoices`, `finance.invoice_line_items`, idempotency key, vendor+invoice unique index |
+| Invoice create/list/detail API | ✅ | `GET/POST /api/v1/invoices`, `GET /api/v1/invoices/{id}`; creates `PENDING_MATCH` invoices from existing PO snapshot |
+| Unit tests | ✅ | Invoice create/list/detail + idempotency/missing PO/vendor mismatch tests pass |
+| 3-way match API | ✅ | `POST /api/v1/invoices/{id}/match`; consumes `inventory.gr.created` into finance GR snapshots, compares PO + GR + Invoice, publishes `finance.invoice.matched` when matched |
+| Approve/dispute/payment actions | ⬜ | Next E09 slice: `POST /approve`, `/dispute`, `/confirm-payment` |
