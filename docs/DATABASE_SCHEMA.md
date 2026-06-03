@@ -56,10 +56,14 @@ PostgreSQL Cluster
 ├── db_inventory
 │   └── schema: inventory
 │       ├── warehouses
+│       ├── items
 │       ├── stock_entries
+│       ├── purchase_order_snapshots
+│       ├── purchase_order_line_snapshots
 │       ├── goods_receipts
-│       ├── gr_line_items
-│       └── stock_movements
+│       ├── goods_receipt_line_items
+│       ├── stock_movements
+│       └── event_processing_log
 │
 ├── db_vendor
 │   └── schema: vendor
@@ -813,82 +817,66 @@ CREATE INDEX idx_invoices_due_date ON finance.invoices(due_date) WHERE status NO
 
 ## 6. db_inventory — Schema INVENTORY
 
-### 6.1 warehouses
+### 6.1 V1 foundation overview
 
 ```sql
-CREATE TABLE inventory.warehouses (
-    id          UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    code        VARCHAR(20)     NOT NULL UNIQUE,
-    name        VARCHAR(200)    NOT NULL,
-    address     TEXT,
-    is_active   BOOLEAN         NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    is_deleted  BOOLEAN         NOT NULL DEFAULT FALSE
-);
-```
+-- All mutable inventory tables include:
+-- created_at, updated_at, created_by, updated_by, is_deleted, deleted_at, deleted_by.
+-- Money/quantity columns use NUMERIC(19,4), timestamps use TIMESTAMPTZ.
 
-### 6.2 stock_entries
+inventory.warehouses
+  id UUID PK, code VARCHAR(20), name VARCHAR(200), address TEXT, is_active BOOLEAN
+  ux_warehouses_code_active(code) WHERE is_deleted = FALSE
 
-```sql
-CREATE TABLE inventory.stock_entries (
-    id                  UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_code           VARCHAR(20)     NOT NULL,
-    warehouse_id        UUID            NOT NULL REFERENCES inventory.warehouses(id),
-    quantity_on_hand    NUMERIC(10,2)   NOT NULL DEFAULT 0,
-    unit                VARCHAR(20)     NOT NULL,
-    last_updated        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    
-    UNIQUE (item_code, warehouse_id),
-    CONSTRAINT chk_stock_qty CHECK (quantity_on_hand >= 0)
-);
-CREATE INDEX idx_stock_item ON inventory.stock_entries(item_code);
-```
+inventory.items
+  id UUID PK, item_code VARCHAR(20), name VARCHAR(300), category_code VARCHAR(50),
+  unit VARCHAR(20), unit_price NUMERIC(19,4), currency VARCHAR(3),
+  preferred_vendor_id UUID, reorder_point NUMERIC(19,4), is_active BOOLEAN
+  ux_items_code_active(item_code) WHERE is_deleted = FALSE
 
-### 6.3 goods_receipts
+inventory.stock_entries
+  id UUID PK, item_code VARCHAR(20), warehouse_id UUID FK warehouses(id),
+  quantity_on_hand NUMERIC(19,4), unit VARCHAR(20), last_updated TIMESTAMPTZ
+  ux_stock_entries_item_warehouse_active(item_code, warehouse_id) WHERE is_deleted = FALSE
 
-```sql
-CREATE TABLE inventory.goods_receipts (
-    id                      UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    gr_number               VARCHAR(20)     NOT NULL UNIQUE,
-    po_id                   UUID            NOT NULL,
-    warehouse_id            UUID            NOT NULL REFERENCES inventory.warehouses(id),
-    warehouse_keeper_id     UUID            NOT NULL,
-    received_at             TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    status                  VARCHAR(30)     NOT NULL DEFAULT 'DRAFT',
-    notes                   TEXT,
-    created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    created_by              UUID            NOT NULL,
-    is_deleted              BOOLEAN         NOT NULL DEFAULT FALSE,
-    deleted_at              TIMESTAMPTZ,
-    deleted_by              UUID,
+inventory.purchase_order_snapshots
+  id UUID PK, po_id UUID, po_number VARCHAR(30), pr_id UUID, pr_number VARCHAR(30),
+  vendor_id UUID, vendor_name VARCHAR(300), vendor_email VARCHAR(320),
+  purchasing_officer_id UUID, total_amount NUMERIC(19,4), currency VARCHAR(3),
+  delivery_address TEXT, delivery_deadline DATE, payment_terms VARCHAR(200),
+  issued_at TIMESTAMPTZ, sent_to_vendor_at TIMESTAMPTZ, source_event_id VARCHAR(100)
+  ux_po_snapshots_po_active(po_id) WHERE is_deleted = FALSE
+  ux_po_snapshots_source_event_active(source_event_id) WHERE is_deleted = FALSE
 
-    CONSTRAINT chk_gr_status CHECK (status IN ('DRAFT','PARTIAL','COMPLETE','DISCREPANCY'))
-);
-CREATE INDEX idx_gr_po ON inventory.goods_receipts(po_id);
-CREATE INDEX idx_gr_status ON inventory.goods_receipts(status) WHERE is_deleted = FALSE;
-```
+inventory.purchase_order_line_snapshots
+  id UUID PK, snapshot_id UUID FK purchase_order_snapshots(id), po_id UUID,
+  po_line_item_id UUID, pr_line_item_id UUID, item_name VARCHAR(300),
+  category_code VARCHAR(50), quantity NUMERIC(19,4), unit VARCHAR(20),
+  unit_price NUMERIC(19,4), total_price NUMERIC(19,4), currency VARCHAR(3)
+  ux_po_line_snapshots_line_active(po_line_item_id) WHERE is_deleted = FALSE
 
-### 6.4 stock_movements (Immutable)
+inventory.goods_receipts
+  id UUID PK, gr_number VARCHAR(30), po_id UUID, warehouse_id UUID FK warehouses(id),
+  warehouse_keeper_id UUID, received_at TIMESTAMPTZ, status VARCHAR(30), notes TEXT
+  status IN ('DRAFT','PARTIAL','COMPLETE','DISCREPANCY')
 
-```sql
-CREATE TABLE inventory.stock_movements (
-    id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_code       VARCHAR(20)     NOT NULL,
-    warehouse_id    UUID            NOT NULL REFERENCES inventory.warehouses(id),
-    movement_type   VARCHAR(30)     NOT NULL,               -- RECEIPT_IN|ISSUE_OUT|ADJUSTMENT|TRANSFER
-    quantity        NUMERIC(10,2)   NOT NULL,
-    unit            VARCHAR(20)     NOT NULL,
-    balance_after   NUMERIC(10,2)   NOT NULL,               -- Snapshot tồn kho sau khi di chuyển
-    source_ref_type VARCHAR(50),                            -- 'GOODS_RECEIPT'|'PURCHASE_REQUEST'
-    source_ref_id   UUID,
-    performed_by    UUID            NOT NULL,
-    performed_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    notes           TEXT
-    -- Không có is_deleted — immutable log
-);
-CREATE INDEX idx_movements_item ON inventory.stock_movements(item_code, performed_at DESC);
-CREATE INDEX idx_movements_ref ON inventory.stock_movements(source_ref_type, source_ref_id);
+inventory.goods_receipt_line_items
+  id UUID PK, goods_receipt_id UUID FK goods_receipts(id), po_line_item_id UUID,
+  item_code VARCHAR(20), item_name VARCHAR(300), ordered_quantity NUMERIC(19,4),
+  received_quantity NUMERIC(19,4), rejected_quantity NUMERIC(19,4), unit VARCHAR(20),
+  rejection_reason TEXT, lot_number VARCHAR(100)
+
+inventory.stock_movements -- immutable, no soft delete
+  id UUID PK, item_code VARCHAR(20), warehouse_id UUID FK warehouses(id),
+  movement_type VARCHAR(30), quantity NUMERIC(19,4), unit VARCHAR(20),
+  balance_after NUMERIC(19,4), source_ref_type VARCHAR(50), source_ref_id UUID,
+  performed_by UUID, performed_at TIMESTAMPTZ, notes TEXT
+  movement_type IN ('RECEIPT_IN','ISSUE_OUT','ADJUSTMENT','TRANSFER')
+
+inventory.event_processing_log -- immutable Kafka idempotency log
+  event_id VARCHAR(100) PK, topic VARCHAR(200), partition_id INTEGER,
+  offset_value BIGINT, handler_name VARCHAR(100), status VARCHAR(30),
+  processed_at TIMESTAMPTZ
 ```
 
 ---

@@ -408,3 +408,10 @@
 - Reason: RFQ-award-created DRAFT POs need delivery details before issue, and Inventory/Notification need a durable PO issued event after send.
 - Impact: `PATCH /api/v1/purchase-orders/{id}`, `POST /api/v1/purchase-orders/{id}/send`, and `PATCH /api/v1/purchase-orders/{id}/cancel` are idempotent via `Idempotency-Key`. Notification-service now subscribes to `procurement.po.issued` and seeds an IN_APP `PO_ISSUED` template.
 - Constraint: Direct/manual `POST /api/v1/purchase-orders` remains deferred until the approved-PR direct-PO source contract is finalized.
+
+## [2026-06-03] E08 Inventory PO issued snapshot foundation
+
+- Decision: Start E08 by adding `inventory-service` and consuming `procurement.po.issued` into `inventory.purchase_order_snapshots` plus `inventory.purchase_order_line_snapshots`, guarded by `inventory.event_processing_log`.
+- Reason: Goods Receipt needs a durable issued-PO source before stock receipt can be implemented, while the PO issued event currently carries item name/category snapshots but not canonical inventory item codes.
+- Impact: `inventory-service` is now a Maven/Docker/Compose service on port 8085 with Flyway V1 inventory foundation, Kafka listener delayed until application ready, and unit-tested idempotent PO snapshot recording.
+- Constraint: GR create/complete APIs must resolve or capture catalog item codes in the next slice before updating `stock_entries` and publishing `inventory.gr.created`.

@@ -6,7 +6,7 @@
 | pr | pr-service | 8082 | db_procurement | pr | com.eprocure.pr | Active dev |
 | approval | approval-service | 8083 | db_procurement | approval, camunda | com.eprocure.approval | Planned |
 | finance | finance-service | 8084 | db_finance | finance | com.eprocure.finance | Planned |
-| inventory | inventory-service | 8085 | db_inventory | inventory | com.eprocure.inventory | Planned |
+| inventory | inventory-service | 8085 | db_inventory | inventory | com.eprocure.inventory | Foundation |
 | vendor | vendor-service | 8086 | db_vendor | vendor | com.eprocure.vendor | Planned |
 | analytics | analytics-service | 8087 | db_procurement | pr, approval | com.eprocure.analytics | Planned |
 | notification | notification-service | 8088 | db_notification | notification | com.eprocure.notification | Planned |

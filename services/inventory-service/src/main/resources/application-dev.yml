@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${INVENTORY_DB_HOST:postgres}:${INVENTORY_DB_PORT:5432}/${INVENTORY_DB_NAME:db_inventory}
+    username: ${INVENTORY_DB_USER:inventory_user}
+    password: ${INVENTORY_DB_PASS:inventory_pass_dev}
+    hikari:
+      connection-init-sql: SET search_path TO ${INVENTORY_DB_SCHEMA:inventory}
+  flyway:
+    schemas: ${INVENTORY_DB_SCHEMA:inventory}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: inventory-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+
+eprocure:
+  internal:
+    api-key: ${INVENTORY_INTERNAL_API_KEY:change-me-internal-api-key}
+  inventory:
+    integration:
+      kafka-enabled: ${INVENTORY_KAFKA_ENABLED:true}
+      kafka-auto-startup: ${INVENTORY_KAFKA_AUTO_STARTUP:true}
+    kafka:
+      topics:
+        po-issued: ${INVENTORY_KAFKA_TOPIC_PO_ISSUED:procurement.po.issued}

@@ -122,6 +122,12 @@ server {
         include /etc/nginx/conf.d/proxy-protected;
     }
 
+    location /api/v1/stock {
+        set $upstream "${INVENTORY_SERVICE_URL}";
+        proxy_pass $upstream;
+        include /etc/nginx/conf.d/proxy-protected;
+    }
+
     location /api/v1/vendors {
         set $upstream "${VENDOR_SERVICE_URL}";
         proxy_pass $upstream;

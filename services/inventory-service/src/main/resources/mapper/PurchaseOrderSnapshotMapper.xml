@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.inventory.infrastructure.persistence.mapper.PurchaseOrderSnapshotMapper">
+
+    <resultMap id="purchaseOrderSnapshotResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.PurchaseOrderSnapshotDbEntity">
+        <id property="id" column="id"/>
+        <result property="poId" column="po_id"/>
+        <result property="poNumber" column="po_number"/>
+        <result property="prId" column="pr_id"/>
+        <result property="prNumber" column="pr_number"/>
+        <result property="vendorId" column="vendor_id"/>
+        <result property="vendorName" column="vendor_name"/>
+        <result property="vendorEmail" column="vendor_email"/>
+        <result property="vendorTaxCode" column="vendor_tax_code"/>
+        <result property="purchasingOfficerId" column="purchasing_officer_id"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="currency" column="currency"/>
+        <result property="deliveryAddress" column="delivery_address"/>
+        <result property="deliveryDeadline" column="delivery_deadline"/>
+        <result property="paymentTerms" column="payment_terms"/>
+        <result property="issuedAt" column="issued_at"/>
+        <result property="sentToVendorAt" column="sent_to_vendor_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="sourceEventId" column="source_event_id"/>
+    </resultMap>
+
+    <resultMap id="purchaseOrderLineSnapshotResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.PurchaseOrderLineSnapshotDbEntity">
+        <id property="id" column="id"/>
+        <result property="snapshotId" column="snapshot_id"/>
+        <result property="poId" column="po_id"/>
+        <result property="poLineItemId" column="po_line_item_id"/>
+        <result property="prLineItemId" column="pr_line_item_id"/>
+        <result property="itemName" column="item_name"/>
+        <result property="categoryCode" column="category_code"/>
+        <result property="quantity" column="quantity"/>
+        <result property="unit" column="unit"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="currency" column="currency"/>
+    </resultMap>
+
+    <sql id="purchaseOrderSnapshotColumns">
+        pos.id,
+        pos.po_id,
+        pos.po_number,
+        pos.pr_id,
+        pos.pr_number,
+        pos.vendor_id,
+        pos.vendor_name,
+        pos.vendor_email,
+        pos.vendor_tax_code,
+        pos.purchasing_officer_id,
+        pos.total_amount,
+        pos.currency,
+        pos.delivery_address,
+        pos.delivery_deadline,
+        pos.payment_terms,
+        pos.issued_at,
+        pos.sent_to_vendor_at,
+        pos.created_at,
+        pos.source_event_id
+    </sql>
+
+    <select id="findHeaderByPoId" resultMap="purchaseOrderSnapshotResultMap">
+        SELECT
+            <include refid="purchaseOrderSnapshotColumns"/>
+        FROM inventory.purchase_order_snapshots pos
+        WHERE pos.po_id = #{poId}
+          AND pos.is_deleted = FALSE
+    </select>
+
+    <select id="findHeaderBySourceEventId" resultMap="purchaseOrderSnapshotResultMap">
+        SELECT
+            <include refid="purchaseOrderSnapshotColumns"/>
+        FROM inventory.purchase_order_snapshots pos
+        WHERE pos.source_event_id = #{sourceEventId}
+          AND pos.is_deleted = FALSE
+    </select>
+
+    <select id="findLineItemsBySnapshotId" resultMap="purchaseOrderLineSnapshotResultMap">
+        SELECT
+            id,
+            snapshot_id,
+            po_id,
+            po_line_item_id,
+            pr_line_item_id,
+            item_name,
+            category_code,
+            quantity,
+            unit,
+            unit_price,
+            total_price,
+            currency
+        FROM inventory.purchase_order_line_snapshots
+        WHERE snapshot_id = #{snapshotId}
+          AND is_deleted = FALSE
+        ORDER BY id ASC
+    </select>
+</mapper>
