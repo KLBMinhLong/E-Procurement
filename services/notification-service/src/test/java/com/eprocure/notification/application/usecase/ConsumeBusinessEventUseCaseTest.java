@@ -85,6 +85,23 @@ class ConsumeBusinessEventUseCaseTest {
         assertThat(webSocketPushPort.pushed).isEmpty();
     }
 
+    @Test
+    void should_create_purchase_order_notification_when_po_issued_event_received() throws Exception {
+        UUID poId = UUID.fromString("96000000-0000-4000-8000-000000000001");
+
+        int created = useCase.execute(poIssuedCommand("evt-po-issued-001", poId));
+
+        assertThat(created).isEqualTo(1);
+        Notification notification = repository.saved.get(0);
+        assertThat(notification.recipientId()).isEqualTo(RECIPIENT_ID);
+        assertThat(notification.eventType()).isEqualTo("PO_ISSUED");
+        assertThat(notification.referenceType()).isEqualTo("PURCHASE_ORDER");
+        assertThat(notification.referenceId()).isEqualTo(poId);
+        assertThat(notification.referenceNumber()).isEqualTo("PO-2026-000001");
+        assertThat(notification.actionUrl()).isEqualTo("/finance/purchase-orders/" + poId);
+        assertThat(webSocketPushPort.pushed).hasSize(1);
+    }
+
     private BusinessEventCommand command(String eventId) throws Exception {
         JsonNode payload = objectMapper.readTree("""
                 {
@@ -135,6 +152,31 @@ class ConsumeBusinessEventUseCaseTest {
                 "notification.email.send",
                 0,
                 30L,
+                payload);
+    }
+
+    private BusinessEventCommand poIssuedCommand(String eventId, UUID poId) throws Exception {
+        JsonNode payload = objectMapper.readTree("""
+                {
+                  "poId": "%s",
+                  "poNumber": "PO-2026-000001",
+                  "recipientId": "%s",
+                  "referenceType": "PURCHASE_ORDER",
+                  "referenceId": "%s",
+                  "referenceNumber": "PO-2026-000001",
+                  "vendorName": "Acme Supplier",
+                  "totalAmount": "25000000.0000",
+                  "currency": "VND"
+                }
+                """.formatted(poId, RECIPIENT_ID, poId));
+        return new BusinessEventCommand(
+                eventId,
+                "PO_ISSUED",
+                "finance-service",
+                NOW,
+                "procurement.po.issued",
+                0,
+                13L,
                 payload);
     }
 
@@ -199,6 +241,18 @@ class ConsumeBusinessEventUseCaseTest {
                         "vi",
                         "Reset password",
                         "Open {{resetUrl}} to reset your password.",
+                        true,
+                        NOW,
+                        NOW));
+            }
+            if ("PO_ISSUED".equals(eventType) && channel == NotificationChannel.IN_APP) {
+                return Optional.of(new NotificationTemplate(
+                        "IN_APP_PO_ISSUED_VI",
+                        "PO_ISSUED",
+                        NotificationChannel.IN_APP,
+                        "vi",
+                        "PO {{poNumber}} issued",
+                        "PO {{poNumber}} for {{vendorName}} has been issued.",
                         true,
                         NOW,
                         NOW));

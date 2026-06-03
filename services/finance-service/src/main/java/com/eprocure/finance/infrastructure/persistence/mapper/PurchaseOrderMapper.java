@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface PurchaseOrderMapper {
@@ -38,18 +39,46 @@ public interface PurchaseOrderMapper {
                 vendor_id, vendor_name, vendor_email, vendor_tax_code,
                 purchasing_officer_id, purchasing_officer_full_name, status,
                 total_amount, currency, delivery_address, delivery_deadline, payment_terms,
-                issued_at, sent_to_vendor_at, created_at, created_by, source_event_id
+                vendor_note, issued_at, sent_to_vendor_at, cancelled_at, cancelled_by, cancel_reason,
+                created_at, created_by, source_event_id
             ) VALUES (
                 #{entity.id}, #{entity.poNumber}, #{entity.prId}, #{entity.prNumber},
                 #{entity.rfqId}, #{entity.rfqNumber}, #{entity.awardedQuoteId},
                 #{entity.vendorId}, #{entity.vendorName}, #{entity.vendorEmail}, #{entity.vendorTaxCode},
                 #{entity.purchasingOfficerId}, #{entity.purchasingOfficerFullName}, #{entity.status},
                 #{entity.totalAmount}, #{entity.currency}, #{entity.deliveryAddress}, #{entity.deliveryDeadline},
-                #{entity.paymentTerms}, #{entity.issuedAt}, #{entity.sentToVendorAt}, #{entity.createdAt},
+                #{entity.paymentTerms}, #{entity.vendorNote}, #{entity.issuedAt}, #{entity.sentToVendorAt},
+                #{entity.cancelledAt}, #{entity.cancelledBy}, #{entity.cancelReason}, #{entity.createdAt},
                 #{entity.purchasingOfficerId}, #{entity.sourceEventId}
             )
             """)
     void insertPurchaseOrder(@Param("entity") PurchaseOrderDbEntity entity);
+
+    @Update("""
+            UPDATE finance.purchase_orders
+            SET delivery_address = #{entity.deliveryAddress},
+                delivery_deadline = #{entity.deliveryDeadline},
+                payment_terms = #{entity.paymentTerms},
+                updated_by = #{actorId}
+            WHERE id = #{entity.id}
+              AND is_deleted = FALSE
+            """)
+    int updateDraftDetails(@Param("entity") PurchaseOrderDbEntity entity, @Param("actorId") UUID actorId);
+
+    @Update("""
+            UPDATE finance.purchase_orders
+            SET status = #{entity.status},
+                vendor_note = #{entity.vendorNote},
+                issued_at = #{entity.issuedAt},
+                sent_to_vendor_at = #{entity.sentToVendorAt},
+                cancelled_at = #{entity.cancelledAt},
+                cancelled_by = #{entity.cancelledBy},
+                cancel_reason = #{entity.cancelReason},
+                updated_by = #{actorId}
+            WHERE id = #{entity.id}
+              AND is_deleted = FALSE
+            """)
+    int updateActionState(@Param("entity") PurchaseOrderDbEntity entity, @Param("actorId") UUID actorId);
 
     @Insert("""
             INSERT INTO finance.po_line_items (

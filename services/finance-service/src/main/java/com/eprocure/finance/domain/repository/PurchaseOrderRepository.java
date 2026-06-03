@@ -20,6 +20,10 @@ public interface PurchaseOrderRepository {
 
     void insert(PurchaseOrder purchaseOrder);
 
+    void updateDraftDetails(PurchaseOrder purchaseOrder, UUID actorId);
+
+    void updateActionState(PurchaseOrder purchaseOrder, UUID actorId);
+
     boolean existsProcessedEvent(String eventId);
 
     void markEventProcessed(String eventId, String topic, Integer partitionId, Long offsetValue, String handlerName);

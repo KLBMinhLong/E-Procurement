@@ -1,7 +1,10 @@
 package com.eprocure.finance.presentation.mapper;
 
+import com.eprocure.finance.application.port.in.CancelPurchaseOrderCommand;
 import com.eprocure.finance.application.port.in.GetPurchaseOrderQuery;
 import com.eprocure.finance.application.port.in.ListPurchaseOrdersQuery;
+import com.eprocure.finance.application.port.in.SendPurchaseOrderCommand;
+import com.eprocure.finance.application.port.in.UpdatePurchaseOrderDraftCommand;
 import com.eprocure.finance.application.service.PurchaseOrderLineItemView;
 import com.eprocure.finance.application.service.PurchaseOrderView;
 import com.eprocure.finance.common.security.UserPrincipal;
@@ -12,6 +15,9 @@ import com.eprocure.finance.presentation.response.PurchaseOrderResponse;
 import com.eprocure.finance.presentation.response.PurchasingOfficerSnapshotResponse;
 import com.eprocure.finance.presentation.response.QuantityResponse;
 import com.eprocure.finance.presentation.response.VendorSnapshotResponse;
+import com.eprocure.finance.presentation.request.CancelPurchaseOrderRequest;
+import com.eprocure.finance.presentation.request.SendPurchaseOrderRequest;
+import com.eprocure.finance.presentation.request.UpdatePurchaseOrderDraftRequest;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -45,6 +51,38 @@ public class PurchaseOrderPresentationMapper {
                 principal.getId(),
                 principal.getPermissions(),
                 poId);
+    }
+
+    public UpdatePurchaseOrderDraftCommand toUpdateCommand(
+            UserPrincipal principal,
+            UUID poId,
+            UpdatePurchaseOrderDraftRequest request) {
+        return new UpdatePurchaseOrderDraftCommand(
+                principal.getId(),
+                poId,
+                request.deliveryAddress(),
+                request.deliveryDeadline(),
+                request.paymentTerms());
+    }
+
+    public SendPurchaseOrderCommand toSendCommand(
+            UserPrincipal principal,
+            UUID poId,
+            SendPurchaseOrderRequest request) {
+        return new SendPurchaseOrderCommand(
+                principal.getId(),
+                poId,
+                request == null ? null : request.additionalNote());
+    }
+
+    public CancelPurchaseOrderCommand toCancelCommand(
+            UserPrincipal principal,
+            UUID poId,
+            CancelPurchaseOrderRequest request) {
+        return new CancelPurchaseOrderCommand(
+                principal.getId(),
+                poId,
+                request.reason());
     }
 
     public PurchaseOrderResponse toResponse(PurchaseOrderView view) {

@@ -75,6 +75,16 @@ public class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
     }
 
     @Override
+    public void updateDraftDetails(PurchaseOrder purchaseOrder, UUID actorId) {
+        purchaseOrderMapper.updateDraftDetails(PurchaseOrderDbEntity.from(purchaseOrder), actorId);
+    }
+
+    @Override
+    public void updateActionState(PurchaseOrder purchaseOrder, UUID actorId) {
+        purchaseOrderMapper.updateActionState(PurchaseOrderDbEntity.from(purchaseOrder), actorId);
+    }
+
+    @Override
     public boolean existsProcessedEvent(String eventId) {
         return purchaseOrderMapper.existsProcessedEvent(eventId);
     }
@@ -111,8 +121,12 @@ public class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
                 header.getDeliveryAddress(),
                 header.getDeliveryDeadline(),
                 header.getPaymentTerms(),
+                header.getVendorNote(),
                 header.getIssuedAt(),
                 header.getSentToVendorAt(),
+                header.getCancelledAt(),
+                header.getCancelledBy(),
+                header.getCancelReason(),
                 header.getCreatedAt(),
                 header.getSourceEventId());
     }

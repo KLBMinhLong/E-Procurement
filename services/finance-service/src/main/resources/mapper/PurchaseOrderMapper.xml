@@ -24,8 +24,12 @@
         <result property="deliveryAddress" column="delivery_address"/>
         <result property="deliveryDeadline" column="delivery_deadline"/>
         <result property="paymentTerms" column="payment_terms"/>
+        <result property="vendorNote" column="vendor_note"/>
         <result property="issuedAt" column="issued_at"/>
         <result property="sentToVendorAt" column="sent_to_vendor_at"/>
+        <result property="cancelledAt" column="cancelled_at"/>
+        <result property="cancelledBy" column="cancelled_by"/>
+        <result property="cancelReason" column="cancel_reason"/>
         <result property="createdAt" column="created_at"/>
         <result property="sourceEventId" column="source_event_id"/>
     </resultMap>
@@ -68,8 +72,12 @@
         po.delivery_address,
         po.delivery_deadline,
         po.payment_terms,
+        po.vendor_note,
         po.issued_at,
         po.sent_to_vendor_at,
+        po.cancelled_at,
+        po.cancelled_by,
+        po.cancel_reason,
         po.created_at,
         po.source_event_id
     </sql>
