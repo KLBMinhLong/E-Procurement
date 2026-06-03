@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.inventory.infrastructure.persistence.mapper.GoodsReceiptMapper">
+
+    <resultMap id="goodsReceiptHeaderResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptDbEntity">
+        <id property="id" column="id"/>
+        <result property="grNumber" column="gr_number"/>
+        <result property="poId" column="po_id"/>
+        <result property="poNumber" column="po_number"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="warehouseName" column="warehouse_name"/>
+        <result property="warehouseKeeperId" column="warehouse_keeper_id"/>
+        <result property="warehouseKeeperFullName" column="warehouse_keeper_full_name"/>
+        <result property="receivedAt" column="received_at"/>
+        <result property="status" column="status"/>
+        <result property="notes" column="notes"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+    </resultMap>
+
+    <resultMap id="goodsReceiptLineItemResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptLineItemDbEntity">
+        <id property="id" column="id"/>
+        <result property="goodsReceiptId" column="goods_receipt_id"/>
+        <result property="poLineItemId" column="po_line_item_id"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="itemName" column="item_name"/>
+        <result property="orderedQuantity" column="ordered_quantity"/>
+        <result property="receivedQuantity" column="received_quantity"/>
+        <result property="rejectedQuantity" column="rejected_quantity"/>
+        <result property="unit" column="unit"/>
+        <result property="rejectionReason" column="rejection_reason"/>
+        <result property="lotNumber" column="lot_number"/>
+        <result property="createdBy" column="created_by"/>
+    </resultMap>
+
+    <sql id="goodsReceiptColumns">
+        gr.id,
+        gr.gr_number,
+        gr.po_id,
+        COALESCE(pos.po_number, gr.po_id::text) AS po_number,
+        gr.warehouse_id,
+        wh.name AS warehouse_name,
+        gr.warehouse_keeper_id,
+        COALESCE(gr.warehouse_keeper_full_name, gr.warehouse_keeper_id::text) AS warehouse_keeper_full_name,
+        gr.received_at,
+        gr.status,
+        gr.notes,
+        gr.created_at,
+        gr.created_by,
+        gr.updated_by,
+        gr.idempotency_key
+    </sql>
+
+    <sql id="goodsReceiptFrom">
+        FROM inventory.goods_receipts gr
+        JOIN inventory.warehouses wh
+          ON wh.id = gr.warehouse_id
+         AND wh.is_deleted = FALSE
+        LEFT JOIN inventory.purchase_order_snapshots pos
+          ON pos.po_id = gr.po_id
+         AND pos.is_deleted = FALSE
+    </sql>
+
+    <sql id="goodsReceiptWhereClause">
+        WHERE gr.is_deleted = FALSE
+        <if test="filter.status != null">
+            AND gr.status = #{filter.status}
+        </if>
+        <if test="filter.poId != null">
+            AND gr.po_id = #{filter.poId}
+        </if>
+        <if test="filter.warehouseId != null">
+            AND gr.warehouse_id = #{filter.warehouseId}
+        </if>
+        <if test="filter.fromReceivedAt != null">
+            AND gr.received_at &gt;= #{filter.fromReceivedAt}
+        </if>
+        <if test="filter.toReceivedAtExclusive != null">
+            AND gr.received_at &lt; #{filter.toReceivedAtExclusive}
+        </if>
+    </sql>
+
+    <select id="findHeaderById" resultMap="goodsReceiptHeaderResultMap">
+        SELECT
+            <include refid="goodsReceiptColumns"/>
+        <include refid="goodsReceiptFrom"/>
+        WHERE gr.id = #{id}
+          AND gr.is_deleted = FALSE
+    </select>
+
+    <select id="findHeaderByIdempotencyKey" resultMap="goodsReceiptHeaderResultMap">
+        SELECT
+            <include refid="goodsReceiptColumns"/>
+        <include refid="goodsReceiptFrom"/>
+        WHERE gr.idempotency_key = #{idempotencyKey}
+          AND gr.is_deleted = FALSE
+    </select>
+
+    <select id="findHeadersByFilter" resultMap="goodsReceiptHeaderResultMap">
+        SELECT
+            <include refid="goodsReceiptColumns"/>
+        <include refid="goodsReceiptFrom"/>
+        <include refid="goodsReceiptWhereClause"/>
+        ORDER BY gr.created_at DESC, gr.gr_number DESC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        <include refid="goodsReceiptFrom"/>
+        <include refid="goodsReceiptWhereClause"/>
+    </select>
+
+    <select id="findLineItemsByGoodsReceiptId" resultMap="goodsReceiptLineItemResultMap">
+        SELECT
+            id,
+            goods_receipt_id,
+            po_line_item_id,
+            item_code,
+            item_name,
+            ordered_quantity,
+            received_quantity,
+            rejected_quantity,
+            unit,
+            rejection_reason,
+            lot_number,
+            created_by
+        FROM inventory.goods_receipt_line_items
+        WHERE goods_receipt_id = #{goodsReceiptId}
+          AND is_deleted = FALSE
+        ORDER BY id ASC
+    </select>
+</mapper>

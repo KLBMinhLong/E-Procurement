@@ -128,6 +128,8 @@
 | `INV_005` | 409 | GR đã được hoàn tất, không thể chỉnh sửa |
 | `INV_006` | 422 | Số lượng nhận thực tế không thể vượt số lượng đặt hàng > 10% |
 | `INV_007` | 422 | Item code đã tồn tại |
+| `INV_009` | 404 | Issued Purchase Order snapshot không tồn tại |
+| `INV_010` | 422 | PO line item không thuộc snapshot |
 
 ### 2.7 Vendor Service — VND_
 
