@@ -40,10 +40,21 @@ Acceptance:
 - Snapshot metrics currently populated from available contracts: total issued PO spend, approved PR count from issued PO facts, category spend, monthly trend, top vendors, SLA breach count, and SLA breach cycle hours.
 - RFQ savings and department spend remain zero/empty until source events provide baseline price and department allocation data.
 
+### E12-US-004 Role Dashboard API Foundation
+
+As manager, purchasing, and requester users, I want stable dashboard API contracts so that the frontend can route each role to a real backend endpoint while data projections are completed incrementally.
+
+Acceptance:
+- `GET /api/v1/dashboard/manager` requires `BUDGET_VIEW_OWN_DEPT` or `BUDGET_VIEW_ALL`.
+- `GET /api/v1/dashboard/purchasing` requires `PO_VIEW_ALL`.
+- `GET /api/v1/dashboard/requester` requires `PR_VIEW_OWN`.
+- Responses follow the analytics OpenAPI shape for each role dashboard.
+- Until role-specific read models exist, APIs return zero/empty structured data instead of failing.
+
 ## Next Coding Slices
 
 1. Executive dashboard foundation.
 2. Executive dashboard event projection ingestion.
-3. Manager, purchasing, requester dashboards.
+3. Manager, purchasing, requester dashboard data projections.
 4. KPI endpoints: cycle time and SLA compliance.
 5. Async report export jobs and Jasper templates.
