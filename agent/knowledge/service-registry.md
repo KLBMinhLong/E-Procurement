@@ -8,7 +8,7 @@
 | finance | finance-service | 8084 | db_finance | finance | com.eprocure.finance | Planned |
 | inventory | inventory-service | 8085 | db_inventory | inventory | com.eprocure.inventory | Foundation |
 | vendor | vendor-service | 8086 | db_vendor | vendor | com.eprocure.vendor | Planned |
-| analytics | analytics-service | 8087 | db_procurement | pr, approval | com.eprocure.analytics | Planned |
+| analytics | analytics-service | 8087 | db_analytics | analytics | com.eprocure.analytics | Foundation |
 | notification | notification-service | 8088 | db_notification | notification | com.eprocure.notification | Planned |
 | admin | admin-service | 8089 | db_audit | audit | com.eprocure.admin | Planned |
 | gateway | api-gateway | 8080 | - | - | com.eprocure.gateway | Active dev |

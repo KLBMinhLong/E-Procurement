@@ -28,6 +28,9 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'notification_user') THEN
         CREATE ROLE notification_user LOGIN PASSWORD 'notification_pass_dev';
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'analytics_user') THEN
+        CREATE ROLE analytics_user LOGIN PASSWORD 'analytics_pass_dev';
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'audit_user') THEN
         CREATE ROLE audit_user LOGIN PASSWORD 'audit_pass_dev';
     END IF;
@@ -51,6 +54,8 @@ SELECT 'CREATE DATABASE db_vendor OWNER vendor_user'
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'db_vendor')\gexec
 SELECT 'CREATE DATABASE db_notification OWNER notification_user'
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'db_notification')\gexec
+SELECT 'CREATE DATABASE db_analytics OWNER analytics_user'
+WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'db_analytics')\gexec
 SELECT 'CREATE DATABASE db_audit OWNER audit_user'
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'db_audit')\gexec
 SELECT 'CREATE DATABASE db_camunda OWNER camunda_user'
@@ -109,6 +114,14 @@ CREATE SCHEMA IF NOT EXISTS notification AUTHORIZATION notification_user;
 GRANT CONNECT ON DATABASE db_notification TO notification_user;
 GRANT USAGE, CREATE ON SCHEMA notification TO notification_user;
 ALTER DATABASE db_notification SET search_path TO notification;
+
+\connect db_analytics
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+CREATE SCHEMA IF NOT EXISTS analytics AUTHORIZATION analytics_user;
+GRANT CONNECT ON DATABASE db_analytics TO analytics_user;
+GRANT USAGE, CREATE ON SCHEMA analytics TO analytics_user;
+ALTER DATABASE db_analytics SET search_path TO analytics;
 
 \connect db_audit
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

@@ -461,3 +461,10 @@
 - Reason: Payment state must be replay-safe and auditable after 3-way match, while approval/dispute transitions need explicit state guards before an invoice can be paid.
 - Impact: `POST /api/v1/invoices/{id}/approve` moves `MATCHED` invoices to `APPROVED`; `POST /api/v1/invoices/{id}/dispute` moves `MISMATCHED` invoices to `DISPUTED`; `POST /api/v1/invoices/{id}/confirm-payment` records a confirmed payment and marks the invoice `PAID`.
 - Constraint: Confirm payment currently requires paid amount to equal invoice total amount and does not update budget spent ledger until PO/invoice carries a reliable budget reference.
+
+## [2026-06-04] E12 Analytics service foundation
+
+- Decision: Start analytics-service as a standalone Spring Boot module on port 8087 with its own `db_analytics` / `analytics` read-model schema.
+- Reason: Executive dashboards need stable API contracts without direct cross-service table reads; future event consumers can populate projections asynchronously.
+- Impact: Root Maven, Docker Compose, PostgreSQL bootstrap, `.env.example`, and service Dockerfiles include analytics-service. `GET /api/v1/dashboard/executive` is guarded by `REPORT_VIEW` and reads fresh executive dashboard snapshots, falling back to an empty dashboard when no snapshot exists.
+- Constraint: Snapshot population, manager/purchasing/requester dashboards, KPI endpoints, and Jasper report export remain later E12 slices.

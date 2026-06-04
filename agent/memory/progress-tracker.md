@@ -275,3 +275,15 @@
 | 3-way match API | ✅ | `POST /api/v1/invoices/{id}/match`; consumes `inventory.gr.created` into finance GR snapshots, compares PO + GR + Invoice, publishes `finance.invoice.matched` when matched |
 | Approve/dispute/payment actions | ✅ | `POST /approve`, `/dispute`, `/confirm-payment`; stores `finance.payments` and marks invoice `PAID` |
 | Budget spent ledger link | ⬜ | Deferred until PO/invoice carries a reliable budget reference for payment posting |
+
+### E12: Analytics & Reports
+| Task | Status | Ghi chú |
+|---|---|---|
+| User story/use case chi tiết | ✅ | `docs/user-stories/E12-analytics-reports.md` |
+| Spring Boot analytics-service module setup | ✅ | Maven module + Docker/compose service on port 8087 |
+| Flyway migration analytics read model | ✅ | `db_analytics`, schema `analytics`, executive dashboard snapshot tables |
+| Executive dashboard API foundation | ✅ | `GET /api/v1/dashboard/executive` guarded by `REPORT_VIEW`, returns fresh snapshot or empty dashboard |
+| Unit tests | ✅ | Executive dashboard use-case tests pass |
+| Projection/event ingestion | ⬜ | Populate snapshots from finance/vendor/approval/inventory events |
+| Manager/purchasing/requester dashboards | ⬜ | Follow OpenAPI dashboard contracts |
+| KPI/report export APIs | ⬜ | Cycle-time/SLA KPI and async Jasper export jobs |

@@ -604,6 +604,57 @@ services:
       start_period: 300s
     logging: *default-logging
 
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    container_name: eprocure-analytics-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: analytics-service
+      SERVER_PORT: 8087
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: analytics-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
+      ANALYTICS_DB_HOST: postgres
+      ANALYTICS_DB_PORT: 5432
+      ANALYTICS_DB_NAME: db_analytics
+      ANALYTICS_DB_SCHEMA: analytics
+      ANALYTICS_DB_USER: ${ANALYTICS_DB_USER:-analytics_user}
+      ANALYTICS_DB_PASS: ${ANALYTICS_DB_PASS:-analytics_pass_dev}
+      ANALYTICS_INTERNAL_API_KEY: ${ANALYTICS_INTERNAL_API_KEY:-change-me-internal-api-key}
+      ANALYTICS_DASHBOARD_CACHE_TTL_MINUTES: ${ANALYTICS_DASHBOARD_CACHE_TTL_MINUTES:-5}
+    ports:
+      - "${ANALYTICS_SERVICE_PORT:-8087}:8087"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    cpus: 0.25
+    mem_limit: 256m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8087/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 75s
+    logging: *default-logging
+
   approval-service:
     build:
       context: .

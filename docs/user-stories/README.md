@@ -22,9 +22,10 @@ E06-rfq-vendor.md
 E09-invoice-payment.md
 E10-budget-management.md
 E11-notification-realtime.md
+E12-analytics-reports.md
 ```
 
-Các epic E07 và E12-E15 vẫn chỉ được story map ở mức roadmap. Khi bắt đầu code từng epic còn lại, tạo file chi tiết riêng theo format E01-E06/E09-E11.
+Các epic E07 và E13-E15 vẫn chỉ được story map ở mức roadmap. Khi bắt đầu code từng epic còn lại, tạo file chi tiết riêng theo format E01-E06/E09-E12.
 
 ---
 
