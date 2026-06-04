@@ -14,6 +14,7 @@
 | 6 | [06-nginx-gateway.md](06-nginx-gateway.md) | Cơ chế auth_request tại NGINX Gateway |
 | 7 | [07-frontend-flow.md](07-frontend-flow.md) | Luồng đăng nhập phía Angular Frontend |
 | 8 | [08-security-layers.md](08-security-layers.md) | Tổng hợp các lớp bảo mật |
+| 9 | [09-keycloak-verification.md](09-keycloak-verification.md) | Keycloak: User Storage SPI & Credential Verification |
 
 ## Dịch vụ liên quan
 
