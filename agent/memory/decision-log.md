@@ -482,3 +482,10 @@
 - Reason: OpenAPI already defines the role dashboard surfaces, but role-specific source projections are not reliable enough yet for real data aggregation.
 - Impact: `/api/v1/dashboard/manager`, `/api/v1/dashboard/purchasing`, and `/api/v1/dashboard/requester` are guarded by permission codes and can be integrated by the Angular shell without 404s.
 - Constraint: Role dashboard data projections remain a follow-up slice once source events/read models exist for budgets, approval inbox, PO pipeline, RFQ, GR, invoices pending match, and requester PR stats.
+
+## [2026-06-04] E12 Purchasing dashboard projection data
+
+- Decision: Populate purchasing dashboard with analytics-owned issued PO and matched invoice projection facts.
+- Reason: `po_issued_projections` and `invoice_matched_projections` are already available and do not require cross-service DB reads.
+- Impact: `/api/v1/dashboard/purchasing` now returns issued PO count, issued PO total, matched invoice count, sent-to-vendor pipeline count, and vendor pending-order rows from analytics projections.
+- Constraint: Open RFQ, GR pending, invoice pending-match, true delivery timeliness, and vendor quality score remain zero until analytics-service has RFQ, GR, invoice-pending, and vendor-score projection sources.

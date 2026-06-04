@@ -50,11 +50,13 @@ Acceptance:
 - `GET /api/v1/dashboard/requester` requires `PR_VIEW_OWN`.
 - Responses follow the analytics OpenAPI shape for each role dashboard.
 - Until role-specific read models exist, APIs return zero/empty structured data instead of failing.
+- Purchasing dashboard populates issued PO count, issued PO total, matched invoice count, and vendor pending-order rows from analytics-owned projection tables.
+- Manager/requester dashboard data and RFQ/GR-specific purchasing metrics remain follow-up until source projections are available.
 
 ## Next Coding Slices
 
 1. Executive dashboard foundation.
 2. Executive dashboard event projection ingestion.
-3. Manager, purchasing, requester dashboard data projections.
+3. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
 4. KPI endpoints: cycle time and SLA compliance.
 5. Async report export jobs and Jasper templates.
