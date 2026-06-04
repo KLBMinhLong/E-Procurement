@@ -475,3 +475,10 @@
 - Reason: These topics already expose stable payloads for spend, vendor/category/monthly trend, invoice match facts, and SLA breach facts without cross-service DB reads.
 - Impact: analytics-service now has Kafka listener config, an event-processing idempotency log, PO/invoice/SLA fact tables, and snapshot refresh logic for annual and quarterly executive dashboard data.
 - Constraint: RFQ savings and department spend stay zero/empty until upstream events include baseline quote savings and department allocation fields.
+
+## [2026-06-04] E12 Role dashboard API foundation
+
+- Decision: Add manager, purchasing, and requester dashboard endpoints as stable analytics-service API contracts returning structured zero/empty data.
+- Reason: OpenAPI already defines the role dashboard surfaces, but role-specific source projections are not reliable enough yet for real data aggregation.
+- Impact: `/api/v1/dashboard/manager`, `/api/v1/dashboard/purchasing`, and `/api/v1/dashboard/requester` are guarded by permission codes and can be integrated by the Angular shell without 404s.
+- Constraint: Role dashboard data projections remain a follow-up slice once source events/read models exist for budgets, approval inbox, PO pipeline, RFQ, GR, invoices pending match, and requester PR stats.

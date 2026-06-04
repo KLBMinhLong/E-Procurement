@@ -285,5 +285,5 @@
 | Executive dashboard API foundation | ✅ | `GET /api/v1/dashboard/executive` guarded by `REPORT_VIEW`, returns fresh snapshot or empty dashboard |
 | Unit tests | ✅ | Executive dashboard + analytics projection use-case tests pass |
 | Projection/event ingestion | ✅ | Consumes `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`; stores idempotent projections and refreshes executive dashboard snapshots |
-| Manager/purchasing/requester dashboards | ⬜ | Follow OpenAPI dashboard contracts |
+| Manager/purchasing/requester dashboards | 🔄 | Foundation APIs added for `/manager`, `/purchasing`, `/requester`; data projections remain follow-up |
 | KPI/report export APIs | ⬜ | Cycle-time/SLA KPI and async Jasper export jobs |

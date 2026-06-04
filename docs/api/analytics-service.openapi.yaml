@@ -164,7 +164,7 @@ paths:
       tags: [Dashboards]
       summary: Dashboard Trưởng phòng
       operationId: getManagerDashboard
-      x-required-permission: BUDGET_VIEW_OWN_DEPT
+      x-required-permission: BUDGET_VIEW_OWN_DEPT | BUDGET_VIEW_ALL
       description: Hiển thị ngân sách phòng, PR đang chờ, SLA warnings. Cached 5 phút.
       responses:
         '200':
@@ -269,6 +269,7 @@ paths:
       tags: [Dashboards]
       summary: Dashboard Nhân viên (My Requests)
       operationId: getRequesterDashboard
+      x-required-permission: PR_VIEW_OWN
       description: PR của tôi theo trạng thái, ngân sách phòng còn lại.
       responses:
         '200':
