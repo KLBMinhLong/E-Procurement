@@ -8,6 +8,7 @@ COPY services/approval-service/pom.xml services/approval-service/pom.xml
 COPY services/finance-service/pom.xml services/finance-service/pom.xml
 COPY services/inventory-service/pom.xml services/inventory-service/pom.xml
 COPY services/vendor-service/pom.xml services/vendor-service/pom.xml
+COPY services/analytics-service/pom.xml services/analytics-service/pom.xml
 COPY services/notification-service/pom.xml services/notification-service/pom.xml
 COPY infra/keycloak/eprocure-keycloak-provider/pom.xml infra/keycloak/eprocure-keycloak-provider/pom.xml
 RUN mvn -pl services/approval-service -am dependency:go-offline

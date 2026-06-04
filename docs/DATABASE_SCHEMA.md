@@ -1107,7 +1107,45 @@ CREATE INDEX idx_email_dispatch_dead_letters_failed_at
 
 ---
 
-## 9. FLYWAY MIGRATION NAMING CONVENTION
+## 9. db_analytics — Schema ANALYTICS
+
+### 9.1 Executive dashboard read model
+
+Analytics-service owns read-model snapshots populated by future projection/event jobs. It does not read mutable service tables directly.
+
+```sql
+analytics.executive_dashboard_snapshots
+  id UUID PK, fiscal_year INTEGER, quarter INTEGER NULL,
+  currency VARCHAR(3), total_spent NUMERIC(19,4),
+  approved_pr_count INTEGER, rfq_savings NUMERIC(19,4),
+  approval_on_time_percent NUMERIC(7,2),
+  approval_avg_cycle_hours NUMERIC(10,2),
+  approval_overdue_count INTEGER,
+  cached_at TIMESTAMPTZ,
+  created_at/updated_at TIMESTAMPTZ, created_by/updated_by UUID,
+  is_deleted BOOLEAN DEFAULT FALSE, deleted_at/deleted_by
+
+analytics.department_spend_snapshots
+  dashboard_id UUID FK executive_dashboard_snapshots,
+  department_code, department_name, spent NUMERIC(19,4),
+  budget NUMERIC(19,4), utilization NUMERIC(7,2), status GOOD/WARNING/CRITICAL
+
+analytics.category_spend_snapshots
+  dashboard_id UUID FK executive_dashboard_snapshots,
+  category_code, spent NUMERIC(19,4), budget NUMERIC(19,4)
+
+analytics.monthly_spend_snapshots
+  dashboard_id UUID FK executive_dashboard_snapshots,
+  month_label YYYY-MM, spent NUMERIC(19,4), budget NUMERIC(19,4), pr_count INTEGER
+
+analytics.top_vendor_snapshots
+  dashboard_id UUID FK executive_dashboard_snapshots,
+  vendor_name, total_spent NUMERIC(19,4), order_count INTEGER, avg_score NUMERIC(7,2)
+```
+
+---
+
+## 10. FLYWAY MIGRATION NAMING CONVENTION
 
 ```
 resources/
@@ -1131,7 +1169,7 @@ resources/
 
 ---
 
-## 10. RESOURCE LIMITS (Docker — 8GB RAM machine)
+## 11. RESOURCE LIMITS (Docker — 8GB RAM machine)
 
 | Service DB | CPU | RAM |
 |---|---|---|
@@ -1141,6 +1179,7 @@ resources/
 | db_inventory | 0.25 | 256MB |
 | db_vendor | 0.25 | 128MB |
 | db_notification | 0.1 | 128MB |
+| db_analytics | 0.1 | 128MB |
 | db_audit | 0.25 | 256MB |
 
 > Dev mode: dùng 1 PostgreSQL instance duy nhất với nhiều database.  

@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${ANALYTICS_DB_HOST}:${ANALYTICS_DB_PORT:5432}/${ANALYTICS_DB_NAME:db_analytics}
+    username: ${ANALYTICS_DB_USER}
+    password: ${ANALYTICS_DB_PASS}
+    hikari:
+      connection-init-sql: SET search_path TO ${ANALYTICS_DB_SCHEMA:analytics}
+  flyway:
+    schemas: ${ANALYTICS_DB_SCHEMA:analytics}
+
+eprocure:
+  internal:
+    api-key: ${ANALYTICS_INTERNAL_API_KEY}

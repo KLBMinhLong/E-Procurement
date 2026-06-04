@@ -283,11 +283,13 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 
 | Biến | Dev | Prod | Mô tả |
 |---|---|---|---|
-| `ANALYTICS_DB_HOST` | `postgres` | `postgres-proc.internal` | Read-replica (nếu có) |
-| `ANALYTICS_DB_NAME` | `db_procurement` | `db_procurement` | |
-| `ANALYTICS_DB_USER` | `analytics_ro` | `analytics_ro` | Read-only user |
+| `ANALYTICS_DB_HOST` | `postgres` | `postgres-analytics.internal` | |
+| `ANALYTICS_DB_NAME` | `db_analytics` | `db_analytics` | |
+| `ANALYTICS_DB_SCHEMA` | `analytics` | `analytics` | |
+| `ANALYTICS_DB_USER` | `analytics_user` | `analytics_user` | Read-model owner |
 | `ANALYTICS_DB_PASS` | `analytics_pass_dev` | `***SENSITIVE***` | |
-| `DASHBOARD_CACHE_TTL_MINUTES` | `5` | `5` | TTL cache dashboard data |
+| `ANALYTICS_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key gateway/service-to-service |
+| `ANALYTICS_DASHBOARD_CACHE_TTL_MINUTES` | `5` | `5` | TTL cache dashboard data |
 | `REPORT_JOB_TIMEOUT_MINUTES` | `10` | `10` | Timeout job export báo cáo |
 | `REPORT_DOWNLOAD_TTL_HOURS` | `24` | `24` | File download link TTL |
 | `REPORT_STORAGE_PATH` | `/data/reports` | `/data/reports` | Thư mục lưu file báo cáo |
