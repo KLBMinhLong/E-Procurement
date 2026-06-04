@@ -1111,7 +1111,7 @@ CREATE INDEX idx_email_dispatch_dead_letters_failed_at
 
 ### 9.1 Executive dashboard read model
 
-Analytics-service owns read-model snapshots populated by future projection/event jobs. It does not read mutable service tables directly.
+Analytics-service owns read-model snapshots populated by projection/event jobs. It does not read mutable service tables directly.
 
 ```sql
 analytics.executive_dashboard_snapshots
@@ -1141,6 +1141,41 @@ analytics.monthly_spend_snapshots
 analytics.top_vendor_snapshots
   dashboard_id UUID FK executive_dashboard_snapshots,
   vendor_name, total_spent NUMERIC(19,4), order_count INTEGER, avg_score NUMERIC(7,2)
+```
+
+### 9.2 Event projections
+
+Projection consumers store business-event facts in `db_analytics` before rebuilding dashboard snapshots.
+
+```sql
+analytics.event_processing_log
+  event_id, topic, partition_id, offset_value, handler_name,
+  event_timestamp TIMESTAMPTZ, processed_at TIMESTAMPTZ,
+  status PROCESSED, audit fields, soft delete fields
+
+analytics.po_issued_projections
+  po_id UUID PK, po_number, pr_id, pr_number, vendor_id, vendor_name,
+  total_amount NUMERIC(19,4), currency VARCHAR(3), issued_at TIMESTAMPTZ,
+  source_event_id, event_timestamp TIMESTAMPTZ, audit fields, soft delete fields
+
+analytics.po_issued_line_projections
+  po_line_item_id UUID PK, po_id UUID FK po_issued_projections,
+  pr_line_item_id UUID, item_name, category_code,
+  quantity NUMERIC(19,4), unit, unit_price NUMERIC(19,4),
+  total_price NUMERIC(19,4), currency VARCHAR(3), audit fields, soft delete fields
+
+analytics.invoice_matched_projections
+  invoice_id UUID PK, invoice_number, po_id, po_number, vendor_id, vendor_name,
+  total_amount NUMERIC(19,4), currency VARCHAR(3), due_date DATE,
+  matched_at TIMESTAMPTZ, source_event_id, event_timestamp TIMESTAMPTZ,
+  audit fields, soft delete fields
+
+analytics.approval_sla_breach_projections
+  approval_step_id UUID PK, process_id, purchase_request_id, pr_number,
+  priority, step_index, step_type, approver_role,
+  breached_approver_id, escalated_to_approver_id, reassigned,
+  assigned_at TIMESTAMPTZ, sla_deadline TIMESTAMPTZ, breached_at TIMESTAMPTZ,
+  source_event_id, event_timestamp TIMESTAMPTZ, audit fields, soft delete fields
 ```
 
 ---
