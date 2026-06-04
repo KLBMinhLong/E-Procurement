@@ -11,10 +11,10 @@ COPY services/vendor-service/pom.xml services/vendor-service/pom.xml
 COPY services/analytics-service/pom.xml services/analytics-service/pom.xml
 COPY services/notification-service/pom.xml services/notification-service/pom.xml
 COPY infra/keycloak/eprocure-keycloak-provider/pom.xml infra/keycloak/eprocure-keycloak-provider/pom.xml
-RUN mvn -pl services/approval-service -am dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2 mvn -pl services/approval-service -am dependency:go-offline
 
 COPY services/approval-service services/approval-service
-RUN mvn -pl services/approval-service -am package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 mvn -pl services/approval-service -am package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 

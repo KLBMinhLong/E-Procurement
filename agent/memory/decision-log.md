@@ -489,3 +489,10 @@
 - Reason: `po_issued_projections` and `invoice_matched_projections` are already available and do not require cross-service DB reads.
 - Impact: `/api/v1/dashboard/purchasing` now returns issued PO count, issued PO total, matched invoice count, sent-to-vendor pipeline count, and vendor pending-order rows from analytics projections.
 - Constraint: Open RFQ, GR pending, invoice pending-match, true delivery timeliness, and vendor quality score remain zero until analytics-service has RFQ, GR, invoice-pending, and vendor-score projection sources.
+
+## [2026-06-04] E12 Async report export job foundation
+
+- Decision: Add analytics-owned report export job storage and API foundation with DB-scoped idempotency.
+- Reason: `POST /reports/export` is a mutating endpoint and must be replay-safe before Jasper/PDF/Excel workers are added.
+- Impact: `analytics.report_export_jobs` stores queued export jobs; `POST /api/v1/reports/export`, `GET /api/v1/reports/jobs/{jobId}`, and download guard endpoints are available under `REPORT_EXPORT`.
+- Constraint: Jobs remain `QUEUED` until a later worker slice renders files and marks jobs `COMPLETED` or `FAILED`.

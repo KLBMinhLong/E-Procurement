@@ -414,6 +414,11 @@ paths:
       summary: Tạo job xuất báo cáo (async)
       operationId: exportReport
       x-required-permission: REPORT_EXPORT
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, format: uuid }
       requestBody:
         required: true
         content:
@@ -462,6 +467,21 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/ReportJob'
+        '200':
+          description: Replay idempotency key, trả về job đã tạo trước đó
+          headers:
+            Idempotency-Replayed:
+              schema: { type: string }
+              example: "true"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReportJob'
 
   /reports/jobs/{jobId}:
     get:
@@ -499,6 +519,8 @@ paths:
           required: true
           schema: { type: string, format: uuid }
       responses:
+        '302':
+          description: Redirect đến file báo cáo đã sẵn sàng
         '200':
           description: File báo cáo
           content:
@@ -507,7 +529,7 @@ paths:
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
               schema: { type: string, format: binary }
         '404':
-          description: Job không tồn tại hoặc file đã hết hạn
+          description: Job không tồn tại, file chưa sẵn sàng hoặc file đã hết hạn
           content:
             application/json:
               schema:
