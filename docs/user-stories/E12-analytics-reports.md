@@ -53,10 +53,21 @@ Acceptance:
 - Purchasing dashboard populates issued PO count, issued PO total, matched invoice count, and vendor pending-order rows from analytics-owned projection tables.
 - Manager/requester dashboard data and RFQ/GR-specific purchasing metrics remain follow-up until source projections are available.
 
+### E12-US-005 Async Report Export Job Foundation
+
+As a report user, I want to create and poll async report jobs so that heavy PDF/Excel generation can be handled outside the request thread.
+
+Acceptance:
+- `POST /api/v1/reports/export` requires `REPORT_EXPORT` and `Idempotency-Key`.
+- A new request stores a `QUEUED` job in `analytics.report_export_jobs`.
+- Replaying the same `Idempotency-Key` for the same user returns the existing job with `Idempotency-Replayed: true`.
+- `GET /api/v1/reports/jobs/{jobId}` returns the current job status for the requesting user.
+- `GET /api/v1/reports/jobs/{jobId}/download` returns a business error until an export worker produces a file.
+
 ## Next Coding Slices
 
 1. Executive dashboard foundation.
 2. Executive dashboard event projection ingestion.
 3. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
 4. KPI endpoints: cycle time and SLA compliance.
-5. Async report export jobs and Jasper templates.
+5. Jasper/PDF/Excel worker implementation for queued report jobs.

@@ -1178,6 +1178,20 @@ analytics.approval_sla_breach_projections
   source_event_id, event_timestamp TIMESTAMPTZ, audit fields, soft delete fields
 ```
 
+### 9.3 Report export jobs
+
+```sql
+analytics.report_export_jobs
+  id UUID PK,
+  report_type, format PDF/EXCEL, status QUEUED/PROCESSING/COMPLETED/FAILED,
+  filters JSONB, download_url, failure_reason,
+  idempotency_key UUID, created_by UUID,
+  created_at/completed_at/expires_at TIMESTAMPTZ,
+  updated_at/updated_by, soft delete fields
+```
+
+`(created_by, idempotency_key)` is unique for active rows so `POST /reports/export` can replay a previous request safely.
+
 ---
 
 ## 10. FLYWAY MIGRATION NAMING CONVENTION
