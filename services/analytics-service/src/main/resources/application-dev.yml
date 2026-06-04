@@ -7,7 +7,23 @@ spring:
       connection-init-sql: SET search_path TO ${ANALYTICS_DB_SCHEMA:analytics}
   flyway:
     schemas: ${ANALYTICS_DB_SCHEMA:analytics}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      group-id: analytics-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
 
 eprocure:
   internal:
     api-key: ${ANALYTICS_INTERNAL_API_KEY:change-me-internal-api-key}
+  analytics:
+    integration:
+      kafka-enabled: ${ANALYTICS_KAFKA_ENABLED:true}
+      kafka-auto-startup: ${ANALYTICS_KAFKA_AUTO_STARTUP:true}
+    kafka:
+      topics:
+        po-issued: ${ANALYTICS_KAFKA_TOPIC_PO_ISSUED:procurement.po.issued}
+        invoice-matched: ${ANALYTICS_KAFKA_TOPIC_INVOICE_MATCHED:finance.invoice.matched}
+        approval-sla-breached: ${ANALYTICS_KAFKA_TOPIC_APPROVAL_SLA_BREACHED:approval.sla.breached}

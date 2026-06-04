@@ -468,3 +468,10 @@
 - Reason: Executive dashboards need stable API contracts without direct cross-service table reads; future event consumers can populate projections asynchronously.
 - Impact: Root Maven, Docker Compose, PostgreSQL bootstrap, `.env.example`, and service Dockerfiles include analytics-service. `GET /api/v1/dashboard/executive` is guarded by `REPORT_VIEW` and reads fresh executive dashboard snapshots, falling back to an empty dashboard when no snapshot exists.
 - Constraint: Snapshot population, manager/purchasing/requester dashboards, KPI endpoints, and Jasper report export remain later E12 slices.
+
+## [2026-06-04] E12 Analytics projection ingestion foundation
+
+- Decision: Populate executive dashboard read models through analytics-owned projections from `procurement.po.issued`, `finance.invoice.matched`, and `approval.sla.breached`.
+- Reason: These topics already expose stable payloads for spend, vendor/category/monthly trend, invoice match facts, and SLA breach facts without cross-service DB reads.
+- Impact: analytics-service now has Kafka listener config, an event-processing idempotency log, PO/invoice/SLA fact tables, and snapshot refresh logic for annual and quarterly executive dashboard data.
+- Constraint: RFQ savings and department spend stay zero/empty until upstream events include baseline quote savings and department allocation fields.

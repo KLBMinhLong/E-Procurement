@@ -197,7 +197,7 @@
 | E09: Invoice & Payment | 🔄 |
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
-| E12: Analytics & Reports | ⬜ |
+| E12: Analytics & Reports | 🔄 |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
 | E15: Testing & CI/CD | ⬜ |
@@ -283,7 +283,7 @@
 | Spring Boot analytics-service module setup | ✅ | Maven module + Docker/compose service on port 8087 |
 | Flyway migration analytics read model | ✅ | `db_analytics`, schema `analytics`, executive dashboard snapshot tables |
 | Executive dashboard API foundation | ✅ | `GET /api/v1/dashboard/executive` guarded by `REPORT_VIEW`, returns fresh snapshot or empty dashboard |
-| Unit tests | ✅ | Executive dashboard use-case tests pass |
-| Projection/event ingestion | ⬜ | Populate snapshots from finance/vendor/approval/inventory events |
+| Unit tests | ✅ | Executive dashboard + analytics projection use-case tests pass |
+| Projection/event ingestion | ✅ | Consumes `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`; stores idempotent projections and refreshes executive dashboard snapshots |
 | Manager/purchasing/requester dashboards | ⬜ | Follow OpenAPI dashboard contracts |
 | KPI/report export APIs | ⬜ | Cycle-time/SLA KPI and async Jasper export jobs |
