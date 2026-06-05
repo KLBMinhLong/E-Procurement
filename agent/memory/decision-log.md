@@ -524,3 +524,10 @@
 - Reason: Report workers need replay-safe, deterministic filter behavior without dynamic SQL string construction or cross-service reads.
 - Impact: `PO_SUMMARY` and `PR_SUMMARY` honor period/fiscal-year/quarter/vendor/category filters, `SLA_COMPLIANCE` honors period/fiscal filters, and `THREE_WAY_MATCH` honors period/fiscal/vendor filters.
 - Constraint: `departmentId`, `status`, and richer report-specific filters remain follow-up until matching analytics projection fields exist.
+
+## [2026-06-05] E12 native report layout templates
+
+- Decision: Add report-type-specific native layout templates for local PDF/XLSX rendering before introducing a JasperReports dependency.
+- Reason: The worker already produces files and needs readable titles, metadata/filter summaries, metric sections, and spreadsheet styling without increasing runtime/dependency weight.
+- Impact: PDF/XLSX exports now use type-specific titles/subtitles, metadata rows, filter summaries, metric tables, XLSX styles, column widths, and frozen panes.
+- Constraint: Jasper template engine integration remains a separate follow-up for production-grade PDF templates.

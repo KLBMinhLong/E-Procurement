@@ -67,8 +67,9 @@ Acceptance:
 - Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
 - Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, and `THREE_WAY_MATCH`.
 - Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
+- PDF/XLSX exports use report-type-specific titles, metadata/filter summaries, metric tables, and spreadsheet column/style hints.
 - Unsupported report types explicitly render foundation rows that identify the missing projection contract.
-- Jasper templates, richer type-specific layouts, and filters requiring missing source fields such as `departmentId`/`status` remain follow-up.
+- Jasper template engine integration and filters requiring missing source fields such as `departmentId`/`status` remain follow-up.
 
 ### E12-US-006 KPI API Foundation
 
@@ -88,7 +89,7 @@ Acceptance:
 
 ## Next Coding Slices
 
-1. Jasper template integration and richer layouts for projection-backed report types.
+1. Jasper template engine integration for production-grade PDF templates.
 2. PR lifecycle projection for real PR to PO cycle-time metrics.
 3. Approval completion/on-time projection for true SLA compliance percentages.
 4. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
