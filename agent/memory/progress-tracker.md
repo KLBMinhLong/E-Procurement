@@ -194,7 +194,7 @@
 | E06: RFQ & Vendor | ✅ |
 | E07: Purchase Order | 🔄 |
 | E08: Goods Receipt & Inventory | ✅ |
-| E09: Invoice & Payment | 🔄 |
+| E09: Invoice & Payment | ✅ |
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
 | E12: Analytics & Reports | ✅ |
@@ -274,7 +274,8 @@
 | Unit tests | ✅ | Invoice create/list/detail + idempotency/missing PO/vendor mismatch tests pass |
 | 3-way match API | ✅ | `POST /api/v1/invoices/{id}/match`; consumes `inventory.gr.created` into finance GR snapshots, compares PO + GR + Invoice, publishes `finance.invoice.matched` when matched |
 | Approve/dispute/payment actions | ✅ | `POST /approve`, `/dispute`, `/confirm-payment`; stores `finance.payments` and marks invoice `PAID` |
-| Budget spent ledger link | ⬜ | Deferred until PO/invoice carries a reliable budget reference for payment posting |
+| Budget spent ledger link | ✅ | Released commitment hold and recorded invoice spend on payment confirmation |
+
 
 ### E12: Analytics & Reports
 | Task | Status | Ghi chú |
