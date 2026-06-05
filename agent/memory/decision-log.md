@@ -538,3 +538,17 @@
 - Reason: Cycle-time KPI should be based on analytics-owned projections instead of returning a foundation response or querying purchase-request-service directly.
 - Impact: `/api/v1/kpi/cycle-time` now returns average, median, p95, priority breakdown, and weekly trend from linked PR submitted and PO issued projections, scoped by date range and optional department.
 - Constraint: The submitted event timestamp is the lifecycle start because the current PR submitted payload does not carry a separate `submittedAt`; richer lifecycle milestones remain follow-up.
+
+## [2026-06-05] E12 Jasper report renderer and exposed filter contract
+
+- Decision: Use JasperReports templates for PDF output and expose only report export filters that the worker actually parses and applies.
+- Reason: API clients should not receive a contract for `departmentId` or `status` filters while analytics projections do not carry those source fields.
+- Impact: PDF exports use Jasper template resources; OpenAPI report export filters are limited to `fromDate`, `toDate`, `fiscalYear`, `quarter`, `vendorId`, and `categoryCode`.
+- Constraint: Remaining report datasets and `departmentId`/`status` filters require new source projection contracts.
+
+## [2026-06-05] E09 confirm payment budget ledger hardening
+
+- Decision: Guard invoice payment transition with `status = 'APPROVED'` at the database update before inserting payment and budget ledger rows.
+- Reason: Idempotency-Key replay protects same-key retries, but concurrent submits with different keys must not double-create payments, RELEASE, or SPEND transactions.
+- Impact: `ConfirmPaymentUseCase` records payment and budget ledger rows only after winning the PAID transition; a second payment attempt receives `FIN_015`.
+- Constraint: Full concurrent DB integration testing remains a follow-up; the current unit test covers the different-key duplicate path.

@@ -2,7 +2,7 @@
 
 ## Scope
 
-E12 cung cấp dashboard/KPI/report cho quản lý và finance. Foundation đầu tiên dựng `analytics-service`, executive dashboard read model, projection ingestion từ các business event đã có contract rõ ràng, KPI API contract, và async report job storage; KPI nâng cao và Jasper export làm ở các slice sau.
+E12 cung cấp dashboard/KPI/report cho quản lý và finance. Foundation đầu tiên dựng `analytics-service`, executive dashboard read model, projection ingestion từ các business event đã có contract rõ ràng, KPI API contract, async report job storage, Jasper template rendering cho các report đã có dataset, và các lát cắt dataset nâng cao sẽ hoàn thiện tiếp theo.
 
 ## User Stories
 
@@ -69,7 +69,7 @@ Acceptance:
 - Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
 - PDF/XLSX exports use report-type-specific titles, metadata/filter summaries, metric tables, and spreadsheet column/style hints.
 - Unsupported report types explicitly render foundation rows that identify the missing projection contract.
-- Jasper template engine integration and filters requiring missing source fields such as `departmentId`/`status` remain follow-up.
+- Filters requiring missing source fields such as `departmentId`/`status` remain follow-up and are not exposed in the current report export API contract.
 
 ### E12-US-006 KPI API Foundation
 
@@ -90,6 +90,6 @@ Acceptance:
 
 ## Next Coding Slices
 
-1. Jasper template engine integration for production-grade PDF templates.
-2. Approval completion/on-time projection for true SLA compliance percentages.
-3. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
+1. Projection-backed datasets for the remaining report types beyond `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, and `THREE_WAY_MATCH`.
+2. Source contracts for `departmentId`/`status` report filters, RFQ savings, GR pending metrics, and department spend.
+3. Docker/Flyway/Kafka end-to-end verification for analytics projections and report worker outputs.

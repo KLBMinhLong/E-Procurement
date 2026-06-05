@@ -33,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ConfirmPaymentUseCase {
     private static final Logger log = LogManager.getLogger(ConfirmPaymentUseCase.class);
+    private static final String PURCHASE_REQUEST_REFERENCE = "PURCHASE_REQUEST";
+    private static final String INVOICE_REFERENCE = "INVOICE";
 
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
@@ -87,27 +89,31 @@ public class ConfirmPaymentUseCase {
         }
 
         Instant confirmedAt = Instant.now(clock);
-
-        // Fetch Purchase Order for budget reference
         PurchaseOrder po = purchaseOrderRepository.findById(invoice.poId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.FIN_006));
 
-        // Query active commitment hold using PURCHASE_REQUEST and prId
-        var holdOpt = budgetRepository.findHeldCommitment("PURCHASE_REQUEST", po.prId());
+        log.info("[ACTION] Start ConfirmPayment | invoiceId={} | userId={}",
+                LogMaskingUtil.maskId(invoice.id()),
+                LogMaskingUtil.maskId(command.actorId()));
+        if (!invoiceRepository.markPaid(invoice.id(), command.actorId(), confirmedAt)) {
+            throw new BusinessException(ErrorCode.FIN_015);
+        }
+
+        var holdOpt = budgetRepository.findHeldCommitment(PURCHASE_REQUEST_REFERENCE, po.prId());
         if (holdOpt.isPresent()) {
             BudgetCommitmentHold hold = holdOpt.get();
             UUID budgetId = hold.budgetId();
 
-            // Lock budget to prevent concurrent edits
-            budgetRepository.lockBudgetForUpdate(budgetId);
+            if (!budgetRepository.lockBudgetForUpdate(budgetId)) {
+                throw new BusinessException(ErrorCode.FIN_001);
+            }
 
-            // Release the commitment hold if there is a positive hold amount
             if (hold.hasHeldAmount()) {
                 BudgetTransaction releaseTx = new BudgetTransaction(
                         budgetId,
                         BudgetTransactionType.RELEASE,
                         hold.amount(),
-                        "PURCHASE_REQUEST",
+                        PURCHASE_REQUEST_REFERENCE,
                         po.prId(),
                         "Release commitment hold for Purchase Order payment: " + po.poNumber(),
                         command.actorId(),
@@ -117,12 +123,11 @@ public class ConfirmPaymentUseCase {
                 budgetRepository.insertTransaction(releaseTx);
             }
 
-            // Record the actual spend transaction
             BudgetTransaction spendTx = new BudgetTransaction(
                     budgetId,
                     BudgetTransactionType.SPEND,
                     paidAmount,
-                    "INVOICE",
+                    INVOICE_REFERENCE,
                     invoice.id(),
                     "Invoice payment confirmation: " + invoice.invoiceNumber(),
                     command.actorId(),
@@ -130,8 +135,6 @@ public class ConfirmPaymentUseCase {
                     null
             );
             budgetRepository.insertTransaction(spendTx);
-
-            // Evict dashboard cache
             budgetDashboardCachePort.evict(budgetId);
         } else {
             log.warn("[ACTION] No budget commitment hold found for PURCHASE_REQUEST | prId={} | poId={}",
@@ -148,11 +151,7 @@ public class ConfirmPaymentUseCase {
                 key,
                 confirmedAt,
                 command.actorId());
-        log.info("[ACTION] Start ConfirmPayment | invoiceId={} | userId={}",
-                LogMaskingUtil.maskId(invoice.id()),
-                LogMaskingUtil.maskId(command.actorId()));
         paymentRepository.insert(payment);
-        invoiceRepository.markPaid(invoice.id(), command.actorId(), confirmedAt);
         log.info("[ACTION] Complete ConfirmPayment | invoiceId={} | paymentId={}",
                 LogMaskingUtil.maskId(invoice.id()),
                 LogMaskingUtil.maskId(payment.id()));

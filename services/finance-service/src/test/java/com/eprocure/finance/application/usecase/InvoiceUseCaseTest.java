@@ -242,7 +242,7 @@ class InvoiceUseCaseTest {
         Invoice invoice = matchedInvoice();
         new ApproveInvoiceUseCase(invoiceRepository, new FakeIdempotencyService(), Clock.fixed(NOW, ZoneOffset.UTC))
                 .execute(new ApproveInvoiceCommand(ACTOR_ID, invoice.id(), null), APPROVE_IDEMPOTENCY_KEY);
-        
+
         UUID budgetId = UUID.randomUUID();
         budgetRepository.hold = new BudgetCommitmentHold(budgetId, new Money(new BigDecimal("1100.0000"), "VND"));
 
@@ -273,7 +273,7 @@ class InvoiceUseCaseTest {
         // Assert budget updates
         assertThat(budgetRepository.locked).isTrue();
         assertThat(budgetRepository.transactions).hasSize(2);
-        
+
         var releaseTx = budgetRepository.transactions.get(0);
         assertThat(releaseTx.budgetId()).isEqualTo(budgetId);
         assertThat(releaseTx.transactionType()).isEqualTo(BudgetTransactionType.RELEASE);
@@ -296,7 +296,7 @@ class InvoiceUseCaseTest {
         Invoice invoice = matchedInvoice();
         new ApproveInvoiceUseCase(invoiceRepository, new FakeIdempotencyService(), Clock.fixed(NOW, ZoneOffset.UTC))
                 .execute(new ApproveInvoiceCommand(ACTOR_ID, invoice.id(), null), APPROVE_IDEMPOTENCY_KEY);
-        
+
         budgetRepository.hold = null;
 
         var useCase = new ConfirmPaymentUseCase(
@@ -321,11 +321,53 @@ class InvoiceUseCaseTest {
         assertThat(result.replayed()).isFalse();
         assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.PAID);
         assertThat(paymentRepository.payments).hasSize(1);
-        
-        // Assert budget updates did not run
         assertThat(budgetRepository.locked).isFalse();
         assertThat(budgetRepository.transactions).isEmpty();
         assertThat(budgetDashboardCachePort.evictedBudgetIds).isEmpty();
+    }
+
+    @Test
+    void should_reject_second_payment_when_invoice_already_paid_with_different_key() {
+        Invoice invoice = matchedInvoice();
+        new ApproveInvoiceUseCase(invoiceRepository, new FakeIdempotencyService(), Clock.fixed(NOW, ZoneOffset.UTC))
+                .execute(new ApproveInvoiceCommand(ACTOR_ID, invoice.id(), null), APPROVE_IDEMPOTENCY_KEY);
+
+        UUID budgetId = UUID.randomUUID();
+        budgetRepository.hold = new BudgetCommitmentHold(budgetId, new Money(new BigDecimal("1100.0000"), "VND"));
+        var useCase = new ConfirmPaymentUseCase(
+                invoiceRepository,
+                paymentRepository,
+                new FakeIdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                purchaseOrderRepository,
+                budgetRepository,
+                budgetDashboardCachePort);
+
+        useCase.execute(
+                new ConfirmPaymentCommand(
+                        ACTOR_ID,
+                        invoice.id(),
+                        LocalDate.parse("2026-06-10"),
+                        "BANK-REF-001",
+                        new BigDecimal("1100.0000"),
+                        "paid by transfer"),
+                PAYMENT_IDEMPOTENCY_KEY);
+
+        assertThatThrownBy(() -> useCase.execute(
+                new ConfirmPaymentCommand(
+                        ACTOR_ID,
+                        invoice.id(),
+                        LocalDate.parse("2026-06-10"),
+                        "BANK-REF-002",
+                        new BigDecimal("1100.0000"),
+                        "duplicate submit"),
+                "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.FIN_015));
+
+        assertThat(paymentRepository.payments).hasSize(1);
+        assertThat(budgetRepository.transactions).hasSize(2);
+        assertThat(budgetDashboardCachePort.evictedBudgetIds).containsExactly(budgetId);
     }
 
     private CreateInvoiceUseCase createUseCase() {
@@ -597,8 +639,12 @@ class InvoiceUseCaseTest {
         }
 
         @Override
-        public void markPaid(UUID invoiceId, UUID paidBy, Instant paidAt) {
-            Invoice invoice = findById(invoiceId).orElseThrow();
+        public boolean markPaid(UUID invoiceId, UUID paidBy, Instant paidAt) {
+            Optional<Invoice> existing = findById(invoiceId);
+            if (existing.isEmpty() || existing.get().status() != InvoiceStatus.APPROVED) {
+                return false;
+            }
+            Invoice invoice = existing.get();
             replaceInvoice(new Invoice(
                     invoice.id(),
                     invoice.invoiceNumber(),
@@ -625,6 +671,7 @@ class InvoiceUseCaseTest {
                     invoice.createdBy(),
                     invoice.idempotencyKey(),
                     invoice.matchIdempotencyKey()));
+            return true;
         }
 
         private void replaceInvoice(Invoice replacement) {

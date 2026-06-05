@@ -25,7 +25,6 @@ import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +34,6 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
 
     private final Path storageDirectory;
 
-    @Autowired
     public LocalReportFileRenderer(
             @Value("${eprocure.analytics.report-worker.storage-dir:${java.io.tmpdir}/eprocure-analytics-reports}")
             String storageDirectory) {
@@ -275,7 +273,8 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         zip.write(content.getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
     }
-    private String escapeXml(String value) {
+
+    private String escapeXml(String value) {
         return sanitizeText(value)
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
