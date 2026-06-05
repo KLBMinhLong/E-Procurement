@@ -15,7 +15,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -93,12 +95,16 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
             parameters.put("periodFilter", periodFilter(job.filterCriteria()));
             parameters.put("scopeFilter", scopeFilter(job.filterCriteria()));
             parameters.put("generatedAt", job.createdAt().toString()); // use job createdAt for deterministic tests
+            parameters.put("locale", Locale.getDefault());
+            parameters.put("timezone", TimeZone.getDefault());
 
             List<Map<String, ?>> mapRows = new ArrayList<>();
+            int rowNum = 1;
             for (ReportDatasetRow row : datasetRows(dataset)) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("label", row.label());
                 map.put("value", row.value());
+                map.put("ROW_NUM", rowNum++);
                 mapRows.add(map);
             }
             JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(mapRows);
@@ -117,9 +123,12 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
             Map<String, CellStyle> styles = workbookStyles(workbook);
             int rowIndex = 0;
 
+            // Title
             rowIndex = writeMergedRow(sheet, rowIndex, template.title(), styles.get("title"), 24);
             rowIndex = writeMergedRow(sheet, rowIndex, template.subtitle(), styles.get("subtitle"), 18);
             rowIndex++;
+
+            // Metadata section
             rowIndex = writeMergedRow(sheet, rowIndex, "Report Metadata", styles.get("section"), 18);
             for (List<String> row : metadataRows(job)) {
                 Row metadataRow = sheet.createRow(rowIndex++);
@@ -127,19 +136,34 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
                 writeCell(metadataRow, 1, row.get(1), styles.get("metadataValue"));
             }
             rowIndex++;
+
+            // Data section
+            List<ReportDatasetRow> rows = datasetRows(dataset);
             rowIndex = writeMergedRow(sheet, rowIndex, template.datasetSectionTitle(), styles.get("section"), 18);
             int headerRowIndex = rowIndex;
             Row header = sheet.createRow(rowIndex++);
             writeCell(header, 0, "Metric", styles.get("tableHeader"));
             writeCell(header, 1, "Value", styles.get("tableHeader"));
-            for (ReportDatasetRow row : datasetRows(dataset)) {
+            int dataRowNum = 0;
+            for (ReportDatasetRow row : rows) {
                 Row dataRow = sheet.createRow(rowIndex++);
-                writeCell(dataRow, 0, row.label(), styles.get("tableLabel"));
-                writeCell(dataRow, 1, row.value(), styles.get("tableValue"));
+                boolean evenRow = dataRowNum % 2 == 0;
+                writeCell(dataRow, 0, row.label(), evenRow ? styles.get("tableRowEven") : styles.get("tableLabel"));
+                writeCell(dataRow, 1, row.value(), evenRow ? styles.get("tableValueEven") : styles.get("tableValue"));
+                dataRowNum++;
             }
 
+            // Summary section
+            rowIndex++;
+            rowIndex = writeMergedRow(sheet, rowIndex, "Summary", styles.get("section"), 18);
+            Row countRow = sheet.createRow(rowIndex++);
+            writeCell(countRow, 0, "Total rows", styles.get("summaryLabel"));
+            writeCell(countRow, 1, String.valueOf(rows.size()), styles.get("summaryValue"));
+            rowIndex++;
+            writeMergedRow(sheet, rowIndex, "This report is auto-generated from analytics read-model projections.", styles.get("disclaimer"), 14);
+
             sheet.createFreezePane(0, headerRowIndex + 1);
-            sheet.setAutoFilter(new CellRangeAddress(headerRowIndex, rowIndex - 1, 0, 1));
+            sheet.setAutoFilter(new CellRangeAddress(headerRowIndex, headerRowIndex + rows.size(), 0, 1));
             sizeColumns(sheet);
             workbook.write(output);
             return output.toByteArray();
@@ -150,12 +174,18 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         Map<String, CellStyle> styles = new HashMap<>();
         styles.put("title", style(workbook, font(workbook, (short) 18, true, IndexedColors.DARK_BLUE), null, false));
         styles.put("subtitle", style(workbook, font(workbook, (short) 10, false, IndexedColors.GREY_50_PERCENT), null, false));
+        styles.put("confidential", style(workbook, font(workbook, (short) 8, true, IndexedColors.GREY_50_PERCENT), null, false));
         styles.put("section", style(workbook, font(workbook, (short) 11, true, IndexedColors.WHITE), IndexedColors.DARK_BLUE, false));
         styles.put("metadataLabel", style(workbook, font(workbook, (short) 10, true, IndexedColors.GREY_80_PERCENT), IndexedColors.GREY_25_PERCENT, true));
         styles.put("metadataValue", style(workbook, font(workbook, (short) 10, false, IndexedColors.GREY_80_PERCENT), null, true));
-        styles.put("tableHeader", style(workbook, font(workbook, (short) 10, true, IndexedColors.WHITE), IndexedColors.DARK_TEAL, true));
+        styles.put("tableHeader", style(workbook, font(workbook, (short) 10, true, IndexedColors.WHITE), IndexedColors.DARK_BLUE, true));
         styles.put("tableLabel", style(workbook, font(workbook, (short) 10, false, IndexedColors.GREY_80_PERCENT), null, true));
         styles.put("tableValue", style(workbook, font(workbook, (short) 10, true, IndexedColors.GREY_80_PERCENT), null, true));
+        styles.put("tableRowEven", style(workbook, font(workbook, (short) 10, false, IndexedColors.GREY_80_PERCENT), IndexedColors.GREY_25_PERCENT, true));
+        styles.put("tableValueEven", style(workbook, font(workbook, (short) 10, true, IndexedColors.GREY_80_PERCENT), IndexedColors.GREY_25_PERCENT, true));
+        styles.put("summaryLabel", style(workbook, font(workbook, (short) 10, true, IndexedColors.DARK_BLUE), null, false));
+        styles.put("summaryValue", style(workbook, font(workbook, (short) 12, true, IndexedColors.DARK_BLUE), null, false));
+        styles.put("disclaimer", style(workbook, font(workbook, (short) 8, false, IndexedColors.GREY_50_PERCENT), null, false));
         return styles;
     }
 
