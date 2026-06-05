@@ -503,3 +503,10 @@
 - Reason: The OpenAPI KPI surface should be stable for frontend/report integration, but current events only support breach-based SLA facts and do not yet provide a PR lifecycle timestamp pair for real PR to PO cycle time.
 - Impact: Cycle-time returns a zero/empty foundation response with target `48.00`; SLA compliance reads `analytics.approval_sla_breach_projections` for overdue counts, breached action hours by approver role, and temporary masked approver identifiers.
 - Constraint: True cycle-time and compliance percentage require future PR lifecycle and approval completion/on-time projections.
+
+## [2026-06-05] E12 report export worker foundation
+
+- Decision: Add an analytics-service scheduled worker that claims queued report jobs, renders local PDF/XLSX foundation files, and streams completed files from the authenticated download endpoint.
+- Reason: The existing report export API created durable jobs but could never move jobs out of `QUEUED` or return a real file.
+- Impact: `analytics.report_export_jobs` now has `storage_path`; worker config is controlled by `ANALYTICS_REPORT_WORKER_*`; completed jobs expose `/api/v1/reports/jobs/{jobId}/download` and are served only after ownership/status/expiry checks.
+- Constraint: Generated files currently contain metadata-only report content using Java-native rendering; Jasper templates and type-specific datasets remain follow-up.

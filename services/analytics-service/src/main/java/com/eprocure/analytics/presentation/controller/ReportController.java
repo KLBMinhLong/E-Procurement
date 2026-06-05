@@ -6,18 +6,26 @@ import com.eprocure.analytics.application.usecase.GetReportDownloadUseCase;
 import com.eprocure.analytics.application.usecase.GetReportJobUseCase;
 import com.eprocure.analytics.common.api.ApiResponse;
 import com.eprocure.analytics.common.api.RequestIdUtil;
+import com.eprocure.analytics.common.exception.BusinessException;
+import com.eprocure.analytics.common.exception.ErrorCode;
 import com.eprocure.analytics.common.security.UserPrincipal;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
+import com.eprocure.analytics.domain.model.report.ReportFormat;
 import com.eprocure.analytics.presentation.mapper.ReportPresentationMapper;
 import com.eprocure.analytics.presentation.request.ExportReportRequest;
 import com.eprocure.analytics.presentation.response.ReportJobResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -88,15 +96,27 @@ public class ReportController {
 
     @GetMapping("/jobs/{jobId}/download")
     @PreAuthorize("hasAuthority('REPORT_EXPORT')")
-    public ResponseEntity<Void> download(
+    public ResponseEntity<Resource> download(
             @PathVariable UUID jobId,
             @AuthenticationPrincipal UserPrincipal principal) {
         log.info("[CONTROLLER] GET /api/v1/reports/jobs/{}/download | userId={}",
                 LogMaskingUtil.maskId(jobId),
                 LogMaskingUtil.maskId(principal.getId()));
         var job = getReportDownloadUseCase.execute(mapper.toQuery(principal, jobId));
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(job.downloadUrl()))
-                .build();
+        Path storagePath = Path.of(job.storagePath());
+        if (!Files.isRegularFile(storagePath)) {
+            throw new BusinessException(ErrorCode.ANL_003);
+        }
+        return ResponseEntity.ok()
+                .contentType(mediaType(job.format()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + storagePath.getFileName() + "\"")
+                .body(new FileSystemResource(storagePath));
+    }
+
+    private MediaType mediaType(ReportFormat format) {
+        if (format == ReportFormat.PDF) {
+            return MediaType.APPLICATION_PDF;
+        }
+        return MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     }
 }

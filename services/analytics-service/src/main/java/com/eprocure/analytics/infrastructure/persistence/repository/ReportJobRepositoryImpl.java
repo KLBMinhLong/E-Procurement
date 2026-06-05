@@ -5,6 +5,8 @@ import com.eprocure.analytics.domain.repository.ReportJobRepository;
 import com.eprocure.analytics.infrastructure.persistence.mapper.ReportJobMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
@@ -45,6 +47,23 @@ public class ReportJobRepositoryImpl implements ReportJobRepository {
                 job.completedAt(),
                 job.expiresAt(),
                 job.createdBy());
+    }
+
+    @Override
+    public List<ReportJob> claimQueuedForProcessing(int limit, Instant claimedAt) {
+        return mapper.claimQueuedForProcessing(limit, claimedAt).stream()
+                .map(row -> row.toDomain())
+                .toList();
+    }
+
+    @Override
+    public void markCompleted(UUID jobId, String downloadUrl, String storagePath, Instant completedAt, Instant expiresAt) {
+        mapper.markCompleted(jobId, downloadUrl, storagePath, completedAt, expiresAt);
+    }
+
+    @Override
+    public void markFailed(UUID jobId, String failureReason, Instant failedAt) {
+        mapper.markFailed(jobId, failureReason, failedAt);
     }
 
     private String toJson(JsonNode filters) {

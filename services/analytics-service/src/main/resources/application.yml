@@ -47,3 +47,8 @@ mybatis:
 eprocure:
   analytics:
     dashboard-cache-ttl-minutes: ${ANALYTICS_DASHBOARD_CACHE_TTL_MINUTES:5}
+    report-worker:
+      enabled: ${ANALYTICS_REPORT_WORKER_ENABLED:true}
+      poll-delay-ms: ${ANALYTICS_REPORT_WORKER_POLL_DELAY_MS:60000}
+      batch-size: ${ANALYTICS_REPORT_WORKER_BATCH_SIZE:5}
+      storage-dir: ${ANALYTICS_REPORT_STORAGE_DIR:${java.io.tmpdir}/eprocure-analytics-reports}

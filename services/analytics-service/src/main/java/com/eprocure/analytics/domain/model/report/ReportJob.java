@@ -10,6 +10,8 @@ public record ReportJob(
         ReportFormat format,
         ReportJobStatus status,
         String downloadUrl,
+        String storagePath,
+        String failureReason,
         Instant createdAt,
         Instant completedAt,
         Instant expiresAt,
@@ -22,6 +24,8 @@ public record ReportJob(
         format = Objects.requireNonNull(format, "format must not be null");
         status = Objects.requireNonNull(status, "status must not be null");
         downloadUrl = downloadUrl == null || downloadUrl.isBlank() ? null : downloadUrl.trim();
+        storagePath = storagePath == null || storagePath.isBlank() ? null : storagePath.trim();
+        failureReason = failureReason == null || failureReason.isBlank() ? null : failureReason.trim();
         createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
         createdBy = Objects.requireNonNull(createdBy, "createdBy must not be null");
         idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey must not be null");
@@ -40,6 +44,8 @@ public record ReportJob(
                 reportType,
                 format,
                 ReportJobStatus.QUEUED,
+                null,
+                null,
                 null,
                 createdAt,
                 null,
