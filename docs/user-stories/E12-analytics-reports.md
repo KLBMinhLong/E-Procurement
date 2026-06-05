@@ -65,7 +65,7 @@ Acceptance:
 - A scheduled worker claims `QUEUED` jobs, marks them `PROCESSING`, renders local PDF/XLSX files, then marks jobs `COMPLETED` or `FAILED`.
 - `GET /api/v1/reports/jobs/{jobId}/download` streams the generated file for the requesting user after completion.
 - Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
-- Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, and `THREE_WAY_MATCH`.
+- Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, and `VENDOR_SCORECARD`.
 - Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
 - PDF/XLSX exports use report-type-specific titles, metadata/filter summaries, metric tables, and spreadsheet column/style hints.
 - Unsupported report types explicitly render foundation rows that identify the missing projection contract.
@@ -90,6 +90,6 @@ Acceptance:
 
 ## Next Coding Slices
 
-1. Projection-backed datasets for the remaining report types beyond `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, and `THREE_WAY_MATCH`.
+1. Projection-backed datasets for the remaining report types beyond `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, and `VENDOR_SCORECARD`.
 2. Source contracts for `departmentId`/`status` report filters, RFQ savings, GR pending metrics, and department spend.
 3. Docker/Flyway/Kafka end-to-end verification for analytics projections and report worker outputs.

@@ -552,3 +552,10 @@
 - Reason: Idempotency-Key replay protects same-key retries, but concurrent submits with different keys must not double-create payments, RELEASE, or SPEND transactions.
 - Impact: `ConfirmPaymentUseCase` records payment and budget ledger rows only after winning the PAID transition; a second payment attempt receives `FIN_015`.
 - Constraint: Full concurrent DB integration testing remains a follow-up; the current unit test covers the different-key duplicate path.
+
+## [2026-06-05] E12 cycle-time and vendor scorecard report datasets
+
+- Decision: Back `CYCLE_TIME_ANALYSIS` and `VENDOR_SCORECARD` report exports with analytics-owned projection queries.
+- Reason: These report types can be populated from existing `pr_submitted`, `po_issued`, `po_issued_line`, and `invoice_matched` projections without new cross-service reads.
+- Impact: Cycle-time exports include linked PR count, avg/median/p95 hours, slowest PR, and top priority; vendor-scorecard exports include vendor count, PO totals, invoice totals, average PO value, and top vendor by PO value.
+- Constraint: Budget-vs-plan, spending-by-department, inventory pending, RFQ savings, maverick spending, and audit-trail reports still require upstream projection contracts.

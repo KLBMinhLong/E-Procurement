@@ -55,6 +55,48 @@ class ProjectionReportDatasetProviderTest {
         assertThat(mapper.slaToExclusive).isEqualTo(Instant.parse("2026-07-01T00:00:00Z"));
     }
 
+    @Test
+    void should_load_cycle_time_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(
+                null,
+                null,
+                2026,
+                1,
+                VENDOR_ID,
+                "IT-HARDWARE");
+
+        var dataset = provider.load(job(ReportType.CYCLE_TIME_ANALYSIS, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.cycleFromInclusive).isEqualTo(Instant.parse("2026-01-01T00:00:00Z"));
+        assertThat(mapper.cycleToExclusive).isEqualTo(Instant.parse("2026-04-01T00:00:00Z"));
+        assertThat(mapper.cycleVendorId).isEqualTo(VENDOR_ID);
+        assertThat(mapper.cycleCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
+    @Test
+    void should_load_vendor_scorecard_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(
+                LocalDate.parse("2026-06-01"),
+                LocalDate.parse("2026-06-05"),
+                null,
+                null,
+                VENDOR_ID,
+                "IT-HARDWARE");
+
+        var dataset = provider.load(job(ReportType.VENDOR_SCORECARD, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.vendorFromInclusive).isEqualTo(Instant.parse("2026-06-01T00:00:00Z"));
+        assertThat(mapper.vendorToExclusive).isEqualTo(Instant.parse("2026-06-06T00:00:00Z"));
+        assertThat(mapper.vendorId).isEqualTo(VENDOR_ID);
+        assertThat(mapper.vendorCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
     private ReportJob job(ReportType reportType, ReportFilterCriteria filters) {
         return new ReportJob(
                 JOB_ID,
@@ -86,6 +128,14 @@ class ProjectionReportDatasetProviderTest {
         private String poCategoryCode;
         private Instant slaFromInclusive;
         private Instant slaToExclusive;
+        private Instant cycleFromInclusive;
+        private Instant cycleToExclusive;
+        private UUID cycleVendorId;
+        private String cycleCategoryCode;
+        private Instant vendorFromInclusive;
+        private Instant vendorToExclusive;
+        private UUID vendorId;
+        private String vendorCategoryCode;
 
         @Override
         public List<ReportDatasetRowDbEntity> findPoSummaryRows(
@@ -123,6 +173,32 @@ class ProjectionReportDatasetProviderTest {
                 Instant fromInclusive,
                 Instant toExclusive,
                 UUID vendorId) {
+            return List.of(row());
+        }
+
+        @Override
+        public List<ReportDatasetRowDbEntity> findCycleTimeAnalysisRows(
+                Instant fromInclusive,
+                Instant toExclusive,
+                UUID vendorId,
+                String categoryCode) {
+            cycleFromInclusive = fromInclusive;
+            cycleToExclusive = toExclusive;
+            cycleVendorId = vendorId;
+            cycleCategoryCode = categoryCode;
+            return List.of(row());
+        }
+
+        @Override
+        public List<ReportDatasetRowDbEntity> findVendorScorecardRows(
+                Instant fromInclusive,
+                Instant toExclusive,
+                UUID vendorId,
+                String categoryCode) {
+            vendorFromInclusive = fromInclusive;
+            vendorToExclusive = toExclusive;
+            this.vendorId = vendorId;
+            vendorCategoryCode = categoryCode;
             return List.of(row());
         }
     }

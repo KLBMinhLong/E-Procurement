@@ -43,9 +43,16 @@ public class ProjectionReportDatasetProvider implements ReportDatasetProvider {
                     fromInclusive,
                     toExclusive,
                     filters.vendorId()));
-            case CYCLE_TIME_ANALYSIS -> List.of(
-                    new ReportDatasetRow("Cycle time source", "Pending PR lifecycle projection"),
-                    new ReportDatasetRow("Current status", "Foundation only"));
+            case CYCLE_TIME_ANALYSIS -> toRows(mapper.findCycleTimeAnalysisRows(
+                    fromInclusive,
+                    toExclusive,
+                    filters.vendorId(),
+                    filters.categoryCode()));
+            case VENDOR_SCORECARD -> toRows(mapper.findVendorScorecardRows(
+                    fromInclusive,
+                    toExclusive,
+                    filters.vendorId(),
+                    filters.categoryCode()));
             default -> List.of(
                     new ReportDatasetRow("Dataset source", "Pending projection contract"),
                     new ReportDatasetRow("Current status", "Foundation only"));
