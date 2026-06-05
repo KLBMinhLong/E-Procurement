@@ -67,7 +67,8 @@ Acceptance:
 - Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
 - Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, and `VENDOR_SCORECARD`.
 - Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
-- PDF/XLSX exports use report-type-specific titles, metadata/filter summaries, metric tables, and spreadsheet column/style hints.
+- PDF exports use JasperReports templates with report-type-specific titles, metadata/filter summaries, and metric tables.
+- XLSX exports use Apache POI workbooks with styled sections, frozen table headers, filters, and fixed business-friendly column widths.
 - Unsupported report types explicitly render foundation rows that identify the missing projection contract.
 - Filters requiring missing source fields such as `departmentId`/`status` remain follow-up and are not exposed in the current report export API contract.
 

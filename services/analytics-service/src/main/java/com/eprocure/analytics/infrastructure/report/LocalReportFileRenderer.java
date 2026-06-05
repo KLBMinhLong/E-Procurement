@@ -10,21 +10,30 @@ import com.eprocure.analytics.domain.model.report.ReportJob;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -105,117 +114,104 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
     }
 
     private byte[] renderXlsx(ReportJob job, ReportDataset dataset) throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        try (ZipOutputStream zip = new ZipOutputStream(output, StandardCharsets.UTF_8)) {
-            put(zip, "[Content_Types].xml", """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-                      <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-                      <Default Extension="xml" ContentType="application/xml"/>
-                      <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-                      <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-                      <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-                    </Types>
-                    """);
-            put(zip, "_rels/.rels", """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-                      <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-                    </Relationships>
-                    """);
-            put(zip, "xl/workbook.xml", """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-                      <sheets><sheet name="Report" sheetId="1" r:id="rId1"/></sheets>
-                    </workbook>
-                    """);
-            put(zip, "xl/_rels/workbook.xml.rels", """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-                      <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-                      <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-                    </Relationships>
-                    """);
-            put(zip, "xl/styles.xml", stylesXml());
-            put(zip, "xl/worksheets/sheet1.xml", sheetXml(job, dataset));
-        }
-        return output.toByteArray();
-    }
-
-    private String sheetXml(ReportJob job, ReportDataset dataset) {
-        List<SheetRow> lines = sheetRows(job, dataset);
-        StringBuilder rows = new StringBuilder();
-        for (int index = 0; index < lines.size(); index++) {
-            int row = index + 1;
-            rows.append("<row r=\"").append(row).append("\">");
-            List<SheetCell> cells = lines.get(index).cells();
-            for (int cellIndex = 0; cellIndex < cells.size(); cellIndex++) {
-                SheetCell cell = cells.get(cellIndex);
-                rows.append("<c r=\"")
-                        .append(columnName(cellIndex))
-                        .append(row)
-                        .append("\"");
-                if (cell.styleIndex() > 0) {
-                    rows.append(" s=\"").append(cell.styleIndex()).append("\"");
-                }
-                rows.append(" t=\"inlineStr\"><is><t>")
-                        .append(escapeXml(cell.value()))
-                        .append("</t></is></c>");
-            }
-            rows.append("</row>");
-        }
-        return """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-                  <sheetViews><sheetView workbookViewId="0"><pane ySplit="8" topLeftCell="A9" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
-                  <cols>
-                    <col min="1" max="1" width="34" customWidth="1"/>
-                    <col min="2" max="2" width="58" customWidth="1"/>
-                  </cols>
-                  <sheetData>%s</sheetData>
-                </worksheet>
-                """.formatted(rows);
-    }
-
-    private List<SheetRow> sheetRows(ReportJob job, ReportDataset dataset) {
         ReportLayoutTemplate template = ReportLayoutTemplate.resolve(job.reportType());
-        List<SheetRow> rows = new ArrayList<>();
-        rows.add(sheetRow(1, template.title(), ""));
-        rows.add(sheetRow(0, template.subtitle(), ""));
-        rows.add(sheetRow(0, "", ""));
-        rows.add(sheetRow(2, "Report Metadata", ""));
-        for (List<String> row : metadataRows(job)) {
-            rows.add(sheetRow(0, row.get(0), row.get(1)));
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet(sheetName(job.reportType().name()));
+            Map<String, CellStyle> styles = workbookStyles(workbook);
+            int rowIndex = 0;
+
+            rowIndex = writeMergedRow(sheet, rowIndex, template.title(), styles.get("title"), 24);
+            rowIndex = writeMergedRow(sheet, rowIndex, template.subtitle(), styles.get("subtitle"), 18);
+            rowIndex++;
+            rowIndex = writeMergedRow(sheet, rowIndex, "Report Metadata", styles.get("section"), 18);
+            for (List<String> row : metadataRows(job)) {
+                Row metadataRow = sheet.createRow(rowIndex++);
+                writeCell(metadataRow, 0, row.get(0), styles.get("metadataLabel"));
+                writeCell(metadataRow, 1, row.get(1), styles.get("metadataValue"));
+            }
+            rowIndex++;
+            rowIndex = writeMergedRow(sheet, rowIndex, template.datasetSectionTitle(), styles.get("section"), 18);
+            int headerRowIndex = rowIndex;
+            Row header = sheet.createRow(rowIndex++);
+            writeCell(header, 0, "Metric", styles.get("tableHeader"));
+            writeCell(header, 1, "Value", styles.get("tableHeader"));
+            for (ReportDatasetRow row : datasetRows(dataset)) {
+                Row dataRow = sheet.createRow(rowIndex++);
+                writeCell(dataRow, 0, row.label(), styles.get("tableLabel"));
+                writeCell(dataRow, 1, row.value(), styles.get("tableValue"));
+            }
+
+            sheet.createFreezePane(0, headerRowIndex + 1);
+            sheet.setAutoFilter(new CellRangeAddress(headerRowIndex, rowIndex - 1, 0, 1));
+            sizeColumns(sheet);
+            workbook.write(output);
+            return output.toByteArray();
         }
-        rows.add(sheetRow(0, "", ""));
-        rows.add(sheetRow(2, template.datasetSectionTitle(), ""));
-        rows.add(sheetRow(3, "Metric", "Value"));
-        for (ReportDatasetRow row : datasetRows(dataset)) {
-            rows.add(sheetRow(0, row.label(), row.value()));
-        }
-        return rows;
     }
 
-    private String stylesXml() {
-        return """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-                  <fonts count="2">
-                    <font><sz val="11"/><name val="Calibri"/></font>
-                    <font><b/><sz val="11"/><name val="Calibri"/></font>
-                  </fonts>
-                  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
-                  <borders count="1"><border/></borders>
-                  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-                  <cellXfs count="4">
-                    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-                    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
-                    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
-                    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
-                  </cellXfs>
-                  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
-                </styleSheet>
-                """;
+    private Map<String, CellStyle> workbookStyles(Workbook workbook) {
+        Map<String, CellStyle> styles = new HashMap<>();
+        styles.put("title", style(workbook, font(workbook, (short) 18, true, IndexedColors.DARK_BLUE), null, false));
+        styles.put("subtitle", style(workbook, font(workbook, (short) 10, false, IndexedColors.GREY_50_PERCENT), null, false));
+        styles.put("section", style(workbook, font(workbook, (short) 11, true, IndexedColors.WHITE), IndexedColors.DARK_BLUE, false));
+        styles.put("metadataLabel", style(workbook, font(workbook, (short) 10, true, IndexedColors.GREY_80_PERCENT), IndexedColors.GREY_25_PERCENT, true));
+        styles.put("metadataValue", style(workbook, font(workbook, (short) 10, false, IndexedColors.GREY_80_PERCENT), null, true));
+        styles.put("tableHeader", style(workbook, font(workbook, (short) 10, true, IndexedColors.WHITE), IndexedColors.DARK_TEAL, true));
+        styles.put("tableLabel", style(workbook, font(workbook, (short) 10, false, IndexedColors.GREY_80_PERCENT), null, true));
+        styles.put("tableValue", style(workbook, font(workbook, (short) 10, true, IndexedColors.GREY_80_PERCENT), null, true));
+        return styles;
+    }
+
+    private Font font(Workbook workbook, short size, boolean bold, IndexedColors color) {
+        Font font = workbook.createFont();
+        font.setFontName("Calibri");
+        font.setFontHeightInPoints(size);
+        font.setBold(bold);
+        font.setColor(color.getIndex());
+        return font;
+    }
+
+    private CellStyle style(Workbook workbook, Font font, IndexedColors fillColor, boolean bordered) {
+        CellStyle style = workbook.createCellStyle();
+        style.setFont(font);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true);
+        if (fillColor != null) {
+            style.setFillForegroundColor(fillColor.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        }
+        if (bordered) {
+            style.setBorderTop(BorderStyle.THIN);
+            style.setBorderRight(BorderStyle.THIN);
+            style.setBorderBottom(BorderStyle.THIN);
+            style.setBorderLeft(BorderStyle.THIN);
+            style.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            style.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            style.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            style.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        }
+        return style;
+    }
+
+    private int writeMergedRow(Sheet sheet, int rowIndex, String value, CellStyle style, int heightInPoints) {
+        Row row = sheet.createRow(rowIndex);
+        row.setHeightInPoints(heightInPoints);
+        writeCell(row, 0, value, style);
+        writeCell(row, 1, "", style);
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, 1));
+        return rowIndex + 1;
+    }
+
+    private void writeCell(Row row, int columnIndex, String value, CellStyle style) {
+        Cell cell = row.createCell(columnIndex);
+        cell.setCellValue(sanitizeText(value));
+        cell.setCellStyle(style);
+    }
+
+    private void sizeColumns(Sheet sheet) {
+        sheet.setColumnWidth(0, 34 * 256);
+        sheet.setColumnWidth(1, 58 * 256);
     }
 
     private List<List<String>> metadataRows(ReportJob job) {
@@ -253,34 +249,11 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         return scopes.isEmpty() ? "All vendors and categories" : String.join("; ", scopes);
     }
 
-    private SheetRow sheetRow(int styleIndex, String first, String second) {
-        return new SheetRow(List.of(new SheetCell(first, styleIndex), new SheetCell(second, styleIndex)));
-    }
-
     private List<ReportDatasetRow> datasetRows(ReportDataset dataset) {
         if (dataset == null || dataset.rows().isEmpty()) {
             return List.of(new ReportDatasetRow("Dataset source", "No projection data available"));
         }
         return dataset.rows();
-    }
-
-    private String columnName(int zeroBasedIndex) {
-        return String.valueOf((char) ('A' + zeroBasedIndex));
-    }
-
-    private void put(ZipOutputStream zip, String name, String content) throws IOException {
-        zip.putNextEntry(new ZipEntry(name));
-        zip.write(content.getBytes(StandardCharsets.UTF_8));
-        zip.closeEntry();
-    }
-
-    private String escapeXml(String value) {
-        return sanitizeText(value)
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&apos;");
     }
 
     private String sanitizeText(String value) {
@@ -292,9 +265,7 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         return sanitized.length() <= maxLength ? sanitized : sanitized.substring(0, maxLength - 3) + "...";
     }
 
-    private record SheetRow(List<SheetCell> cells) {
-    }
-
-    private record SheetCell(String value, int styleIndex) {
+    private String sheetName(String reportType) {
+        return truncate(reportType.replace('_', ' ').replaceAll("[\\\\/?*\\[\\]:]", " "), 31);
     }
 }

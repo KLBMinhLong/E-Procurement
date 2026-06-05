@@ -559,3 +559,10 @@
 - Reason: These report types can be populated from existing `pr_submitted`, `po_issued`, `po_issued_line`, and `invoice_matched` projections without new cross-service reads.
 - Impact: Cycle-time exports include linked PR count, avg/median/p95 hours, slowest PR, and top priority; vendor-scorecard exports include vendor count, PO totals, invoice totals, average PO value, and top vendor by PO value.
 - Constraint: Budget-vs-plan, spending-by-department, inventory pending, RFQ savings, maverick spending, and audit-trail reports still require upstream projection contracts.
+
+## [2026-06-05] E12 POI XLSX report renderer
+
+- Decision: Render XLSX report files with Apache POI workbooks instead of hand-built OpenXML ZIP strings.
+- Reason: XLSX generation should use a structured library already present in analytics-service so formatting, freeze panes, filters, and future workbook expansion are maintainable.
+- Impact: Excel exports now include styled title/subtitle sections, metadata rows, a frozen/filterable metric table, fixed business-friendly column widths, and workbook-level validation in tests.
+- Constraint: PDF output still uses JasperReports templates; visual review of actual generated PDFs remains part of runtime/export verification.

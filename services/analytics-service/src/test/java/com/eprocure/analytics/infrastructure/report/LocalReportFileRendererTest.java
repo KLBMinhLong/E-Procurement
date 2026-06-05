@@ -15,7 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.zip.ZipFile;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.PaneInformation;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -57,22 +60,23 @@ class LocalReportFileRendererTest {
 
         Path output = Path.of(rendered.storagePath());
         assertThat(output).exists();
-        try (ZipFile zipFile = new ZipFile(output.toFile())) {
-            assertThat(zipFile.getEntry("[Content_Types].xml")).isNotNull();
-            assertThat(zipFile.getEntry("xl/worksheets/sheet1.xml")).isNotNull();
-            assertThat(zipFile.getEntry("xl/styles.xml")).isNotNull();
-            String sheetXml = new String(zipFile.getInputStream(zipFile.getEntry("xl/worksheets/sheet1.xml")).readAllBytes(),
-                    StandardCharsets.UTF_8);
-            assertThat(sheetXml).contains("<cols>");
-            assertThat(sheetXml).contains("Purchase Order Summary");
-            assertThat(sheetXml).contains("Report Metadata");
-            assertThat(sheetXml).contains("Issued PO Metrics");
-            assertThat(sheetXml).contains("Issued PO count");
-            assertThat(sheetXml).contains("3");
-            String stylesXml = new String(zipFile.getInputStream(zipFile.getEntry("xl/styles.xml")).readAllBytes(),
-                    StandardCharsets.UTF_8);
-            assertThat(stylesXml).contains("<styleSheet");
-            assertThat(stylesXml).contains("<b/>");
+        try (XSSFWorkbook workbook = new XSSFWorkbook(Files.newInputStream(output))) {
+            Sheet sheet = workbook.getSheet("PO SUMMARY");
+            DataFormatter formatter = new DataFormatter();
+
+            assertThat(sheet).isNotNull();
+            assertThat(text(sheet, formatter, 0, 0)).isEqualTo("Purchase Order Summary");
+            assertThat(text(sheet, formatter, 3, 0)).isEqualTo("Report Metadata");
+            assertThat(text(sheet, formatter, 11, 0)).isEqualTo("Issued PO Metrics");
+            assertThat(text(sheet, formatter, 12, 0)).isEqualTo("Metric");
+            assertThat(text(sheet, formatter, 12, 1)).isEqualTo("Value");
+            assertThat(text(sheet, formatter, 13, 0)).isEqualTo("Issued PO count");
+            assertThat(text(sheet, formatter, 13, 1)).isEqualTo("3");
+            assertThat(sheet.getColumnWidth(0)).isEqualTo(34 * 256);
+            assertThat(sheet.getColumnWidth(1)).isEqualTo(58 * 256);
+            PaneInformation paneInformation = sheet.getPaneInformation();
+            assertThat(paneInformation).isNotNull();
+            assertThat(paneInformation.isFreezePane()).isTrue();
         }
     }
 
@@ -82,12 +86,17 @@ class LocalReportFileRendererTest {
 
         var rendered = renderer.render(filteredJob(), dataset());
 
-        try (ZipFile zipFile = new ZipFile(Path.of(rendered.storagePath()).toFile())) {
-            String sheetXml = new String(zipFile.getInputStream(zipFile.getEntry("xl/worksheets/sheet1.xml")).readAllBytes(),
-                    StandardCharsets.UTF_8);
-            assertThat(sheetXml).contains("FY 2026 Q2");
-            assertThat(sheetXml).contains("Category IT-HARDWARE");
+        try (XSSFWorkbook workbook = new XSSFWorkbook(Files.newInputStream(Path.of(rendered.storagePath())))) {
+            Sheet sheet = workbook.getSheet("PO SUMMARY");
+            DataFormatter formatter = new DataFormatter();
+
+            assertThat(text(sheet, formatter, 8, 1)).isEqualTo("FY 2026 Q2");
+            assertThat(text(sheet, formatter, 9, 1)).isEqualTo("Category IT-HARDWARE");
         }
+    }
+
+    private String text(Sheet sheet, DataFormatter formatter, int rowIndex, int columnIndex) {
+        return formatter.formatCellValue(sheet.getRow(rowIndex).getCell(columnIndex));
     }
 
     private ReportJob job(ReportFormat format) {
