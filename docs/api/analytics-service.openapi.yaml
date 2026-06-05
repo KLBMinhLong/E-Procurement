@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: eProcure — Analytics & Report Service API
   description: |
-    Dashboard, KPI metrics và xuất báo cáo JasperReport (PDF/Excel).
+    Dashboard, KPI metrics và xuất báo cáo PDF/Excel.
     Dữ liệu dashboard được cache Redis TTL 5 phút.
     Report export chạy async khi data lớn — trả về jobId để poll kết quả.
   version: 1.0.0
@@ -67,7 +67,10 @@ components:
           type: string
           enum: [QUEUED, PROCESSING, COMPLETED, FAILED]
         format:     { type: string, enum: [PDF, EXCEL] }
-        downloadUrl:{ type: string, nullable: true }
+        downloadUrl:
+          type: string
+          nullable: true
+          description: Relative authenticated download endpoint after the job is completed.
         createdAt:  { type: string, format: date-time }
         completedAt:{ type: string, format: date-time, nullable: true }
         expiresAt:  { type: string, format: date-time, nullable: true }
@@ -521,8 +524,6 @@ paths:
           required: true
           schema: { type: string, format: uuid }
       responses:
-        '302':
-          description: Redirect đến file báo cáo đã sẵn sàng
         '200':
           description: File báo cáo
           content:

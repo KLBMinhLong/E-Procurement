@@ -290,10 +290,10 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `ANALYTICS_DB_PASS` | `analytics_pass_dev` | `***SENSITIVE***` | |
 | `ANALYTICS_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key gateway/service-to-service |
 | `ANALYTICS_DASHBOARD_CACHE_TTL_MINUTES` | `5` | `5` | TTL cache dashboard data |
-| `REPORT_JOB_TIMEOUT_MINUTES` | `10` | `10` | Timeout job export báo cáo |
-| `REPORT_DOWNLOAD_TTL_HOURS` | `24` | `24` | File download link TTL |
-| `REPORT_STORAGE_PATH` | `/data/reports` | `/data/reports` | Thư mục lưu file báo cáo |
-| `JASPER_TEMPLATE_PATH` | `classpath:reports/` | `classpath:reports/` | Path JasperReport templates |
+| `ANALYTICS_REPORT_WORKER_ENABLED` | `true` | `true` | Enable scheduled report export worker |
+| `ANALYTICS_REPORT_WORKER_POLL_DELAY_MS` | `60000` | `60000` | Delay between report worker scans |
+| `ANALYTICS_REPORT_WORKER_BATCH_SIZE` | `5` | `5` | Max jobs claimed per worker run |
+| `ANALYTICS_REPORT_STORAGE_DIR` | `/tmp/eprocure-analytics-reports` | `/data/reports` | Local directory for generated report files |
 
 ---
 

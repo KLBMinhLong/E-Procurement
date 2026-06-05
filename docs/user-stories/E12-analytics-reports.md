@@ -62,7 +62,10 @@ Acceptance:
 - A new request stores a `QUEUED` job in `analytics.report_export_jobs`.
 - Replaying the same `Idempotency-Key` for the same user returns the existing job with `Idempotency-Replayed: true`.
 - `GET /api/v1/reports/jobs/{jobId}` returns the current job status for the requesting user.
-- `GET /api/v1/reports/jobs/{jobId}/download` returns a business error until an export worker produces a file.
+- A scheduled worker claims `QUEUED` jobs, marks them `PROCESSING`, renders local PDF/XLSX files, then marks jobs `COMPLETED` or `FAILED`.
+- `GET /api/v1/reports/jobs/{jobId}/download` streams the generated file for the requesting user after completion.
+- Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
+- Current renderer produces a foundation metadata report; Jasper templates and rich report datasets remain follow-up.
 
 ### E12-US-006 KPI API Foundation
 
@@ -82,7 +85,7 @@ Acceptance:
 
 ## Next Coding Slices
 
-1. Jasper/PDF/Excel worker implementation for queued report jobs.
+1. Jasper template integration and real datasets for each report type.
 2. PR lifecycle projection for real PR to PO cycle-time metrics.
 3. Approval completion/on-time projection for true SLA compliance percentages.
 4. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.

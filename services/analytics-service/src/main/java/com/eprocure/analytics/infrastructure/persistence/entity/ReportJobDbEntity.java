@@ -13,6 +13,8 @@ public class ReportJobDbEntity {
     private String format;
     private String status;
     private String downloadUrl;
+    private String storagePath;
+    private String failureReason;
     private Instant createdAt;
     private Instant completedAt;
     private Instant expiresAt;
@@ -26,6 +28,8 @@ public class ReportJobDbEntity {
                 ReportFormat.valueOf(format),
                 ReportJobStatus.valueOf(status),
                 downloadUrl,
+                storagePath,
+                failureReason,
                 createdAt,
                 completedAt,
                 expiresAt,
@@ -71,6 +75,22 @@ public class ReportJobDbEntity {
 
     public void setDownloadUrl(String downloadUrl) {
         this.downloadUrl = downloadUrl;
+    }
+
+    public String getStoragePath() {
+        return storagePath;
+    }
+
+    public void setStoragePath(String storagePath) {
+        this.storagePath = storagePath;
+    }
+
+    public String getFailureReason() {
+        return failureReason;
+    }
+
+    public void setFailureReason(String failureReason) {
+        this.failureReason = failureReason;
     }
 
     public Instant getCreatedAt() {

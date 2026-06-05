@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -123,6 +124,19 @@ class ReportJobUseCaseTest {
             byIdempotencyKey.put(job.idempotencyKey(), job);
             byJobId.put(job.id(), job);
             savedFilters = filters;
+        }
+
+        @Override
+        public List<ReportJob> claimQueuedForProcessing(int limit, Instant claimedAt) {
+            return List.of();
+        }
+
+        @Override
+        public void markCompleted(UUID jobId, String downloadUrl, String storagePath, Instant completedAt, Instant expiresAt) {
+        }
+
+        @Override
+        public void markFailed(UUID jobId, String failureReason, Instant failedAt) {
         }
     }
 }
