@@ -313,6 +313,7 @@ paths:
     get:
       tags: [KPIs]
       summary: Thời gian xử lý PR trung bình (PR → PO)
+      description: Foundation endpoint. Returns zero/empty cycle-time metrics until analytics receives PR lifecycle projections with reliable PR submitted/created timestamps.
       operationId: getCycleTimeKpi
       x-required-permission: REPORT_VIEW
       parameters:
@@ -363,6 +364,7 @@ paths:
     get:
       tags: [KPIs]
       summary: Tỷ lệ tuân thủ SLA phê duyệt
+      description: Foundation endpoint. Current data is breach-based from approval SLA breach projections; true compliance percentages require approval completion/on-time denominator projections.
       operationId: getSlaComplianceKpi
       x-required-permission: REPORT_VIEW
       parameters:

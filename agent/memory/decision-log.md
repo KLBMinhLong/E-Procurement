@@ -496,3 +496,10 @@
 - Reason: `POST /reports/export` is a mutating endpoint and must be replay-safe before Jasper/PDF/Excel workers are added.
 - Impact: `analytics.report_export_jobs` stores queued export jobs; `POST /api/v1/reports/export`, `GET /api/v1/reports/jobs/{jobId}`, and download guard endpoints are available under `REPORT_EXPORT`.
 - Constraint: Jobs remain `QUEUED` until a later worker slice renders files and marks jobs `COMPLETED` or `FAILED`.
+
+## [2026-06-05] E12 KPI API foundation
+
+- Decision: Add `GET /api/v1/kpi/cycle-time` and `GET /api/v1/kpi/sla-compliance` in analytics-service under `REPORT_VIEW`.
+- Reason: The OpenAPI KPI surface should be stable for frontend/report integration, but current events only support breach-based SLA facts and do not yet provide a PR lifecycle timestamp pair for real PR to PO cycle time.
+- Impact: Cycle-time returns a zero/empty foundation response with target `48.00`; SLA compliance reads `analytics.approval_sla_breach_projections` for overdue counts, breached action hours by approver role, and temporary masked approver identifiers.
+- Constraint: True cycle-time and compliance percentage require future PR lifecycle and approval completion/on-time projections.
