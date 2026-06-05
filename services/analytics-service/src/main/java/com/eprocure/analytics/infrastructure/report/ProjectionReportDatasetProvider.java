@@ -53,6 +53,11 @@ public class ProjectionReportDatasetProvider implements ReportDatasetProvider {
                     toExclusive,
                     filters.vendorId(),
                     filters.categoryCode()));
+            case SPENDING_BY_DEPARTMENT -> toRows(mapper.findSpendingByDepartmentRows(
+                    fromInclusive,
+                    toExclusive,
+                    filters.vendorId(),
+                    filters.categoryCode()));
             case RFQ_SAVINGS -> toRows(mapper.findRfqSavingsRows(
                     fromInclusive,
                     toExclusive,

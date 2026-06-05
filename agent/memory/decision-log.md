@@ -572,4 +572,11 @@
 - Decision: Consume `procurement.rfq.awarded` and `inventory.gr.created` into analytics-owned projection tables, then back `RFQ_SAVINGS` and `INVENTORY_PENDING` report datasets with those facts.
 - Reason: These event contracts already exist and provide enough facts for award totals, category award totals, received quantities, rejected quantities, and post-receipt pending quantities without cross-service reads.
 - Impact: Analytics stores idempotent RFQ award and GR projection rows, report exports now include RFQ award metrics and inventory pending metrics, and Jasper templates no longer use deprecated `isStretchWithOverflow`.
-- Constraint: True RFQ savings still needs a baseline price contract; budget-vs-plan, department spend, maverick spending, audit trail, and `departmentId`/`status` report filters remain source-contract follow-up.
+- Constraint: True RFQ savings still needs a baseline price contract; budget-vs-plan, maverick spending, audit trail, and `departmentId`/`status` report filters remain source-contract follow-up.
+
+## [2026-06-05] E12 department spend report dataset
+
+- Decision: Back `SPENDING_BY_DEPARTMENT` report exports by joining analytics-owned `po_issued_projections` to `pr_submitted_projections` on `pr_id`.
+- Reason: PR submitted facts already carry `department_id`, so department spend can be computed without cross-service reads or a new endpoint contract.
+- Impact: PDF/XLSX report jobs now render department count, linked PR/PO counts, total and average department spend, and top department rows from projection data; category filters use matching PO line totals instead of whole PO totals.
+- Constraint: Department names still render as temporary `dept:{uuid-prefix}` labels until IAM department label projection is introduced; `departmentId`/`status` report filters remain follow-up source contracts.

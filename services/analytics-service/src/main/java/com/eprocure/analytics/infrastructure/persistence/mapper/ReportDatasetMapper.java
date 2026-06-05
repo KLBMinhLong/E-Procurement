@@ -254,6 +254,78 @@ public interface ReportDatasetMapper {
             @Param("categoryCode") String categoryCode);
 
     @Select("""
+            WITH po AS (
+                SELECT
+                    po.po_id,
+                    po.pr_id,
+                    CASE
+                        WHEN #{categoryCode,jdbcType=VARCHAR} IS NULL THEN po.total_amount
+                        ELSE COALESCE((
+                            SELECT SUM(filter_line.total_price)
+                            FROM analytics.po_issued_line_projections filter_line
+                            WHERE filter_line.po_id = po.po_id
+                              AND filter_line.is_deleted = FALSE
+                              AND filter_line.category_code = #{categoryCode,jdbcType=VARCHAR}
+                        ), 0)
+                    END AS spend_amount
+                FROM analytics.po_issued_projections po
+                WHERE po.is_deleted = FALSE
+                  AND po.pr_id IS NOT NULL
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                      SELECT 1
+                      FROM analytics.po_issued_line_projections filter_line
+                      WHERE filter_line.po_id = po.po_id
+                        AND filter_line.is_deleted = FALSE
+                        AND filter_line.category_code = #{categoryCode,jdbcType=VARCHAR}
+                  ))
+            ),
+            department_spend AS (
+                SELECT
+                    pr.department_id,
+                    COUNT(DISTINCT pr.pr_id) AS pr_count,
+                    COUNT(DISTINCT po.po_id) AS po_count,
+                    COALESCE(SUM(po.spend_amount), 0) AS total_spend
+                FROM po
+                JOIN analytics.pr_submitted_projections pr ON pr.pr_id = po.pr_id
+                WHERE pr.is_deleted = FALSE
+                GROUP BY pr.department_id
+            )
+            SELECT 'Department count' AS label, COUNT(*)::TEXT AS value FROM department_spend
+            UNION ALL
+            SELECT 'Issued PO total by department', COALESCE(ROUND(SUM(total_spend), 4), 0)::TEXT FROM department_spend
+            UNION ALL
+            SELECT 'Linked PR count', COALESCE(SUM(pr_count), 0)::TEXT FROM department_spend
+            UNION ALL
+            SELECT 'Issued PO count', COALESCE(SUM(po_count), 0)::TEXT FROM department_spend
+            UNION ALL
+            SELECT 'Average department spend', COALESCE(ROUND(AVG(total_spend), 4), 0)::TEXT FROM department_spend
+            UNION ALL
+            SELECT 'Top department by spend', COALESCE((
+                SELECT 'dept:' || LEFT(department_id::TEXT, 8) || ' (' || ROUND(total_spend, 4)::TEXT || ')'
+                FROM department_spend
+                ORDER BY total_spend DESC, department_id ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Top department PO count', COALESCE((
+                SELECT 'dept:' || LEFT(department_id::TEXT, 8) || ' (' || po_count::TEXT || ')'
+                FROM department_spend
+                ORDER BY po_count DESC, department_id ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Department label source', 'IAM department name projection pending'
+            """)
+    List<ReportDatasetRowDbEntity> findSpendingByDepartmentRows(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive,
+            @Param("vendorId") UUID vendorId,
+            @Param("categoryCode") String categoryCode);
+
+    @Select("""
             WITH rfq AS (
                 SELECT rfq.rfq_id, rfq.rfq_number, rfq.vendor_id, rfq.vendor_name, rfq.total_amount, rfq.awarded_at
                 FROM analytics.rfq_awarded_projections rfq

@@ -98,6 +98,27 @@ class ProjectionReportDatasetProviderTest {
     }
 
     @Test
+    void should_load_spending_by_department_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(
+                null,
+                null,
+                2026,
+                3,
+                VENDOR_ID,
+                "IT-HARDWARE");
+
+        var dataset = provider.load(job(ReportType.SPENDING_BY_DEPARTMENT, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.departmentFromInclusive).isEqualTo(Instant.parse("2026-07-01T00:00:00Z"));
+        assertThat(mapper.departmentToExclusive).isEqualTo(Instant.parse("2026-10-01T00:00:00Z"));
+        assertThat(mapper.departmentVendorId).isEqualTo(VENDOR_ID);
+        assertThat(mapper.departmentCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
+    @Test
     void should_load_rfq_savings_dataset_from_projection_mapper() {
         FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
         ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
@@ -178,6 +199,10 @@ class ProjectionReportDatasetProviderTest {
         private Instant vendorToExclusive;
         private UUID vendorId;
         private String vendorCategoryCode;
+        private Instant departmentFromInclusive;
+        private Instant departmentToExclusive;
+        private UUID departmentVendorId;
+        private String departmentCategoryCode;
         private Instant rfqFromInclusive;
         private Instant rfqToExclusive;
         private UUID rfqVendorId;
@@ -249,6 +274,19 @@ class ProjectionReportDatasetProviderTest {
             vendorToExclusive = toExclusive;
             this.vendorId = vendorId;
             vendorCategoryCode = categoryCode;
+            return List.of(row());
+        }
+
+        @Override
+        public List<ReportDatasetRowDbEntity> findSpendingByDepartmentRows(
+                Instant fromInclusive,
+                Instant toExclusive,
+                UUID vendorId,
+                String categoryCode) {
+            departmentFromInclusive = fromInclusive;
+            departmentToExclusive = toExclusive;
+            departmentVendorId = vendorId;
+            departmentCategoryCode = categoryCode;
             return List.of(row());
         }
 
