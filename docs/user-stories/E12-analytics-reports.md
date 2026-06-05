@@ -2,7 +2,7 @@
 
 ## Scope
 
-E12 cung cấp dashboard/KPI/report cho quản lý và finance. Foundation đầu tiên dựng `analytics-service`, executive dashboard read model, và projection ingestion từ các business event đã có contract rõ ràng; KPI nâng cao và Jasper export làm ở các slice sau.
+E12 cung cấp dashboard/KPI/report cho quản lý và finance. Foundation đầu tiên dựng `analytics-service`, executive dashboard read model, projection ingestion từ các business event đã có contract rõ ràng, KPI API contract, và async report job storage; KPI nâng cao và Jasper export làm ở các slice sau.
 
 ## User Stories
 
@@ -64,10 +64,25 @@ Acceptance:
 - `GET /api/v1/reports/jobs/{jobId}` returns the current job status for the requesting user.
 - `GET /api/v1/reports/jobs/{jobId}/download` returns a business error until an export worker produces a file.
 
+### E12-US-006 KPI API Foundation
+
+As a report viewer, I want stable KPI endpoints for cycle time and approval SLA so that dashboards can integrate with analytics-service while source projections mature.
+
+Acceptance:
+- `GET /api/v1/kpi/cycle-time` requires `REPORT_VIEW`.
+- Required filters: `from_date`, `to_date`; optional filter: `department_id`.
+- Response follows OpenAPI shape with `avgCycleHours`, `medianCycleHours`, `p95CycleHours`, `target`, `byPriority`, and `trend`.
+- Because current events do not carry a reliable PR submitted/created timestamp for PR to PO cycle time, cycle-time returns a zero/empty foundation response with target `48.00` until PR lifecycle projection is added.
+- `GET /api/v1/kpi/sla-compliance` requires `REPORT_VIEW`.
+- Required filters: `from_date`, `to_date`.
+- SLA response reads `analytics.approval_sla_breach_projections` and exposes overdue count plus average breached action hours by approver role.
+- Overall and row compliance percentages stay `0` until analytics has a completion/on-time denominator event or projection.
+- Worst approver rows expose temporary masked approver identifiers (`approver:{uuid-prefix}`) until IAM/user name projection is available.
+- Both endpoints validate `from_date <= to_date` and return `VAL_001` for invalid ranges.
+
 ## Next Coding Slices
 
-1. Executive dashboard foundation.
-2. Executive dashboard event projection ingestion.
-3. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
-4. KPI endpoints: cycle time and SLA compliance.
-5. Jasper/PDF/Excel worker implementation for queued report jobs.
+1. Jasper/PDF/Excel worker implementation for queued report jobs.
+2. PR lifecycle projection for real PR to PO cycle-time metrics.
+3. Approval completion/on-time projection for true SLA compliance percentages.
+4. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
