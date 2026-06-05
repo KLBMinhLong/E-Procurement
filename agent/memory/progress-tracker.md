@@ -285,5 +285,5 @@
 | Executive dashboard API foundation | ✅ | `GET /api/v1/dashboard/executive` guarded by `REPORT_VIEW`, returns fresh snapshot or empty dashboard |
 | Unit tests | ✅ | Executive dashboard + analytics projection use-case tests pass |
 | Projection/event ingestion | ✅ | Consumes `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`; stores idempotent projections and refreshes executive dashboard snapshots where applicable |
-| Manager/purchasing/requester dashboards | 🔄 | `/purchasing` reads issued PO + matched invoice projections; manager/requester and RFQ/GR-specific data projections remain follow-up |
+| Manager/purchasing/requester dashboards | ✅ | `/purchasing` reads PO + invoice projections; `/manager` reads PR submitted + SLA breach projections scoped by dept; `/requester` reads PR submitted projections scoped by requester; RFQ/GR-specific purchasing metrics remain follow-up |
 | KPI/report export APIs | 🔄 | Async report export API, cycle-time KPI from PR submitted + PO issued projections, SLA breach KPI, local PDF/XLSX worker, projection-backed report datasets with supported filters, and type-specific native layouts added; Jasper template engine and SLA completion denominator remain follow-up |

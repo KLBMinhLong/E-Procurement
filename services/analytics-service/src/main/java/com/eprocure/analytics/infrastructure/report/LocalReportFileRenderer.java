@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
 
     private final Path storageDirectory;
 
+    @Autowired
     public LocalReportFileRenderer(
             @Value("${eprocure.analytics.report-worker.storage-dir:${java.io.tmpdir}/eprocure-analytics-reports}")
             String storageDirectory) {
