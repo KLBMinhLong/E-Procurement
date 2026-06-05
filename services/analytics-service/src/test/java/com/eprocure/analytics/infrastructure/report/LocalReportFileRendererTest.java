@@ -33,7 +33,7 @@ class LocalReportFileRendererTest {
 
     @Test
     void should_render_pdf_file_when_format_is_pdf() throws Exception {
-        LocalReportFileRenderer renderer = new LocalReportFileRenderer(tempDir);
+        LocalReportFileRenderer renderer = new LocalReportFileRenderer(tempDir.toString());
 
         var rendered = renderer.render(job(ReportFormat.PDF), dataset());
 
@@ -54,7 +54,7 @@ class LocalReportFileRendererTest {
 
     @Test
     void should_render_xlsx_file_when_format_is_excel() throws Exception {
-        LocalReportFileRenderer renderer = new LocalReportFileRenderer(tempDir);
+        LocalReportFileRenderer renderer = new LocalReportFileRenderer(tempDir.toString());
 
         var rendered = renderer.render(job(ReportFormat.EXCEL), dataset());
 
@@ -82,7 +82,7 @@ class LocalReportFileRendererTest {
 
     @Test
     void should_include_filter_summary_in_xlsx_output() throws Exception {
-        LocalReportFileRenderer renderer = new LocalReportFileRenderer(tempDir);
+        LocalReportFileRenderer renderer = new LocalReportFileRenderer(tempDir.toString());
 
         var rendered = renderer.render(filteredJob(), dataset());
 

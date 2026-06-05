@@ -1,5 +1,12 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-06-05] Bug: Analytics service startup failed with UnsatisfiedDependencyException on LocalReportFileRenderer
+
+- Symptom: Analytics service failed to start during context initialization. The log showed: `UnsatisfiedDependencyException: Error creating bean with name 'processReportExportJobsUseCase' ... Unsatisfied dependency expressed through constructor parameter 2: Error creating bean with name 'localReportFileRenderer' ... Failed to instantiate [com.eprocure.analytics.infrastructure.report.LocalReportFileRenderer]: No default constructor found`.
+- Root cause: `LocalReportFileRenderer` had two constructors: one taking a `String` (with `@Value`) and another package-private constructor taking a `Path` (used for tests). Because there were multiple constructors and neither was annotated with `@Autowired`, Spring could not resolve which constructor to use for dependency injection and tried to fall back to a default (no-args) constructor, which did not exist.
+- Fix: Simplified `LocalReportFileRenderer` to a single constructor that accepts a `String` (annotated with `@Value`) and converts it to a `Path` inside the constructor. Updated the test class `LocalReportFileRendererTest` to instantiate it with `tempDir.toString()`.
+- Prevention: Prefer defining a single constructor in Spring bean classes to avoid injection ambiguity. If multiple constructors are required, explicitly annotate the injection target constructor with `@Autowired` or equivalent.
+
 ## [2026-06-01] Bug: Reset password email link opened frontend not-found
 
 - Symptom: Brevo delivered forgot-password email, but opening `http://localhost:4200/reset-password?token=...` showed the Angular not-found page even though the HTTP request returned 200.

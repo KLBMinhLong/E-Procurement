@@ -46,11 +46,7 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
     public LocalReportFileRenderer(
             @Value("${eprocure.analytics.report-worker.storage-dir:${java.io.tmpdir}/eprocure-analytics-reports}")
             String storageDirectory) {
-        this(Path.of(storageDirectory));
-    }
-
-    LocalReportFileRenderer(Path storageDirectory) {
-        this.storageDirectory = storageDirectory;
+        this.storageDirectory = Path.of(storageDirectory);
     }
 
     @Override
