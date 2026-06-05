@@ -316,7 +316,7 @@ paths:
     get:
       tags: [KPIs]
       summary: Thời gian xử lý PR trung bình (PR → PO)
-      description: Foundation endpoint. Returns zero/empty cycle-time metrics until analytics receives PR lifecycle projections with reliable PR submitted/created timestamps.
+      description: Reads analytics-owned PR submitted and issued PO projections to calculate PR-to-PO cycle-time metrics. Returns zero/empty metrics when no linked projection rows exist for the requested period.
       operationId: getCycleTimeKpi
       x-required-permission: REPORT_VIEW
       parameters:

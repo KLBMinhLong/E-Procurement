@@ -39,6 +39,43 @@ public interface AnalyticsProjectionMapper {
             @Param("eventTimestamp") Instant eventTimestamp);
 
     @Insert("""
+            INSERT INTO analytics.pr_submitted_projections (
+                pr_id, pr_number, requester_id, department_id, priority,
+                fiscal_year, total_amount, currency, submitted_at, source_event_id, event_timestamp
+            )
+            VALUES (
+                #{purchaseRequestId}, #{prNumber}, #{requesterId}, #{departmentId}, #{priority},
+                #{fiscalYear}, #{totalAmount}, #{currency}, #{submittedAt}, #{sourceEventId}, #{eventTimestamp}
+            )
+            ON CONFLICT (pr_id) DO UPDATE SET
+                pr_number = EXCLUDED.pr_number,
+                requester_id = EXCLUDED.requester_id,
+                department_id = EXCLUDED.department_id,
+                priority = EXCLUDED.priority,
+                fiscal_year = EXCLUDED.fiscal_year,
+                total_amount = EXCLUDED.total_amount,
+                currency = EXCLUDED.currency,
+                submitted_at = EXCLUDED.submitted_at,
+                source_event_id = EXCLUDED.source_event_id,
+                event_timestamp = EXCLUDED.event_timestamp,
+                is_deleted = FALSE,
+                deleted_at = NULL,
+                deleted_by = NULL
+            """)
+    void upsertPrSubmitted(
+            @Param("purchaseRequestId") UUID purchaseRequestId,
+            @Param("prNumber") String prNumber,
+            @Param("requesterId") UUID requesterId,
+            @Param("departmentId") UUID departmentId,
+            @Param("priority") String priority,
+            @Param("fiscalYear") int fiscalYear,
+            @Param("totalAmount") BigDecimal totalAmount,
+            @Param("currency") String currency,
+            @Param("submittedAt") Instant submittedAt,
+            @Param("sourceEventId") String sourceEventId,
+            @Param("eventTimestamp") Instant eventTimestamp);
+
+    @Insert("""
             INSERT INTO analytics.po_issued_projections (
                 po_id, po_number, pr_id, pr_number, vendor_id, vendor_name,
                 total_amount, currency, issued_at, source_event_id, event_timestamp

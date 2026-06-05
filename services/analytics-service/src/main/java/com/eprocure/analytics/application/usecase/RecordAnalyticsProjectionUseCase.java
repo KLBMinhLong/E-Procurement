@@ -3,11 +3,13 @@ package com.eprocure.analytics.application.usecase;
 import com.eprocure.analytics.application.port.in.RecordApprovalSlaBreachedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordInvoiceMatchedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
+import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
 import com.eprocure.analytics.domain.repository.AnalyticsProjectionRepository;
 import java.time.Clock;
 import java.time.Instant;
@@ -29,6 +31,19 @@ public class RecordAnalyticsProjectionUseCase {
     public RecordAnalyticsProjectionUseCase(AnalyticsProjectionRepository repository, Clock clock) {
         this.repository = repository;
         this.clock = clock;
+    }
+
+    @Transactional
+    public void recordPrSubmitted(RecordPrSubmittedProjectionCommand command) {
+        PrSubmittedProjection projection = command.toProjection();
+        if (alreadyProcessed(projection.eventMetadata())) {
+            return;
+        }
+        repository.upsertPrSubmitted(projection);
+        repository.saveProcessedEvent(projection.eventMetadata(), "PR_SUBMITTED");
+        log.info("[ACTION] Complete RecordPrSubmittedProjection | eventId={} | prId={}",
+                projection.eventMetadata().eventId(),
+                LogMaskingUtil.maskId(projection.purchaseRequestId()));
     }
 
     @Transactional

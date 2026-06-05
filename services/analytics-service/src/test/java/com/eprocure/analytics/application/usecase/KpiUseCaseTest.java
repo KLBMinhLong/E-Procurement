@@ -8,7 +8,10 @@ import com.eprocure.analytics.application.port.in.GetSlaComplianceKpiQuery;
 import com.eprocure.analytics.common.exception.BusinessException;
 import com.eprocure.analytics.common.exception.ErrorCode;
 import com.eprocure.analytics.domain.model.kpi.ApproverRoleSla;
+import com.eprocure.analytics.domain.model.kpi.CycleTimeKpi;
+import com.eprocure.analytics.domain.model.kpi.PriorityCycleTime;
 import com.eprocure.analytics.domain.model.kpi.SlaComplianceKpi;
+import com.eprocure.analytics.domain.model.kpi.WeeklyCycleTime;
 import com.eprocure.analytics.domain.model.kpi.WorstApproverSla;
 import com.eprocure.analytics.domain.repository.KpiRepository;
 import java.math.BigDecimal;
@@ -25,17 +28,21 @@ class KpiUseCaseTest {
     private static final LocalDate TO_DATE = LocalDate.of(2026, 6, 5);
 
     @Test
-    void should_return_cycle_time_foundation_when_projection_source_missing() {
-        var useCase = new GetCycleTimeKpiUseCase();
+    void should_return_cycle_time_from_projection_repository() {
+        FakeKpiRepository repository = new FakeKpiRepository();
+        var useCase = new GetCycleTimeKpiUseCase(repository);
 
         var result = useCase.execute(new GetCycleTimeKpiQuery(ACTOR_ID, FROM_DATE, TO_DATE, DEPARTMENT_ID));
 
-        assertThat(result.avgCycleHours().signum()).isZero();
-        assertThat(result.medianCycleHours().signum()).isZero();
-        assertThat(result.p95CycleHours().signum()).isZero();
+        assertThat(repository.cycleFromInclusive).isEqualTo(Instant.parse("2026-06-01T00:00:00Z"));
+        assertThat(repository.cycleToExclusive).isEqualTo(Instant.parse("2026-06-06T00:00:00Z"));
+        assertThat(repository.cycleDepartmentId).isEqualTo(DEPARTMENT_ID);
+        assertThat(result.avgCycleHours()).isEqualByComparingTo("18.25");
+        assertThat(result.medianCycleHours()).isEqualByComparingTo("16.00");
+        assertThat(result.p95CycleHours()).isEqualByComparingTo("28.00");
         assertThat(result.target()).isEqualByComparingTo("48.00");
-        assertThat(result.byPriority()).isEmpty();
-        assertThat(result.trend()).isEmpty();
+        assertThat(result.byPriority()).extracting(PriorityCycleTime::priority).containsExactly("NORMAL");
+        assertThat(result.trend()).extracting(WeeklyCycleTime::week).containsExactly("2026-W23");
     }
 
     @Test
@@ -56,7 +63,7 @@ class KpiUseCaseTest {
 
     @Test
     void should_throw_val_001_when_cycle_time_from_date_after_to_date() {
-        var useCase = new GetCycleTimeKpiUseCase();
+        var useCase = new GetCycleTimeKpiUseCase(new FakeKpiRepository());
 
         assertThatThrownBy(() -> useCase.execute(new GetCycleTimeKpiQuery(
                         ACTOR_ID,
@@ -79,8 +86,25 @@ class KpiUseCaseTest {
     }
 
     private static final class FakeKpiRepository implements KpiRepository {
+        private Instant cycleFromInclusive;
+        private Instant cycleToExclusive;
+        private UUID cycleDepartmentId;
         private Instant fromInclusive;
         private Instant toExclusive;
+
+        @Override
+        public CycleTimeKpi findCycleTime(Instant fromInclusive, Instant toExclusive, UUID departmentId) {
+            this.cycleFromInclusive = fromInclusive;
+            this.cycleToExclusive = toExclusive;
+            this.cycleDepartmentId = departmentId;
+            return new CycleTimeKpi(
+                    new BigDecimal("18.25"),
+                    new BigDecimal("16.00"),
+                    new BigDecimal("28.00"),
+                    new BigDecimal("48.00"),
+                    List.of(new PriorityCycleTime("NORMAL", new BigDecimal("18.25"))),
+                    List.of(new WeeklyCycleTime("2026-W23", new BigDecimal("18.25"))));
+        }
 
         @Override
         public SlaComplianceKpi findSlaCompliance(Instant fromInclusive, Instant toExclusive) {

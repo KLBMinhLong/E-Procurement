@@ -33,9 +33,9 @@ Acceptance:
 As an analytics service, I want to consume business events into my own read model so that executive dashboard data is populated without cross-service database reads.
 
 Acceptance:
-- Consume `procurement.po.issued`, `finance.invoice.matched`, and `approval.sla.breached`.
+- Consume `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, and `approval.sla.breached`.
 - Store event processing records by `eventId` so Kafka replay does not duplicate projections.
-- Store issued PO, PO line, matched invoice, and approval SLA breach fact rows in schema `analytics`.
+- Store submitted PR, issued PO, PO line, matched invoice, and approval SLA breach fact rows in schema `analytics`.
 - Refresh annual and quarterly executive dashboard snapshots after a supported event is recorded.
 - Snapshot metrics currently populated from available contracts: total issued PO spend, approved PR count from issued PO facts, category spend, monthly trend, top vendors, SLA breach count, and SLA breach cycle hours.
 - RFQ savings and department spend remain zero/empty until source events provide baseline price and department allocation data.
@@ -79,7 +79,8 @@ Acceptance:
 - `GET /api/v1/kpi/cycle-time` requires `REPORT_VIEW`.
 - Required filters: `from_date`, `to_date`; optional filter: `department_id`.
 - Response follows OpenAPI shape with `avgCycleHours`, `medianCycleHours`, `p95CycleHours`, `target`, `byPriority`, and `trend`.
-- Because current events do not carry a reliable PR submitted/created timestamp for PR to PO cycle time, cycle-time returns a zero/empty foundation response with target `48.00` until PR lifecycle projection is added.
+- Cycle-time reads `analytics.pr_submitted_projections` joined to `analytics.po_issued_projections` by `prId` to expose average, median, p95, priority breakdown, and weekly trend for PR-to-PO hours.
+- Cycle-time returns zero/empty metrics with target `48.00` when no linked PR submitted and PO issued projections exist in the requested period.
 - `GET /api/v1/kpi/sla-compliance` requires `REPORT_VIEW`.
 - Required filters: `from_date`, `to_date`.
 - SLA response reads `analytics.approval_sla_breach_projections` and exposes overdue count plus average breached action hours by approver role.
@@ -90,6 +91,5 @@ Acceptance:
 ## Next Coding Slices
 
 1. Jasper template engine integration for production-grade PDF templates.
-2. PR lifecycle projection for real PR to PO cycle-time metrics.
-3. Approval completion/on-time projection for true SLA compliance percentages.
-4. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
+2. Approval completion/on-time projection for true SLA compliance percentages.
+3. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.

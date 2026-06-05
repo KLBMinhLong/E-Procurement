@@ -3,10 +3,12 @@ package com.eprocure.analytics.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
+import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
 import com.eprocure.analytics.domain.repository.AnalyticsProjectionRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -21,6 +23,22 @@ import org.junit.jupiter.api.Test;
 
 class RecordAnalyticsProjectionUseCaseTest {
     private static final Instant NOW = Instant.parse("2026-06-04T04:00:00Z");
+
+    @Test
+    void should_store_pr_submitted_projection_without_refreshing_dashboard_snapshots() {
+        FakeAnalyticsProjectionRepository repository = new FakeAnalyticsProjectionRepository();
+        RecordAnalyticsProjectionUseCase useCase = new RecordAnalyticsProjectionUseCase(
+                repository,
+                Clock.fixed(NOW, ZoneOffset.UTC));
+
+        useCase.recordPrSubmitted(prSubmittedCommand("evt-pr-1"));
+
+        assertThat(repository.prSubmittedProjection).isNotNull();
+        assertThat(repository.prSubmittedProjection.prNumber()).isEqualTo("PR-2026-0001");
+        assertThat(repository.prSubmittedProjection.priority()).isEqualTo("NORMAL");
+        assertThat(repository.processedEvents).contains("evt-pr-1");
+        assertThat(repository.refreshes).isEmpty();
+    }
 
     @Test
     void should_store_po_issued_projection_and_refresh_year_and_quarter_snapshots() {
@@ -54,6 +72,24 @@ class RecordAnalyticsProjectionUseCaseTest {
 
         assertThat(repository.poIssuedProjection).isNull();
         assertThat(repository.refreshes).isEmpty();
+    }
+
+    private static RecordPrSubmittedProjectionCommand prSubmittedCommand(String eventId) {
+        return new RecordPrSubmittedProjectionCommand(
+                eventId,
+                "procurement.pr.submitted",
+                0,
+                9,
+                Instant.parse("2026-06-04T02:00:00Z"),
+                UUID.fromString("20000000-0000-4000-8000-000000000001"),
+                "PR-2026-0001",
+                UUID.fromString("60000000-0000-4000-8000-000000000001"),
+                UUID.fromString("70000000-0000-4000-8000-000000000001"),
+                "NORMAL",
+                2026,
+                new BigDecimal("1250000.0000"),
+                "VND",
+                Instant.parse("2026-06-04T02:00:00Z"));
     }
 
     private static RecordPoIssuedProjectionCommand poIssuedCommand(String eventId) {
@@ -90,6 +126,7 @@ class RecordAnalyticsProjectionUseCaseTest {
     private static final class FakeAnalyticsProjectionRepository implements AnalyticsProjectionRepository {
         private final Set<String> processedEvents = new HashSet<>();
         private final List<RefreshRequest> refreshes = new ArrayList<>();
+        private PrSubmittedProjection prSubmittedProjection;
         private PoIssuedProjection poIssuedProjection;
 
         @Override
@@ -100,6 +137,11 @@ class RecordAnalyticsProjectionUseCaseTest {
         @Override
         public void saveProcessedEvent(AnalyticsEventMetadata metadata, String handlerName) {
             processedEvents.add(metadata.eventId());
+        }
+
+        @Override
+        public void upsertPrSubmitted(PrSubmittedProjection projection) {
+            this.prSubmittedProjection = projection;
         }
 
         @Override

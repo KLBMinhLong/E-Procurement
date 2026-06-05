@@ -531,3 +531,10 @@
 - Reason: The worker already produces files and needs readable titles, metadata/filter summaries, metric sections, and spreadsheet styling without increasing runtime/dependency weight.
 - Impact: PDF/XLSX exports now use type-specific titles/subtitles, metadata rows, filter summaries, metric tables, XLSX styles, column widths, and frozen panes.
 - Constraint: Jasper template engine integration remains a separate follow-up for production-grade PDF templates.
+
+## [2026-06-05] E12 PR lifecycle cycle-time projection
+
+- Decision: Consume `procurement.pr.submitted` into `analytics.pr_submitted_projections` and calculate PR-to-PO cycle-time by joining submitted PR facts to issued PO facts on `pr_id`.
+- Reason: Cycle-time KPI should be based on analytics-owned projections instead of returning a foundation response or querying purchase-request-service directly.
+- Impact: `/api/v1/kpi/cycle-time` now returns average, median, p95, priority breakdown, and weekly trend from linked PR submitted and PO issued projections, scoped by date range and optional department.
+- Constraint: The submitted event timestamp is the lifecycle start because the current PR submitted payload does not carry a separate `submittedAt`; richer lifecycle milestones remain follow-up.

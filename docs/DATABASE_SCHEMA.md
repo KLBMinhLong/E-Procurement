@@ -1153,6 +1153,12 @@ analytics.event_processing_log
   event_timestamp TIMESTAMPTZ, processed_at TIMESTAMPTZ,
   status PROCESSED, audit fields, soft delete fields
 
+analytics.pr_submitted_projections
+  pr_id UUID PK, pr_number, requester_id, department_id, priority,
+  fiscal_year INTEGER, total_amount NUMERIC(19,4), currency VARCHAR(3),
+  submitted_at TIMESTAMPTZ, source_event_id, event_timestamp TIMESTAMPTZ,
+  audit fields, soft delete fields
+
 analytics.po_issued_projections
   po_id UUID PK, po_number, pr_id, pr_number, vendor_id, vendor_name,
   total_amount NUMERIC(19,4), currency VARCHAR(3), issued_at TIMESTAMPTZ,

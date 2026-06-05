@@ -5,6 +5,7 @@ import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjectio
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedLineProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
+import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
 import com.eprocure.analytics.domain.repository.AnalyticsProjectionRepository;
 import com.eprocure.analytics.infrastructure.persistence.mapper.AnalyticsProjectionMapper;
 import java.time.Instant;
@@ -33,6 +34,22 @@ public class AnalyticsProjectionRepositoryImpl implements AnalyticsProjectionRep
                 metadata.offsetValue(),
                 handlerName,
                 metadata.eventTimestamp());
+    }
+
+    @Override
+    public void upsertPrSubmitted(PrSubmittedProjection projection) {
+        mapper.upsertPrSubmitted(
+                projection.purchaseRequestId(),
+                projection.prNumber(),
+                projection.requesterId(),
+                projection.departmentId(),
+                projection.priority(),
+                projection.fiscalYear(),
+                projection.totalAmount(),
+                projection.currency(),
+                projection.submittedAt(),
+                projection.eventMetadata().eventId(),
+                projection.eventMetadata().eventTimestamp());
     }
 
     @Override

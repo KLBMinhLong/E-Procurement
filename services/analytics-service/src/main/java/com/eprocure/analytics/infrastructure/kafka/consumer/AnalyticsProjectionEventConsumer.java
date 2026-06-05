@@ -3,6 +3,7 @@ package com.eprocure.analytics.infrastructure.kafka.consumer;
 import com.eprocure.analytics.application.port.in.RecordApprovalSlaBreachedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordInvoiceMatchedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
 import com.eprocure.analytics.application.usecase.RecordAnalyticsProjectionUseCase;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -38,6 +39,7 @@ public class AnalyticsProjectionEventConsumer {
     }
 
     @KafkaListener(topics = {
+            "${eprocure.analytics.kafka.topics.pr-submitted:procurement.pr.submitted}",
             "${eprocure.analytics.kafka.topics.po-issued:procurement.po.issued}",
             "${eprocure.analytics.kafka.topics.invoice-matched:finance.invoice.matched}",
             "${eprocure.analytics.kafka.topics.approval-sla-breached:approval.sla.breached}"
@@ -47,6 +49,7 @@ public class AnalyticsProjectionEventConsumer {
             JsonNode root = root(record);
             String eventType = requiredText(root, "eventType");
             switch (eventType) {
+                case "PURCHASE_REQUEST_SUBMITTED" -> consumePrSubmitted(record, root);
                 case "PO_ISSUED" -> consumePoIssued(record, root);
                 case "INVOICE_MATCHED" -> consumeInvoiceMatched(record, root);
                 case "APPROVAL_SLA_BREACHED" -> consumeApprovalSlaBreached(record, root);
@@ -59,6 +62,32 @@ public class AnalyticsProjectionEventConsumer {
                     record.topic(),
                     exception.getMessage());
         }
+    }
+
+    private void consumePrSubmitted(ConsumerRecord<String, String> record, JsonNode root) {
+        Instant eventTimestamp = requiredTimestamp(root);
+        PrSubmittedPayload payload = payload(root, PrSubmittedPayload.class);
+        MoneyPayload totalAmount = money(payload.totalAmount());
+        RecordPrSubmittedProjectionCommand command = new RecordPrSubmittedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                eventTimestamp,
+                payload.purchaseRequestId(),
+                payload.prNumber(),
+                payload.requesterId(),
+                payload.departmentId(),
+                payload.priority(),
+                fiscalYear(payload.fiscalYear(), eventTimestamp),
+                totalAmount.amount(),
+                totalAmount.currency(),
+                payload.submittedAt() == null ? eventTimestamp : payload.submittedAt());
+        recordAnalyticsProjectionUseCase.recordPrSubmitted(command);
+        log.info("[KAFKA] Consumed analytics PR submitted event | topic={} | eventId={} | prId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.purchaseRequestId()));
     }
 
     private void consumePoIssued(ConsumerRecord<String, String> record, JsonNode root) {
@@ -202,6 +231,35 @@ public class AnalyticsProjectionEventConsumer {
 
     private <T> List<T> safeList(List<T> values) {
         return values == null ? List.of() : values;
+    }
+
+    private int fiscalYear(Integer fiscalYear, Instant eventTimestamp) {
+        return fiscalYear == null ? eventTimestamp.atZone(java.time.ZoneOffset.UTC).getYear() : fiscalYear;
+    }
+
+    private MoneyPayload money(MoneyPayload value) {
+        if (value == null) {
+            return new MoneyPayload(BigDecimal.ZERO, "VND");
+        }
+        return value;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record PrSubmittedPayload(
+            UUID purchaseRequestId,
+            String prNumber,
+            UUID requesterId,
+            UUID departmentId,
+            String priority,
+            Integer fiscalYear,
+            MoneyPayload totalAmount,
+            Instant submittedAt) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record MoneyPayload(
+            BigDecimal amount,
+            String currency) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
