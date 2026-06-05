@@ -53,6 +53,16 @@ public class ProjectionReportDatasetProvider implements ReportDatasetProvider {
                     toExclusive,
                     filters.vendorId(),
                     filters.categoryCode()));
+            case RFQ_SAVINGS -> toRows(mapper.findRfqSavingsRows(
+                    fromInclusive,
+                    toExclusive,
+                    filters.vendorId(),
+                    filters.categoryCode()));
+            case INVENTORY_PENDING -> toRows(mapper.findInventoryPendingRows(
+                    fromInclusive,
+                    toExclusive,
+                    filters.vendorId(),
+                    filters.categoryCode()));
             default -> List.of(
                     new ReportDatasetRow("Dataset source", "Pending projection contract"),
                     new ReportDatasetRow("Current status", "Foundation only"));

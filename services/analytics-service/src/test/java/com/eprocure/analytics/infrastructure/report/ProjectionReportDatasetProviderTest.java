@@ -97,6 +97,48 @@ class ProjectionReportDatasetProviderTest {
         assertThat(mapper.vendorCategoryCode).isEqualTo("IT-HARDWARE");
     }
 
+    @Test
+    void should_load_rfq_savings_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(
+                LocalDate.parse("2026-06-01"),
+                LocalDate.parse("2026-06-05"),
+                null,
+                null,
+                VENDOR_ID,
+                "IT-HARDWARE");
+
+        var dataset = provider.load(job(ReportType.RFQ_SAVINGS, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.rfqFromInclusive).isEqualTo(Instant.parse("2026-06-01T00:00:00Z"));
+        assertThat(mapper.rfqToExclusive).isEqualTo(Instant.parse("2026-06-06T00:00:00Z"));
+        assertThat(mapper.rfqVendorId).isEqualTo(VENDOR_ID);
+        assertThat(mapper.rfqCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
+    @Test
+    void should_load_inventory_pending_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(
+                null,
+                null,
+                2026,
+                2,
+                VENDOR_ID,
+                "IT-HARDWARE");
+
+        var dataset = provider.load(job(ReportType.INVENTORY_PENDING, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.inventoryFromInclusive).isEqualTo(Instant.parse("2026-04-01T00:00:00Z"));
+        assertThat(mapper.inventoryToExclusive).isEqualTo(Instant.parse("2026-07-01T00:00:00Z"));
+        assertThat(mapper.inventoryVendorId).isEqualTo(VENDOR_ID);
+        assertThat(mapper.inventoryCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
     private ReportJob job(ReportType reportType, ReportFilterCriteria filters) {
         return new ReportJob(
                 JOB_ID,
@@ -136,6 +178,14 @@ class ProjectionReportDatasetProviderTest {
         private Instant vendorToExclusive;
         private UUID vendorId;
         private String vendorCategoryCode;
+        private Instant rfqFromInclusive;
+        private Instant rfqToExclusive;
+        private UUID rfqVendorId;
+        private String rfqCategoryCode;
+        private Instant inventoryFromInclusive;
+        private Instant inventoryToExclusive;
+        private UUID inventoryVendorId;
+        private String inventoryCategoryCode;
 
         @Override
         public List<ReportDatasetRowDbEntity> findPoSummaryRows(
@@ -199,6 +249,32 @@ class ProjectionReportDatasetProviderTest {
             vendorToExclusive = toExclusive;
             this.vendorId = vendorId;
             vendorCategoryCode = categoryCode;
+            return List.of(row());
+        }
+
+        @Override
+        public List<ReportDatasetRowDbEntity> findRfqSavingsRows(
+                Instant fromInclusive,
+                Instant toExclusive,
+                UUID vendorId,
+                String categoryCode) {
+            rfqFromInclusive = fromInclusive;
+            rfqToExclusive = toExclusive;
+            rfqVendorId = vendorId;
+            rfqCategoryCode = categoryCode;
+            return List.of(row());
+        }
+
+        @Override
+        public List<ReportDatasetRowDbEntity> findInventoryPendingRows(
+                Instant fromInclusive,
+                Instant toExclusive,
+                UUID vendorId,
+                String categoryCode) {
+            inventoryFromInclusive = fromInclusive;
+            inventoryToExclusive = toExclusive;
+            inventoryVendorId = vendorId;
+            inventoryCategoryCode = categoryCode;
             return List.of(row());
         }
     }

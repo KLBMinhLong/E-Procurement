@@ -33,12 +33,12 @@ Acceptance:
 As an analytics service, I want to consume business events into my own read model so that executive dashboard data is populated without cross-service database reads.
 
 Acceptance:
-- Consume `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, and `approval.sla.breached`.
+- Consume `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`, `approval.step.assigned`, `procurement.rfq.awarded`, and `inventory.gr.created`.
 - Store event processing records by `eventId` so Kafka replay does not duplicate projections.
-- Store submitted PR, issued PO, PO line, matched invoice, and approval SLA breach fact rows in schema `analytics`.
+- Store submitted PR, issued PO, PO line, matched invoice, approval SLA, RFQ award, and goods receipt fact rows in schema `analytics`.
 - Refresh annual and quarterly executive dashboard snapshots after a supported event is recorded.
 - Snapshot metrics currently populated from available contracts: total issued PO spend, approved PR count from issued PO facts, category spend, monthly trend, top vendors, SLA breach count, and SLA breach cycle hours.
-- RFQ savings and department spend remain zero/empty until source events provide baseline price and department allocation data.
+- RFQ award and goods receipt facts are available for reports, while true RFQ savings and department spend remain zero/empty until source events provide baseline price and department allocation data.
 
 ### E12-US-004 Role Dashboard API Foundation
 
@@ -51,7 +51,7 @@ Acceptance:
 - Responses follow the analytics OpenAPI shape for each role dashboard.
 - Until role-specific read models exist, APIs return zero/empty structured data instead of failing.
 - Purchasing dashboard populates issued PO count, issued PO total, matched invoice count, and vendor pending-order rows from analytics-owned projection tables.
-- Manager/requester dashboard data and RFQ/GR-specific purchasing metrics remain follow-up until source projections are available.
+- Manager/requester dashboard data and richer RFQ/GR-specific purchasing metrics remain follow-up until source projections include the required workflow status and ownership fields.
 
 ### E12-US-005 Async Report Export Job Foundation
 
@@ -65,11 +65,11 @@ Acceptance:
 - A scheduled worker claims `QUEUED` jobs, marks them `PROCESSING`, renders local PDF/XLSX files, then marks jobs `COMPLETED` or `FAILED`.
 - `GET /api/v1/reports/jobs/{jobId}/download` streams the generated file for the requesting user after completion.
 - Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
-- Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, and `VENDOR_SCORECARD`.
+- Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, `VENDOR_SCORECARD`, `RFQ_SAVINGS`, and `INVENTORY_PENDING`.
 - Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
 - PDF exports use JasperReports templates with report-type-specific titles, metadata/filter summaries, and metric tables.
 - XLSX exports use Apache POI workbooks with styled sections, frozen table headers, filters, and fixed business-friendly column widths.
-- Unsupported report types explicitly render foundation rows that identify the missing projection contract.
+- Unsupported report types explicitly render foundation rows that identify the missing projection contract; `RFQ_SAVINGS` reports surface RFQ award metrics and state that savings baseline pricing is not available yet.
 - Filters requiring missing source fields such as `departmentId`/`status` remain follow-up and are not exposed in the current report export API contract.
 
 ### E12-US-006 KPI API Foundation
@@ -91,6 +91,6 @@ Acceptance:
 
 ## Next Coding Slices
 
-1. Projection-backed datasets for the remaining report types beyond `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, and `VENDOR_SCORECARD`.
-2. Source contracts for `departmentId`/`status` report filters, RFQ savings, GR pending metrics, and department spend.
+1. Projection-backed datasets for the remaining report types beyond `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, `VENDOR_SCORECARD`, `RFQ_SAVINGS`, and `INVENTORY_PENDING`.
+2. Source contracts for `departmentId`/`status` report filters, RFQ baseline savings, budget-vs-plan, department spend, maverick spend, and audit trail.
 3. Docker/Flyway/Kafka end-to-end verification for analytics projections and report worker outputs.

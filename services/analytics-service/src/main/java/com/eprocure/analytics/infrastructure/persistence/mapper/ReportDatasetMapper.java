@@ -252,4 +252,121 @@ public interface ReportDatasetMapper {
             @Param("toExclusive") Instant toExclusive,
             @Param("vendorId") UUID vendorId,
             @Param("categoryCode") String categoryCode);
+
+    @Select("""
+            WITH rfq AS (
+                SELECT rfq.rfq_id, rfq.rfq_number, rfq.vendor_id, rfq.vendor_name, rfq.total_amount, rfq.awarded_at
+                FROM analytics.rfq_awarded_projections rfq
+                WHERE rfq.is_deleted = FALSE
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR rfq.awarded_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR rfq.awarded_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR rfq.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                      SELECT 1
+                      FROM analytics.rfq_awarded_line_projections filter_line
+                      WHERE filter_line.rfq_id = rfq.rfq_id
+                        AND filter_line.is_deleted = FALSE
+                        AND filter_line.category_code = #{categoryCode,jdbcType=VARCHAR}
+                  ))
+            ),
+            line AS (
+                SELECT line.rfq_id, line.item_name, line.category_code, line.quantity, line.total_price, line.currency
+                FROM analytics.rfq_awarded_line_projections line
+                JOIN rfq ON rfq.rfq_id = line.rfq_id
+                WHERE line.is_deleted = FALSE
+                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
+            )
+            SELECT 'Awarded RFQ count' AS label, COUNT(*)::TEXT AS value FROM rfq
+            UNION ALL
+            SELECT 'Awarded RFQ total', COALESCE(ROUND(SUM(total_amount), 4), 0)::TEXT FROM rfq
+            UNION ALL
+            SELECT 'Awarded line count', COUNT(*)::TEXT FROM line
+            UNION ALL
+            SELECT 'Average award value', COALESCE(ROUND(AVG(total_amount), 4), 0)::TEXT FROM rfq
+            UNION ALL
+            SELECT 'Top awarded vendor', COALESCE((
+                SELECT vendor_name || ' (' || ROUND(SUM(total_amount), 4)::TEXT || ')'
+                FROM rfq
+                GROUP BY vendor_name
+                ORDER BY SUM(total_amount) DESC, vendor_name ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Top awarded category', COALESCE((
+                SELECT category_code || ' (' || ROUND(SUM(total_price), 4)::TEXT || ')'
+                FROM line
+                GROUP BY category_code
+                ORDER BY SUM(total_price) DESC, category_code ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Savings baseline status', 'Missing baseline price contract'
+            """)
+    List<ReportDatasetRowDbEntity> findRfqSavingsRows(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive,
+            @Param("vendorId") UUID vendorId,
+            @Param("categoryCode") String categoryCode);
+
+    @Select("""
+            WITH gr AS (
+                SELECT gr.gr_id, gr.gr_number, gr.po_id, gr.po_number, gr.status, gr.completed_at,
+                       po.vendor_id, po.vendor_name
+                FROM analytics.goods_receipt_created_projections gr
+                LEFT JOIN analytics.po_issued_projections po ON po.po_id = gr.po_id AND po.is_deleted = FALSE
+                WHERE gr.is_deleted = FALSE
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR gr.completed_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR gr.completed_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+            ),
+            line AS (
+                SELECT
+                    line.gr_id,
+                    line.item_code,
+                    line.item_name,
+                    line.unit,
+                    line.ordered_quantity,
+                    line.received_quantity,
+                    line.rejected_quantity,
+                    COALESCE(po_line.category_code, 'UNCATEGORIZED') AS category_code,
+                    GREATEST(line.ordered_quantity - line.received_quantity - line.rejected_quantity, 0) AS pending_quantity
+                FROM analytics.goods_receipt_line_projections line
+                JOIN gr ON gr.gr_id = line.gr_id
+                LEFT JOIN analytics.po_issued_line_projections po_line
+                  ON po_line.po_line_item_id = line.po_line_item_id
+                 AND po_line.is_deleted = FALSE
+                WHERE line.is_deleted = FALSE
+                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR po_line.category_code = #{categoryCode,jdbcType=VARCHAR})
+            )
+            SELECT 'Goods receipt count' AS label, COUNT(DISTINCT gr_id)::TEXT AS value FROM line
+            UNION ALL
+            SELECT 'Receipt line count', COUNT(*)::TEXT FROM line
+            UNION ALL
+            SELECT 'Received quantity', COALESCE(ROUND(SUM(received_quantity), 4), 0)::TEXT FROM line
+            UNION ALL
+            SELECT 'Rejected quantity', COALESCE(ROUND(SUM(rejected_quantity), 4), 0)::TEXT FROM line
+            UNION ALL
+            SELECT 'Pending quantity after receipt', COALESCE(ROUND(SUM(pending_quantity), 4), 0)::TEXT FROM line
+            UNION ALL
+            SELECT 'Top pending item', COALESCE((
+                SELECT item_name || ' (' || ROUND(SUM(pending_quantity), 4)::TEXT || ' ' || unit || ')'
+                FROM line
+                GROUP BY item_name, unit
+                ORDER BY SUM(pending_quantity) DESC, item_name ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Top received category', COALESCE((
+                SELECT category_code || ' (' || ROUND(SUM(received_quantity), 4)::TEXT || ')'
+                FROM line
+                GROUP BY category_code
+                ORDER BY SUM(received_quantity) DESC, category_code ASC
+                LIMIT 1
+            ), 'N/A')
+            """)
+    List<ReportDatasetRowDbEntity> findInventoryPendingRows(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive,
+            @Param("vendorId") UUID vendorId,
+            @Param("categoryCode") String categoryCode);
 }

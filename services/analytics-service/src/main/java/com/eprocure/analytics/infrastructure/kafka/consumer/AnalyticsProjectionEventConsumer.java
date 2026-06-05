@@ -2,9 +2,11 @@ package com.eprocure.analytics.infrastructure.kafka.consumer;
 
 import com.eprocure.analytics.application.port.in.RecordApprovalSlaBreachedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordApprovalStepAssignedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordGoodsReceiptCreatedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordInvoiceMatchedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordRfqAwardedProjectionCommand;
 import com.eprocure.analytics.application.usecase.RecordAnalyticsProjectionUseCase;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -44,7 +46,9 @@ public class AnalyticsProjectionEventConsumer {
             "${eprocure.analytics.kafka.topics.po-issued:procurement.po.issued}",
             "${eprocure.analytics.kafka.topics.invoice-matched:finance.invoice.matched}",
             "${eprocure.analytics.kafka.topics.approval-sla-breached:approval.sla.breached}",
-            "${eprocure.analytics.kafka.topics.approval-step-assigned:approval.step.assigned}"
+            "${eprocure.analytics.kafka.topics.approval-step-assigned:approval.step.assigned}",
+            "${eprocure.analytics.kafka.topics.rfq-awarded:procurement.rfq.awarded}",
+            "${eprocure.analytics.kafka.topics.gr-created:inventory.gr.created}"
     })
     public void consume(ConsumerRecord<String, String> record) {
         try {
@@ -56,6 +60,8 @@ public class AnalyticsProjectionEventConsumer {
                 case "INVOICE_MATCHED" -> consumeInvoiceMatched(record, root);
                 case "APPROVAL_SLA_BREACHED" -> consumeApprovalSlaBreached(record, root);
                 case "APPROVAL_STEP_ASSIGNED" -> consumeApprovalStepAssigned(record, root);
+                case "RFQ_AWARDED" -> consumeRfqAwarded(record, root);
+                case "GR_CREATED" -> consumeGoodsReceiptCreated(record, root);
                 default -> log.warn("[KAFKA] Skip unsupported analytics event | topic={} | eventType={}",
                         record.topic(),
                         eventType);
@@ -207,6 +213,77 @@ public class AnalyticsProjectionEventConsumer {
                 record.topic(),
                 command.eventId(),
                 LogMaskingUtil.maskId(command.approvalStepId()));
+    }
+
+    private void consumeRfqAwarded(ConsumerRecord<String, String> record, JsonNode root) {
+        RfqAwardedPayload payload = payload(root, RfqAwardedPayload.class);
+        RecordRfqAwardedProjectionCommand command = new RecordRfqAwardedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                requiredTimestamp(root),
+                payload.rfqId(),
+                payload.rfqNumber(),
+                payload.prId(),
+                payload.prNumber(),
+                payload.vendorId(),
+                payload.vendorName(),
+                payload.totalAmount(),
+                payload.currency(),
+                requiredTimestamp(root),
+                safeList(payload.lineItems()).stream()
+                        .map(item -> new RecordRfqAwardedProjectionCommand.LineItem(
+                                item.rfqLineItemId(),
+                                item.prLineItemId(),
+                                item.itemName(),
+                                item.categoryCode(),
+                                item.quantity(),
+                                item.unit(),
+                                item.unitPrice(),
+                                item.totalPrice(),
+                                item.currency()))
+                        .toList());
+        recordAnalyticsProjectionUseCase.recordRfqAwarded(command);
+        log.info("[KAFKA] Consumed analytics RFQ awarded event | topic={} | eventId={} | rfqId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.rfqId()));
+    }
+
+    private void consumeGoodsReceiptCreated(ConsumerRecord<String, String> record, JsonNode root) {
+        GoodsReceiptCreatedPayload payload = payload(root, GoodsReceiptCreatedPayload.class);
+        RecordGoodsReceiptCreatedProjectionCommand command = new RecordGoodsReceiptCreatedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                requiredTimestamp(root),
+                payload.grId(),
+                payload.grNumber(),
+                payload.poId(),
+                payload.poNumber(),
+                payload.warehouseId(),
+                payload.warehouseKeeperId(),
+                payload.status(),
+                payload.receivedAt(),
+                payload.completedAt(),
+                safeList(payload.lineItems()).stream()
+                        .map(item -> new RecordGoodsReceiptCreatedProjectionCommand.LineItem(
+                                item.grLineItemId(),
+                                item.poLineItemId(),
+                                item.itemCode(),
+                                item.itemName(),
+                                item.orderedQuantity(),
+                                item.receivedQuantity(),
+                                item.rejectedQuantity(),
+                                item.unit()))
+                        .toList());
+        recordAnalyticsProjectionUseCase.recordGoodsReceiptCreated(command);
+        log.info("[KAFKA] Consumed analytics GR created event | topic={} | eventId={} | grId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.grId()));
     }
 
     private JsonNode root(ConsumerRecord<String, String> record) throws JsonProcessingException {
@@ -363,5 +440,57 @@ public class AnalyticsProjectionEventConsumer {
             UUID approverId,
             Instant assignedAt,
             Instant slaDeadline) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record RfqAwardedPayload(
+            UUID rfqId,
+            String rfqNumber,
+            UUID prId,
+            String prNumber,
+            UUID vendorId,
+            String vendorName,
+            BigDecimal totalAmount,
+            String currency,
+            List<RfqAwardedLineItem> lineItems) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record RfqAwardedLineItem(
+            UUID rfqLineItemId,
+            UUID prLineItemId,
+            String itemName,
+            String categoryCode,
+            BigDecimal quantity,
+            String unit,
+            BigDecimal unitPrice,
+            BigDecimal totalPrice,
+            String currency) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record GoodsReceiptCreatedPayload(
+            UUID grId,
+            String grNumber,
+            UUID poId,
+            String poNumber,
+            UUID warehouseId,
+            UUID warehouseKeeperId,
+            String status,
+            Instant receivedAt,
+            Instant completedAt,
+            List<GoodsReceiptLineItem> lineItems) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record GoodsReceiptLineItem(
+            UUID grLineItemId,
+            UUID poLineItemId,
+            String itemCode,
+            String itemName,
+            BigDecimal orderedQuantity,
+            BigDecimal receivedQuantity,
+            BigDecimal rejectedQuantity,
+            String unit) {
     }
 }

@@ -279,6 +279,148 @@ public interface AnalyticsProjectionMapper {
             @Param("eventTimestamp") Instant eventTimestamp);
 
     @Insert("""
+            INSERT INTO analytics.rfq_awarded_projections (
+                rfq_id, rfq_number, pr_id, pr_number, vendor_id, vendor_name,
+                total_amount, currency, awarded_at, source_event_id, event_timestamp
+            )
+            VALUES (
+                #{rfqId}, #{rfqNumber}, #{prId}, #{prNumber}, #{vendorId}, #{vendorName},
+                #{totalAmount}, #{currency}, #{awardedAt}, #{sourceEventId}, #{eventTimestamp}
+            )
+            ON CONFLICT (rfq_id) DO UPDATE SET
+                rfq_number = EXCLUDED.rfq_number,
+                pr_id = EXCLUDED.pr_id,
+                pr_number = EXCLUDED.pr_number,
+                vendor_id = EXCLUDED.vendor_id,
+                vendor_name = EXCLUDED.vendor_name,
+                total_amount = EXCLUDED.total_amount,
+                currency = EXCLUDED.currency,
+                awarded_at = EXCLUDED.awarded_at,
+                source_event_id = EXCLUDED.source_event_id,
+                event_timestamp = EXCLUDED.event_timestamp,
+                is_deleted = FALSE,
+                deleted_at = NULL,
+                deleted_by = NULL
+            """)
+    void upsertRfqAwarded(
+            @Param("rfqId") UUID rfqId,
+            @Param("rfqNumber") String rfqNumber,
+            @Param("prId") UUID prId,
+            @Param("prNumber") String prNumber,
+            @Param("vendorId") UUID vendorId,
+            @Param("vendorName") String vendorName,
+            @Param("totalAmount") BigDecimal totalAmount,
+            @Param("currency") String currency,
+            @Param("awardedAt") Instant awardedAt,
+            @Param("sourceEventId") String sourceEventId,
+            @Param("eventTimestamp") Instant eventTimestamp);
+
+    @Insert("""
+            INSERT INTO analytics.rfq_awarded_line_projections (
+                rfq_line_item_id, rfq_id, pr_line_item_id, item_name, category_code,
+                quantity, unit, unit_price, total_price, currency
+            )
+            VALUES (
+                #{rfqLineItemId}, #{rfqId}, #{prLineItemId}, #{itemName}, #{categoryCode},
+                #{quantity}, #{unit}, #{unitPrice}, #{totalPrice}, #{currency}
+            )
+            ON CONFLICT (rfq_line_item_id) DO UPDATE SET
+                rfq_id = EXCLUDED.rfq_id,
+                pr_line_item_id = EXCLUDED.pr_line_item_id,
+                item_name = EXCLUDED.item_name,
+                category_code = EXCLUDED.category_code,
+                quantity = EXCLUDED.quantity,
+                unit = EXCLUDED.unit,
+                unit_price = EXCLUDED.unit_price,
+                total_price = EXCLUDED.total_price,
+                currency = EXCLUDED.currency,
+                is_deleted = FALSE,
+                deleted_at = NULL,
+                deleted_by = NULL
+            """)
+    void upsertRfqAwardedLine(
+            @Param("rfqLineItemId") UUID rfqLineItemId,
+            @Param("rfqId") UUID rfqId,
+            @Param("prLineItemId") UUID prLineItemId,
+            @Param("itemName") String itemName,
+            @Param("categoryCode") String categoryCode,
+            @Param("quantity") BigDecimal quantity,
+            @Param("unit") String unit,
+            @Param("unitPrice") BigDecimal unitPrice,
+            @Param("totalPrice") BigDecimal totalPrice,
+            @Param("currency") String currency);
+
+    @Insert("""
+            INSERT INTO analytics.goods_receipt_created_projections (
+                gr_id, gr_number, po_id, po_number, warehouse_id, warehouse_keeper_id,
+                status, received_at, completed_at, source_event_id, event_timestamp
+            )
+            VALUES (
+                #{grId}, #{grNumber}, #{poId}, #{poNumber}, #{warehouseId}, #{warehouseKeeperId},
+                #{status}, #{receivedAt}, #{completedAt}, #{sourceEventId}, #{eventTimestamp}
+            )
+            ON CONFLICT (gr_id) DO UPDATE SET
+                gr_number = EXCLUDED.gr_number,
+                po_id = EXCLUDED.po_id,
+                po_number = EXCLUDED.po_number,
+                warehouse_id = EXCLUDED.warehouse_id,
+                warehouse_keeper_id = EXCLUDED.warehouse_keeper_id,
+                status = EXCLUDED.status,
+                received_at = EXCLUDED.received_at,
+                completed_at = EXCLUDED.completed_at,
+                source_event_id = EXCLUDED.source_event_id,
+                event_timestamp = EXCLUDED.event_timestamp,
+                is_deleted = FALSE,
+                deleted_at = NULL,
+                deleted_by = NULL
+            """)
+    void upsertGoodsReceiptCreated(
+            @Param("grId") UUID grId,
+            @Param("grNumber") String grNumber,
+            @Param("poId") UUID poId,
+            @Param("poNumber") String poNumber,
+            @Param("warehouseId") UUID warehouseId,
+            @Param("warehouseKeeperId") UUID warehouseKeeperId,
+            @Param("status") String status,
+            @Param("receivedAt") Instant receivedAt,
+            @Param("completedAt") Instant completedAt,
+            @Param("sourceEventId") String sourceEventId,
+            @Param("eventTimestamp") Instant eventTimestamp);
+
+    @Insert("""
+            INSERT INTO analytics.goods_receipt_line_projections (
+                gr_line_item_id, gr_id, po_line_item_id, item_code, item_name,
+                ordered_quantity, received_quantity, rejected_quantity, unit
+            )
+            VALUES (
+                #{grLineItemId}, #{grId}, #{poLineItemId}, #{itemCode}, #{itemName},
+                #{orderedQuantity}, #{receivedQuantity}, #{rejectedQuantity}, #{unit}
+            )
+            ON CONFLICT (gr_line_item_id) DO UPDATE SET
+                gr_id = EXCLUDED.gr_id,
+                po_line_item_id = EXCLUDED.po_line_item_id,
+                item_code = EXCLUDED.item_code,
+                item_name = EXCLUDED.item_name,
+                ordered_quantity = EXCLUDED.ordered_quantity,
+                received_quantity = EXCLUDED.received_quantity,
+                rejected_quantity = EXCLUDED.rejected_quantity,
+                unit = EXCLUDED.unit,
+                is_deleted = FALSE,
+                deleted_at = NULL,
+                deleted_by = NULL
+            """)
+    void upsertGoodsReceiptLine(
+            @Param("grLineItemId") UUID grLineItemId,
+            @Param("grId") UUID grId,
+            @Param("poLineItemId") UUID poLineItemId,
+            @Param("itemCode") String itemCode,
+            @Param("itemName") String itemName,
+            @Param("orderedQuantity") BigDecimal orderedQuantity,
+            @Param("receivedQuantity") BigDecimal receivedQuantity,
+            @Param("rejectedQuantity") BigDecimal rejectedQuantity,
+            @Param("unit") String unit);
+
+    @Insert("""
             WITH period_po AS (
                 SELECT *
                 FROM analytics.po_issued_projections

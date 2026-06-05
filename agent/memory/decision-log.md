@@ -566,3 +566,10 @@
 - Reason: XLSX generation should use a structured library already present in analytics-service so formatting, freeze panes, filters, and future workbook expansion are maintainable.
 - Impact: Excel exports now include styled title/subtitle sections, metadata rows, a frozen/filterable metric table, fixed business-friendly column widths, and workbook-level validation in tests.
 - Constraint: PDF output still uses JasperReports templates; visual review of actual generated PDFs remains part of runtime/export verification.
+
+## [2026-06-05] E12 RFQ and goods receipt analytics projections
+
+- Decision: Consume `procurement.rfq.awarded` and `inventory.gr.created` into analytics-owned projection tables, then back `RFQ_SAVINGS` and `INVENTORY_PENDING` report datasets with those facts.
+- Reason: These event contracts already exist and provide enough facts for award totals, category award totals, received quantities, rejected quantities, and post-receipt pending quantities without cross-service reads.
+- Impact: Analytics stores idempotent RFQ award and GR projection rows, report exports now include RFQ award metrics and inventory pending metrics, and Jasper templates no longer use deprecated `isStretchWithOverflow`.
+- Constraint: True RFQ savings still needs a baseline price contract; budget-vs-plan, department spend, maverick spending, audit trail, and `departmentId`/`status` report filters remain source-contract follow-up.

@@ -202,14 +202,14 @@
                     <pen lineWidth="1.0" lineColor="#E2E8F0"/>
                 </graphicElement>
             </rectangle>
-            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
                 <reportElement x="10" y="2" width="340" height="16" forecolor="#2D3748" uuid="88e0eb9d-475b-43fe-a86d-8bdc81bfcd13"/>
                 <textElement verticalAlignment="Middle">
                     <font fontName="SansSerif" size="9"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{label}]]></textFieldExpression>
             </textField>
-            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
                 <reportElement x="360" y="2" width="185" height="16" forecolor="#2D3748" uuid="f3e0d8b5-54eb-485a-8b1b-c408db054e7a"/>
                 <textElement verticalAlignment="Middle">
                     <font fontName="SansSerif" size="9"/>

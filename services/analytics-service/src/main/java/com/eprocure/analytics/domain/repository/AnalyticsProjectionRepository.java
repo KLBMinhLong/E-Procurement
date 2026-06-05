@@ -3,9 +3,11 @@ package com.eprocure.analytics.domain.repository;
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
 import com.eprocure.analytics.domain.model.projection.ApprovalStepAssignedProjection;
+import com.eprocure.analytics.domain.model.projection.GoodsReceiptCreatedProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
 import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
+import com.eprocure.analytics.domain.model.projection.RfqAwardedProjection;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,6 +25,10 @@ public interface AnalyticsProjectionRepository {
     void upsertApprovalSlaBreach(ApprovalSlaBreachProjection projection);
 
     void upsertApprovalStepAssigned(ApprovalStepAssignedProjection projection);
+
+    void upsertRfqAwarded(RfqAwardedProjection projection);
+
+    void upsertGoodsReceiptCreated(GoodsReceiptCreatedProjection projection);
 
     void refreshExecutiveDashboard(UUID dashboardId, int fiscalYear, Integer quarter, Instant cachedAt);
 }
