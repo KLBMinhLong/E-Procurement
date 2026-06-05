@@ -510,3 +510,10 @@
 - Reason: The existing report export API created durable jobs but could never move jobs out of `QUEUED` or return a real file.
 - Impact: `analytics.report_export_jobs` now has `storage_path`; worker config is controlled by `ANALYTICS_REPORT_WORKER_*`; completed jobs expose `/api/v1/reports/jobs/{jobId}/download` and are served only after ownership/status/expiry checks.
 - Constraint: Generated files currently contain metadata-only report content using Java-native rendering; Jasper templates and type-specific datasets remain follow-up.
+
+## [2026-06-05] E12 projection-backed report datasets
+
+- Decision: Add a report dataset provider that reads analytics-owned projections for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, and `THREE_WAY_MATCH`.
+- Reason: The report worker should produce useful content from existing read-model facts instead of metadata-only files.
+- Impact: PDF/XLSX exports now include summary metrics from issued PO, PO line, SLA breach, and matched invoice projection tables; report types without source contracts render explicit foundation rows.
+- Constraint: Jasper templates, richer layouts, report filters, and remaining report datasets still require follow-up source contracts and presentation work.

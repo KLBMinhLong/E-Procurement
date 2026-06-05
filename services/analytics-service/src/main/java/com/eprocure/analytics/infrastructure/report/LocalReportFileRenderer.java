@@ -1,6 +1,8 @@
 package com.eprocure.analytics.infrastructure.report;
 
 import com.eprocure.analytics.application.port.out.RenderedReport;
+import com.eprocure.analytics.application.port.out.ReportDataset;
+import com.eprocure.analytics.application.port.out.ReportDatasetRow;
 import com.eprocure.analytics.application.port.out.ReportFileRenderer;
 import com.eprocure.analytics.domain.model.report.ReportFormat;
 import com.eprocure.analytics.domain.model.report.ReportJob;
@@ -31,15 +33,15 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
     }
 
     @Override
-    public RenderedReport render(ReportJob job) {
+    public RenderedReport render(ReportJob job, ReportDataset dataset) {
         try {
             Files.createDirectories(storageDirectory);
             String extension = job.format() == ReportFormat.PDF ? "pdf" : "xlsx";
             Path output = storageDirectory.resolve(job.id() + "-" + job.reportType().name().toLowerCase() + "." + extension)
                     .normalize();
             byte[] bytes = job.format() == ReportFormat.PDF
-                    ? renderPdf(job)
-                    : renderXlsx(job);
+                    ? renderPdf(job, dataset)
+                    : renderXlsx(job, dataset);
             Files.write(output, bytes);
             return new RenderedReport(output.toString(), "/api/v1/reports/jobs/" + job.id() + "/download");
         } catch (IOException exception) {
@@ -47,8 +49,8 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         }
     }
 
-    private byte[] renderPdf(ReportJob job) {
-        List<String> lines = reportLines(job);
+    private byte[] renderPdf(ReportJob job, ReportDataset dataset) {
+        List<String> lines = reportLines(job, dataset);
         StringBuilder content = new StringBuilder();
         content.append("BT\n/F1 12 Tf\n72 760 Td\n");
         for (String line : lines) {
@@ -85,7 +87,7 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         return output.toByteArray();
     }
 
-    private byte[] renderXlsx(ReportJob job) throws IOException {
+    private byte[] renderXlsx(ReportJob job, ReportDataset dataset) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(output, StandardCharsets.UTF_8)) {
             put(zip, "[Content_Types].xml", """
@@ -115,20 +117,27 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
                       <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
                     </Relationships>
                     """);
-            put(zip, "xl/worksheets/sheet1.xml", sheetXml(job));
+            put(zip, "xl/worksheets/sheet1.xml", sheetXml(job, dataset));
         }
         return output.toByteArray();
     }
 
-    private String sheetXml(ReportJob job) {
-        List<String> lines = reportLines(job);
+    private String sheetXml(ReportJob job, ReportDataset dataset) {
+        List<List<String>> lines = sheetRows(job, dataset);
         StringBuilder rows = new StringBuilder();
         for (int index = 0; index < lines.size(); index++) {
             int row = index + 1;
-            rows.append("<row r=\"").append(row).append("\">")
-                    .append("<c r=\"A").append(row).append("\" t=\"inlineStr\"><is><t>")
-                    .append(escapeXml(lines.get(index)))
-                    .append("</t></is></c></row>");
+            rows.append("<row r=\"").append(row).append("\">");
+            List<String> cells = lines.get(index);
+            for (int cellIndex = 0; cellIndex < cells.size(); cellIndex++) {
+                rows.append("<c r=\"")
+                        .append(columnName(cellIndex))
+                        .append(row)
+                        .append("\" t=\"inlineStr\"><is><t>")
+                        .append(escapeXml(cells.get(cellIndex)))
+                        .append("</t></is></c>");
+            }
+            rows.append("</row>");
         }
         return """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -138,13 +147,43 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
                 """.formatted(rows);
     }
 
-    private List<String> reportLines(ReportJob job) {
-        return List.of(
-                "eProcure Analytics Report",
-                "Report type: " + job.reportType(),
-                "Format: " + job.format(),
-                "Job ID: " + job.id(),
-                "Created at: " + job.createdAt());
+    private List<String> reportLines(ReportJob job, ReportDataset dataset) {
+        List<String> lines = new ArrayList<>();
+        lines.add("eProcure Analytics Report");
+        lines.add("Report type: " + job.reportType());
+        lines.add("Format: " + job.format());
+        lines.add("Job ID: " + job.id());
+        lines.add("Created at: " + job.createdAt());
+        lines.add("Dataset");
+        for (ReportDatasetRow row : datasetRows(dataset)) {
+            lines.add(row.label() + ": " + row.value());
+        }
+        return lines;
+    }
+
+    private List<List<String>> sheetRows(ReportJob job, ReportDataset dataset) {
+        List<List<String>> rows = new ArrayList<>();
+        rows.add(List.of("eProcure Analytics Report", ""));
+        rows.add(List.of("Report type", job.reportType().name()));
+        rows.add(List.of("Format", job.format().name()));
+        rows.add(List.of("Job ID", job.id().toString()));
+        rows.add(List.of("Created at", job.createdAt().toString()));
+        rows.add(List.of("Metric", "Value"));
+        for (ReportDatasetRow row : datasetRows(dataset)) {
+            rows.add(List.of(row.label(), row.value()));
+        }
+        return rows;
+    }
+
+    private List<ReportDatasetRow> datasetRows(ReportDataset dataset) {
+        if (dataset == null || dataset.rows().isEmpty()) {
+            return List.of(new ReportDatasetRow("Dataset source", "No projection data available"));
+        }
+        return dataset.rows();
+    }
+
+    private String columnName(int zeroBasedIndex) {
+        return String.valueOf((char) ('A' + zeroBasedIndex));
     }
 
     private void put(ZipOutputStream zip, String name, String content) throws IOException {

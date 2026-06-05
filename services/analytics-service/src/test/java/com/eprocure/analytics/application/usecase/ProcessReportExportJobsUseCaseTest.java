@@ -3,6 +3,9 @@ package com.eprocure.analytics.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.eprocure.analytics.application.port.out.RenderedReport;
+import com.eprocure.analytics.application.port.out.ReportDataset;
+import com.eprocure.analytics.application.port.out.ReportDatasetProvider;
+import com.eprocure.analytics.application.port.out.ReportDatasetRow;
 import com.eprocure.analytics.application.port.out.ReportFileRenderer;
 import com.eprocure.analytics.domain.model.report.ReportFormat;
 import com.eprocure.analytics.domain.model.report.ReportJob;
@@ -28,9 +31,11 @@ class ProcessReportExportJobsUseCaseTest {
     void should_complete_claimed_report_job_when_renderer_succeeds() {
         FakeReportJobRepository repository = new FakeReportJobRepository();
         repository.claimedJobs = List.of(queuedJob());
+        FakeDatasetProvider datasetProvider = new FakeDatasetProvider();
         ProcessReportExportJobsUseCase useCase = new ProcessReportExportJobsUseCase(
                 repository,
-                job -> new RenderedReport("D:/tmp/report.pdf", "/api/v1/reports/jobs/" + job.id() + "/download"),
+                datasetProvider,
+                (job, dataset) -> new RenderedReport("D:/tmp/report.pdf", "/api/v1/reports/jobs/" + job.id() + "/download"),
                 Clock.fixed(NOW, ZoneOffset.UTC));
 
         int processed = useCase.execute(5);
@@ -42,17 +47,19 @@ class ProcessReportExportJobsUseCaseTest {
         assertThat(repository.completedStoragePath).isEqualTo("D:/tmp/report.pdf");
         assertThat(repository.completedAt).isEqualTo(NOW);
         assertThat(repository.expiresAt).isEqualTo(NOW.plusSeconds(604800));
+        assertThat(datasetProvider.loadedJobId).isEqualTo(JOB_ID);
     }
 
     @Test
     void should_mark_job_failed_when_renderer_fails() {
         FakeReportJobRepository repository = new FakeReportJobRepository();
         repository.claimedJobs = List.of(queuedJob());
-        ReportFileRenderer failingRenderer = job -> {
+        ReportFileRenderer failingRenderer = (job, dataset) -> {
             throw new IllegalStateException("render failed");
         };
         ProcessReportExportJobsUseCase useCase = new ProcessReportExportJobsUseCase(
                 repository,
+                job -> new ReportDataset(List.of(new ReportDatasetRow("Metric", "Value"))),
                 failingRenderer,
                 Clock.fixed(NOW, ZoneOffset.UTC));
 
@@ -121,6 +128,16 @@ class ProcessReportExportJobsUseCaseTest {
             this.failedJobId = jobId;
             this.failureReason = failureReason;
             this.failedAt = failedAt;
+        }
+    }
+
+    private static final class FakeDatasetProvider implements ReportDatasetProvider {
+        private UUID loadedJobId;
+
+        @Override
+        public ReportDataset load(ReportJob job) {
+            loadedJobId = job.id();
+            return new ReportDataset(List.of(new ReportDatasetRow("Metric", "Value")));
         }
     }
 }
