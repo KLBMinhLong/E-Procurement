@@ -29,6 +29,17 @@ import com.eprocure.finance.domain.repository.InvoiceRepository;
 import com.eprocure.finance.domain.repository.PaymentRepository;
 import com.eprocure.finance.domain.repository.PurchaseOrderFilter;
 import com.eprocure.finance.domain.repository.PurchaseOrderRepository;
+import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
+import com.eprocure.finance.application.service.BudgetDashboardView;
+import com.eprocure.finance.domain.model.BudgetCheckCriteria;
+import com.eprocure.finance.domain.model.BudgetCommitmentHold;
+import com.eprocure.finance.domain.model.BudgetLedgerSummary;
+import com.eprocure.finance.domain.model.BudgetOverrideApproval;
+import com.eprocure.finance.domain.model.BudgetTransaction;
+import com.eprocure.finance.domain.model.BudgetTransactionType;
+import com.eprocure.finance.domain.model.BudgetTransfer;
+import com.eprocure.finance.domain.repository.BudgetFilter;
+import com.eprocure.finance.domain.repository.BudgetRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -66,6 +77,8 @@ class InvoiceUseCaseTest {
     private FakeGoodsReceiptSnapshotRepository goodsReceiptSnapshotRepository;
     private FakeInvoiceMatchedEventPublisher invoiceMatchedEventPublisher;
     private FakePaymentRepository paymentRepository;
+    private FakeBudgetRepository budgetRepository;
+    private FakeBudgetDashboardCachePort budgetDashboardCachePort;
 
     @BeforeEach
     void setUp() {
@@ -74,6 +87,8 @@ class InvoiceUseCaseTest {
         goodsReceiptSnapshotRepository = new FakeGoodsReceiptSnapshotRepository();
         invoiceMatchedEventPublisher = new FakeInvoiceMatchedEventPublisher();
         paymentRepository = new FakePaymentRepository();
+        budgetRepository = new FakeBudgetRepository();
+        budgetDashboardCachePort = new FakeBudgetDashboardCachePort();
         purchaseOrderRepository.purchaseOrders.add(purchaseOrder());
     }
 
@@ -227,11 +242,18 @@ class InvoiceUseCaseTest {
         Invoice invoice = matchedInvoice();
         new ApproveInvoiceUseCase(invoiceRepository, new FakeIdempotencyService(), Clock.fixed(NOW, ZoneOffset.UTC))
                 .execute(new ApproveInvoiceCommand(ACTOR_ID, invoice.id(), null), APPROVE_IDEMPOTENCY_KEY);
+        
+        UUID budgetId = UUID.randomUUID();
+        budgetRepository.hold = new BudgetCommitmentHold(budgetId, new Money(new BigDecimal("1100.0000"), "VND"));
+
         var useCase = new ConfirmPaymentUseCase(
                 invoiceRepository,
                 paymentRepository,
                 new FakeIdempotencyService(),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                purchaseOrderRepository,
+                budgetRepository,
+                budgetDashboardCachePort);
 
         var result = useCase.execute(
                 new ConfirmPaymentCommand(
@@ -247,6 +269,63 @@ class InvoiceUseCaseTest {
         assertThat(result.payment().paidAmount().amount()).isEqualByComparingTo("1100.0000");
         assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.PAID);
         assertThat(paymentRepository.payments).hasSize(1);
+
+        // Assert budget updates
+        assertThat(budgetRepository.locked).isTrue();
+        assertThat(budgetRepository.transactions).hasSize(2);
+        
+        var releaseTx = budgetRepository.transactions.get(0);
+        assertThat(releaseTx.budgetId()).isEqualTo(budgetId);
+        assertThat(releaseTx.transactionType()).isEqualTo(BudgetTransactionType.RELEASE);
+        assertThat(releaseTx.money().amount()).isEqualByComparingTo("1100.0000");
+        assertThat(releaseTx.referenceType()).isEqualTo("PURCHASE_REQUEST");
+        assertThat(releaseTx.referenceId()).isEqualTo(PR_ID);
+
+        var spendTx = budgetRepository.transactions.get(1);
+        assertThat(spendTx.budgetId()).isEqualTo(budgetId);
+        assertThat(spendTx.transactionType()).isEqualTo(BudgetTransactionType.SPEND);
+        assertThat(spendTx.money().amount()).isEqualByComparingTo("1100.0000");
+        assertThat(spendTx.referenceType()).isEqualTo("INVOICE");
+        assertThat(spendTx.referenceId()).isEqualTo(invoice.id());
+
+        assertThat(budgetDashboardCachePort.evictedBudgetIds).containsExactly(budgetId);
+    }
+
+    @Test
+    void should_confirm_payment_without_budget_update_when_hold_missing() {
+        Invoice invoice = matchedInvoice();
+        new ApproveInvoiceUseCase(invoiceRepository, new FakeIdempotencyService(), Clock.fixed(NOW, ZoneOffset.UTC))
+                .execute(new ApproveInvoiceCommand(ACTOR_ID, invoice.id(), null), APPROVE_IDEMPOTENCY_KEY);
+        
+        budgetRepository.hold = null;
+
+        var useCase = new ConfirmPaymentUseCase(
+                invoiceRepository,
+                paymentRepository,
+                new FakeIdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                purchaseOrderRepository,
+                budgetRepository,
+                budgetDashboardCachePort);
+
+        var result = useCase.execute(
+                new ConfirmPaymentCommand(
+                        ACTOR_ID,
+                        invoice.id(),
+                        LocalDate.parse("2026-06-10"),
+                        "BANK-REF-001",
+                        new BigDecimal("1100.0000"),
+                        "paid by transfer"),
+                PAYMENT_IDEMPOTENCY_KEY);
+
+        assertThat(result.replayed()).isFalse();
+        assertThat(invoiceRepository.findById(invoice.id()).orElseThrow().status()).isEqualTo(InvoiceStatus.PAID);
+        assertThat(paymentRepository.payments).hasSize(1);
+        
+        // Assert budget updates did not run
+        assertThat(budgetRepository.locked).isFalse();
+        assertThat(budgetRepository.transactions).isEmpty();
+        assertThat(budgetDashboardCachePort.evictedBudgetIds).isEmpty();
     }
 
     private CreateInvoiceUseCase createUseCase() {
@@ -679,6 +758,106 @@ class InvoiceUseCaseTest {
         @Override
         public void verify(String idempotencyKey) {
             assertThat(idempotencyKey).isNotBlank();
+        }
+    }
+
+    private static final class FakeBudgetDashboardCachePort implements BudgetDashboardCachePort {
+        private final List<UUID> evictedBudgetIds = new ArrayList<>();
+
+        @Override
+        public Optional<BudgetDashboardView> findByBudgetId(UUID budgetId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void store(BudgetDashboardView dashboard) {
+        }
+
+        @Override
+        public void evict(UUID budgetId) {
+            evictedBudgetIds.add(budgetId);
+        }
+    }
+
+    private static final class FakeBudgetRepository implements BudgetRepository {
+        private final List<BudgetTransaction> transactions = new ArrayList<>();
+        private BudgetCommitmentHold hold;
+        private boolean locked = false;
+
+        @Override
+        public Optional<BudgetLedgerSummary> findActiveSummary(BudgetCheckCriteria criteria) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<BudgetLedgerSummary> findByFilter(BudgetFilter filter) {
+            return List.of();
+        }
+
+        @Override
+        public long countByFilter(BudgetFilter filter) {
+            return 0;
+        }
+
+        @Override
+        public Optional<BudgetLedgerSummary> findSummaryById(UUID budgetId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean lockBudgetForUpdate(UUID budgetId) {
+            this.locked = true;
+            return true;
+        }
+
+        @Override
+        public boolean existsProcessedEvent(String eventId) {
+            return false;
+        }
+
+        @Override
+        public void markEventProcessed(String eventId, String topic, Integer partitionId, Long offsetValue, String handlerName) {
+        }
+
+        @Override
+        public boolean existsTransaction(UUID budgetId, BudgetTransactionType transactionType, String referenceType, UUID referenceId) {
+            return transactions.stream()
+                    .anyMatch(tx -> tx.budgetId().equals(budgetId)
+                            && tx.transactionType() == transactionType
+                            && tx.referenceType().equals(referenceType)
+                            && tx.referenceId().equals(referenceId));
+        }
+
+        @Override
+        public void insertTransaction(BudgetTransaction transaction) {
+            transactions.add(transaction);
+        }
+
+        @Override
+        public Optional<BudgetCommitmentHold> findHeldCommitment(String referenceType, UUID referenceId) {
+            return Optional.ofNullable(hold);
+        }
+
+        @Override
+        public Optional<BudgetOverrideApproval> findOverrideApprovalByIdempotencyKey(UUID idempotencyKey) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void insertOverrideApproval(BudgetOverrideApproval approval) {
+        }
+
+        @Override
+        public Optional<BudgetTransfer> findTransferByIdempotencyKey(UUID idempotencyKey) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void insertTransfer(BudgetTransfer transfer) {
+        }
+
+        @Override
+        public void adjustAllocatedAmount(UUID budgetId, Money delta, UUID actorId) {
         }
     }
 }

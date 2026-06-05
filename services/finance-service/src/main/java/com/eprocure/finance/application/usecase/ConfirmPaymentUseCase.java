@@ -1,18 +1,25 @@
 package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.ConfirmPaymentCommand;
+import com.eprocure.finance.application.port.out.BudgetDashboardCachePort;
 import com.eprocure.finance.application.service.IdempotencyService;
 import com.eprocure.finance.application.service.PaymentConfirmationResult;
 import com.eprocure.finance.application.service.PaymentView;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
+import com.eprocure.finance.domain.model.BudgetCommitmentHold;
+import com.eprocure.finance.domain.model.BudgetTransaction;
+import com.eprocure.finance.domain.model.BudgetTransactionType;
 import com.eprocure.finance.domain.model.Invoice;
 import com.eprocure.finance.domain.model.InvoiceStatus;
 import com.eprocure.finance.domain.model.Payment;
+import com.eprocure.finance.domain.model.PurchaseOrder;
 import com.eprocure.finance.domain.model.vo.Money;
+import com.eprocure.finance.domain.repository.BudgetRepository;
 import com.eprocure.finance.domain.repository.InvoiceRepository;
 import com.eprocure.finance.domain.repository.PaymentRepository;
+import com.eprocure.finance.domain.repository.PurchaseOrderRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -31,16 +38,25 @@ public class ConfirmPaymentUseCase {
     private final PaymentRepository paymentRepository;
     private final IdempotencyService idempotencyService;
     private final Clock clock;
+    private final PurchaseOrderRepository purchaseOrderRepository;
+    private final BudgetRepository budgetRepository;
+    private final BudgetDashboardCachePort budgetDashboardCachePort;
 
     public ConfirmPaymentUseCase(
             InvoiceRepository invoiceRepository,
             PaymentRepository paymentRepository,
             IdempotencyService idempotencyService,
-            Clock clock) {
+            Clock clock,
+            PurchaseOrderRepository purchaseOrderRepository,
+            BudgetRepository budgetRepository,
+            BudgetDashboardCachePort budgetDashboardCachePort) {
         this.invoiceRepository = invoiceRepository;
         this.paymentRepository = paymentRepository;
         this.idempotencyService = idempotencyService;
         this.clock = clock;
+        this.purchaseOrderRepository = purchaseOrderRepository;
+        this.budgetRepository = budgetRepository;
+        this.budgetDashboardCachePort = budgetDashboardCachePort;
     }
 
     @Transactional
@@ -71,6 +87,58 @@ public class ConfirmPaymentUseCase {
         }
 
         Instant confirmedAt = Instant.now(clock);
+
+        // Fetch Purchase Order for budget reference
+        PurchaseOrder po = purchaseOrderRepository.findById(invoice.poId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.FIN_006));
+
+        // Query active commitment hold using PURCHASE_REQUEST and prId
+        var holdOpt = budgetRepository.findHeldCommitment("PURCHASE_REQUEST", po.prId());
+        if (holdOpt.isPresent()) {
+            BudgetCommitmentHold hold = holdOpt.get();
+            UUID budgetId = hold.budgetId();
+
+            // Lock budget to prevent concurrent edits
+            budgetRepository.lockBudgetForUpdate(budgetId);
+
+            // Release the commitment hold if there is a positive hold amount
+            if (hold.hasHeldAmount()) {
+                BudgetTransaction releaseTx = new BudgetTransaction(
+                        budgetId,
+                        BudgetTransactionType.RELEASE,
+                        hold.amount(),
+                        "PURCHASE_REQUEST",
+                        po.prId(),
+                        "Release commitment hold for Purchase Order payment: " + po.poNumber(),
+                        command.actorId(),
+                        confirmedAt,
+                        null
+                );
+                budgetRepository.insertTransaction(releaseTx);
+            }
+
+            // Record the actual spend transaction
+            BudgetTransaction spendTx = new BudgetTransaction(
+                    budgetId,
+                    BudgetTransactionType.SPEND,
+                    paidAmount,
+                    "INVOICE",
+                    invoice.id(),
+                    "Invoice payment confirmation: " + invoice.invoiceNumber(),
+                    command.actorId(),
+                    confirmedAt,
+                    null
+            );
+            budgetRepository.insertTransaction(spendTx);
+
+            // Evict dashboard cache
+            budgetDashboardCachePort.evict(budgetId);
+        } else {
+            log.warn("[ACTION] No budget commitment hold found for PURCHASE_REQUEST | prId={} | poId={}",
+                    LogMaskingUtil.maskId(po.prId()),
+                    LogMaskingUtil.maskId(po.id()));
+        }
+
         Payment payment = Payment.confirm(
                 invoice.id(),
                 command.paymentDate(),
