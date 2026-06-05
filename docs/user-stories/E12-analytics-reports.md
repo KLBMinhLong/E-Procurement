@@ -66,8 +66,9 @@ Acceptance:
 - `GET /api/v1/reports/jobs/{jobId}/download` streams the generated file for the requesting user after completion.
 - Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
 - Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, and `THREE_WAY_MATCH`.
+- Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
 - Unsupported report types explicitly render foundation rows that identify the missing projection contract.
-- Jasper templates and richer type-specific layouts remain follow-up.
+- Jasper templates, richer type-specific layouts, and filters requiring missing source fields such as `departmentId`/`status` remain follow-up.
 
 ### E12-US-006 KPI API Foundation
 

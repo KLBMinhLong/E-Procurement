@@ -457,6 +457,7 @@ paths:
                     toDate:       { type: string, format: date }
                     departmentId: { type: string, format: uuid }
                     fiscalYear:   { type: integer }
+                    quarter:      { type: integer, minimum: 1, maximum: 4 }
                     vendorId:     { type: string, format: uuid }
                     status:       { type: string }
                     categoryCode: { type: string }

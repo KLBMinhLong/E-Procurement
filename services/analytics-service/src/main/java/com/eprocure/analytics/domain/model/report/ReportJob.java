@@ -16,7 +16,8 @@ public record ReportJob(
         Instant completedAt,
         Instant expiresAt,
         UUID createdBy,
-        UUID idempotencyKey) {
+        UUID idempotencyKey,
+        ReportFilterCriteria filterCriteria) {
 
     public ReportJob {
         id = Objects.requireNonNull(id, "id must not be null");
@@ -29,6 +30,7 @@ public record ReportJob(
         createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
         createdBy = Objects.requireNonNull(createdBy, "createdBy must not be null");
         idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey must not be null");
+        filterCriteria = filterCriteria == null ? ReportFilterCriteria.empty() : filterCriteria;
     }
 
     public static ReportJob queued(
@@ -51,6 +53,7 @@ public record ReportJob(
                 null,
                 expiresAt,
                 createdBy,
-                idempotencyKey);
+                idempotencyKey,
+                ReportFilterCriteria.empty());
     }
 }

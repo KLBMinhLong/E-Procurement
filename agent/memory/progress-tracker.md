@@ -286,4 +286,4 @@
 | Unit tests | ✅ | Executive dashboard + analytics projection use-case tests pass |
 | Projection/event ingestion | ✅ | Consumes `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`; stores idempotent projections and refreshes executive dashboard snapshots |
 | Manager/purchasing/requester dashboards | 🔄 | `/purchasing` reads issued PO + matched invoice projections; manager/requester and RFQ/GR-specific data projections remain follow-up |
-| KPI/report export APIs | 🔄 | Async report export API, KPI endpoint, local PDF/XLSX worker, and projection-backed report dataset foundation added; Jasper templates/layouts, PR lifecycle projection, and SLA completion denominator remain follow-up |
+| KPI/report export APIs | 🔄 | Async report export API, KPI endpoint, local PDF/XLSX worker, and projection-backed report dataset foundation with supported filters added; Jasper templates/layouts, PR lifecycle projection, and SLA completion denominator remain follow-up |

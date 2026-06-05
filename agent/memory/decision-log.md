@@ -517,3 +517,10 @@
 - Reason: The report worker should produce useful content from existing read-model facts instead of metadata-only files.
 - Impact: PDF/XLSX exports now include summary metrics from issued PO, PO line, SLA breach, and matched invoice projection tables; report types without source contracts render explicit foundation rows.
 - Constraint: Jasper templates, richer layouts, report filters, and remaining report datasets still require follow-up source contracts and presentation work.
+
+## [2026-06-05] E12 report dataset filter criteria
+
+- Decision: Parse report export `filters` from persisted job JSON into a domain `ReportFilterCriteria`, then bind supported values into projection-backed dataset queries.
+- Reason: Report workers need replay-safe, deterministic filter behavior without dynamic SQL string construction or cross-service reads.
+- Impact: `PO_SUMMARY` and `PR_SUMMARY` honor period/fiscal-year/quarter/vendor/category filters, `SLA_COMPLIANCE` honors period/fiscal filters, and `THREE_WAY_MATCH` honors period/fiscal/vendor filters.
+- Constraint: `departmentId`, `status`, and richer report-specific filters remain follow-up until matching analytics projection fields exist.
