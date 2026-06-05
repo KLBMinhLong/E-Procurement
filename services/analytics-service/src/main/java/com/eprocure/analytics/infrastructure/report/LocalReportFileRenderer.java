@@ -9,13 +9,22 @@ import com.eprocure.analytics.domain.model.report.ReportFormat;
 import com.eprocure.analytics.domain.model.report.ReportJob;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -55,66 +64,46 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
     }
 
     private byte[] renderPdf(ReportJob job, ReportDataset dataset) {
-        ReportLayoutTemplate template = ReportLayoutTemplate.resolve(job.reportType());
-        StringBuilder content = new StringBuilder();
-        int y = 760;
-        appendText(content, "F2", 18, 72, y, template.title());
-        y -= 18;
-        appendText(content, "F1", 10, 72, y, template.subtitle());
-        y -= 28;
-        appendText(content, "F2", 11, 72, y, "Report Metadata");
-        y -= 18;
-        for (List<String> row : metadataRows(job)) {
-            appendText(content, "F2", 9, 72, y, truncate(row.get(0) + ":", 28));
-            appendText(content, "F1", 9, 190, y, truncate(row.get(1), 64));
-            y -= 14;
-        }
-        y -= 10;
-        appendText(content, "F2", 12, 72, y, template.datasetSectionTitle());
-        y -= 18;
-        appendText(content, "F2", 9, 72, y, "Metric");
-        appendText(content, "F2", 9, 310, y, "Value");
-        y -= 14;
-        int rowCount = 0;
-        for (ReportDatasetRow row : datasetRows(dataset)) {
-            if (rowCount >= PDF_MAX_DATASET_ROWS || y < 72) {
-                appendText(content, "F1", 9, 72, y, "Additional rows truncated in PDF output.");
-                break;
+        try {
+            String templateName = job.reportType().name().toLowerCase().replace('_', '-');
+            JasperReport jasperReport;
+            try (InputStream is = getClass().getResourceAsStream("/reports/" + templateName + ".jrxml")) {
+                if (is == null) {
+                    try (InputStream defaultIs = getClass().getResourceAsStream("/reports/default.jrxml")) {
+                        if (defaultIs == null) {
+                            throw new IllegalStateException("Default report template not found");
+                        }
+                        jasperReport = JasperCompileManager.compileReport(defaultIs);
+                    }
+                } else {
+                    jasperReport = JasperCompileManager.compileReport(is);
+                }
             }
-            appendText(content, "F1", 9, 72, y, truncate(row.label(), 46));
-            appendText(content, "F1", 9, 310, y, truncate(row.value(), 42));
-            y -= 14;
-            rowCount++;
-        }
-        byte[] contentBytes = content.toString().getBytes(StandardCharsets.ISO_8859_1);
-        List<byte[]> objects = List.of(
-                "<< /Type /Catalog /Pages 2 0 R >>".getBytes(StandardCharsets.ISO_8859_1),
-                "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".getBytes(StandardCharsets.ISO_8859_1),
-                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>"
-                        .getBytes(StandardCharsets.ISO_8859_1),
-                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".getBytes(StandardCharsets.ISO_8859_1),
-                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>".getBytes(StandardCharsets.ISO_8859_1),
-                ("<< /Length " + contentBytes.length + " >>\nstream\n" + content + "endstream")
-                        .getBytes(StandardCharsets.ISO_8859_1));
 
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        writeAscii(output, "%PDF-1.4\n");
-        List<Integer> offsets = new ArrayList<>();
-        for (int index = 0; index < objects.size(); index++) {
-            offsets.add(output.size());
-            writeAscii(output, (index + 1) + " 0 obj\n");
-            writeBytes(output, objects.get(index));
-            writeAscii(output, "\nendobj\n");
+            ReportLayoutTemplate template = ReportLayoutTemplate.resolve(job.reportType());
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("reportTitle", template.title());
+            parameters.put("reportSubtitle", template.subtitle());
+            parameters.put("datasetSectionTitle", template.datasetSectionTitle());
+            parameters.put("jobId", job.id().toString());
+            parameters.put("createdAt", job.createdAt().toString());
+            parameters.put("periodFilter", periodFilter(job.filterCriteria()));
+            parameters.put("scopeFilter", scopeFilter(job.filterCriteria()));
+            parameters.put("generatedAt", job.createdAt().toString()); // use job createdAt for deterministic tests
+
+            List<Map<String, ?>> mapRows = new ArrayList<>();
+            for (ReportDatasetRow row : datasetRows(dataset)) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("label", row.label());
+                map.put("value", row.value());
+                mapRows.add(map);
+            }
+            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(mapRows);
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to render PDF using JasperReports", e);
         }
-        int xrefOffset = output.size();
-        writeAscii(output, "xref\n0 " + (objects.size() + 1) + "\n");
-        writeAscii(output, "0000000000 65535 f \n");
-        for (Integer offset : offsets) {
-            writeAscii(output, String.format("%010d 00000 n \n", offset));
-        }
-        writeAscii(output, "trailer\n<< /Size " + (objects.size() + 1) + " /Root 1 0 R >>\n");
-        writeAscii(output, "startxref\n" + xrefOffset + "\n%%EOF\n");
-        return output.toByteArray();
     }
 
     private byte[] renderXlsx(ReportJob job, ReportDataset dataset) throws IOException {
@@ -286,26 +275,7 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         zip.write(content.getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
     }
-
-    private String escapePdf(String value) {
-        return sanitizeText(value).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
-    }
-
-    private void appendText(StringBuilder content, String font, int size, int x, int y, String value) {
-        content.append("BT\n/")
-                .append(font)
-                .append(' ')
-                .append(size)
-                .append(" Tf\n")
-                .append(x)
-                .append(' ')
-                .append(y)
-                .append(" Td\n(")
-                .append(escapePdf(value))
-                .append(") Tj\nET\n");
-    }
-
-    private String escapeXml(String value) {
+    private String escapeXml(String value) {
         return sanitizeText(value)
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
@@ -321,14 +291,6 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
     private String truncate(String value, int maxLength) {
         String sanitized = sanitizeText(value);
         return sanitized.length() <= maxLength ? sanitized : sanitized.substring(0, maxLength - 3) + "...";
-    }
-
-    private void writeAscii(ByteArrayOutputStream output, String value) {
-        writeBytes(output, value.getBytes(StandardCharsets.ISO_8859_1));
-    }
-
-    private void writeBytes(ByteArrayOutputStream output, byte[] bytes) {
-        output.write(bytes, 0, bytes.length);
     }
 
     private record SheetRow(List<SheetCell> cells) {

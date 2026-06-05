@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="footer"
+              pageWidth="555"
+              pageHeight="35"
+              columnWidth="555"
+              leftMargin="0"
+              rightMargin="0"
+              topMargin="0"
+              bottomMargin="0"
+              uuid="dfc2079a-e8d7-4632-bd97-6a2c2c0607bc">
+
+    <parameter name="generatedAt" class="java.lang.String"/>
+
+    <background>
+        <band splitType="Stretch"/>
+    </background>
+
+    <title>
+        <band height="35" splitType="Stretch">
+            <line>
+                <reportElement x="0" y="5" width="555" height="1" forecolor="#E2E8F0" uuid="d6e8bfa1-df2b-4780-928d-2ebcfcd4d1bd"/>
+            </line>
+            <textField>
+                <reportElement x="0" y="10" width="300" height="20" forecolor="#A0AEC0" uuid="c24a6bf7-0c7f-442b-980b-9ffb73715c0e"/>
+                <textElement>
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["eProcure Enterprise Analytics • Generated on " + $P{generatedAt}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+</jasperReport>

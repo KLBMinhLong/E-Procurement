@@ -36,13 +36,16 @@ class LocalReportFileRendererTest {
 
         Path output = Path.of(rendered.storagePath());
         assertThat(output).exists();
-        String content = Files.readString(output, StandardCharsets.ISO_8859_1);
-        assertThat(content.substring(0, 8)).isEqualTo("%PDF-1.4");
-        assertThat(content).contains("Purchase Order Summary");
-        assertThat(content).contains("Report Metadata");
-        assertThat(content).contains("Issued PO Metrics");
-        assertThat(content).contains("Issued PO count");
-        assertThat(content).contains("All periods");
+        byte[] bytes = Files.readAllBytes(output);
+        assertThat(bytes).startsWith("%PDF-1.".getBytes(StandardCharsets.ISO_8859_1));
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.Loader.loadPDF(bytes)) {
+            org.apache.pdfbox.text.PDFTextStripper stripper = new org.apache.pdfbox.text.PDFTextStripper();
+            String text = stripper.getText(document);
+            assertThat(text).contains("Purchase Order Summary");
+            assertThat(text).contains("Issued PO Metrics");
+            assertThat(text).contains("Issued PO count");
+            assertThat(text).contains("All periods");
+        }
         assertThat(rendered.downloadUrl()).isEqualTo("/api/v1/reports/jobs/" + JOB_ID + "/download");
     }
 

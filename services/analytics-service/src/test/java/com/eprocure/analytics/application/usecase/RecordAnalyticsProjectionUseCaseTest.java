@@ -6,6 +6,7 @@ import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionComman
 import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
+import com.eprocure.analytics.domain.model.projection.ApprovalStepAssignedProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
 import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
@@ -155,6 +156,10 @@ class RecordAnalyticsProjectionUseCaseTest {
 
         @Override
         public void upsertApprovalSlaBreach(ApprovalSlaBreachProjection projection) {
+        }
+
+        @Override
+        public void upsertApprovalStepAssigned(ApprovalStepAssignedProjection projection) {
         }
 
         @Override

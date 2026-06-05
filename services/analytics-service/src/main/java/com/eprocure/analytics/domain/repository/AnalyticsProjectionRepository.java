@@ -2,6 +2,7 @@ package com.eprocure.analytics.domain.repository;
 
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
+import com.eprocure.analytics.domain.model.projection.ApprovalStepAssignedProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
 import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
@@ -20,6 +21,8 @@ public interface AnalyticsProjectionRepository {
     void upsertInvoiceMatched(InvoiceMatchedProjection projection);
 
     void upsertApprovalSlaBreach(ApprovalSlaBreachProjection projection);
+
+    void upsertApprovalStepAssigned(ApprovalStepAssignedProjection projection);
 
     void refreshExecutiveDashboard(UUID dashboardId, int fiscalYear, Integer quarter, Instant cachedAt);
 }

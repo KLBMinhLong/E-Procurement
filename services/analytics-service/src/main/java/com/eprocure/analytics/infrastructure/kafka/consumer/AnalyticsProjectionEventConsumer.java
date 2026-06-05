@@ -1,6 +1,7 @@
 package com.eprocure.analytics.infrastructure.kafka.consumer;
 
 import com.eprocure.analytics.application.port.in.RecordApprovalSlaBreachedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordApprovalStepAssignedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordInvoiceMatchedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
@@ -42,7 +43,8 @@ public class AnalyticsProjectionEventConsumer {
             "${eprocure.analytics.kafka.topics.pr-submitted:procurement.pr.submitted}",
             "${eprocure.analytics.kafka.topics.po-issued:procurement.po.issued}",
             "${eprocure.analytics.kafka.topics.invoice-matched:finance.invoice.matched}",
-            "${eprocure.analytics.kafka.topics.approval-sla-breached:approval.sla.breached}"
+            "${eprocure.analytics.kafka.topics.approval-sla-breached:approval.sla.breached}",
+            "${eprocure.analytics.kafka.topics.approval-step-assigned:approval.step.assigned}"
     })
     public void consume(ConsumerRecord<String, String> record) {
         try {
@@ -53,6 +55,7 @@ public class AnalyticsProjectionEventConsumer {
                 case "PO_ISSUED" -> consumePoIssued(record, root);
                 case "INVOICE_MATCHED" -> consumeInvoiceMatched(record, root);
                 case "APPROVAL_SLA_BREACHED" -> consumeApprovalSlaBreached(record, root);
+                case "APPROVAL_STEP_ASSIGNED" -> consumeApprovalStepAssigned(record, root);
                 default -> log.warn("[KAFKA] Skip unsupported analytics event | topic={} | eventType={}",
                         record.topic(),
                         eventType);
@@ -175,6 +178,32 @@ public class AnalyticsProjectionEventConsumer {
                 payload.breachedAt());
         recordAnalyticsProjectionUseCase.recordApprovalSlaBreached(command);
         log.info("[KAFKA] Consumed analytics SLA breach event | topic={} | eventId={} | approvalStepId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.approvalStepId()));
+    }
+
+    private void consumeApprovalStepAssigned(ConsumerRecord<String, String> record, JsonNode root) {
+        ApprovalStepAssignedPayload payload = payload(root, ApprovalStepAssignedPayload.class);
+        RecordApprovalStepAssignedProjectionCommand command = new RecordApprovalStepAssignedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                requiredTimestamp(root),
+                payload.processId(),
+                payload.approvalStepId(),
+                payload.purchaseRequestId(),
+                payload.prNumber(),
+                payload.priority(),
+                payload.stepIndex(),
+                payload.stepType(),
+                payload.approverRole(),
+                payload.approverId(),
+                payload.assignedAt(),
+                payload.slaDeadline());
+        recordAnalyticsProjectionUseCase.recordApprovalStepAssigned(command);
+        log.info("[KAFKA] Consumed analytics step assigned event | topic={} | eventId={} | approvalStepId={}",
                 record.topic(),
                 command.eventId(),
                 LogMaskingUtil.maskId(command.approvalStepId()));
@@ -319,5 +348,20 @@ public class AnalyticsProjectionEventConsumer {
             Instant assignedAt,
             Instant slaDeadline,
             Instant breachedAt) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record ApprovalStepAssignedPayload(
+            UUID processId,
+            UUID approvalStepId,
+            UUID purchaseRequestId,
+            String prNumber,
+            String priority,
+            int stepIndex,
+            String stepType,
+            String approverRole,
+            UUID approverId,
+            Instant assignedAt,
+            Instant slaDeadline) {
     }
 }

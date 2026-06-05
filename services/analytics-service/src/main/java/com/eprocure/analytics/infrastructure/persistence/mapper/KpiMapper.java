@@ -94,37 +94,107 @@ public interface KpiMapper {
             @Param("toExclusive") Instant toExclusive,
             @Param("departmentId") UUID departmentId);
 
+    /**
+     * Counts total approval steps assigned in the period.
+     * This is the denominator for SLA compliance: compliance% = (total - breached) / total * 100.
+     */
     @Select("""
-            SELECT
-                approver_role AS role,
-                0 AS compliance_pct,
-                COALESCE(
-                    ROUND(AVG(GREATEST(EXTRACT(EPOCH FROM (breached_at - assigned_at)) / 3600.0, 0))::NUMERIC, 2),
-                    0
-                ) AS avg_action_hours,
-                COUNT(*)::INTEGER AS overdue_count
+            SELECT COUNT(*)
+            FROM analytics.approval_step_assigned_projections
+            WHERE is_deleted = FALSE
+              AND assigned_at >= #{fromInclusive}
+              AND assigned_at < #{toExclusive}
+            """)
+    int countTotalAssignedSteps(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive);
+
+    /**
+     * Counts total SLA-breached steps in the period.
+     * This is the numerator for overdue metrics and subtracted from total for on-time count.
+     */
+    @Select("""
+            SELECT COUNT(*)
             FROM analytics.approval_sla_breach_projections
             WHERE is_deleted = FALSE
               AND breached_at >= #{fromInclusive}
               AND breached_at < #{toExclusive}
-            GROUP BY approver_role
-            ORDER BY COUNT(*) DESC, approver_role ASC
+            """)
+    int countBreachedSteps(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive);
+
+    @Select("""
+            WITH role_stats AS (
+                SELECT
+                    a.approver_role AS role,
+                    COUNT(*)::INTEGER AS total_count,
+                    COALESCE((
+                        SELECT COUNT(*)
+                        FROM analytics.approval_sla_breach_projections b
+                        WHERE b.is_deleted = FALSE
+                          AND b.approver_role = a.approver_role
+                          AND b.breached_at >= #{fromInclusive}
+                          AND b.breached_at < #{toExclusive}
+                    ), 0)::INTEGER AS overdue_count
+                FROM analytics.approval_step_assigned_projections a
+                WHERE a.is_deleted = FALSE
+                  AND a.assigned_at >= #{fromInclusive}
+                  AND a.assigned_at < #{toExclusive}
+                GROUP BY a.approver_role
+            )
+            SELECT
+                role,
+                CASE WHEN total_count > 0
+                    THEN ROUND(((total_count - overdue_count)::NUMERIC / total_count) * 100, 2)
+                    ELSE 0
+                END AS compliance_pct,
+                COALESCE((
+                    SELECT ROUND(AVG(GREATEST(EXTRACT(EPOCH FROM (b.breached_at - b.assigned_at)) / 3600.0, 0))::NUMERIC, 2)
+                    FROM analytics.approval_sla_breach_projections b
+                    WHERE b.is_deleted = FALSE
+                      AND b.approver_role = role_stats.role
+                      AND b.breached_at >= #{fromInclusive}
+                      AND b.breached_at < #{toExclusive}
+                ), 0) AS avg_action_hours,
+                overdue_count
+            FROM role_stats
+            ORDER BY overdue_count DESC, role ASC
             """)
     List<ApproverRoleSlaDbEntity> findByApproverRole(
             @Param("fromInclusive") Instant fromInclusive,
             @Param("toExclusive") Instant toExclusive);
 
     @Select("""
+            WITH approver_stats AS (
+                SELECT
+                    a.approver_id,
+                    CONCAT('approver:', SUBSTRING(a.approver_id::TEXT FROM 1 FOR 8)) AS approver_name,
+                    COUNT(*)::INTEGER AS total_count,
+                    COALESCE((
+                        SELECT COUNT(*)
+                        FROM analytics.approval_sla_breach_projections b
+                        WHERE b.is_deleted = FALSE
+                          AND b.breached_approver_id = a.approver_id
+                          AND b.breached_at >= #{fromInclusive}
+                          AND b.breached_at < #{toExclusive}
+                    ), 0)::INTEGER AS overdue_count
+                FROM analytics.approval_step_assigned_projections a
+                WHERE a.is_deleted = FALSE
+                  AND a.assigned_at >= #{fromInclusive}
+                  AND a.assigned_at < #{toExclusive}
+                GROUP BY a.approver_id
+            )
             SELECT
-                CONCAT('approver:', SUBSTRING(breached_approver_id::TEXT FROM 1 FOR 8)) AS approver_name,
-                COUNT(*)::INTEGER AS overdue_count,
-                0 AS compliance_pct
-            FROM analytics.approval_sla_breach_projections
-            WHERE is_deleted = FALSE
-              AND breached_at >= #{fromInclusive}
-              AND breached_at < #{toExclusive}
-            GROUP BY breached_approver_id
-            ORDER BY COUNT(*) DESC, breached_approver_id ASC
+                approver_name,
+                overdue_count,
+                CASE WHEN total_count > 0
+                    THEN ROUND(((total_count - overdue_count)::NUMERIC / total_count) * 100, 2)
+                    ELSE 0
+                END AS compliance_pct
+            FROM approver_stats
+            WHERE overdue_count > 0
+            ORDER BY overdue_count DESC, approver_name ASC
             LIMIT 5
             """)
     List<WorstApproverSlaDbEntity> findWorstApprovers(

@@ -236,6 +236,49 @@ public interface AnalyticsProjectionMapper {
             @Param("eventTimestamp") Instant eventTimestamp);
 
     @Insert("""
+            INSERT INTO analytics.approval_step_assigned_projections (
+                approval_step_id, process_id, purchase_request_id, pr_number, priority,
+                step_index, step_type, approver_role, approver_id,
+                assigned_at, sla_deadline, source_event_id, event_timestamp
+            )
+            VALUES (
+                #{approvalStepId}, #{processId}, #{purchaseRequestId}, #{prNumber}, #{priority},
+                #{stepIndex}, #{stepType}, #{approverRole}, #{approverId},
+                #{assignedAt}, #{slaDeadline}, #{sourceEventId}, #{eventTimestamp}
+            )
+            ON CONFLICT (approval_step_id) DO UPDATE SET
+                process_id = EXCLUDED.process_id,
+                purchase_request_id = EXCLUDED.purchase_request_id,
+                pr_number = EXCLUDED.pr_number,
+                priority = EXCLUDED.priority,
+                step_index = EXCLUDED.step_index,
+                step_type = EXCLUDED.step_type,
+                approver_role = EXCLUDED.approver_role,
+                approver_id = EXCLUDED.approver_id,
+                assigned_at = EXCLUDED.assigned_at,
+                sla_deadline = EXCLUDED.sla_deadline,
+                source_event_id = EXCLUDED.source_event_id,
+                event_timestamp = EXCLUDED.event_timestamp,
+                is_deleted = FALSE,
+                deleted_at = NULL,
+                deleted_by = NULL
+            """)
+    void upsertApprovalStepAssigned(
+            @Param("approvalStepId") UUID approvalStepId,
+            @Param("processId") UUID processId,
+            @Param("purchaseRequestId") UUID purchaseRequestId,
+            @Param("prNumber") String prNumber,
+            @Param("priority") String priority,
+            @Param("stepIndex") int stepIndex,
+            @Param("stepType") String stepType,
+            @Param("approverRole") String approverRole,
+            @Param("approverId") UUID approverId,
+            @Param("assignedAt") Instant assignedAt,
+            @Param("slaDeadline") Instant slaDeadline,
+            @Param("sourceEventId") String sourceEventId,
+            @Param("eventTimestamp") Instant eventTimestamp);
+
+    @Insert("""
             WITH period_po AS (
                 SELECT *
                 FROM analytics.po_issued_projections

@@ -2,6 +2,7 @@ package com.eprocure.analytics.infrastructure.persistence.repository;
 
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
+import com.eprocure.analytics.domain.model.projection.ApprovalStepAssignedProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedLineProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
@@ -115,6 +116,24 @@ public class AnalyticsProjectionRepositoryImpl implements AnalyticsProjectionRep
                 projection.assignedAt(),
                 projection.slaDeadline(),
                 projection.breachedAt(),
+                projection.eventMetadata().eventId(),
+                projection.eventMetadata().eventTimestamp());
+    }
+
+    @Override
+    public void upsertApprovalStepAssigned(ApprovalStepAssignedProjection projection) {
+        mapper.upsertApprovalStepAssigned(
+                projection.approvalStepId(),
+                projection.processId(),
+                projection.purchaseRequestId(),
+                projection.prNumber(),
+                projection.priority(),
+                projection.stepIndex(),
+                projection.stepType(),
+                projection.approverRole(),
+                projection.approverId(),
+                projection.assignedAt(),
+                projection.slaDeadline(),
                 projection.eventMetadata().eventId(),
                 projection.eventMetadata().eventTimestamp());
     }

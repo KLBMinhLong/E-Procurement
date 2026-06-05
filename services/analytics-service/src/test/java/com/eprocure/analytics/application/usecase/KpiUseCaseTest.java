@@ -54,11 +54,30 @@ class KpiUseCaseTest {
 
         assertThat(repository.fromInclusive).isEqualTo(Instant.parse("2026-06-01T00:00:00Z"));
         assertThat(repository.toExclusive).isEqualTo(Instant.parse("2026-06-06T00:00:00Z"));
-        assertThat(result.overallCompliancePct().signum()).isZero();
+        // 10 assigned, 2 breached → (10-2)/10*100 = 80.00%
+        assertThat(result.overallCompliancePct()).isEqualByComparingTo("80.00");
         assertThat(result.byApproverRole()).extracting(ApproverRoleSla::role).containsExactly("MANAGER");
+        assertThat(result.byApproverRole().get(0).compliancePct()).isEqualByComparingTo("80.00");
         assertThat(result.byApproverRole().get(0).avgActionHours()).isEqualByComparingTo("26.50");
         assertThat(result.worstApprovers()).extracting(WorstApproverSla::approverName)
                 .containsExactly("approver:30000000");
+    }
+
+    @Test
+    void should_return_zero_compliance_when_no_steps_assigned() {
+        FakeKpiRepository emptyRepository = new FakeKpiRepository() {
+            @Override
+            public SlaComplianceKpi findSlaCompliance(Instant fromInclusive, Instant toExclusive) {
+                return new SlaComplianceKpi(BigDecimal.ZERO, List.of(), List.of());
+            }
+        };
+        var useCase = new GetSlaComplianceKpiUseCase(emptyRepository);
+
+        var result = useCase.execute(new GetSlaComplianceKpiQuery(ACTOR_ID, FROM_DATE, TO_DATE));
+
+        assertThat(result.overallCompliancePct()).isEqualByComparingTo("0");
+        assertThat(result.byApproverRole()).isEmpty();
+        assertThat(result.worstApprovers()).isEmpty();
     }
 
     @Test
@@ -85,7 +104,7 @@ class KpiUseCaseTest {
                 .isEqualTo(ErrorCode.VAL_001);
     }
 
-    private static final class FakeKpiRepository implements KpiRepository {
+    private static class FakeKpiRepository implements KpiRepository {
         private Instant cycleFromInclusive;
         private Instant cycleToExclusive;
         private UUID cycleDepartmentId;
@@ -110,10 +129,11 @@ class KpiUseCaseTest {
         public SlaComplianceKpi findSlaCompliance(Instant fromInclusive, Instant toExclusive) {
             this.fromInclusive = fromInclusive;
             this.toExclusive = toExclusive;
+            // Simulates 10 total assigned steps, 2 breached → 80% compliance
             return new SlaComplianceKpi(
-                    BigDecimal.ZERO,
-                    List.of(new ApproverRoleSla("MANAGER", BigDecimal.ZERO, new BigDecimal("26.50"), 2)),
-                    List.of(new WorstApproverSla("approver:30000000", 2, BigDecimal.ZERO)));
+                    new BigDecimal("80.00"),
+                    List.of(new ApproverRoleSla("MANAGER", new BigDecimal("80.00"), new BigDecimal("26.50"), 2)),
+                    List.of(new WorstApproverSla("approver:30000000", 2, new BigDecimal("80.00"))));
         }
     }
 }

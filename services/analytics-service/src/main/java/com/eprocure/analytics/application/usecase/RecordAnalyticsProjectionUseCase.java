@@ -1,12 +1,14 @@
 package com.eprocure.analytics.application.usecase;
 
 import com.eprocure.analytics.application.port.in.RecordApprovalSlaBreachedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordApprovalStepAssignedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordInvoiceMatchedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
+import com.eprocure.analytics.domain.model.projection.ApprovalStepAssignedProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
 import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
@@ -84,6 +86,19 @@ public class RecordAnalyticsProjectionUseCase {
         repository.saveProcessedEvent(projection.eventMetadata(), "APPROVAL_SLA_BREACHED");
         refreshFor(projection.breachedAt());
         log.info("[ACTION] Complete RecordApprovalSlaBreachedProjection | eventId={} | approvalStepId={}",
+                projection.eventMetadata().eventId(),
+                LogMaskingUtil.maskId(projection.approvalStepId()));
+    }
+
+    @Transactional
+    public void recordApprovalStepAssigned(RecordApprovalStepAssignedProjectionCommand command) {
+        ApprovalStepAssignedProjection projection = command.toProjection();
+        if (alreadyProcessed(projection.eventMetadata())) {
+            return;
+        }
+        repository.upsertApprovalStepAssigned(projection);
+        repository.saveProcessedEvent(projection.eventMetadata(), "APPROVAL_STEP_ASSIGNED");
+        log.info("[ACTION] Complete RecordApprovalStepAssignedProjection | eventId={} | approvalStepId={}",
                 projection.eventMetadata().eventId(),
                 LogMaskingUtil.maskId(projection.approvalStepId()));
     }
