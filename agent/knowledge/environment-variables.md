@@ -46,6 +46,10 @@
 | IAM_PROVIDER_BASE_URL | Base URL from `.env` used by Keycloak provider -> IAM internal endpoints |
 | IAM_PROVIDER_TIMEOUT_SECONDS | HTTP timeout for Keycloak provider -> IAM internal endpoints |
 | IAM_INTERNAL_API_KEY | Shared key for Keycloak provider and approval-service -> IAM internal endpoints |
+| PR_SERVICE_URL | Base URL for service-to-service calls to purchase-request-service |
+| PR_INTERNAL_API_KEY | Shared key for `/internal/purchase-requests/*` |
+| VENDOR_SERVICE_URL | Base URL for service-to-service calls to vendor-service |
+| VENDOR_INTERNAL_API_KEY | Shared key for `/internal/vendors/*` |
 | GOOGLE_CLIENT_ID | Google OAuth client ID |
 | GOOGLE_CLIENT_SECRET | Google OAuth client secret |
 | GOOGLE_REDIRECT_URI | http://localhost:8081/api/v1/auth/oauth/google/callback |

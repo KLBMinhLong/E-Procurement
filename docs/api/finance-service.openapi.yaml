@@ -178,6 +178,11 @@ components:
         deliveryAddress:  { type: string, nullable: true }
         deliveryDeadline: { type: string, format: date, nullable: true }
         paymentTerms:     { type: string, nullable: true }
+        prConversionStatus:
+          type: string
+          nullable: true
+          enum: [PENDING, DELIVERED, FAILED_RETRYABLE, FAILED_EXHAUSTED]
+          description: Trạng thái callback đánh dấu PR đã CONVERTED_TO_PO; PO send cần trạng thái DELIVERED.
         issuedAt:         { type: string, format: date-time, nullable: true }
         sentToVendorAt:   { type: string, format: date-time, nullable: true }
         createdAt:        { type: string, format: date-time }
@@ -568,6 +573,11 @@ paths:
       summary: Tạo Purchase Order từ PR đã approved
       operationId: createPurchaseOrder
       x-required-permission: PO_CREATE
+      description: |
+        Tạo manual/direct PO từ một PR đã APPROVED. Finance-service phải lấy PR line snapshot qua
+        `GET /internal/purchase-requests/{id}/po-source` và vendor snapshot qua
+        `GET /internal/vendors/{id}/po-source`; client không gửi vendor/line snapshot đáng tin cậy.
+        MVP tạo một PO gồm toàn bộ PR line items, không hỗ trợ partial/split quantity.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -596,6 +606,24 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/PurchaseOrderDetail'
+        '404':
+          description: PR hoặc vendor source không tồn tại (PR_001/VND_001 hoặc mapped dependency error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Active manual PO đã tồn tại cho PR này (FIN_018)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: PR không đủ điều kiện tạo manual PO hoặc vendor không hợp lệ (FIN_017, FIN_019)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /purchase-orders/{id}:
     get:
@@ -662,6 +690,7 @@ paths:
       summary: Gửi PO cho nhà cung cấp qua email
       operationId: sendPurchaseOrder
       x-required-permission: PO_SEND_TO_VENDOR
+      description: Chỉ được gửi PO khi PO còn ở trạng thái gửi được, delivery address/vendor email hợp lệ, và PR-conversion callback tương ứng đã được delivered.
       parameters:
         - name: id
           in: path

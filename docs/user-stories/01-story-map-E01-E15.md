@@ -106,21 +106,22 @@ Requester sees PR status APPROVED
 
 ## 6. Current Continuation Plan
 
-Hiện trạng cập nhật 2026-05-30:
+Hiện trạng cập nhật 2026-06-06:
 
-- E01-E05 và E13-A đã được triển khai theo tracker.
-- Backend hiện có `iam-service`, `purchase-request-service`, `approval-service` và Keycloak provider.
-- Frontend đã có PR, Approval inbox/detail/actions, Approval Rule Admin, Admin User/RBAC/Org UI.
-- Các service Finance/Inventory/Vendor/Notification/Analytics/Admin chưa có code backend riêng, mới có tài liệu và OpenAPI nền.
+- E01-E06, E08-E12 và E13-A đã có implementation foundation theo tracker.
+- `finance-service` đã có budget, RFQ-award PO, PO list/detail/edit/send/cancel, invoice, 3-way match, payment, và report source projections.
+- `vendor-service`, `inventory-service`, `notification-service`, và `analytics-service` đã có backend foundation.
+- E07 còn thiếu phần direct/manual PO từ approved PR. Contract chi tiết nằm tại `E07-purchase-order.md`.
+- E13 backend/admin config phần còn lại, E14 security hardening, và E15 testing/CI-CD vẫn là epic chưa làm.
 
 Thứ tự nên làm tiếp:
 
-```
-1. E10 Budget Management: dùng `E10-budget-management.md` để dựng finance-service budget foundation và thay BudgetCheckPort fallback của PR.
-2. E11 Notification & Realtime: dùng `E11-notification-realtime.md` để nhận các event PR/approval/budget và gửi email/in-app/WebSocket.
-3. E06 RFQ & Vendor: mở vendor-service/RFQ sau khi budget và notification nền đã rõ.
-4. E07 Purchase Order: tạo PO từ PR đã approved và vendor/RFQ result.
-5. E08 Goods Receipt & Inventory.
-6. E09 Invoice & Payment.
-7. E12-E15 sau khi luồng nghiệp vụ chính chạy được.
+```text
+1. E07 manual/direct PO source contracts and implementation:
+   PR po-source + converted-to-po, Vendor po-source, Finance POST /purchase-orders.
+2. E07 frontend manual PO creation UI after backend contracts are green.
+3. E15 runtime/API verification and CI/CD hardening for the full service set.
+4. E13 remaining admin/config backend and UI surfaces.
+5. E14 security hardening and penetration-readiness tasks.
+6. E12 source-enrichment follow-ups where needed for richer reports.
 ```
