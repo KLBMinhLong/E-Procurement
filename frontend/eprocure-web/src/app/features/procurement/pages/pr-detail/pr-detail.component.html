@@ -54,6 +54,17 @@
             {{ 'pr.detail.action.submit' | translate }}
           </ep-button>
         }
+
+        @if (canCreatePo()) {
+          <ep-button
+            *epHasPermission="'PO_CREATE'"
+            id="btn-create-po-from-pr"
+            variant="primary"
+            icon="file-plus-2"
+            (click)="navigateCreatePo()">
+            {{ 'pr.detail.action.createPo' | translate }}
+          </ep-button>
+        }
       </div>
     </div>
 

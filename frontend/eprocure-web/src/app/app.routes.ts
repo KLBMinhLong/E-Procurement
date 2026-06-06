@@ -59,6 +59,12 @@ export const routes: Routes = [
           import('./features/approvals/approvals.routes').then((m) => m.approvalsRoutes)
       },
       {
+        path: 'finance',
+        canActivate: [permissionGuard],
+        data: { requiredPermissions: ['PO_VIEW_OWN', 'PO_VIEW_ALL', 'PO_CREATE'] },
+        loadChildren: () => import('./features/finance/finance.routes').then((m) => m.financeRoutes)
+      },
+      {
         path: 'admin',
         canActivate: [permissionGuard],
         data: { requiredPermissions: ['ADMIN_USER_VIEW', 'ADMIN_ROLE_MANAGE', 'SYSTEM_CONFIG', 'ADMIN_APPROVAL_RULE'] },

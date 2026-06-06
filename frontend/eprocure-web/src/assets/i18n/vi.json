@@ -170,7 +170,8 @@
     "openMenu": "Mở menu",
     "primary": "Điều hướng chính",
     "procurement": "Mua sắm",
-    "purchaseRequest": "Yêu cầu mua sắm"
+    "purchaseRequest": "Yêu cầu mua sắm",
+    "purchaseOrders": "Đơn mua hàng"
   },
   "notification": {
     "empty": "Chưa có thông báo",
@@ -201,6 +202,11 @@
     "procurement": "Mua sắm",
     "profile": "Thông tin cá nhân",
     "uiShowcase": "Thư viện giao diện",
+    "finance": {
+      "purchaseOrders": "Đơn mua hàng",
+      "createPo": "Tạo đơn mua hàng",
+      "poDetail": "Chi tiết đơn mua hàng"
+    },
     "pr": {
       "create": "Tạo yêu cầu",
       "detail": "Chi tiết yêu cầu"
@@ -393,7 +399,8 @@
       "metricsLabel": "Chỉ số nhanh của yêu cầu mua sắm",
       "action": {
         "submit": "Gửi phê duyệt",
-        "confirmCancel": "Xác nhận hủy"
+        "confirmCancel": "Xác nhận hủy",
+        "createPo": "Tạo PO"
       },
       "label": {
         "justification": "Lý do mua sắm",
@@ -480,6 +487,154 @@
       "PASS": "Đạt",
       "WARNING": "Cảnh báo",
       "FAIL": "Vượt ngân sách"
+    }
+  },
+  "finance": {
+    "po": {
+      "status": {
+        "DRAFT": "Nháp",
+        "PENDING_APPROVAL": "Chờ duyệt",
+        "APPROVED": "Đã duyệt",
+        "SENT_TO_VENDOR": "Đã gửi NCC",
+        "PARTIALLY_RECEIVED": "Nhận một phần",
+        "FULLY_RECEIVED": "Đã nhận đủ",
+        "INVOICED": "Đã có hóa đơn",
+        "PAID": "Đã thanh toán",
+        "CLOSED": "Đã đóng",
+        "CANCELLED": "Đã hủy"
+      },
+      "callback": {
+        "PENDING": "Chờ đồng bộ PR",
+        "DELIVERED": "PR đã chuyển PO",
+        "FAILED_RETRYABLE": "Đang retry PR",
+        "FAILED_EXHAUSTED": "Callback lỗi",
+        "none": "Không có callback"
+      },
+      "list": {
+        "eyebrow": "Tài chính mua hàng",
+        "title": "Đơn mua hàng",
+        "subtitle": "Theo dõi PO từ tạo nháp, đồng bộ PR, gửi nhà cung cấp đến nhận hàng và thanh toán.",
+        "summaryLabel": "Tổng quan danh sách đơn mua hàng",
+        "stat": {
+          "total": "Tổng PO",
+          "draft": "Nháp",
+          "issued": "Đã phát hành",
+          "callbackPending": "Chờ PR",
+          "visibleAmount": "Giá trị đang hiển thị"
+        },
+        "action": {
+          "create": "Tạo PO"
+        },
+        "filter": {
+          "vendorPlaceholder": "Nhập Vendor UUID để lọc",
+          "clear": "Xóa lọc",
+          "status": "Trạng thái",
+          "allStatus": "Tất cả trạng thái",
+          "fromDate": "Từ ngày",
+          "toDate": "Đến ngày"
+        },
+        "col": {
+          "number": "Mã PO",
+          "vendor": "Nhà cung cấp",
+          "pr": "PR nguồn",
+          "status": "Trạng thái",
+          "callback": "Đồng bộ PR",
+          "amount": "Giá trị",
+          "createdAt": "Ngày tạo"
+        },
+        "empty": {
+          "title": "Chưa có PO phù hợp",
+          "message": "Tạo PO thủ công từ PR đã phê duyệt hoặc thay đổi bộ lọc."
+        },
+        "totalItems": "đơn mua hàng"
+      },
+      "create": {
+        "eyebrow": "Tạo PO trực tiếp",
+        "title": "Tạo đơn mua hàng từ PR đã phê duyệt",
+        "subtitle": "Finance sẽ lấy snapshot PR và Vendor qua internal contract; người dùng chỉ nhập nguồn và điều kiện giao hàng.",
+        "section": {
+          "source": "Nguồn dữ liệu",
+          "sourceHint": "PR phải ở trạng thái APPROVED và Vendor phải nằm trong AVL.",
+          "delivery": "Điều kiện giao hàng",
+          "deliveryHint": "Các thông tin này có thể chỉnh khi PO còn nháp."
+        },
+        "field": {
+          "prId": "PR UUID",
+          "vendorId": "Vendor UUID",
+          "deliveryAddress": "Địa chỉ giao hàng",
+          "deliveryDeadline": "Hạn giao hàng",
+          "paymentTerms": "Điều khoản thanh toán",
+          "notes": "Ghi chú nội bộ"
+        },
+        "placeholder": {
+          "prId": "Dán UUID của PR đã phê duyệt",
+          "vendorId": "Dán UUID nhà cung cấp trong AVL",
+          "deliveryAddress": "Nhập địa chỉ nhận hàng chi tiết",
+          "paymentTerms": "VD: NET30",
+          "notes": "Ghi chú cho PO nếu cần"
+        },
+        "summary": {
+          "title": "Kiểm tra khi tạo",
+          "subtitle": "Backend giữ nguồn dữ liệu tin cậy và callback trạng thái PR.",
+          "prCheck": "PR source",
+          "vendorCheck": "Vendor source",
+          "callback": "PR callback",
+          "backendOwned": "Backend xác thực",
+          "outbox": "Outbox retry"
+        },
+        "validation": {
+          "required": "Thông tin này là bắt buộc",
+          "minLength": "Nội dung quá ngắn",
+          "invalid": "Giá trị không hợp lệ"
+        },
+        "action": {
+          "back": "Quay lại danh sách PO",
+          "cancel": "Hủy",
+          "submit": "Tạo PO"
+        },
+        "toast": {
+          "success": "Đã tạo PO nháp thành công."
+        }
+      },
+      "detail": {
+        "eyebrow": "Chi tiết PO",
+        "subtitle": "Nguồn PR {{prNumber}} · Nhà cung cấp {{vendor}}",
+        "action": {
+          "back": "Quay lại danh sách PO",
+          "refresh": "Tải lại"
+        },
+        "stat": {
+          "totalAmount": "Tổng giá trị",
+          "lines": "Dòng hàng",
+          "deadline": "Hạn giao",
+          "sentAt": "Thời điểm gửi"
+        },
+        "section": {
+          "vendor": "Nhà cung cấp",
+          "delivery": "Giao hàng và phụ trách",
+          "lines": "Dòng hàng PO"
+        },
+        "field": {
+          "vendorName": "Tên nhà cung cấp",
+          "vendorEmail": "Email",
+          "vendorTaxCode": "Mã số thuế",
+          "deliveryAddress": "Địa chỉ giao hàng",
+          "paymentTerms": "Điều khoản thanh toán",
+          "officer": "Nhân sự mua hàng"
+        },
+        "line": {
+          "lineNumber": "Dòng",
+          "item": "Hàng hóa",
+          "category": "Danh mục",
+          "quantity": "Số lượng",
+          "unitPrice": "Đơn giá",
+          "totalPrice": "Thành tiền"
+        },
+        "empty": {
+          "title": "Không tìm thấy PO",
+          "message": "PO có thể đã bị xóa hoặc bạn không có quyền xem."
+        }
+      }
     }
   },
   "admin": {

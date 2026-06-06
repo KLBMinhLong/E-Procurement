@@ -170,7 +170,8 @@
     "openMenu": "Open menu",
     "primary": "Primary navigation",
     "procurement": "Procurement",
-    "purchaseRequest": "Purchase Requests"
+    "purchaseRequest": "Purchase Requests",
+    "purchaseOrders": "Purchase Orders"
   },
   "notification": {
     "empty": "No notifications",
@@ -201,6 +202,11 @@
     "procurement": "Procurement",
     "profile": "Personal Profile",
     "uiShowcase": "UI library",
+    "finance": {
+      "purchaseOrders": "Purchase Orders",
+      "createPo": "Create Purchase Order",
+      "poDetail": "Purchase Order Detail"
+    },
     "pr": {
       "create": "Create Request",
       "detail": "Request Details"
@@ -393,7 +399,8 @@
       "metricsLabel": "Purchase request quick metrics",
       "action": {
         "submit": "Submit for Approval",
-        "confirmCancel": "Confirm Cancel"
+        "confirmCancel": "Confirm Cancel",
+        "createPo": "Create PO"
       },
       "label": {
         "justification": "Justification",
@@ -480,6 +487,154 @@
       "PASS": "Pass",
       "WARNING": "Warning",
       "FAIL": "Budget Exceeded"
+    }
+  },
+  "finance": {
+    "po": {
+      "status": {
+        "DRAFT": "Draft",
+        "PENDING_APPROVAL": "Pending Approval",
+        "APPROVED": "Approved",
+        "SENT_TO_VENDOR": "Sent to Vendor",
+        "PARTIALLY_RECEIVED": "Partially Received",
+        "FULLY_RECEIVED": "Fully Received",
+        "INVOICED": "Invoiced",
+        "PAID": "Paid",
+        "CLOSED": "Closed",
+        "CANCELLED": "Cancelled"
+      },
+      "callback": {
+        "PENDING": "PR sync pending",
+        "DELIVERED": "PR converted",
+        "FAILED_RETRYABLE": "PR retrying",
+        "FAILED_EXHAUSTED": "Callback failed",
+        "none": "No callback"
+      },
+      "list": {
+        "eyebrow": "Purchasing Finance",
+        "title": "Purchase Orders",
+        "subtitle": "Track POs from draft creation and PR conversion through vendor dispatch, receiving, and payment.",
+        "summaryLabel": "Purchase order list summary",
+        "stat": {
+          "total": "Total POs",
+          "draft": "Drafts",
+          "issued": "Issued",
+          "callbackPending": "PR pending",
+          "visibleAmount": "Visible amount"
+        },
+        "action": {
+          "create": "Create PO"
+        },
+        "filter": {
+          "vendorPlaceholder": "Enter Vendor UUID to filter",
+          "clear": "Clear filters",
+          "status": "Status",
+          "allStatus": "All statuses",
+          "fromDate": "From date",
+          "toDate": "To date"
+        },
+        "col": {
+          "number": "PO Number",
+          "vendor": "Vendor",
+          "pr": "Source PR",
+          "status": "Status",
+          "callback": "PR sync",
+          "amount": "Amount",
+          "createdAt": "Created"
+        },
+        "empty": {
+          "title": "No matching POs",
+          "message": "Create a manual PO from an approved PR or adjust the filters."
+        },
+        "totalItems": "purchase orders"
+      },
+      "create": {
+        "eyebrow": "Direct PO creation",
+        "title": "Create a purchase order from an approved PR",
+        "subtitle": "Finance fetches trusted PR and Vendor snapshots through internal contracts; users only supply source IDs and delivery terms.",
+        "section": {
+          "source": "Source data",
+          "sourceHint": "The PR must be APPROVED and the Vendor must be on the AVL.",
+          "delivery": "Delivery terms",
+          "deliveryHint": "These fields can still be edited while the PO is in draft."
+        },
+        "field": {
+          "prId": "PR UUID",
+          "vendorId": "Vendor UUID",
+          "deliveryAddress": "Delivery address",
+          "deliveryDeadline": "Delivery deadline",
+          "paymentTerms": "Payment terms",
+          "notes": "Internal notes"
+        },
+        "placeholder": {
+          "prId": "Paste an approved PR UUID",
+          "vendorId": "Paste an AVL vendor UUID",
+          "deliveryAddress": "Enter the receiving address",
+          "paymentTerms": "E.g. NET30",
+          "notes": "Optional PO notes"
+        },
+        "summary": {
+          "title": "Creation checks",
+          "subtitle": "The backend owns trusted source validation and PR status callback.",
+          "prCheck": "PR source",
+          "vendorCheck": "Vendor source",
+          "callback": "PR callback",
+          "backendOwned": "Backend validated",
+          "outbox": "Retry outbox"
+        },
+        "validation": {
+          "required": "This field is required",
+          "minLength": "The value is too short",
+          "invalid": "Invalid value"
+        },
+        "action": {
+          "back": "Back to PO list",
+          "cancel": "Cancel",
+          "submit": "Create PO"
+        },
+        "toast": {
+          "success": "Draft PO created successfully."
+        }
+      },
+      "detail": {
+        "eyebrow": "PO Detail",
+        "subtitle": "Source PR {{prNumber}} · Vendor {{vendor}}",
+        "action": {
+          "back": "Back to PO list",
+          "refresh": "Reload"
+        },
+        "stat": {
+          "totalAmount": "Total amount",
+          "lines": "Lines",
+          "deadline": "Deadline",
+          "sentAt": "Sent at"
+        },
+        "section": {
+          "vendor": "Vendor",
+          "delivery": "Delivery and owner",
+          "lines": "PO line items"
+        },
+        "field": {
+          "vendorName": "Vendor name",
+          "vendorEmail": "Email",
+          "vendorTaxCode": "Tax code",
+          "deliveryAddress": "Delivery address",
+          "paymentTerms": "Payment terms",
+          "officer": "Purchasing officer"
+        },
+        "line": {
+          "lineNumber": "Line",
+          "item": "Item",
+          "category": "Category",
+          "quantity": "Quantity",
+          "unitPrice": "Unit price",
+          "totalPrice": "Total"
+        },
+        "empty": {
+          "title": "PO not found",
+          "message": "The PO may have been removed or you may not have access."
+        }
+      }
     }
   },
   "admin": {

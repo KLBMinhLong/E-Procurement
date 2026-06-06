@@ -193,7 +193,7 @@
 |---|---|
 | E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
 | E06: RFQ & Vendor | ✅ |
-| E07: Purchase Order | 🔄 |
+| E07: Purchase Order | ✅ |
 | E08: Goods Receipt & Inventory | ✅ |
 | E09: Invoice & Payment | ✅ |
 | E10: Budget Management | ✅ |
@@ -256,7 +256,7 @@
 | PR PO source + converted callback | ✅ | `GET /internal/purchase-requests/{id}/po-source` + `PATCH /internal/purchase-requests/{id}/converted-to-po`; purchase-request-service tests pass |
 | Vendor PO source contract | ✅ | `GET /internal/vendors/{id}/po-source`; vendor-service tests pass |
 | Manual PO create API | ✅ | `POST /api/v1/purchase-orders` creates DRAFT PO from approved PR + AVL vendor, stores callback outbox, exposes `prConversionStatus`, and blocks send until callback delivered |
-| Frontend: Manual PO create UI | ⬜ | Next E07 slice: purchasing officer form should call manual PO create API using existing PO/PR UI patterns |
+| Frontend: Manual PO create UI | ✅ | Angular `/finance/purchase-orders` list/detail/create screens, PR detail handoff, PO navigation/i18n; `npm run build` passes |
 
 ### E08: Goods Receipt & Inventory
 | Task | Status | Ghi chú |
