@@ -12,6 +12,7 @@ tags:
   - name: Vendors
   - name: RFQ
   - name: Quotes
+  - name: Internal Vendors
 security:
   - cookieAuth: []
 components:
@@ -20,6 +21,10 @@ components:
       type: apiKey
       in: cookie
       name: ep_session
+    internalApiKey:
+      type: apiKey
+      in: header
+      name: X-Internal-Api-Key
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -124,6 +129,32 @@ components:
               items: { type: string, format: uuid }
             notes:     { type: string, nullable: true }
             createdAt: { type: string, format: date-time }
+    VendorPoSource:
+      type: object
+      description: Internal trusted vendor snapshot used by finance-service when creating Purchase Orders.
+      properties:
+        id:         { type: string, format: uuid }
+        vendorCode: { type: string, example: VND-001 }
+        name:       { type: string }
+        taxCode:    { type: string }
+        email:      { type: string, format: email }
+        phone:      { type: string }
+        status:
+          type: string
+          enum: [APPROVED]
+        isOnApprovedVendorList: { type: boolean }
+        categories:
+          type: array
+          items: { type: string }
+        primaryContact:
+          type: object
+          nullable: true
+          properties:
+            id:    { type: string, format: uuid }
+            name:  { type: string }
+            role:  { type: string, nullable: true }
+            email: { type: string, format: email }
+            phone: { type: string }
     RfqInvitation:
       type: object
       properties:
@@ -201,6 +232,55 @@ components:
         createdAt:           { type: string, format: date-time }
 
 paths:
+  /internal/vendors/{id}/po-source:
+    get:
+      tags: [Internal Vendors]
+      summary: Lấy vendor snapshot phục vụ tạo Purchase Order
+      operationId: getVendorPoSource
+      description: Endpoint nội bộ cho finance-service. Bắt buộc `X-Internal-Api-Key`. Chỉ trả dữ liệu vendor khi status là `APPROVED` và vendor nằm trong AVL.
+      servers:
+        - url: https://{host}
+          variables:
+            host:
+              default: vendor-service.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Trusted vendor snapshot dùng để lưu vào PO header.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VendorPoSource'
+        '403':
+          description: Internal API key không hợp lệ (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Vendor không tồn tại (VND_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Vendor chưa approved hoặc không nằm trong AVL (VND_008)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ── Vendors ───────────────────────────────────────────────────
   /vendors:
     get:

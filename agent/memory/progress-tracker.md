@@ -35,6 +35,7 @@
 | user-stories/E04-purchase-request-service.md | ✅ | User story/use case chi tiết MVP |
 | user-stories/E05-approval-engine.md | ✅ | User story/use case chi tiết MVP |
 | user-stories/E06-rfq-vendor.md | ✅ | User story/use case chi tiết chuẩn bị vendor-service foundation |
+| user-stories/E07-purchase-order.md | ✅ | User story/use case chi tiết cho manual/direct PO, PR PO source, vendor PO source |
 | user-stories/E10-budget-management.md | ✅ | User story/use case chi tiết chuẩn bị finance-service budget foundation |
 | user-stories/E11-notification-realtime.md | ✅ | User story/use case chi tiết chuẩn bị notification-service |
 
@@ -245,13 +246,14 @@
 ### E07: Purchase Order
 | Task | Status | Ghi chú |
 |---|---|---|
+| User story/use case chi tiết | ✅ | `docs/user-stories/E07-purchase-order.md`; chốt manual PO contract: PR `po-source`, PR `converted-to-po`, Vendor `po-source`, Finance callback outbox |
 | RFQ award consumer + PO persistence | ✅ | finance-service consumes `procurement.rfq.awarded`, dedups via `finance.event_processing_log`, creates `finance.purchase_orders` + `finance.po_line_items` |
 | PO list/detail API | ✅ | `GET /api/v1/purchase-orders`, `GET /api/v1/purchase-orders/{id}` guarded by `PO_VIEW_OWN`/`PO_VIEW_ALL` |
 | PO draft edit before send | ✅ | `PATCH /api/v1/purchase-orders/{id}` updates delivery details/payment terms for DRAFT PO with `PO_EDIT` + Idempotency-Key |
 | PO send/cancel actions | ✅ | `POST /api/v1/purchase-orders/{id}/send` and `PATCH /api/v1/purchase-orders/{id}/cancel`; idempotent Redis replay + status fallback |
 | PO issue event | ✅ | Finance publishes `procurement.po.issued`; Notification subscribes and creates `PO_ISSUED` in-app notification |
 | Vendor email handoff on PO send | ✅ | Finance publishes `notification.email.send` with rendered subject/body for vendor email dispatch |
-| Manual PO create API | ⬜ | `POST /api/v1/purchase-orders` from approved PR remains deferred until PR line source for direct PO is finalized |
+| Manual PO create API | ⬜ | `POST /api/v1/purchase-orders` from approved PR is ready for implementation from E07 source contracts; MVP creates one PO for all PR lines |
 
 ### E08: Goods Receipt & Inventory
 | Task | Status | Ghi chú |

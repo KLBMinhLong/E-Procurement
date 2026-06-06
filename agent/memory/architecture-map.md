@@ -87,7 +87,9 @@
 
 5. Tạo PO
    Purchasing → Gateway → Finance Service [POST /purchase-orders]
-   Finance Service → Vendor Service [GET vendor info]
+   Finance Service → PR Service [GET /internal/purchase-requests/{id}/po-source]
+   Finance Service → Vendor Service [GET /internal/vendors/{id}/po-source]
+   Finance Service → PR Service [PATCH /internal/purchase-requests/{id}/converted-to-po]
 
 6. Gửi PO cho Vendor
    Finance Service → Notification Service [Email PO đến vendor]

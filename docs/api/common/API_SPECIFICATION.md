@@ -588,10 +588,11 @@ Query: ?priority=URGENT&minAmount=5000000&page=1&size=20
 *Requires: PO_VIEW_OWN | PO_VIEW_ALL*
 
 #### POST /api/v1/purchase-orders
-*Tạo PO từ PR đã approved. Requires: PO_CREATE*
+*Tạo manual PO từ PR đã approved. Requires: PO_CREATE*
 ```jsonc
-{ "prId": "uuid", "vendorId": "uuid", "deliveryDeadline": "2025-02-20", "paymentTerms": "NET30" }
+{ "prId": "uuid", "vendorId": "uuid", "deliveryAddress": "Kho Hà Nội", "deliveryDeadline": "2025-02-20", "paymentTerms": "NET30" }
 ```
+Finance lấy trusted PR line snapshot từ `/internal/purchase-requests/{id}/po-source` và vendor snapshot từ `/internal/vendors/{id}/po-source`; client không gửi vendor/line snapshot.
 
 #### PATCH /api/v1/purchase-orders/{id}
 *Cập nhật PO nháp trước khi gửi. Requires: PO_EDIT*

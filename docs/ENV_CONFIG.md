@@ -240,6 +240,10 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `FINANCE_KAFKA_AUTO_STARTUP` | `true` | `true` | Khi `true`, Finance start Kafka listeners sau khi app ready; lỗi broker tạm thời không làm fail `/actuator/health` |
 | `FINANCE_KAFKA_TOPIC_GR_CREATED` | `inventory.gr.created` | `inventory.gr.created` | Topic nhận GR completed snapshot từ Inventory cho 3-way match |
 | `FINANCE_KAFKA_TOPIC_INVOICE_MATCHED` | `finance.invoice.matched` | `finance.invoice.matched` | Topic phát invoice matched cho Notification |
+| `PR_SERVICE_URL` | `http://pr-service:8082` | `https://pr.eprocure.internal` | Finance gọi PR internal API để lấy PO source và mark converted |
+| `PR_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho `/internal/purchase-requests/*` |
+| `VENDOR_SERVICE_URL` | `http://vendor-service:8086` | `https://vendor.eprocure.internal` | Finance gọi Vendor internal API để lấy vendor PO source |
+| `VENDOR_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho `/internal/vendors/*` |
 
 ---
 
@@ -274,6 +278,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `VENDOR_DB_PASS` | `vendor_pass_dev` | `***SENSITIVE***` | |
 | `VENDOR_DB_POOL_MIN` | `2` | `3` | |
 | `VENDOR_DB_POOL_MAX` | `5` | `10` | |
+| `VENDOR_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho `/internal/vendors/*` |
 | `RFQ_MIN_VENDORS` | `2` | `2` | Số vendor tối thiểu cần mời trong RFQ |
 | `RFQ_REMINDER_HOURS_BEFORE` | `24` | `24` | Gửi reminder trước deadline N giờ |
 

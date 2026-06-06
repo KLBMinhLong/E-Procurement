@@ -154,6 +154,35 @@ components:
           type: string
           example: camunda-approval-001
 
+    MarkConvertedToPoRequest:
+      type: object
+      required: [poId, poNumber]
+      properties:
+        poId:
+          type: string
+          format: uuid
+        poNumber:
+          type: string
+          example: PO-2026-000001
+
+    ConvertedToPoView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        prNumber:
+          type: string
+          example: PR-2026-05-00001
+        status:
+          $ref: '#/components/schemas/PrStatus'
+        poId:
+          type: string
+          format: uuid
+        poNumber:
+          type: string
+          example: PO-2026-000001
+
     BudgetCheckResult:
       type: object
       properties:
@@ -419,6 +448,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RfqSourceLineItem'
+    PoSourceLineItem:
+      type: object
+      description: Immutable PR line snapshot used by finance-service to create direct/manual PO.
+      properties:
+        id:                { type: string, format: uuid, description: PR line item id }
+        lineNumber:        { type: integer, minimum: 1 }
+        itemCode:          { type: string, nullable: true }
+        itemName:          { type: string }
+        description:       { type: string, nullable: true }
+        categoryCode:      { type: string }
+        quantity:          { $ref: '#/components/schemas/Quantity' }
+        unitPrice:         { $ref: '#/components/schemas/Money' }
+        totalPrice:        { $ref: '#/components/schemas/Money' }
+        preferredVendorId: { type: string, format: uuid, nullable: true }
+        specifications:    { type: string, nullable: true }
+        glAccountCode:     { type: string }
+        fromCatalog:       { type: boolean }
+    PoSourceView:
+      type: object
+      description: Internal approved-PR source snapshot for direct/manual Purchase Order creation.
+      properties:
+        id:           { type: string, format: uuid }
+        prNumber:     { type: string }
+        status:       { $ref: '#/components/schemas/PrStatus' }
+        requesterId:  { type: string, format: uuid }
+        departmentId: { type: string, format: uuid }
+        fiscalYear:   { type: integer }
+        needByDate:   { type: string, format: date, nullable: true }
+        totalAmount:  { $ref: '#/components/schemas/Money' }
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoSourceLineItem'
 
 paths:
   /internal/purchase-requests/{id}/rfq-source:
@@ -459,6 +521,55 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: PR không tồn tại (PR_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/purchase-requests/{id}/po-source:
+    get:
+      tags: [Internal Purchase Requests]
+      summary: Lấy snapshot PR đã approved phục vụ tạo Purchase Order trực tiếp
+      operationId: getPurchaseRequestPoSource
+      description: Endpoint nội bộ cho finance-service. Bắt buộc `X-Internal-Api-Key`. Chỉ trả dữ liệu khi PR ở trạng thái `APPROVED`.
+      servers:
+        - url: https://{host}
+          variables:
+            host:
+              default: pr-service.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Snapshot PR approved gồm header và toàn bộ line item để finance-service tạo manual PO.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PoSourceView'
+        '403':
+          description: Internal API key không hợp lệ (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: PR không tồn tại (PR_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: PR không ở trạng thái APPROVED để tạo PO trực tiếp (PR_003)
           content:
             application/json:
               schema:
@@ -509,6 +620,62 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: PR không ở trạng thái SUBMITTED/PENDING_APPROVAL (PR_003)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/purchase-requests/{id}/converted-to-po:
+    patch:
+      tags: [Internal Purchase Requests]
+      summary: Đánh dấu PR đã được chuyển thành Purchase Order
+      operationId: markPurchaseRequestConvertedToPo
+      description: Endpoint nội bộ cho finance-service sau khi PO đã được tạo thành công. Bắt buộc `X-Internal-Api-Key` và `Idempotency-Key`.
+      servers:
+        - url: https://{host}
+          variables:
+            host:
+              default: pr-service.eprocure.internal
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkConvertedToPoRequest'
+      responses:
+        '200':
+          description: PR đã chuyển sang CONVERTED_TO_PO
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ConvertedToPoView'
+        '403':
+          description: Internal API key không hợp lệ (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: PR không tồn tại (PR_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: PR không ở trạng thái APPROVED hoặc đã converted bởi request khác (PR_003)
           content:
             application/json:
               schema:

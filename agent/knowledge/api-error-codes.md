@@ -104,6 +104,9 @@
 | FIN_009 | 422 | Phong ban nguon khong du ngan sach de chuyen |
 | FIN_010 | 422 | So tien hoa don vuot qua so tien PO cho phep |
 | FIN_011 | 422 | Trang thai Purchase Order khong cho phep thao tac |
+| FIN_017 | 422 | Purchase request khong du dieu kien tao manual PO |
+| FIN_018 | 409 | Purchase Order dang active da ton tai cho purchase request |
+| FIN_019 | 422 | Vendor khong du dieu kien tao Purchase Order |
 
 ### Inventory (INV_)
 | Code | HTTP | Description |

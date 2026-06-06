@@ -116,6 +116,10 @@
 | `FIN_008` | 409 | Hóa đơn đã được xử lý |
 | `FIN_009` | 422 | Phòng ban nguồn không đủ ngân sách để chuyển |
 | `FIN_010` | 422 | Số tiền hóa đơn vượt quá số tiền PO cho phép |
+| `FIN_011` | 422 | Trạng thái Purchase Order không cho phép thao tác |
+| `FIN_017` | 422 | Purchase request không đủ điều kiện tạo manual PO |
+| `FIN_018` | 409 | Purchase Order đang active đã tồn tại cho purchase request |
+| `FIN_019` | 422 | Vendor không đủ điều kiện tạo Purchase Order |
 
 ### 2.6 Inventory Service — INV_
 

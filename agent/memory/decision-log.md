@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-06-06] E07 manual PO source contracts
+
+- Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.
+- Reason: Finance must not read PR/Vendor databases directly or trust vendor/line snapshots from the frontend, and the existing PR `rfq-source` contract is intentionally scoped to RFQ creation instead of direct PO creation.
+- Impact: E07 manual PO MVP is one approved PR to one active manual PO containing all PR lines. Finance should add duplicate protection for active manual PO by `pr_id`, create `FIN_017`/`FIN_018`/`FIN_019`, persist a `po_pr_conversion_callbacks` outbox row in the same local transaction as PO creation, and dispatch the PR converted callback after commit with retry before allowing PO send.
+- Constraint: Partial line selection, split quantity, and multi-vendor split PO require a separate PR-line conversion ledger and are deferred.
+
 ## [2026-06-01] E11 notification template admin
 
 - Decision: Manage notification templates through `SYSTEM_CONFIG` guarded list/update/preview APIs and an Angular admin page at `/admin/notification-templates`.
