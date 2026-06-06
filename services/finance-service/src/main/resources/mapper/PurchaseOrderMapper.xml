@@ -127,6 +127,18 @@
         LIMIT 1
     </select>
 
+    <select id="findActiveManualHeaderByPrId" resultMap="purchaseOrderHeaderResultMap">
+        SELECT
+            <include refid="purchaseOrderColumns"/>
+        FROM finance.purchase_orders po
+        WHERE po.pr_id = #{prId}
+          AND po.rfq_id IS NULL
+          AND po.status != 'CANCELLED'
+          AND po.is_deleted = FALSE
+        ORDER BY po.created_at DESC
+        LIMIT 1
+    </select>
+
     <select id="findHeadersByFilter" resultMap="purchaseOrderHeaderResultMap">
         SELECT
             <include refid="purchaseOrderColumns"/>

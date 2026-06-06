@@ -2,6 +2,7 @@ package com.eprocure.finance.application.usecase;
 
 import com.eprocure.finance.application.port.in.GetPurchaseOrderQuery;
 import com.eprocure.finance.application.service.PurchaseOrderView;
+import com.eprocure.finance.application.service.PurchaseOrderViewAssembler;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
@@ -20,9 +21,13 @@ public class GetPurchaseOrderUseCase {
     private static final String PERMISSION_VIEW_OWN = "PO_VIEW_OWN";
 
     private final PurchaseOrderRepository purchaseOrderRepository;
+    private final PurchaseOrderViewAssembler viewAssembler;
 
-    public GetPurchaseOrderUseCase(PurchaseOrderRepository purchaseOrderRepository) {
+    public GetPurchaseOrderUseCase(
+            PurchaseOrderRepository purchaseOrderRepository,
+            PurchaseOrderViewAssembler viewAssembler) {
         this.purchaseOrderRepository = purchaseOrderRepository;
+        this.viewAssembler = viewAssembler;
     }
 
     @Transactional(readOnly = true)
@@ -37,7 +42,7 @@ public class GetPurchaseOrderUseCase {
         log.info("[ACTION] Complete GetPurchaseOrder | userId={} | poId={}",
                 LogMaskingUtil.maskId(query.actorId()),
                 LogMaskingUtil.maskId(query.purchaseOrderId()));
-        return PurchaseOrderView.from(purchaseOrder);
+        return viewAssembler.toView(purchaseOrder);
     }
 
     private void verifyScope(GetPurchaseOrderQuery query, PurchaseOrder purchaseOrder) {

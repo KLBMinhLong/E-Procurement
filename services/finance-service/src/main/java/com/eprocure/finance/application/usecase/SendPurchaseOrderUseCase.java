@@ -6,12 +6,15 @@ import com.eprocure.finance.application.port.out.PurchaseOrderIssuedEventPublish
 import com.eprocure.finance.application.service.IdempotencyService;
 import com.eprocure.finance.application.service.PurchaseOrderActionResult;
 import com.eprocure.finance.application.service.PurchaseOrderView;
+import com.eprocure.finance.application.service.PurchaseOrderViewAssembler;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
+import com.eprocure.finance.domain.model.PoPrConversionCallbackStatus;
 import com.eprocure.finance.domain.event.PurchaseOrderEmailRequestedEvent;
 import com.eprocure.finance.domain.event.PurchaseOrderIssuedEvent;
 import com.eprocure.finance.domain.model.PurchaseOrder;
+import com.eprocure.finance.domain.repository.PoPrConversionCallbackRepository;
 import com.eprocure.finance.domain.repository.PurchaseOrderRepository;
 import java.time.Clock;
 import java.time.Instant;
@@ -27,20 +30,26 @@ public class SendPurchaseOrderUseCase {
     private static final String IDEMPOTENCY_OPERATION = "po-send";
 
     private final PurchaseOrderRepository purchaseOrderRepository;
+    private final PoPrConversionCallbackRepository callbackRepository;
     private final PurchaseOrderIssuedEventPublisher issuedEventPublisher;
     private final PurchaseOrderEmailEventPublisher emailEventPublisher;
+    private final PurchaseOrderViewAssembler viewAssembler;
     private final IdempotencyService idempotencyService;
     private final Clock clock;
 
     public SendPurchaseOrderUseCase(
             PurchaseOrderRepository purchaseOrderRepository,
+            PoPrConversionCallbackRepository callbackRepository,
             PurchaseOrderIssuedEventPublisher issuedEventPublisher,
             PurchaseOrderEmailEventPublisher emailEventPublisher,
+            PurchaseOrderViewAssembler viewAssembler,
             IdempotencyService idempotencyService,
             Clock clock) {
         this.purchaseOrderRepository = purchaseOrderRepository;
+        this.callbackRepository = callbackRepository;
         this.issuedEventPublisher = issuedEventPublisher;
         this.emailEventPublisher = emailEventPublisher;
+        this.viewAssembler = viewAssembler;
         this.idempotencyService = idempotencyService;
         this.clock = clock;
     }
@@ -63,6 +72,7 @@ public class SendPurchaseOrderUseCase {
         }
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(command.purchaseOrderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.FIN_006));
+        verifyPrConversionDelivered(purchaseOrder);
         try {
             Instant now = Instant.now(clock);
             PurchaseOrder sent = purchaseOrder.sendToVendor(now, command.additionalNote());
@@ -74,7 +84,7 @@ public class SendPurchaseOrderUseCase {
             PurchaseOrderEmailRequestedEvent emailEvent = PurchaseOrderEmailRequestedEvent.create(sent, now);
             issuedEventPublisher.publish(issuedEvent);
             emailEventPublisher.publish(emailEvent);
-            PurchaseOrderView view = PurchaseOrderView.from(sent);
+            PurchaseOrderView view = viewAssembler.toView(sent);
             idempotencyService.save(IDEMPOTENCY_OPERATION, command.actorId(), idempotencyKey, view);
             log.info("[ACTION] Complete SendPurchaseOrder | poId={} | poNumber={} | userId={}",
                     LogMaskingUtil.maskId(command.purchaseOrderId()),
@@ -86,11 +96,19 @@ public class SendPurchaseOrderUseCase {
         }
     }
 
+    private void verifyPrConversionDelivered(PurchaseOrder purchaseOrder) {
+        PoPrConversionCallbackStatus status = callbackRepository.findStatusByPoId(purchaseOrder.id())
+                .orElse(null);
+        if (status != PoPrConversionCallbackStatus.DELIVERED) {
+            throw new BusinessException(ErrorCode.FIN_011);
+        }
+    }
+
     private PurchaseOrderActionResult replayCurrent(
             SendPurchaseOrderCommand command,
             String idempotencyKey,
             PurchaseOrder purchaseOrder) {
-        PurchaseOrderView view = PurchaseOrderView.from(purchaseOrder);
+        PurchaseOrderView view = viewAssembler.toView(purchaseOrder);
         idempotencyService.save(IDEMPOTENCY_OPERATION, command.actorId(), idempotencyKey, view);
         return PurchaseOrderActionResult.replayed(view);
     }

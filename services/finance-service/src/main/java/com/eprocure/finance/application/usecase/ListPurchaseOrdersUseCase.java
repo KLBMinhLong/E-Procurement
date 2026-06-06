@@ -4,6 +4,7 @@ import com.eprocure.finance.application.port.in.ListPurchaseOrdersQuery;
 import com.eprocure.finance.application.service.PageMeta;
 import com.eprocure.finance.application.service.PageResult;
 import com.eprocure.finance.application.service.PurchaseOrderView;
+import com.eprocure.finance.application.service.PurchaseOrderViewAssembler;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
@@ -25,9 +26,13 @@ public class ListPurchaseOrdersUseCase {
     private static final String PERMISSION_VIEW_OWN = "PO_VIEW_OWN";
 
     private final PurchaseOrderRepository purchaseOrderRepository;
+    private final PurchaseOrderViewAssembler viewAssembler;
 
-    public ListPurchaseOrdersUseCase(PurchaseOrderRepository purchaseOrderRepository) {
+    public ListPurchaseOrdersUseCase(
+            PurchaseOrderRepository purchaseOrderRepository,
+            PurchaseOrderViewAssembler viewAssembler) {
         this.purchaseOrderRepository = purchaseOrderRepository;
+        this.viewAssembler = viewAssembler;
     }
 
     @Transactional(readOnly = true)
@@ -54,9 +59,7 @@ public class ListPurchaseOrdersUseCase {
                 LogMaskingUtil.maskId(query.actorId()),
                 query.page(),
                 query.size());
-        var items = purchaseOrderRepository.findByFilter(filter).stream()
-                .map(PurchaseOrderView::from)
-                .toList();
+        var items = viewAssembler.toViews(purchaseOrderRepository.findByFilter(filter));
         long total = purchaseOrderRepository.countByFilter(filter);
         log.info("[ACTION] Complete ListPurchaseOrders | userId={} | totalCount={}",
                 LogMaskingUtil.maskId(query.actorId()),

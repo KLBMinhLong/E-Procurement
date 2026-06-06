@@ -1,6 +1,7 @@
 package com.eprocure.pr.application.usecase;
 
 import com.eprocure.pr.application.port.in.GetPurchaseRequestQuery;
+import com.eprocure.pr.application.service.PoSourceView;
 import com.eprocure.pr.application.service.PurchaseRequestDetailView;
 import com.eprocure.pr.application.service.PurchaseRequestSummaryView;
 import com.eprocure.pr.application.service.RfqSourceView;
@@ -74,6 +75,25 @@ public class GetPurchaseRequestUseCase {
                 LogMaskingUtil.maskId(pr.getId()),
                 pr.getStatus());
         return RfqSourceView.from(pr);
+    }
+
+    @Transactional(readOnly = true)
+    public PoSourceView getPoSource(UUID purchaseRequestId) {
+        Objects.requireNonNull(purchaseRequestId, "purchaseRequestId must not be null");
+
+        log.info("[ACTION] Start GetPurchaseRequestPoSource | prId={}",
+                LogMaskingUtil.maskId(purchaseRequestId));
+
+        PurchaseRequest pr = purchaseRequestRepository.findById(purchaseRequestId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PR_001));
+        if (pr.getStatus() != com.eprocure.pr.domain.model.PrStatus.APPROVED) {
+            throw new BusinessException(ErrorCode.PR_003);
+        }
+
+        log.info("[ACTION] Complete GetPurchaseRequestPoSource | prId={} | status={}",
+                LogMaskingUtil.maskId(pr.getId()),
+                pr.getStatus());
+        return PoSourceView.from(pr);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.eprocure.finance.application.service;
 
 import com.eprocure.finance.domain.model.PurchaseOrder;
+import com.eprocure.finance.domain.model.PoPrConversionCallbackStatus;
 import com.eprocure.finance.domain.model.PurchaseOrderStatus;
 import com.eprocure.finance.domain.model.vo.Money;
 import java.time.Instant;
@@ -21,11 +22,18 @@ public record PurchaseOrderView(
         String deliveryAddress,
         LocalDate deliveryDeadline,
         String paymentTerms,
+        PoPrConversionCallbackStatus prConversionStatus,
         Instant issuedAt,
         Instant sentToVendorAt,
         Instant createdAt) {
 
     public static PurchaseOrderView from(PurchaseOrder purchaseOrder) {
+        return from(purchaseOrder, null);
+    }
+
+    public static PurchaseOrderView from(
+            PurchaseOrder purchaseOrder,
+            PoPrConversionCallbackStatus prConversionStatus) {
         return new PurchaseOrderView(
                 purchaseOrder.id(),
                 purchaseOrder.poNumber(),
@@ -47,6 +55,7 @@ public record PurchaseOrderView(
                 purchaseOrder.deliveryAddress(),
                 purchaseOrder.deliveryDeadline(),
                 purchaseOrder.paymentTerms(),
+                prConversionStatus,
                 purchaseOrder.issuedAt(),
                 purchaseOrder.sentToVendorAt(),
                 purchaseOrder.createdAt());

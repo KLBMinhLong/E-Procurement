@@ -4,6 +4,7 @@ import com.eprocure.finance.application.port.in.CancelPurchaseOrderCommand;
 import com.eprocure.finance.application.service.IdempotencyService;
 import com.eprocure.finance.application.service.PurchaseOrderActionResult;
 import com.eprocure.finance.application.service.PurchaseOrderView;
+import com.eprocure.finance.application.service.PurchaseOrderViewAssembler;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
@@ -25,14 +26,17 @@ public class CancelPurchaseOrderUseCase {
 
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final IdempotencyService idempotencyService;
+    private final PurchaseOrderViewAssembler viewAssembler;
     private final Clock clock;
 
     public CancelPurchaseOrderUseCase(
             PurchaseOrderRepository purchaseOrderRepository,
             IdempotencyService idempotencyService,
+            PurchaseOrderViewAssembler viewAssembler,
             Clock clock) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.idempotencyService = idempotencyService;
+        this.viewAssembler = viewAssembler;
         this.clock = clock;
     }
 
@@ -62,7 +66,7 @@ public class CancelPurchaseOrderUseCase {
                 return replayCurrent(command, idempotencyKey, purchaseOrder);
             }
             purchaseOrderRepository.updateActionState(cancelled, command.actorId());
-            PurchaseOrderView view = PurchaseOrderView.from(cancelled);
+            PurchaseOrderView view = viewAssembler.toView(cancelled);
             idempotencyService.save(IDEMPOTENCY_OPERATION, command.actorId(), idempotencyKey, view);
             log.info("[ACTION] Complete CancelPurchaseOrder | poId={} | userId={}",
                     LogMaskingUtil.maskId(command.purchaseOrderId()),
@@ -82,7 +86,7 @@ public class CancelPurchaseOrderUseCase {
             CancelPurchaseOrderCommand command,
             String idempotencyKey,
             PurchaseOrder purchaseOrder) {
-        PurchaseOrderView view = PurchaseOrderView.from(purchaseOrder);
+        PurchaseOrderView view = viewAssembler.toView(purchaseOrder);
         idempotencyService.save(IDEMPOTENCY_OPERATION, command.actorId(), idempotencyKey, view);
         return PurchaseOrderActionResult.replayed(view);
     }

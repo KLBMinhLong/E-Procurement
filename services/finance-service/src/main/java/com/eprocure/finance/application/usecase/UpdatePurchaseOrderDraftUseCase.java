@@ -4,6 +4,7 @@ import com.eprocure.finance.application.port.in.UpdatePurchaseOrderDraftCommand;
 import com.eprocure.finance.application.service.IdempotencyService;
 import com.eprocure.finance.application.service.PurchaseOrderActionResult;
 import com.eprocure.finance.application.service.PurchaseOrderView;
+import com.eprocure.finance.application.service.PurchaseOrderViewAssembler;
 import com.eprocure.finance.common.exception.BusinessException;
 import com.eprocure.finance.common.exception.ErrorCode;
 import com.eprocure.finance.common.util.LogMaskingUtil;
@@ -22,12 +23,15 @@ public class UpdatePurchaseOrderDraftUseCase {
 
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final IdempotencyService idempotencyService;
+    private final PurchaseOrderViewAssembler viewAssembler;
 
     public UpdatePurchaseOrderDraftUseCase(
             PurchaseOrderRepository purchaseOrderRepository,
-            IdempotencyService idempotencyService) {
+            IdempotencyService idempotencyService,
+            PurchaseOrderViewAssembler viewAssembler) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.idempotencyService = idempotencyService;
+        this.viewAssembler = viewAssembler;
     }
 
     @Transactional
@@ -55,7 +59,7 @@ public class UpdatePurchaseOrderDraftUseCase {
                     command.paymentTerms(),
                     command.actorId());
             purchaseOrderRepository.updateDraftDetails(updated, command.actorId());
-            PurchaseOrderView view = PurchaseOrderView.from(updated);
+            PurchaseOrderView view = viewAssembler.toView(updated);
             idempotencyService.save(IDEMPOTENCY_OPERATION, command.actorId(), idempotencyKey, view);
             log.info("[ACTION] Complete UpdatePurchaseOrderDraft | poId={} | userId={}",
                     LogMaskingUtil.maskId(command.purchaseOrderId()),

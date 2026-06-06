@@ -20,6 +20,8 @@ public interface PurchaseOrderMapper {
 
     Optional<PurchaseOrderDbEntity> findHeaderByRfqId(@Param("rfqId") UUID rfqId);
 
+    Optional<PurchaseOrderDbEntity> findActiveManualHeaderByPrId(@Param("prId") UUID prId);
+
     List<PurchaseOrderDbEntity> findHeadersByFilter(@Param("filter") PurchaseOrderFilter filter);
 
     long countByFilter(@Param("filter") PurchaseOrderFilter filter);

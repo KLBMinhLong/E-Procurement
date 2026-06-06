@@ -1,6 +1,7 @@
 package com.eprocure.finance.presentation.response;
 
 import com.eprocure.finance.domain.model.PurchaseOrderStatus;
+import com.eprocure.finance.domain.model.PoPrConversionCallbackStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -20,6 +21,7 @@ public record PurchaseOrderResponse(
         String deliveryAddress,
         LocalDate deliveryDeadline,
         String paymentTerms,
+        PoPrConversionCallbackStatus prConversionStatus,
         Instant issuedAt,
         Instant sentToVendorAt,
         Instant createdAt) {
