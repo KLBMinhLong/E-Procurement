@@ -65,11 +65,11 @@ Acceptance:
 - A scheduled worker claims `QUEUED` jobs, marks them `PROCESSING`, renders local PDF/XLSX files, then marks jobs `COMPLETED` or `FAILED`.
 - `GET /api/v1/reports/jobs/{jobId}/download` streams the generated file for the requesting user after completion.
 - Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
-- Current renderer includes projection-backed summary rows for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, `VENDOR_SCORECARD`, `SPENDING_BY_DEPARTMENT`, `RFQ_SAVINGS`, and `INVENTORY_PENDING`.
+- Current renderer includes type-specific summary rows for every report type: `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, `VENDOR_SCORECARD`, `SPENDING_BY_DEPARTMENT`, `BUDGET_VS_PLAN`, `RFQ_SAVINGS`, `INVENTORY_PENDING`, `MAVERICK_SPENDING`, and `AUDIT_TRAIL`.
 - Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
 - PDF exports use JasperReports templates with report-type-specific titles, metadata/filter summaries, and metric tables.
 - XLSX exports use Apache POI workbooks with styled sections, frozen table headers, filters, and fixed business-friendly column widths.
-- Unsupported report types explicitly render foundation rows that identify the missing projection contract; `RFQ_SAVINGS` reports surface RFQ award metrics and state that savings baseline pricing is not available yet; `SPENDING_BY_DEPARTMENT` uses temporary `dept:{uuid-prefix}` labels until IAM department name projection is available.
+- Source-limited report types render available metrics plus explicit source-scope rows: `RFQ_SAVINGS` surfaces RFQ award metrics while baseline pricing is pending; `SPENDING_BY_DEPARTMENT` uses temporary `dept:{uuid-prefix}` labels; `BUDGET_VS_PLAN` renders actual PO spend while finance budget plan snapshots are pending; `MAVERICK_SPENDING` uses emergency PRs as a controlled proxy until `procurement.emergency.abuse` is available; `AUDIT_TRAIL` uses analytics event-ingestion audit until immutable system audit projection is available.
 - Filters requiring missing source fields such as `departmentId`/`status` remain follow-up and are not exposed in the current report export API contract.
 
 ### E12-US-006 KPI API Foundation
@@ -91,6 +91,5 @@ Acceptance:
 
 ## Next Coding Slices
 
-1. Projection-backed datasets for the remaining report types beyond `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, `VENDOR_SCORECARD`, `SPENDING_BY_DEPARTMENT`, `RFQ_SAVINGS`, and `INVENTORY_PENDING`.
-2. Source contracts for `departmentId`/`status` report filters, IAM department labels, RFQ baseline savings, budget-vs-plan, maverick spend, and audit trail.
-3. Docker/Flyway/Kafka end-to-end verification for analytics projections and report worker outputs.
+1. Source-enrichment contracts for `departmentId`/`status` report filters, IAM department labels, RFQ baseline prices, finance budget plan snapshots, maverick-abuse events, and immutable system audit projection.
+2. Docker/Flyway/Kafka end-to-end verification for analytics projections and report worker outputs.

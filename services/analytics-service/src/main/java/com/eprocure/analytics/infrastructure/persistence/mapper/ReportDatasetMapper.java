@@ -326,6 +326,68 @@ public interface ReportDatasetMapper {
             @Param("categoryCode") String categoryCode);
 
     @Select("""
+            WITH po AS (
+                SELECT
+                    po.po_id,
+                    po.currency,
+                    CASE
+                        WHEN #{categoryCode,jdbcType=VARCHAR} IS NULL THEN po.total_amount
+                        ELSE COALESCE((
+                            SELECT SUM(filter_line.total_price)
+                            FROM analytics.po_issued_line_projections filter_line
+                            WHERE filter_line.po_id = po.po_id
+                              AND filter_line.is_deleted = FALSE
+                              AND filter_line.category_code = #{categoryCode,jdbcType=VARCHAR}
+                        ), 0)
+                    END AS actual_spend,
+                    po.issued_at
+                FROM analytics.po_issued_projections po
+                WHERE po.is_deleted = FALSE
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                      SELECT 1
+                      FROM analytics.po_issued_line_projections filter_line
+                      WHERE filter_line.po_id = po.po_id
+                        AND filter_line.is_deleted = FALSE
+                        AND filter_line.category_code = #{categoryCode,jdbcType=VARCHAR}
+                  ))
+            ),
+            line AS (
+                SELECT line.category_code, line.total_price
+                FROM analytics.po_issued_line_projections line
+                JOIN po ON po.po_id = line.po_id
+                WHERE line.is_deleted = FALSE
+                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
+            )
+            SELECT 'Actual PO spend' AS label, COALESCE(ROUND(SUM(actual_spend), 4), 0)::TEXT AS value FROM po
+            UNION ALL
+            SELECT 'Issued PO count', COUNT(*)::TEXT FROM po
+            UNION ALL
+            SELECT 'Average PO spend', COALESCE(ROUND(AVG(actual_spend), 4), 0)::TEXT FROM po
+            UNION ALL
+            SELECT 'Spend currency', COALESCE((SELECT currency FROM po ORDER BY issued_at DESC LIMIT 1), 'VND')
+            UNION ALL
+            SELECT 'Top spend category', COALESCE((
+                SELECT category_code || ' (' || ROUND(SUM(total_price), 4)::TEXT || ')'
+                FROM line
+                GROUP BY category_code
+                ORDER BY SUM(total_price) DESC, category_code ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Budget plan source', 'Finance budget snapshot projection pending'
+            UNION ALL
+            SELECT 'Variance status', 'Actual spend available; planned budget unavailable'
+            """)
+    List<ReportDatasetRowDbEntity> findBudgetVsPlanRows(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive,
+            @Param("vendorId") UUID vendorId,
+            @Param("categoryCode") String categoryCode);
+
+    @Select("""
             WITH rfq AS (
                 SELECT rfq.rfq_id, rfq.rfq_number, rfq.vendor_id, rfq.vendor_name, rfq.total_amount, rfq.awarded_at
                 FROM analytics.rfq_awarded_projections rfq
@@ -441,4 +503,98 @@ public interface ReportDatasetMapper {
             @Param("toExclusive") Instant toExclusive,
             @Param("vendorId") UUID vendorId,
             @Param("categoryCode") String categoryCode);
+
+    @Select("""
+            WITH emergency_pr AS (
+                SELECT pr.pr_id, pr.pr_number, pr.department_id, pr.total_amount, pr.submitted_at
+                FROM analytics.pr_submitted_projections pr
+                WHERE pr.is_deleted = FALSE
+                  AND UPPER(pr.priority) = 'EMERGENCY'
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR pr.submitted_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR pr.submitted_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR EXISTS (
+                      SELECT 1
+                      FROM analytics.po_issued_projections po
+                      WHERE po.pr_id = pr.pr_id
+                        AND po.is_deleted = FALSE
+                        AND po.vendor_id = #{vendorId,jdbcType=OTHER}
+                  ))
+                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                      SELECT 1
+                      FROM analytics.po_issued_projections po
+                      JOIN analytics.po_issued_line_projections line ON line.po_id = po.po_id
+                      WHERE po.pr_id = pr.pr_id
+                        AND po.is_deleted = FALSE
+                        AND line.is_deleted = FALSE
+                        AND line.category_code = #{categoryCode,jdbcType=VARCHAR}
+                  ))
+            )
+            SELECT 'Emergency PR proxy count' AS label, COUNT(*)::TEXT AS value FROM emergency_pr
+            UNION ALL
+            SELECT 'Emergency PR proxy amount', COALESCE(ROUND(SUM(total_amount), 4), 0)::TEXT FROM emergency_pr
+            UNION ALL
+            SELECT 'Latest emergency PR', COALESCE((
+                SELECT pr_number
+                FROM emergency_pr
+                ORDER BY submitted_at DESC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Top emergency department', COALESCE((
+                SELECT 'dept:' || LEFT(department_id::TEXT, 8) || ' (' || COUNT(*)::TEXT || ')'
+                FROM emergency_pr
+                GROUP BY department_id
+                ORDER BY COUNT(*) DESC, department_id ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Maverick source contract', 'Emergency-priority proxy; procurement.emergency.abuse pending'
+            """)
+    List<ReportDatasetRowDbEntity> findMaverickSpendingRows(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive,
+            @Param("vendorId") UUID vendorId,
+            @Param("categoryCode") String categoryCode);
+
+    @Select("""
+            WITH processed_event AS (
+                SELECT topic, handler_name, event_timestamp, processed_at
+                FROM analytics.event_processing_log
+                WHERE is_deleted = FALSE
+                  AND status = 'PROCESSED'
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR event_timestamp >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR event_timestamp < #{toExclusive,jdbcType=TIMESTAMP})
+            )
+            SELECT 'Processed analytics event count' AS label, COUNT(*)::TEXT AS value FROM processed_event
+            UNION ALL
+            SELECT 'Distinct source topics', COUNT(DISTINCT topic)::TEXT FROM processed_event
+            UNION ALL
+            SELECT 'Latest source topic', COALESCE((
+                SELECT topic
+                FROM processed_event
+                ORDER BY event_timestamp DESC, processed_at DESC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Top handler', COALESCE((
+                SELECT handler_name || ' (' || COUNT(*)::TEXT || ')'
+                FROM processed_event
+                GROUP BY handler_name
+                ORDER BY COUNT(*) DESC, handler_name ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Top source topic', COALESCE((
+                SELECT topic || ' (' || COUNT(*)::TEXT || ')'
+                FROM processed_event
+                GROUP BY topic
+                ORDER BY COUNT(*) DESC, topic ASC
+                LIMIT 1
+            ), 'N/A')
+            UNION ALL
+            SELECT 'Audit scope', 'Analytics event ingestion audit; immutable system audit projection pending'
+            """)
+    List<ReportDatasetRowDbEntity> findAuditTrailRows(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive);
 }

@@ -197,7 +197,7 @@
 | E09: Invoice & Payment | ✅ |
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
-| E12: Analytics & Reports | 🔄 |
+| E12: Analytics & Reports | ✅ |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
 | E15: Testing & CI/CD | ⬜ |
@@ -287,4 +287,4 @@
 | Unit tests | ✅ | Executive dashboard + analytics projection use-case tests pass |
 | Projection/event ingestion | ✅ | Consumes `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`, `approval.step.assigned`, `procurement.rfq.awarded`, `inventory.gr.created`; stores idempotent projections and refreshes executive dashboard snapshots where applicable |
 | Manager/purchasing/requester dashboards | ✅ | `/purchasing` reads PO + invoice projections; `/manager` reads PR submitted + SLA breach projections scoped by dept; `/requester` reads PR submitted projections scoped by requester; RFQ/GR-specific purchasing metrics remain follow-up |
-| KPI/report export APIs | 🔄 | Async report export API, cycle-time KPI from PR submitted + PO issued projections, SLA KPI with assigned-step denominator, local PDF worker with JasperReports templates, POI-based XLSX workbook export, and projection-backed datasets for PO/PR/SLA/3-way-match/cycle-time/vendor-scorecard/department-spend/RFQ-award/inventory-pending. Remaining report types plus IAM department labels and `departmentId`/`status` filters require source contracts. |
+| KPI/report export APIs | ✅ | Async report export API, cycle-time KPI from PR submitted + PO issued projections, SLA KPI with assigned-step denominator, local PDF worker with JasperReports templates, POI-based XLSX workbook export, and type-specific report datasets for all report types. Source-enrichment contracts remain future work for IAM department labels, `departmentId`/`status` filters, RFQ baseline prices, finance budget plan snapshots, maverick-abuse events, and immutable system audit projection. |

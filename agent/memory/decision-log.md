@@ -558,7 +558,7 @@
 - Decision: Back `CYCLE_TIME_ANALYSIS` and `VENDOR_SCORECARD` report exports with analytics-owned projection queries.
 - Reason: These report types can be populated from existing `pr_submitted`, `po_issued`, `po_issued_line`, and `invoice_matched` projections without new cross-service reads.
 - Impact: Cycle-time exports include linked PR count, avg/median/p95 hours, slowest PR, and top priority; vendor-scorecard exports include vendor count, PO totals, invoice totals, average PO value, and top vendor by PO value.
-- Constraint: Budget-vs-plan, spending-by-department, inventory pending, RFQ savings, maverick spending, and audit-trail reports still require upstream projection contracts.
+- Constraint: Earlier source gaps are being closed incrementally by type-specific report datasets; richer source contracts remain a follow-up only where the source service does not publish the full business fact yet.
 
 ## [2026-06-05] E12 POI XLSX report renderer
 
@@ -572,7 +572,7 @@
 - Decision: Consume `procurement.rfq.awarded` and `inventory.gr.created` into analytics-owned projection tables, then back `RFQ_SAVINGS` and `INVENTORY_PENDING` report datasets with those facts.
 - Reason: These event contracts already exist and provide enough facts for award totals, category award totals, received quantities, rejected quantities, and post-receipt pending quantities without cross-service reads.
 - Impact: Analytics stores idempotent RFQ award and GR projection rows, report exports now include RFQ award metrics and inventory pending metrics, and Jasper templates no longer use deprecated `isStretchWithOverflow`.
-- Constraint: True RFQ savings still needs a baseline price contract; budget-vs-plan, maverick spending, audit trail, and `departmentId`/`status` report filters remain source-contract follow-up.
+- Constraint: True RFQ savings still needs a baseline price contract; source-enriched budget plan, maverick abuse, audit trail, and `departmentId`/`status` report filters remain follow-up.
 
 ## [2026-06-05] E12 department spend report dataset
 
@@ -580,3 +580,10 @@
 - Reason: PR submitted facts already carry `department_id`, so department spend can be computed without cross-service reads or a new endpoint contract.
 - Impact: PDF/XLSX report jobs now render department count, linked PR/PO counts, total and average department spend, and top department rows from projection data; category filters use matching PO line totals instead of whole PO totals.
 - Constraint: Department names still render as temporary `dept:{uuid-prefix}` labels until IAM department label projection is introduced; `departmentId`/`status` report filters remain follow-up source contracts.
+
+## [2026-06-06] E12 complete report dataset coverage
+
+- Decision: Route every `ReportType` to a type-specific dataset instead of the generic pending-contract fallback.
+- Reason: The E12 report branch should produce useful, explicit output for every exported report while preserving service DB boundaries and documenting source limitations in the report rows.
+- Impact: `BUDGET_VS_PLAN` renders actual PO spend and category totals while budget plan snapshots are pending; `MAVERICK_SPENDING` uses emergency PRs as a controlled proxy; `AUDIT_TRAIL` uses analytics event-processing log rows for ingestion audit.
+- Constraint: Source-enrichment remains future work for finance budget plan snapshots, `procurement.emergency.abuse`, immutable system audit projection, RFQ baseline pricing, IAM department labels, and `departmentId`/`status` report filters.

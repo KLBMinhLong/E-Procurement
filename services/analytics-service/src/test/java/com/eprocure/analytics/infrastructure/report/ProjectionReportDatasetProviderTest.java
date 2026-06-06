@@ -119,6 +119,27 @@ class ProjectionReportDatasetProviderTest {
     }
 
     @Test
+    void should_load_budget_vs_plan_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(
+                null,
+                null,
+                2026,
+                4,
+                VENDOR_ID,
+                "IT-HARDWARE");
+
+        var dataset = provider.load(job(ReportType.BUDGET_VS_PLAN, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.budgetFromInclusive).isEqualTo(Instant.parse("2026-10-01T00:00:00Z"));
+        assertThat(mapper.budgetToExclusive).isEqualTo(Instant.parse("2027-01-01T00:00:00Z"));
+        assertThat(mapper.budgetVendorId).isEqualTo(VENDOR_ID);
+        assertThat(mapper.budgetCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
+    @Test
     void should_load_rfq_savings_dataset_from_projection_mapper() {
         FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
         ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
@@ -158,6 +179,40 @@ class ProjectionReportDatasetProviderTest {
         assertThat(mapper.inventoryToExclusive).isEqualTo(Instant.parse("2026-07-01T00:00:00Z"));
         assertThat(mapper.inventoryVendorId).isEqualTo(VENDOR_ID);
         assertThat(mapper.inventoryCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
+    @Test
+    void should_load_maverick_spending_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(
+                LocalDate.parse("2026-06-01"),
+                LocalDate.parse("2026-06-05"),
+                null,
+                null,
+                VENDOR_ID,
+                "IT-HARDWARE");
+
+        var dataset = provider.load(job(ReportType.MAVERICK_SPENDING, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.maverickFromInclusive).isEqualTo(Instant.parse("2026-06-01T00:00:00Z"));
+        assertThat(mapper.maverickToExclusive).isEqualTo(Instant.parse("2026-06-06T00:00:00Z"));
+        assertThat(mapper.maverickVendorId).isEqualTo(VENDOR_ID);
+        assertThat(mapper.maverickCategoryCode).isEqualTo("IT-HARDWARE");
+    }
+
+    @Test
+    void should_load_audit_trail_dataset_from_projection_mapper() {
+        FakeReportDatasetMapper mapper = new FakeReportDatasetMapper();
+        ProjectionReportDatasetProvider provider = new ProjectionReportDatasetProvider(mapper);
+        ReportFilterCriteria filters = new ReportFilterCriteria(null, null, 2026, 1, null, null);
+
+        var dataset = provider.load(job(ReportType.AUDIT_TRAIL, filters));
+
+        assertThat(dataset.rows()).hasSize(1);
+        assertThat(mapper.auditFromInclusive).isEqualTo(Instant.parse("2026-01-01T00:00:00Z"));
+        assertThat(mapper.auditToExclusive).isEqualTo(Instant.parse("2026-04-01T00:00:00Z"));
     }
 
     private ReportJob job(ReportType reportType, ReportFilterCriteria filters) {
@@ -203,6 +258,10 @@ class ProjectionReportDatasetProviderTest {
         private Instant departmentToExclusive;
         private UUID departmentVendorId;
         private String departmentCategoryCode;
+        private Instant budgetFromInclusive;
+        private Instant budgetToExclusive;
+        private UUID budgetVendorId;
+        private String budgetCategoryCode;
         private Instant rfqFromInclusive;
         private Instant rfqToExclusive;
         private UUID rfqVendorId;
@@ -211,6 +270,12 @@ class ProjectionReportDatasetProviderTest {
         private Instant inventoryToExclusive;
         private UUID inventoryVendorId;
         private String inventoryCategoryCode;
+        private Instant maverickFromInclusive;
+        private Instant maverickToExclusive;
+        private UUID maverickVendorId;
+        private String maverickCategoryCode;
+        private Instant auditFromInclusive;
+        private Instant auditToExclusive;
 
         @Override
         public List<ReportDatasetRowDbEntity> findPoSummaryRows(
@@ -291,6 +356,19 @@ class ProjectionReportDatasetProviderTest {
         }
 
         @Override
+        public List<ReportDatasetRowDbEntity> findBudgetVsPlanRows(
+                Instant fromInclusive,
+                Instant toExclusive,
+                UUID vendorId,
+                String categoryCode) {
+            budgetFromInclusive = fromInclusive;
+            budgetToExclusive = toExclusive;
+            budgetVendorId = vendorId;
+            budgetCategoryCode = categoryCode;
+            return List.of(row());
+        }
+
+        @Override
         public List<ReportDatasetRowDbEntity> findRfqSavingsRows(
                 Instant fromInclusive,
                 Instant toExclusive,
@@ -313,6 +391,28 @@ class ProjectionReportDatasetProviderTest {
             inventoryToExclusive = toExclusive;
             inventoryVendorId = vendorId;
             inventoryCategoryCode = categoryCode;
+            return List.of(row());
+        }
+
+        @Override
+        public List<ReportDatasetRowDbEntity> findMaverickSpendingRows(
+                Instant fromInclusive,
+                Instant toExclusive,
+                UUID vendorId,
+                String categoryCode) {
+            maverickFromInclusive = fromInclusive;
+            maverickToExclusive = toExclusive;
+            maverickVendorId = vendorId;
+            maverickCategoryCode = categoryCode;
+            return List.of(row());
+        }
+
+        @Override
+        public List<ReportDatasetRowDbEntity> findAuditTrailRows(
+                Instant fromInclusive,
+                Instant toExclusive) {
+            auditFromInclusive = fromInclusive;
+            auditToExclusive = toExclusive;
             return List.of(row());
         }
     }

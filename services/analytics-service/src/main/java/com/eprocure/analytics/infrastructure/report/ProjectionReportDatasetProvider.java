@@ -58,6 +58,11 @@ public class ProjectionReportDatasetProvider implements ReportDatasetProvider {
                     toExclusive,
                     filters.vendorId(),
                     filters.categoryCode()));
+            case BUDGET_VS_PLAN -> toRows(mapper.findBudgetVsPlanRows(
+                    fromInclusive,
+                    toExclusive,
+                    filters.vendorId(),
+                    filters.categoryCode()));
             case RFQ_SAVINGS -> toRows(mapper.findRfqSavingsRows(
                     fromInclusive,
                     toExclusive,
@@ -68,9 +73,12 @@ public class ProjectionReportDatasetProvider implements ReportDatasetProvider {
                     toExclusive,
                     filters.vendorId(),
                     filters.categoryCode()));
-            default -> List.of(
-                    new ReportDatasetRow("Dataset source", "Pending projection contract"),
-                    new ReportDatasetRow("Current status", "Foundation only"));
+            case MAVERICK_SPENDING -> toRows(mapper.findMaverickSpendingRows(
+                    fromInclusive,
+                    toExclusive,
+                    filters.vendorId(),
+                    filters.categoryCode()));
+            case AUDIT_TRAIL -> toRows(mapper.findAuditTrailRows(fromInclusive, toExclusive));
         };
         return new ReportDataset(rows);
     }
