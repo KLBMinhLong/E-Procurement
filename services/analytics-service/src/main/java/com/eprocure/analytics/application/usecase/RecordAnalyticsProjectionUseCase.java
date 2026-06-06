@@ -1,13 +1,21 @@
 package com.eprocure.analytics.application.usecase;
 
 import com.eprocure.analytics.application.port.in.RecordApprovalSlaBreachedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordApprovalStepAssignedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordGoodsReceiptCreatedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordInvoiceMatchedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordRfqAwardedProjectionCommand;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
+import com.eprocure.analytics.domain.model.projection.ApprovalStepAssignedProjection;
+import com.eprocure.analytics.domain.model.projection.GoodsReceiptCreatedProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
+import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
+import com.eprocure.analytics.domain.model.projection.RfqAwardedProjection;
 import com.eprocure.analytics.domain.repository.AnalyticsProjectionRepository;
 import java.time.Clock;
 import java.time.Instant;
@@ -29,6 +37,19 @@ public class RecordAnalyticsProjectionUseCase {
     public RecordAnalyticsProjectionUseCase(AnalyticsProjectionRepository repository, Clock clock) {
         this.repository = repository;
         this.clock = clock;
+    }
+
+    @Transactional
+    public void recordPrSubmitted(RecordPrSubmittedProjectionCommand command) {
+        PrSubmittedProjection projection = command.toProjection();
+        if (alreadyProcessed(projection.eventMetadata())) {
+            return;
+        }
+        repository.upsertPrSubmitted(projection);
+        repository.saveProcessedEvent(projection.eventMetadata(), "PR_SUBMITTED");
+        log.info("[ACTION] Complete RecordPrSubmittedProjection | eventId={} | prId={}",
+                projection.eventMetadata().eventId(),
+                LogMaskingUtil.maskId(projection.purchaseRequestId()));
     }
 
     @Transactional
@@ -71,6 +92,47 @@ public class RecordAnalyticsProjectionUseCase {
         log.info("[ACTION] Complete RecordApprovalSlaBreachedProjection | eventId={} | approvalStepId={}",
                 projection.eventMetadata().eventId(),
                 LogMaskingUtil.maskId(projection.approvalStepId()));
+    }
+
+    @Transactional
+    public void recordApprovalStepAssigned(RecordApprovalStepAssignedProjectionCommand command) {
+        ApprovalStepAssignedProjection projection = command.toProjection();
+        if (alreadyProcessed(projection.eventMetadata())) {
+            return;
+        }
+        repository.upsertApprovalStepAssigned(projection);
+        repository.saveProcessedEvent(projection.eventMetadata(), "APPROVAL_STEP_ASSIGNED");
+        log.info("[ACTION] Complete RecordApprovalStepAssignedProjection | eventId={} | approvalStepId={}",
+                projection.eventMetadata().eventId(),
+                LogMaskingUtil.maskId(projection.approvalStepId()));
+    }
+
+    @Transactional
+    public void recordRfqAwarded(RecordRfqAwardedProjectionCommand command) {
+        RfqAwardedProjection projection = command.toProjection();
+        if (alreadyProcessed(projection.eventMetadata())) {
+            return;
+        }
+        repository.upsertRfqAwarded(projection);
+        repository.saveProcessedEvent(projection.eventMetadata(), "RFQ_AWARDED");
+        refreshFor(projection.awardedAt());
+        log.info("[ACTION] Complete RecordRfqAwardedProjection | eventId={} | rfqId={}",
+                projection.eventMetadata().eventId(),
+                LogMaskingUtil.maskId(projection.rfqId()));
+    }
+
+    @Transactional
+    public void recordGoodsReceiptCreated(RecordGoodsReceiptCreatedProjectionCommand command) {
+        GoodsReceiptCreatedProjection projection = command.toProjection();
+        if (alreadyProcessed(projection.eventMetadata())) {
+            return;
+        }
+        repository.upsertGoodsReceiptCreated(projection);
+        repository.saveProcessedEvent(projection.eventMetadata(), "GR_CREATED");
+        refreshFor(projection.completedAt());
+        log.info("[ACTION] Complete RecordGoodsReceiptCreatedProjection | eventId={} | grId={}",
+                projection.eventMetadata().eventId(),
+                LogMaskingUtil.maskId(projection.grId()));
     }
 
     private boolean alreadyProcessed(AnalyticsEventMetadata metadata) {

@@ -510,3 +510,80 @@
 - Reason: The existing report export API created durable jobs but could never move jobs out of `QUEUED` or return a real file.
 - Impact: `analytics.report_export_jobs` now has `storage_path`; worker config is controlled by `ANALYTICS_REPORT_WORKER_*`; completed jobs expose `/api/v1/reports/jobs/{jobId}/download` and are served only after ownership/status/expiry checks.
 - Constraint: Generated files currently contain metadata-only report content using Java-native rendering; Jasper templates and type-specific datasets remain follow-up.
+
+## [2026-06-05] E12 projection-backed report datasets
+
+- Decision: Add a report dataset provider that reads analytics-owned projections for `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, and `THREE_WAY_MATCH`.
+- Reason: The report worker should produce useful content from existing read-model facts instead of metadata-only files.
+- Impact: PDF/XLSX exports now include summary metrics from issued PO, PO line, SLA breach, and matched invoice projection tables; report types without source contracts render explicit foundation rows.
+- Constraint: Jasper templates, richer layouts, report filters, and remaining report datasets still require follow-up source contracts and presentation work.
+
+## [2026-06-05] E12 report dataset filter criteria
+
+- Decision: Parse report export `filters` from persisted job JSON into a domain `ReportFilterCriteria`, then bind supported values into projection-backed dataset queries.
+- Reason: Report workers need replay-safe, deterministic filter behavior without dynamic SQL string construction or cross-service reads.
+- Impact: `PO_SUMMARY` and `PR_SUMMARY` honor period/fiscal-year/quarter/vendor/category filters, `SLA_COMPLIANCE` honors period/fiscal filters, and `THREE_WAY_MATCH` honors period/fiscal/vendor filters.
+- Constraint: `departmentId`, `status`, and richer report-specific filters remain follow-up until matching analytics projection fields exist.
+
+## [2026-06-05] E12 native report layout templates
+
+- Decision: Add report-type-specific native layout templates for local PDF/XLSX rendering before introducing a JasperReports dependency.
+- Reason: The worker already produces files and needs readable titles, metadata/filter summaries, metric sections, and spreadsheet styling without increasing runtime/dependency weight.
+- Impact: PDF/XLSX exports now use type-specific titles/subtitles, metadata rows, filter summaries, metric tables, XLSX styles, column widths, and frozen panes.
+- Constraint: Jasper template engine integration remains a separate follow-up for production-grade PDF templates.
+
+## [2026-06-05] E12 PR lifecycle cycle-time projection
+
+- Decision: Consume `procurement.pr.submitted` into `analytics.pr_submitted_projections` and calculate PR-to-PO cycle-time by joining submitted PR facts to issued PO facts on `pr_id`.
+- Reason: Cycle-time KPI should be based on analytics-owned projections instead of returning a foundation response or querying purchase-request-service directly.
+- Impact: `/api/v1/kpi/cycle-time` now returns average, median, p95, priority breakdown, and weekly trend from linked PR submitted and PO issued projections, scoped by date range and optional department.
+- Constraint: The submitted event timestamp is the lifecycle start because the current PR submitted payload does not carry a separate `submittedAt`; richer lifecycle milestones remain follow-up.
+
+## [2026-06-05] E12 Jasper report renderer and exposed filter contract
+
+- Decision: Use JasperReports templates for PDF output and expose only report export filters that the worker actually parses and applies.
+- Reason: API clients should not receive a contract for `departmentId` or `status` filters while analytics projections do not carry those source fields.
+- Impact: PDF exports use Jasper template resources; OpenAPI report export filters are limited to `fromDate`, `toDate`, `fiscalYear`, `quarter`, `vendorId`, and `categoryCode`.
+- Constraint: Remaining report datasets and `departmentId`/`status` filters require new source projection contracts.
+
+## [2026-06-05] E09 confirm payment budget ledger hardening
+
+- Decision: Guard invoice payment transition with `status = 'APPROVED'` at the database update before inserting payment and budget ledger rows.
+- Reason: Idempotency-Key replay protects same-key retries, but concurrent submits with different keys must not double-create payments, RELEASE, or SPEND transactions.
+- Impact: `ConfirmPaymentUseCase` records payment and budget ledger rows only after winning the PAID transition; a second payment attempt receives `FIN_015`.
+- Constraint: Full concurrent DB integration testing remains a follow-up; the current unit test covers the different-key duplicate path.
+
+## [2026-06-05] E12 cycle-time and vendor scorecard report datasets
+
+- Decision: Back `CYCLE_TIME_ANALYSIS` and `VENDOR_SCORECARD` report exports with analytics-owned projection queries.
+- Reason: These report types can be populated from existing `pr_submitted`, `po_issued`, `po_issued_line`, and `invoice_matched` projections without new cross-service reads.
+- Impact: Cycle-time exports include linked PR count, avg/median/p95 hours, slowest PR, and top priority; vendor-scorecard exports include vendor count, PO totals, invoice totals, average PO value, and top vendor by PO value.
+- Constraint: Earlier source gaps are being closed incrementally by type-specific report datasets; richer source contracts remain a follow-up only where the source service does not publish the full business fact yet.
+
+## [2026-06-05] E12 POI XLSX report renderer
+
+- Decision: Render XLSX report files with Apache POI workbooks instead of hand-built OpenXML ZIP strings.
+- Reason: XLSX generation should use a structured library already present in analytics-service so formatting, freeze panes, filters, and future workbook expansion are maintainable.
+- Impact: Excel exports now include styled title/subtitle sections, metadata rows, a frozen/filterable metric table, fixed business-friendly column widths, and workbook-level validation in tests.
+- Constraint: PDF output still uses JasperReports templates; visual review of actual generated PDFs remains part of runtime/export verification.
+
+## [2026-06-05] E12 RFQ and goods receipt analytics projections
+
+- Decision: Consume `procurement.rfq.awarded` and `inventory.gr.created` into analytics-owned projection tables, then back `RFQ_SAVINGS` and `INVENTORY_PENDING` report datasets with those facts.
+- Reason: These event contracts already exist and provide enough facts for award totals, category award totals, received quantities, rejected quantities, and post-receipt pending quantities without cross-service reads.
+- Impact: Analytics stores idempotent RFQ award and GR projection rows, report exports now include RFQ award metrics and inventory pending metrics, and Jasper templates no longer use deprecated `isStretchWithOverflow`.
+- Constraint: True RFQ savings still needs a baseline price contract; source-enriched budget plan, maverick abuse, audit trail, and `departmentId`/`status` report filters remain follow-up.
+
+## [2026-06-05] E12 department spend report dataset
+
+- Decision: Back `SPENDING_BY_DEPARTMENT` report exports by joining analytics-owned `po_issued_projections` to `pr_submitted_projections` on `pr_id`.
+- Reason: PR submitted facts already carry `department_id`, so department spend can be computed without cross-service reads or a new endpoint contract.
+- Impact: PDF/XLSX report jobs now render department count, linked PR/PO counts, total and average department spend, and top department rows from projection data; category filters use matching PO line totals instead of whole PO totals.
+- Constraint: Department names still render as temporary `dept:{uuid-prefix}` labels until IAM department label projection is introduced; `departmentId`/`status` report filters remain follow-up source contracts.
+
+## [2026-06-06] E12 complete report dataset coverage
+
+- Decision: Route every `ReportType` to a type-specific dataset instead of the generic pending-contract fallback.
+- Reason: The E12 report branch should produce useful, explicit output for every exported report while preserving service DB boundaries and documenting source limitations in the report rows.
+- Impact: `BUDGET_VS_PLAN` renders actual PO spend and category totals while budget plan snapshots are pending; `MAVERICK_SPENDING` uses emergency PRs as a controlled proxy; `AUDIT_TRAIL` uses analytics event-processing log rows for ingestion audit.
+- Constraint: Source-enrichment remains future work for finance budget plan snapshots, `procurement.emergency.abuse`, immutable system audit projection, RFQ baseline pricing, IAM department labels, and `departmentId`/`status` report filters.

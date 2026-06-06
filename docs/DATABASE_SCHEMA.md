@@ -1153,6 +1153,12 @@ analytics.event_processing_log
   event_timestamp TIMESTAMPTZ, processed_at TIMESTAMPTZ,
   status PROCESSED, audit fields, soft delete fields
 
+analytics.pr_submitted_projections
+  pr_id UUID PK, pr_number, requester_id, department_id, priority,
+  fiscal_year INTEGER, total_amount NUMERIC(19,4), currency VARCHAR(3),
+  submitted_at TIMESTAMPTZ, source_event_id, event_timestamp TIMESTAMPTZ,
+  audit fields, soft delete fields
+
 analytics.po_issued_projections
   po_id UUID PK, po_number, pr_id, pr_number, vendor_id, vendor_name,
   total_amount NUMERIC(19,4), currency VARCHAR(3), issued_at TIMESTAMPTZ,
@@ -1176,6 +1182,35 @@ analytics.approval_sla_breach_projections
   breached_approver_id, escalated_to_approver_id, reassigned,
   assigned_at TIMESTAMPTZ, sla_deadline TIMESTAMPTZ, breached_at TIMESTAMPTZ,
   source_event_id, event_timestamp TIMESTAMPTZ, audit fields, soft delete fields
+
+analytics.approval_step_assigned_projections
+  approval_step_id UUID PK, process_id, purchase_request_id, pr_number,
+  priority, step_index, step_type, approver_role, approver_id,
+  assigned_at TIMESTAMPTZ, sla_deadline TIMESTAMPTZ,
+  source_event_id, event_timestamp TIMESTAMPTZ, audit fields, soft delete fields
+
+analytics.rfq_awarded_projections
+  rfq_id UUID PK, rfq_number, pr_id, pr_number, vendor_id, vendor_name,
+  total_amount NUMERIC(19,4), currency VARCHAR(3), awarded_at TIMESTAMPTZ,
+  source_event_id, event_timestamp TIMESTAMPTZ, audit fields, soft delete fields
+
+analytics.rfq_awarded_line_projections
+  rfq_line_item_id UUID PK, rfq_id UUID FK rfq_awarded_projections,
+  pr_line_item_id UUID, item_name, category_code,
+  quantity NUMERIC(19,4), unit, unit_price NUMERIC(19,4),
+  total_price NUMERIC(19,4), currency VARCHAR(3), audit fields, soft delete fields
+
+analytics.goods_receipt_created_projections
+  gr_id UUID PK, gr_number, po_id, po_number, warehouse_id, warehouse_keeper_id,
+  status DRAFT/PARTIAL/COMPLETE/DISCREPANCY,
+  received_at TIMESTAMPTZ, completed_at TIMESTAMPTZ,
+  source_event_id, event_timestamp TIMESTAMPTZ, audit fields, soft delete fields
+
+analytics.goods_receipt_line_projections
+  gr_line_item_id UUID PK, gr_id UUID FK goods_receipt_created_projections,
+  po_line_item_id UUID, item_code, item_name,
+  ordered_quantity NUMERIC(19,4), received_quantity NUMERIC(19,4),
+  rejected_quantity NUMERIC(19,4), unit, audit fields, soft delete fields
 ```
 
 ### 9.3 Report export jobs

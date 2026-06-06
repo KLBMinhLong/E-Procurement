@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="shared-header"
+              pageWidth="555"
+              pageHeight="80"
+              columnWidth="555"
+              leftMargin="0"
+              rightMargin="0"
+              topMargin="0"
+              bottomMargin="0"
+              uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+
+    <parameter name="reportTitle" class="java.lang.String"/>
+    <parameter name="reportSubtitle" class="java.lang.String"/>
+
+    <background>
+        <band splitType="Stretch"/>
+    </background>
+
+    <title>
+        <band height="80" splitType="Stretch">
+            <!-- Dark navy banner -->
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="55" backcolor="#1A365D" uuid="h001"/>
+                <graphicElement><pen lineWidth="0.0"/></graphicElement>
+            </rectangle>
+
+            <!-- Company name -->
+            <staticText>
+                <reportElement x="15" y="8" width="250" height="22" forecolor="#FFFFFF" uuid="h002"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="15" isBold="true"/>
+                </textElement>
+                <text><![CDATA[eProcure Enterprise]]></text>
+            </staticText>
+
+            <!-- Subtitle -->
+            <staticText>
+                <reportElement x="300" y="12" width="240" height="18" forecolor="#CBD5E0" uuid="h003"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9"/>
+                </textElement>
+                <text><![CDATA[Internal Analytics & Reports]]></text>
+            </staticText>
+
+            <!-- Confidential notice -->
+            <staticText>
+                <reportElement x="300" y="32" width="240" height="14" forecolor="#A0AEC0" uuid="h004"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="7" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[CONFIDENTIAL — Internal Use Only]]></text>
+            </staticText>
+
+            <!-- Gold accent line -->
+            <rectangle>
+                <reportElement x="0" y="55" width="555" height="2" backcolor="#C9A96E" uuid="h005"/>
+                <graphicElement><pen lineWidth="0.0"/></graphicElement>
+            </rectangle>
+
+            <!-- Report title -->
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="60" width="555" height="20" forecolor="#1A365D" uuid="h006"/>
+                <textElement>
+                    <font fontName="SansSerif" size="14" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{reportTitle}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+</jasperReport>

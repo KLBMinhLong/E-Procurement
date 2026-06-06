@@ -194,10 +194,10 @@
 | E06: RFQ & Vendor | ✅ |
 | E07: Purchase Order | 🔄 |
 | E08: Goods Receipt & Inventory | ✅ |
-| E09: Invoice & Payment | 🔄 |
+| E09: Invoice & Payment | ✅ |
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
-| E12: Analytics & Reports | 🔄 |
+| E12: Analytics & Reports | ✅ |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
 | E15: Testing & CI/CD | ⬜ |
@@ -274,7 +274,8 @@
 | Unit tests | ✅ | Invoice create/list/detail + idempotency/missing PO/vendor mismatch tests pass |
 | 3-way match API | ✅ | `POST /api/v1/invoices/{id}/match`; consumes `inventory.gr.created` into finance GR snapshots, compares PO + GR + Invoice, publishes `finance.invoice.matched` when matched |
 | Approve/dispute/payment actions | ✅ | `POST /approve`, `/dispute`, `/confirm-payment`; stores `finance.payments` and marks invoice `PAID` |
-| Budget spent ledger link | ⬜ | Deferred until PO/invoice carries a reliable budget reference for payment posting |
+| Budget spent ledger link | ✅ | Released commitment hold and recorded invoice spend on payment confirmation |
+
 
 ### E12: Analytics & Reports
 | Task | Status | Ghi chú |
@@ -284,6 +285,6 @@
 | Flyway migration analytics read model | ✅ | `db_analytics`, schema `analytics`, executive dashboard snapshot tables |
 | Executive dashboard API foundation | ✅ | `GET /api/v1/dashboard/executive` guarded by `REPORT_VIEW`, returns fresh snapshot or empty dashboard |
 | Unit tests | ✅ | Executive dashboard + analytics projection use-case tests pass |
-| Projection/event ingestion | ✅ | Consumes `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`; stores idempotent projections and refreshes executive dashboard snapshots |
-| Manager/purchasing/requester dashboards | 🔄 | `/purchasing` reads issued PO + matched invoice projections; manager/requester and RFQ/GR-specific data projections remain follow-up |
-| KPI/report export APIs | 🔄 | Async report export API, KPI endpoint, and local PDF/XLSX worker foundations added; Jasper templates, real report datasets, PR lifecycle projection, and SLA completion denominator remain follow-up |
+| Projection/event ingestion | ✅ | Consumes `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`, `approval.step.assigned`, `procurement.rfq.awarded`, `inventory.gr.created`; stores idempotent projections and refreshes executive dashboard snapshots where applicable |
+| Manager/purchasing/requester dashboards | ✅ | `/purchasing` reads PO + invoice projections; `/manager` reads PR submitted + SLA breach projections scoped by dept; `/requester` reads PR submitted projections scoped by requester; RFQ/GR-specific purchasing metrics remain follow-up |
+| KPI/report export APIs | ✅ | Async report export API, cycle-time KPI from PR submitted + PO issued projections, SLA KPI with assigned-step denominator, local PDF worker with JasperReports templates, POI-based XLSX workbook export, and type-specific report datasets for all report types. Source-enrichment contracts remain future work for IAM department labels, `departmentId`/`status` filters, RFQ baseline prices, finance budget plan snapshots, maverick-abuse events, and immutable system audit projection. |

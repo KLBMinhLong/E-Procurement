@@ -15,6 +15,7 @@ import org.apache.ibatis.annotations.Update;
 public interface ReportJobMapper {
     @Select("""
             SELECT id, report_type, format, status, download_url, storage_path, failure_reason,
+                   filters::TEXT AS filters_json,
                    created_at, completed_at, expires_at, created_by, idempotency_key
             FROM analytics.report_export_jobs
             WHERE created_by = #{actorId}
@@ -28,6 +29,7 @@ public interface ReportJobMapper {
 
     @Select("""
             SELECT id, report_type, format, status, download_url, storage_path, failure_reason,
+                   filters::TEXT AS filters_json,
                    created_at, completed_at, expires_at, created_by, idempotency_key
             FROM analytics.report_export_jobs
             WHERE id = #{jobId}
@@ -79,7 +81,7 @@ public interface ReportJobMapper {
             WHERE job.id = claimed.id
             RETURNING job.id, job.report_type, job.format, job.status, job.download_url,
                       job.storage_path, job.failure_reason, job.created_at, job.completed_at,
-                      job.expires_at, job.created_by, job.idempotency_key
+                      job.filters::TEXT AS filters_json, job.expires_at, job.created_by, job.idempotency_key
             """)
     List<ReportJobDbEntity> claimQueuedForProcessing(
             @Param("limit") int limit,

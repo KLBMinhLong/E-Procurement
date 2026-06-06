@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="shared-footer"
+              pageWidth="555"
+              pageHeight="40"
+              columnWidth="555"
+              leftMargin="0"
+              rightMargin="0"
+              topMargin="0"
+              bottomMargin="0"
+              uuid="b2c3d4e5-f6a7-8901-bcde-f12345678901">
+
+    <parameter name="generatedAt" class="java.lang.String"/>
+
+    <variable name="PAGE_NUM" class="java.lang.Integer">
+        <variableExpression><![CDATA[$V{PAGE_NUMBER}]]></variableExpression>
+    </variable>
+
+    <background>
+        <band splitType="Stretch"/>
+    </background>
+
+    <pageFooter>
+        <band height="40" splitType="Stretch">
+            <!-- Separator line -->
+            <line>
+                <reportElement x="0" y="3" width="555" height="1" forecolor="#E2E8F0" uuid="f001"/>
+            </line>
+
+            <!-- Generated info left -->
+            <textField>
+                <reportElement x="0" y="8" width="280" height="14" forecolor="#A0AEC0" uuid="f002"/>
+                <textElement>
+                    <font fontName="SansSerif" size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Generated: " + $P{generatedAt}]]></textFieldExpression>
+            </textField>
+
+            <!-- Confidential notice center -->
+            <staticText>
+                <reportElement x="150" y="8" width="255" height="14" forecolor="#A0AEC0" uuid="f003"/>
+                <textElement textAlignment="Center">
+                    <font fontName="SansSerif" size="7" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[eProcure Enterprise — Confidential]]></text>
+            </staticText>
+
+            <!-- Page number right -->
+            <textField evaluationTime="Report">
+                <reportElement x="455" y="8" width="100" height="14" forecolor="#A0AEC0" uuid="f004"/>
+                <textElement textAlignment="Right">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+</jasperReport>

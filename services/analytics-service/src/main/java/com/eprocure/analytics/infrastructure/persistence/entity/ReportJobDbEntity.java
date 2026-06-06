@@ -1,6 +1,7 @@
 package com.eprocure.analytics.infrastructure.persistence.entity;
 
 import com.eprocure.analytics.domain.model.report.ReportFormat;
+import com.eprocure.analytics.domain.model.report.ReportFilterCriteria;
 import com.eprocure.analytics.domain.model.report.ReportJob;
 import com.eprocure.analytics.domain.model.report.ReportJobStatus;
 import com.eprocure.analytics.domain.model.report.ReportType;
@@ -15,13 +16,14 @@ public class ReportJobDbEntity {
     private String downloadUrl;
     private String storagePath;
     private String failureReason;
+    private String filtersJson;
     private Instant createdAt;
     private Instant completedAt;
     private Instant expiresAt;
     private UUID createdBy;
     private UUID idempotencyKey;
 
-    public ReportJob toDomain() {
+    public ReportJob toDomain(ReportFilterCriteria filterCriteria) {
         return new ReportJob(
                 id,
                 ReportType.valueOf(reportType),
@@ -34,7 +36,8 @@ public class ReportJobDbEntity {
                 completedAt,
                 expiresAt,
                 createdBy,
-                idempotencyKey);
+                idempotencyKey,
+                filterCriteria);
     }
 
     public UUID getId() {
@@ -91,6 +94,14 @@ public class ReportJobDbEntity {
 
     public void setFailureReason(String failureReason) {
         this.failureReason = failureReason;
+    }
+
+    public String getFiltersJson() {
+        return filtersJson;
+    }
+
+    public void setFiltersJson(String filtersJson) {
+        this.filtersJson = filtersJson;
     }
 
     public Instant getCreatedAt() {

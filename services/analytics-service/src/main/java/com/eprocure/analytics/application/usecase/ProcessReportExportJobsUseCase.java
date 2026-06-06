@@ -1,6 +1,8 @@
 package com.eprocure.analytics.application.usecase;
 
 import com.eprocure.analytics.application.port.out.RenderedReport;
+import com.eprocure.analytics.application.port.out.ReportDataset;
+import com.eprocure.analytics.application.port.out.ReportDatasetProvider;
 import com.eprocure.analytics.application.port.out.ReportFileRenderer;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
 import com.eprocure.analytics.domain.model.report.ReportJob;
@@ -21,14 +23,17 @@ public class ProcessReportExportJobsUseCase {
     private static final int MAX_FAILURE_REASON_LENGTH = 500;
 
     private final ReportJobRepository repository;
+    private final ReportDatasetProvider datasetProvider;
     private final ReportFileRenderer renderer;
     private final Clock clock;
 
     public ProcessReportExportJobsUseCase(
             ReportJobRepository repository,
+            ReportDatasetProvider datasetProvider,
             ReportFileRenderer renderer,
             Clock clock) {
         this.repository = repository;
+        this.datasetProvider = datasetProvider;
         this.renderer = renderer;
         this.clock = clock;
     }
@@ -50,7 +55,8 @@ public class ProcessReportExportJobsUseCase {
 
     private void processOne(ReportJob job) {
         try {
-            RenderedReport renderedReport = renderer.render(job);
+            ReportDataset dataset = datasetProvider.load(job);
+            RenderedReport renderedReport = renderer.render(job, dataset);
             Instant completedAt = Instant.now(clock);
             repository.markCompleted(
                     job.id(),

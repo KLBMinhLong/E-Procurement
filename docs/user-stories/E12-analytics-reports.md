@@ -2,7 +2,7 @@
 
 ## Scope
 
-E12 cung cấp dashboard/KPI/report cho quản lý và finance. Foundation đầu tiên dựng `analytics-service`, executive dashboard read model, projection ingestion từ các business event đã có contract rõ ràng, KPI API contract, và async report job storage; KPI nâng cao và Jasper export làm ở các slice sau.
+E12 cung cấp dashboard/KPI/report cho quản lý và finance. Foundation đầu tiên dựng `analytics-service`, executive dashboard read model, projection ingestion từ các business event đã có contract rõ ràng, KPI API contract, async report job storage, Jasper template rendering cho các report đã có dataset, và các lát cắt dataset nâng cao sẽ hoàn thiện tiếp theo.
 
 ## User Stories
 
@@ -33,12 +33,12 @@ Acceptance:
 As an analytics service, I want to consume business events into my own read model so that executive dashboard data is populated without cross-service database reads.
 
 Acceptance:
-- Consume `procurement.po.issued`, `finance.invoice.matched`, and `approval.sla.breached`.
+- Consume `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`, `approval.step.assigned`, `procurement.rfq.awarded`, and `inventory.gr.created`.
 - Store event processing records by `eventId` so Kafka replay does not duplicate projections.
-- Store issued PO, PO line, matched invoice, and approval SLA breach fact rows in schema `analytics`.
+- Store submitted PR, issued PO, PO line, matched invoice, approval SLA, RFQ award, and goods receipt fact rows in schema `analytics`.
 - Refresh annual and quarterly executive dashboard snapshots after a supported event is recorded.
 - Snapshot metrics currently populated from available contracts: total issued PO spend, approved PR count from issued PO facts, category spend, monthly trend, top vendors, SLA breach count, and SLA breach cycle hours.
-- RFQ savings and department spend remain zero/empty until source events provide baseline price and department allocation data.
+- RFQ award, goods receipt, and PR department allocation facts are available for reports, while true RFQ savings and department names remain incomplete until source events provide baseline price and department label data.
 
 ### E12-US-004 Role Dashboard API Foundation
 
@@ -51,7 +51,7 @@ Acceptance:
 - Responses follow the analytics OpenAPI shape for each role dashboard.
 - Until role-specific read models exist, APIs return zero/empty structured data instead of failing.
 - Purchasing dashboard populates issued PO count, issued PO total, matched invoice count, and vendor pending-order rows from analytics-owned projection tables.
-- Manager/requester dashboard data and RFQ/GR-specific purchasing metrics remain follow-up until source projections are available.
+- Manager/requester dashboard data and richer RFQ/GR-specific purchasing metrics remain follow-up until source projections include the required workflow status and ownership fields.
 
 ### E12-US-005 Async Report Export Job Foundation
 
@@ -65,7 +65,12 @@ Acceptance:
 - A scheduled worker claims `QUEUED` jobs, marks them `PROCESSING`, renders local PDF/XLSX files, then marks jobs `COMPLETED` or `FAILED`.
 - `GET /api/v1/reports/jobs/{jobId}/download` streams the generated file for the requesting user after completion.
 - Download returns a business error while the file is not ready, expired, missing, or not owned by the requester.
-- Current renderer produces a foundation metadata report; Jasper templates and rich report datasets remain follow-up.
+- Current renderer includes type-specific summary rows for every report type: `PO_SUMMARY`, `PR_SUMMARY`, `SLA_COMPLIANCE`, `THREE_WAY_MATCH`, `CYCLE_TIME_ANALYSIS`, `VENDOR_SCORECARD`, `SPENDING_BY_DEPARTMENT`, `BUDGET_VS_PLAN`, `RFQ_SAVINGS`, `INVENTORY_PENDING`, `MAVERICK_SPENDING`, and `AUDIT_TRAIL`.
+- Projection-backed report datasets honor supported export filters: `fromDate`/`toDate`, `fiscalYear`/`quarter`, `vendorId`, and `categoryCode` where the source projection has matching columns.
+- PDF exports use JasperReports templates with report-type-specific titles, metadata/filter summaries, and metric tables.
+- XLSX exports use Apache POI workbooks with styled sections, frozen table headers, filters, and fixed business-friendly column widths.
+- Source-limited report types render available metrics plus explicit source-scope rows: `RFQ_SAVINGS` surfaces RFQ award metrics while baseline pricing is pending; `SPENDING_BY_DEPARTMENT` uses temporary `dept:{uuid-prefix}` labels; `BUDGET_VS_PLAN` renders actual PO spend while finance budget plan snapshots are pending; `MAVERICK_SPENDING` uses emergency PRs as a controlled proxy until `procurement.emergency.abuse` is available; `AUDIT_TRAIL` uses analytics event-ingestion audit until immutable system audit projection is available.
+- Filters requiring missing source fields such as `departmentId`/`status` remain follow-up and are not exposed in the current report export API contract.
 
 ### E12-US-006 KPI API Foundation
 
@@ -75,7 +80,8 @@ Acceptance:
 - `GET /api/v1/kpi/cycle-time` requires `REPORT_VIEW`.
 - Required filters: `from_date`, `to_date`; optional filter: `department_id`.
 - Response follows OpenAPI shape with `avgCycleHours`, `medianCycleHours`, `p95CycleHours`, `target`, `byPriority`, and `trend`.
-- Because current events do not carry a reliable PR submitted/created timestamp for PR to PO cycle time, cycle-time returns a zero/empty foundation response with target `48.00` until PR lifecycle projection is added.
+- Cycle-time reads `analytics.pr_submitted_projections` joined to `analytics.po_issued_projections` by `prId` to expose average, median, p95, priority breakdown, and weekly trend for PR-to-PO hours.
+- Cycle-time returns zero/empty metrics with target `48.00` when no linked PR submitted and PO issued projections exist in the requested period.
 - `GET /api/v1/kpi/sla-compliance` requires `REPORT_VIEW`.
 - Required filters: `from_date`, `to_date`.
 - SLA response reads `analytics.approval_sla_breach_projections` and exposes overdue count plus average breached action hours by approver role.
@@ -85,7 +91,5 @@ Acceptance:
 
 ## Next Coding Slices
 
-1. Jasper template integration and real datasets for each report type.
-2. PR lifecycle projection for real PR to PO cycle-time metrics.
-3. Approval completion/on-time projection for true SLA compliance percentages.
-4. Manager/requester dashboard data projections and RFQ/GR-specific purchasing metrics.
+1. Source-enrichment contracts for `departmentId`/`status` report filters, IAM department labels, RFQ baseline prices, finance budget plan snapshots, maverick-abuse events, and immutable system audit projection.
+2. Docker/Flyway/Kafka end-to-end verification for analytics projections and report worker outputs.

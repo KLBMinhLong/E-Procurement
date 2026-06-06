@@ -117,8 +117,8 @@ public class InvoiceRepositoryImpl implements InvoiceRepository {
     }
 
     @Override
-    public void markPaid(UUID invoiceId, UUID paidBy, java.time.Instant paidAt) {
-        invoiceMapper.markPaid(invoiceId, paidBy, paidAt);
+    public boolean markPaid(UUID invoiceId, UUID paidBy, java.time.Instant paidAt) {
+        return invoiceMapper.markPaid(invoiceId, paidBy, paidAt) == 1;
     }
 
     private Invoice toDomain(InvoiceDbEntity header) {

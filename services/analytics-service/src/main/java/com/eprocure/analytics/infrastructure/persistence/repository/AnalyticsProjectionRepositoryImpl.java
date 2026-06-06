@@ -2,9 +2,15 @@ package com.eprocure.analytics.infrastructure.persistence.repository;
 
 import com.eprocure.analytics.domain.model.projection.AnalyticsEventMetadata;
 import com.eprocure.analytics.domain.model.projection.ApprovalSlaBreachProjection;
+import com.eprocure.analytics.domain.model.projection.ApprovalStepAssignedProjection;
+import com.eprocure.analytics.domain.model.projection.GoodsReceiptCreatedProjection;
+import com.eprocure.analytics.domain.model.projection.GoodsReceiptLineProjection;
 import com.eprocure.analytics.domain.model.projection.InvoiceMatchedProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedLineProjection;
 import com.eprocure.analytics.domain.model.projection.PoIssuedProjection;
+import com.eprocure.analytics.domain.model.projection.PrSubmittedProjection;
+import com.eprocure.analytics.domain.model.projection.RfqAwardedLineProjection;
+import com.eprocure.analytics.domain.model.projection.RfqAwardedProjection;
 import com.eprocure.analytics.domain.repository.AnalyticsProjectionRepository;
 import com.eprocure.analytics.infrastructure.persistence.mapper.AnalyticsProjectionMapper;
 import java.time.Instant;
@@ -33,6 +39,22 @@ public class AnalyticsProjectionRepositoryImpl implements AnalyticsProjectionRep
                 metadata.offsetValue(),
                 handlerName,
                 metadata.eventTimestamp());
+    }
+
+    @Override
+    public void upsertPrSubmitted(PrSubmittedProjection projection) {
+        mapper.upsertPrSubmitted(
+                projection.purchaseRequestId(),
+                projection.prNumber(),
+                projection.requesterId(),
+                projection.departmentId(),
+                projection.priority(),
+                projection.fiscalYear(),
+                projection.totalAmount(),
+                projection.currency(),
+                projection.submittedAt(),
+                projection.eventMetadata().eventId(),
+                projection.eventMetadata().eventTimestamp());
     }
 
     @Override
@@ -100,6 +122,81 @@ public class AnalyticsProjectionRepositoryImpl implements AnalyticsProjectionRep
                 projection.breachedAt(),
                 projection.eventMetadata().eventId(),
                 projection.eventMetadata().eventTimestamp());
+    }
+
+    @Override
+    public void upsertApprovalStepAssigned(ApprovalStepAssignedProjection projection) {
+        mapper.upsertApprovalStepAssigned(
+                projection.approvalStepId(),
+                projection.processId(),
+                projection.purchaseRequestId(),
+                projection.prNumber(),
+                projection.priority(),
+                projection.stepIndex(),
+                projection.stepType(),
+                projection.approverRole(),
+                projection.approverId(),
+                projection.assignedAt(),
+                projection.slaDeadline(),
+                projection.eventMetadata().eventId(),
+                projection.eventMetadata().eventTimestamp());
+    }
+
+    @Override
+    public void upsertRfqAwarded(RfqAwardedProjection projection) {
+        mapper.upsertRfqAwarded(
+                projection.rfqId(),
+                projection.rfqNumber(),
+                projection.prId(),
+                projection.prNumber(),
+                projection.vendorId(),
+                projection.vendorName(),
+                projection.totalAmount(),
+                projection.currency(),
+                projection.awardedAt(),
+                projection.eventMetadata().eventId(),
+                projection.eventMetadata().eventTimestamp());
+        for (RfqAwardedLineProjection line : projection.lineItems()) {
+            mapper.upsertRfqAwardedLine(
+                    line.rfqLineItemId(),
+                    projection.rfqId(),
+                    line.prLineItemId(),
+                    line.itemName(),
+                    line.categoryCode(),
+                    line.quantity(),
+                    line.unit(),
+                    line.unitPrice(),
+                    line.totalPrice(),
+                    line.currency());
+        }
+    }
+
+    @Override
+    public void upsertGoodsReceiptCreated(GoodsReceiptCreatedProjection projection) {
+        mapper.upsertGoodsReceiptCreated(
+                projection.grId(),
+                projection.grNumber(),
+                projection.poId(),
+                projection.poNumber(),
+                projection.warehouseId(),
+                projection.warehouseKeeperId(),
+                projection.status(),
+                projection.receivedAt(),
+                projection.completedAt(),
+                projection.eventMetadata().eventId(),
+                projection.eventMetadata().eventTimestamp());
+        for (GoodsReceiptLineProjection line : projection.lineItems()) {
+            mapper.upsertGoodsReceiptLine(
+                    line.grLineItemId(),
+                    projection.grId(),
+                    line.poLineItemId(),
+                    line.itemCode(),
+                    line.itemName(),
+                    line.orderedQuantity(),
+                    line.receivedQuantity(),
+                    line.rejectedQuantity(),
+                    line.unit());
+        }
     }
 
     @Override

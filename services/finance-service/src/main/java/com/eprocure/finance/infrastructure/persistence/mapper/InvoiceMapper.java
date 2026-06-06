@@ -139,9 +139,10 @@ public interface InvoiceMapper {
                 paid_at = #{paidAt},
                 updated_by = #{paidBy}
             WHERE id = #{invoiceId}
+              AND status = 'APPROVED'
               AND is_deleted = FALSE
             """)
-    void markPaid(
+    int markPaid(
             @Param("invoiceId") UUID invoiceId,
             @Param("paidBy") UUID paidBy,
             @Param("paidAt") java.time.Instant paidAt);

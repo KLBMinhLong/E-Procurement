@@ -44,5 +44,5 @@ public interface InvoiceRepository {
 
     void markDisputed(UUID invoiceId, String reason, UUID disputedBy, Instant disputedAt, UUID idempotencyKey);
 
-    void markPaid(UUID invoiceId, UUID paidBy, Instant paidAt);
+    boolean markPaid(UUID invoiceId, UUID paidBy, Instant paidAt);
 }

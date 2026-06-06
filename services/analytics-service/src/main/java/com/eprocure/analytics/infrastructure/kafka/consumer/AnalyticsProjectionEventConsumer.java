@@ -1,8 +1,12 @@
 package com.eprocure.analytics.infrastructure.kafka.consumer;
 
 import com.eprocure.analytics.application.port.in.RecordApprovalSlaBreachedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordApprovalStepAssignedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordGoodsReceiptCreatedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordInvoiceMatchedProjectionCommand;
 import com.eprocure.analytics.application.port.in.RecordPoIssuedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordPrSubmittedProjectionCommand;
+import com.eprocure.analytics.application.port.in.RecordRfqAwardedProjectionCommand;
 import com.eprocure.analytics.application.usecase.RecordAnalyticsProjectionUseCase;
 import com.eprocure.analytics.common.util.LogMaskingUtil;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -38,18 +42,26 @@ public class AnalyticsProjectionEventConsumer {
     }
 
     @KafkaListener(topics = {
+            "${eprocure.analytics.kafka.topics.pr-submitted:procurement.pr.submitted}",
             "${eprocure.analytics.kafka.topics.po-issued:procurement.po.issued}",
             "${eprocure.analytics.kafka.topics.invoice-matched:finance.invoice.matched}",
-            "${eprocure.analytics.kafka.topics.approval-sla-breached:approval.sla.breached}"
+            "${eprocure.analytics.kafka.topics.approval-sla-breached:approval.sla.breached}",
+            "${eprocure.analytics.kafka.topics.approval-step-assigned:approval.step.assigned}",
+            "${eprocure.analytics.kafka.topics.rfq-awarded:procurement.rfq.awarded}",
+            "${eprocure.analytics.kafka.topics.gr-created:inventory.gr.created}"
     })
     public void consume(ConsumerRecord<String, String> record) {
         try {
             JsonNode root = root(record);
             String eventType = requiredText(root, "eventType");
             switch (eventType) {
+                case "PURCHASE_REQUEST_SUBMITTED" -> consumePrSubmitted(record, root);
                 case "PO_ISSUED" -> consumePoIssued(record, root);
                 case "INVOICE_MATCHED" -> consumeInvoiceMatched(record, root);
                 case "APPROVAL_SLA_BREACHED" -> consumeApprovalSlaBreached(record, root);
+                case "APPROVAL_STEP_ASSIGNED" -> consumeApprovalStepAssigned(record, root);
+                case "RFQ_AWARDED" -> consumeRfqAwarded(record, root);
+                case "GR_CREATED" -> consumeGoodsReceiptCreated(record, root);
                 default -> log.warn("[KAFKA] Skip unsupported analytics event | topic={} | eventType={}",
                         record.topic(),
                         eventType);
@@ -59,6 +71,32 @@ public class AnalyticsProjectionEventConsumer {
                     record.topic(),
                     exception.getMessage());
         }
+    }
+
+    private void consumePrSubmitted(ConsumerRecord<String, String> record, JsonNode root) {
+        Instant eventTimestamp = requiredTimestamp(root);
+        PrSubmittedPayload payload = payload(root, PrSubmittedPayload.class);
+        MoneyPayload totalAmount = money(payload.totalAmount());
+        RecordPrSubmittedProjectionCommand command = new RecordPrSubmittedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                eventTimestamp,
+                payload.purchaseRequestId(),
+                payload.prNumber(),
+                payload.requesterId(),
+                payload.departmentId(),
+                payload.priority(),
+                fiscalYear(payload.fiscalYear(), eventTimestamp),
+                totalAmount.amount(),
+                totalAmount.currency(),
+                payload.submittedAt() == null ? eventTimestamp : payload.submittedAt());
+        recordAnalyticsProjectionUseCase.recordPrSubmitted(command);
+        log.info("[KAFKA] Consumed analytics PR submitted event | topic={} | eventId={} | prId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.purchaseRequestId()));
     }
 
     private void consumePoIssued(ConsumerRecord<String, String> record, JsonNode root) {
@@ -151,6 +189,103 @@ public class AnalyticsProjectionEventConsumer {
                 LogMaskingUtil.maskId(command.approvalStepId()));
     }
 
+    private void consumeApprovalStepAssigned(ConsumerRecord<String, String> record, JsonNode root) {
+        ApprovalStepAssignedPayload payload = payload(root, ApprovalStepAssignedPayload.class);
+        RecordApprovalStepAssignedProjectionCommand command = new RecordApprovalStepAssignedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                requiredTimestamp(root),
+                payload.processId(),
+                payload.approvalStepId(),
+                payload.purchaseRequestId(),
+                payload.prNumber(),
+                payload.priority(),
+                payload.stepIndex(),
+                payload.stepType(),
+                payload.approverRole(),
+                payload.approverId(),
+                payload.assignedAt(),
+                payload.slaDeadline());
+        recordAnalyticsProjectionUseCase.recordApprovalStepAssigned(command);
+        log.info("[KAFKA] Consumed analytics step assigned event | topic={} | eventId={} | approvalStepId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.approvalStepId()));
+    }
+
+    private void consumeRfqAwarded(ConsumerRecord<String, String> record, JsonNode root) {
+        RfqAwardedPayload payload = payload(root, RfqAwardedPayload.class);
+        RecordRfqAwardedProjectionCommand command = new RecordRfqAwardedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                requiredTimestamp(root),
+                payload.rfqId(),
+                payload.rfqNumber(),
+                payload.prId(),
+                payload.prNumber(),
+                payload.vendorId(),
+                payload.vendorName(),
+                payload.totalAmount(),
+                payload.currency(),
+                requiredTimestamp(root),
+                safeList(payload.lineItems()).stream()
+                        .map(item -> new RecordRfqAwardedProjectionCommand.LineItem(
+                                item.rfqLineItemId(),
+                                item.prLineItemId(),
+                                item.itemName(),
+                                item.categoryCode(),
+                                item.quantity(),
+                                item.unit(),
+                                item.unitPrice(),
+                                item.totalPrice(),
+                                item.currency()))
+                        .toList());
+        recordAnalyticsProjectionUseCase.recordRfqAwarded(command);
+        log.info("[KAFKA] Consumed analytics RFQ awarded event | topic={} | eventId={} | rfqId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.rfqId()));
+    }
+
+    private void consumeGoodsReceiptCreated(ConsumerRecord<String, String> record, JsonNode root) {
+        GoodsReceiptCreatedPayload payload = payload(root, GoodsReceiptCreatedPayload.class);
+        RecordGoodsReceiptCreatedProjectionCommand command = new RecordGoodsReceiptCreatedProjectionCommand(
+                requiredText(root, "eventId"),
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                requiredTimestamp(root),
+                payload.grId(),
+                payload.grNumber(),
+                payload.poId(),
+                payload.poNumber(),
+                payload.warehouseId(),
+                payload.warehouseKeeperId(),
+                payload.status(),
+                payload.receivedAt(),
+                payload.completedAt(),
+                safeList(payload.lineItems()).stream()
+                        .map(item -> new RecordGoodsReceiptCreatedProjectionCommand.LineItem(
+                                item.grLineItemId(),
+                                item.poLineItemId(),
+                                item.itemCode(),
+                                item.itemName(),
+                                item.orderedQuantity(),
+                                item.receivedQuantity(),
+                                item.rejectedQuantity(),
+                                item.unit()))
+                        .toList());
+        recordAnalyticsProjectionUseCase.recordGoodsReceiptCreated(command);
+        log.info("[KAFKA] Consumed analytics GR created event | topic={} | eventId={} | grId={}",
+                record.topic(),
+                command.eventId(),
+                LogMaskingUtil.maskId(command.grId()));
+    }
+
     private JsonNode root(ConsumerRecord<String, String> record) throws JsonProcessingException {
         if (record.value() == null || record.value().isBlank()) {
             throw new IllegalArgumentException("Kafka event payload must not be blank");
@@ -202,6 +337,35 @@ public class AnalyticsProjectionEventConsumer {
 
     private <T> List<T> safeList(List<T> values) {
         return values == null ? List.of() : values;
+    }
+
+    private int fiscalYear(Integer fiscalYear, Instant eventTimestamp) {
+        return fiscalYear == null ? eventTimestamp.atZone(java.time.ZoneOffset.UTC).getYear() : fiscalYear;
+    }
+
+    private MoneyPayload money(MoneyPayload value) {
+        if (value == null) {
+            return new MoneyPayload(BigDecimal.ZERO, "VND");
+        }
+        return value;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record PrSubmittedPayload(
+            UUID purchaseRequestId,
+            String prNumber,
+            UUID requesterId,
+            UUID departmentId,
+            String priority,
+            Integer fiscalYear,
+            MoneyPayload totalAmount,
+            Instant submittedAt) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record MoneyPayload(
+            BigDecimal amount,
+            String currency) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -261,5 +425,72 @@ public class AnalyticsProjectionEventConsumer {
             Instant assignedAt,
             Instant slaDeadline,
             Instant breachedAt) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record ApprovalStepAssignedPayload(
+            UUID processId,
+            UUID approvalStepId,
+            UUID purchaseRequestId,
+            String prNumber,
+            String priority,
+            int stepIndex,
+            String stepType,
+            String approverRole,
+            UUID approverId,
+            Instant assignedAt,
+            Instant slaDeadline) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record RfqAwardedPayload(
+            UUID rfqId,
+            String rfqNumber,
+            UUID prId,
+            String prNumber,
+            UUID vendorId,
+            String vendorName,
+            BigDecimal totalAmount,
+            String currency,
+            List<RfqAwardedLineItem> lineItems) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record RfqAwardedLineItem(
+            UUID rfqLineItemId,
+            UUID prLineItemId,
+            String itemName,
+            String categoryCode,
+            BigDecimal quantity,
+            String unit,
+            BigDecimal unitPrice,
+            BigDecimal totalPrice,
+            String currency) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record GoodsReceiptCreatedPayload(
+            UUID grId,
+            String grNumber,
+            UUID poId,
+            String poNumber,
+            UUID warehouseId,
+            UUID warehouseKeeperId,
+            String status,
+            Instant receivedAt,
+            Instant completedAt,
+            List<GoodsReceiptLineItem> lineItems) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record GoodsReceiptLineItem(
+            UUID grLineItemId,
+            UUID poLineItemId,
+            String itemCode,
+            String itemName,
+            BigDecimal orderedQuantity,
+            BigDecimal receivedQuantity,
+            BigDecimal rejectedQuantity,
+            String unit) {
     }
 }
