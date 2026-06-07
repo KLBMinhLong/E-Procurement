@@ -1,13 +1,17 @@
 package com.eprocure.pr.presentation.internal;
 
 import com.eprocure.pr.application.port.in.ApplyPurchaseRequestApprovalResultCommand;
+import com.eprocure.pr.application.port.in.MarkPurchaseRequestConvertedToPoCommand;
 import com.eprocure.pr.application.port.in.MarkPurchaseRequestPendingApprovalCommand;
 import com.eprocure.pr.application.service.AppliedApprovalResultView;
+import com.eprocure.pr.application.service.ConvertedToPoView;
 import com.eprocure.pr.application.service.InternalApiKeyGuard;
 import com.eprocure.pr.application.service.MarkedPendingApprovalView;
+import com.eprocure.pr.application.service.PoSourceView;
 import com.eprocure.pr.application.service.RfqSourceView;
 import com.eprocure.pr.application.usecase.ApplyPurchaseRequestApprovalResultUseCase;
 import com.eprocure.pr.application.usecase.GetPurchaseRequestUseCase;
+import com.eprocure.pr.application.usecase.MarkPurchaseRequestConvertedToPoUseCase;
 import com.eprocure.pr.application.usecase.MarkPurchaseRequestPendingApprovalUseCase;
 import com.eprocure.pr.common.api.ApiResponse;
 import com.eprocure.pr.common.api.RequestIdUtil;
@@ -35,16 +39,19 @@ public class InternalPurchaseRequestController {
 
     private final InternalApiKeyGuard internalApiKeyGuard;
     private final MarkPurchaseRequestPendingApprovalUseCase markPendingApprovalUseCase;
+    private final MarkPurchaseRequestConvertedToPoUseCase markConvertedToPoUseCase;
     private final ApplyPurchaseRequestApprovalResultUseCase applyApprovalResultUseCase;
     private final GetPurchaseRequestUseCase getPurchaseRequestUseCase;
 
     public InternalPurchaseRequestController(
             InternalApiKeyGuard internalApiKeyGuard,
             MarkPurchaseRequestPendingApprovalUseCase markPendingApprovalUseCase,
+            MarkPurchaseRequestConvertedToPoUseCase markConvertedToPoUseCase,
             ApplyPurchaseRequestApprovalResultUseCase applyApprovalResultUseCase,
             GetPurchaseRequestUseCase getPurchaseRequestUseCase) {
         this.internalApiKeyGuard = internalApiKeyGuard;
         this.markPendingApprovalUseCase = markPendingApprovalUseCase;
+        this.markConvertedToPoUseCase = markConvertedToPoUseCase;
         this.applyApprovalResultUseCase = applyApprovalResultUseCase;
         this.getPurchaseRequestUseCase = getPurchaseRequestUseCase;
     }
@@ -59,6 +66,19 @@ public class InternalPurchaseRequestController {
                 LogMaskingUtil.maskId(id));
         return ResponseEntity.ok(ApiResponse.success(
                 getPurchaseRequestUseCase.getRfqSource(id),
+                RequestIdUtil.resolve(request)));
+    }
+
+    @GetMapping("/{id}/po-source")
+    public ResponseEntity<ApiResponse<PoSourceView>> getPoSource(
+            @PathVariable UUID id,
+            @RequestHeader(value = INTERNAL_API_KEY_HEADER, required = false) String internalApiKey,
+            HttpServletRequest request) {
+        internalApiKeyGuard.verify(internalApiKey);
+        log.info("[CONTROLLER] GET /internal/purchase-requests/{}/po-source | userId=internal",
+                LogMaskingUtil.maskId(id));
+        return ResponseEntity.ok(ApiResponse.success(
+                getPurchaseRequestUseCase.getPoSource(id),
                 RequestIdUtil.resolve(request)));
     }
 
@@ -77,6 +97,25 @@ public class InternalPurchaseRequestController {
                         id,
                         body.approvalProcessId(),
                         body.camundaProcessInstanceId()),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
+    }
+
+    @PatchMapping("/{id}/converted-to-po")
+    public ResponseEntity<ApiResponse<ConvertedToPoView>> markConvertedToPo(
+            @PathVariable UUID id,
+            @Valid @RequestBody MarkConvertedToPoRequest body,
+            @RequestHeader(value = INTERNAL_API_KEY_HEADER, required = false) String internalApiKey,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            HttpServletRequest request) {
+        internalApiKeyGuard.verify(internalApiKey);
+        log.info("[CONTROLLER] PATCH /internal/purchase-requests/{}/converted-to-po | userId=internal",
+                LogMaskingUtil.maskId(id));
+        ConvertedToPoView view = markConvertedToPoUseCase.execute(
+                new MarkPurchaseRequestConvertedToPoCommand(
+                        id,
+                        body.poId(),
+                        body.poNumber()),
                 idempotencyKey);
         return ResponseEntity.ok(ApiResponse.success(view, RequestIdUtil.resolve(request)));
     }

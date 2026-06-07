@@ -48,3 +48,7 @@ mybatis:
 eprocure:
   finance:
     budget-cache-ttl-minutes: ${BUDGET_CACHE_TTL_MINUTES:5}
+    po-conversion-callback:
+      fixed-delay-ms: ${FINANCE_PO_CONVERSION_CALLBACK_DELAY_MS:60000}
+      batch-size: ${FINANCE_PO_CONVERSION_CALLBACK_BATCH_SIZE:20}
+      max-attempts: ${FINANCE_PO_CONVERSION_CALLBACK_MAX_ATTEMPTS:5}

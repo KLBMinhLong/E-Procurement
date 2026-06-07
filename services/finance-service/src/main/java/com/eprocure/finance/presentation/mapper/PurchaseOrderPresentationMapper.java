@@ -1,6 +1,7 @@
 package com.eprocure.finance.presentation.mapper;
 
 import com.eprocure.finance.application.port.in.CancelPurchaseOrderCommand;
+import com.eprocure.finance.application.port.in.CreateManualPurchaseOrderCommand;
 import com.eprocure.finance.application.port.in.GetPurchaseOrderQuery;
 import com.eprocure.finance.application.port.in.ListPurchaseOrdersQuery;
 import com.eprocure.finance.application.port.in.SendPurchaseOrderCommand;
@@ -16,6 +17,7 @@ import com.eprocure.finance.presentation.response.PurchasingOfficerSnapshotRespo
 import com.eprocure.finance.presentation.response.QuantityResponse;
 import com.eprocure.finance.presentation.response.VendorSnapshotResponse;
 import com.eprocure.finance.presentation.request.CancelPurchaseOrderRequest;
+import com.eprocure.finance.presentation.request.CreatePurchaseOrderRequest;
 import com.eprocure.finance.presentation.request.SendPurchaseOrderRequest;
 import com.eprocure.finance.presentation.request.UpdatePurchaseOrderDraftRequest;
 import java.time.LocalDate;
@@ -65,6 +67,20 @@ public class PurchaseOrderPresentationMapper {
                 request.paymentTerms());
     }
 
+    public CreateManualPurchaseOrderCommand toCreateCommand(
+            UserPrincipal principal,
+            CreatePurchaseOrderRequest request) {
+        return new CreateManualPurchaseOrderCommand(
+                principal.getId(),
+                principal.getFullName(),
+                request.prId(),
+                request.vendorId(),
+                request.deliveryAddress(),
+                request.deliveryDeadline(),
+                request.paymentTerms(),
+                request.notes());
+    }
+
     public SendPurchaseOrderCommand toSendCommand(
             UserPrincipal principal,
             UUID poId,
@@ -108,6 +124,7 @@ public class PurchaseOrderPresentationMapper {
                 view.deliveryAddress(),
                 view.deliveryDeadline(),
                 view.paymentTerms(),
+                view.prConversionStatus(),
                 view.issuedAt(),
                 view.sentToVendorAt(),
                 view.createdAt());

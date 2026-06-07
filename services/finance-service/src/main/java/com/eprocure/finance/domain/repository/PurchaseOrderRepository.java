@@ -12,6 +12,8 @@ public interface PurchaseOrderRepository {
 
     Optional<PurchaseOrder> findByRfqId(UUID rfqId);
 
+    Optional<PurchaseOrder> findActiveManualByPrId(UUID prId);
+
     List<PurchaseOrder> findByFilter(PurchaseOrderFilter filter);
 
     long countByFilter(PurchaseOrderFilter filter);

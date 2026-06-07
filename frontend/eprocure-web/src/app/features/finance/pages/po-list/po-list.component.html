@@ -1,0 +1,216 @@
+<section class="po-list-page" aria-labelledby="po-list-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'finance.po.list.eyebrow' | translate }}</span>
+      <h1 id="po-list-heading" class="page-header__title">{{ 'finance.po.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'finance.po.list.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        *epHasPermission="'PO_CREATE'"
+        id="btn-create-manual-po"
+        variant="primary"
+        icon="file-plus-2"
+        (click)="navigateCreate()">
+        {{ 'finance.po.list.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="summary-grid" [attr.aria-label]="'finance.po.list.summaryLabel' | translate">
+    <div class="summary-card">
+      <ep-icon name="file-text" />
+      <span class="summary-card__label">{{ 'finance.po.list.stat.total' | translate }}</span>
+      <span class="summary-card__value">{{ meta()?.totalElements ?? items().length }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="file-pen-line" />
+      <span class="summary-card__label">{{ 'finance.po.list.stat.draft' | translate }}</span>
+      <span class="summary-card__value">{{ draftCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="send" />
+      <span class="summary-card__label">{{ 'finance.po.list.stat.issued' | translate }}</span>
+      <span class="summary-card__value">{{ issuedCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="refresh-cw" />
+      <span class="summary-card__label">{{ 'finance.po.list.stat.callbackPending' | translate }}</span>
+      <span class="summary-card__value">{{ callbackPendingCount() }}</span>
+    </div>
+    <div class="summary-card summary-card--amount">
+      <ep-icon name="receipt-text" />
+      <span class="summary-card__label">{{ 'finance.po.list.stat.visibleAmount' | translate }}</span>
+      <ep-amount class="summary-card__amount" [value]="visibleTotalAmount()" currency="VND" />
+    </div>
+  </div>
+
+  <div class="po-toolbar">
+    <div class="po-toolbar__top">
+      <ep-filter-bar
+        id="po-vendor-filter"
+        placeholderKey="finance.po.list.filter.vendorPlaceholder"
+        [value]="vendorId()"
+        (valueChange)="onVendorSearch($event)"
+        (refresh)="loadData()">
+      </ep-filter-bar>
+
+      @if (hasActiveFilters()) {
+        <ep-button id="btn-clear-po-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'finance.po.list.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
+
+    <div class="filter-chip-group" [attr.aria-label]="'finance.po.list.filter.status' | translate">
+      <button
+        id="filter-po-status-all"
+        class="filter-chip"
+        [class.filter-chip--active]="activeStatus() === ''"
+        (click)="onStatusChange('')">
+        {{ 'finance.po.list.filter.allStatus' | translate }}
+      </button>
+      @for (status of statuses; track status) {
+        <button
+          [id]="'filter-po-status-' + status"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === status"
+          (click)="onStatusChange(status)">
+          {{ ('finance.po.status.' + status) | translate }}
+        </button>
+      }
+    </div>
+
+    <div class="advanced-filters">
+      <label class="compact-field">
+        <span>{{ 'finance.po.list.filter.fromDate' | translate }}</span>
+        <input
+          id="filter-po-from-date"
+          type="date"
+          class="compact-field__control"
+          [value]="fromDate()"
+          (change)="onDateFilterChange('from', $any($event.target).value)">
+      </label>
+      <label class="compact-field">
+        <span>{{ 'finance.po.list.filter.toDate' | translate }}</span>
+        <input
+          id="filter-po-to-date"
+          type="date"
+          class="compact-field__control"
+          [value]="toDate()"
+          (change)="onDateFilterChange('to', $any($event.target).value)">
+      </label>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="file-text"
+      [title]="'finance.po.list.empty.title' | translate"
+      [message]="'finance.po.list.empty.message' | translate" />
+  } @else {
+    <div class="po-table-wrapper">
+      <table class="po-table" role="grid" aria-labelledby="po-list-heading">
+        <thead>
+          <tr>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('poNumber')">
+                {{ 'finance.po.list.col.number' | translate }}
+                <ep-icon [name]="sortIcon('poNumber')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col">{{ 'finance.po.list.col.vendor' | translate }}</th>
+            <th scope="col">{{ 'finance.po.list.col.pr' | translate }}</th>
+            <th scope="col">{{ 'finance.po.list.col.status' | translate }}</th>
+            <th scope="col">{{ 'finance.po.list.col.callback' | translate }}</th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('totalAmount')">
+                {{ 'finance.po.list.col.amount' | translate }}
+                <ep-icon [name]="sortIcon('totalAmount')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('createdAt')">
+                {{ 'finance.po.list.col.createdAt' | translate }}
+                <ep-icon [name]="sortIcon('createdAt')" [size]="14" />
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (po of items(); track po.id) {
+            <tr
+              [id]="'po-row-' + po.id"
+              class="po-table__row"
+              role="button"
+              tabindex="0"
+              (click)="navigateDetail(po.id)"
+              (keydown.enter)="navigateDetail(po.id)">
+              <td class="po-table__number">
+                <span class="mono">{{ po.poNumber }}</span>
+                <span class="po-table__subtitle">{{ shortId(po.id) }}</span>
+              </td>
+              <td class="po-table__vendor">
+                <span class="po-table__primary">{{ po.vendor.name }}</span>
+                <span class="po-table__subtitle">{{ po.vendor.email || shortId(po.vendor.id) }}</span>
+              </td>
+              <td>
+                <span class="mono">{{ po.prNumber }}</span>
+              </td>
+              <td>
+                <ep-badge
+                  [tone]="statusTone[po.status] || 'neutral'"
+                  [labelKey]="'finance.po.status.' + po.status" />
+              </td>
+              <td>
+                <ep-badge
+                  [tone]="po.prConversionStatus === 'DELIVERED' ? 'success' : 'warning'"
+                  [labelKey]="po.prConversionStatus ? 'finance.po.callback.' + po.prConversionStatus : 'finance.po.callback.none'" />
+              </td>
+              <td class="align-right">
+                <ep-amount [value]="amount(po)" />
+              </td>
+              <td class="align-right po-table__date">
+                {{ formatDate(po.createdAt) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as metaData) {
+      <div class="po-pagination">
+        <span class="po-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="po-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'finance.po.list.totalItems' | translate }}
+        </span>
+        <div class="po-pagination__controls">
+          <ep-button
+            id="btn-prev-po-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange({ page: metaData.page - 1, size: metaData.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-po-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="metaData.isLast"
+            (click)="onPageChange({ page: metaData.page + 1, size: metaData.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+</section>

@@ -757,6 +757,11 @@ class InvoiceUseCaseTest {
         }
 
         @Override
+        public Optional<PurchaseOrder> findActiveManualByPrId(UUID prId) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
         public List<PurchaseOrder> findByFilter(PurchaseOrderFilter filter) {
             throw new UnsupportedOperationException("not used");
         }

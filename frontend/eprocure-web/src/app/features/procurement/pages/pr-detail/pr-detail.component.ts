@@ -119,6 +119,8 @@ export class PrDetailComponent implements OnInit {
     return status === 'DRAFT' || status === 'SUBMITTED' || status === 'CHANGES_REQUESTED';
   });
 
+  readonly canCreatePo = computed(() => this.pr()?.status === 'APPROVED');
+
   readonly approvalStepTone = APPROVAL_STEP_TONE;
   readonly budgetTone = BUDGET_TONE;
 
@@ -136,6 +138,19 @@ export class PrDetailComponent implements OnInit {
     }
     this.router.navigate(['/procurement', 'create'], {
       queryParams: { edit: id }
+    });
+  }
+
+  navigateCreatePo(): void {
+    const data = this.pr();
+    if (!data) {
+      return;
+    }
+    this.router.navigate(['/finance', 'purchase-orders', 'create'], {
+      queryParams: {
+        prId: data.id,
+        vendorId: this.preferredVendorId(data)
+      }
     });
   }
 
@@ -283,5 +298,9 @@ export class PrDetailComponent implements OnInit {
     const raw = typeof value === 'object' && value !== null ? value.amount : value;
     const parsed = Number(raw ?? 0);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private preferredVendorId(data: PurchaseRequestDetail): string | null {
+    return data.lineItems.find((item) => Boolean(item.preferredVendorId))?.preferredVendorId ?? null;
   }
 }

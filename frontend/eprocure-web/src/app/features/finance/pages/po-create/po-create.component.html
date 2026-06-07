@@ -1,0 +1,138 @@
+<section class="po-create-page" aria-labelledby="po-create-heading">
+  <ep-breadcrumb />
+
+  <div class="po-create-page__nav">
+    <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="navigateBack()">
+      {{ 'finance.po.create.action.back' | translate }}
+    </ep-button>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'finance.po.create.eyebrow' | translate }}</span>
+      <h1 id="po-create-heading" class="page-header__title">{{ 'finance.po.create.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'finance.po.create.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <form class="po-create-layout" [formGroup]="form" (ngSubmit)="submit()">
+    <section class="po-create-panel" aria-labelledby="po-source-heading">
+      <div class="panel-heading">
+        <ep-icon name="git-branch" />
+        <div>
+          <h2 id="po-source-heading">{{ 'finance.po.create.section.source' | translate }}</h2>
+          <p>{{ 'finance.po.create.section.sourceHint' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <ep-form-field
+          [label]="'finance.po.create.field.prId' | translate"
+          [error]="fieldError('prId') ? (fieldError('prId')! | translate) : null">
+          <input
+            id="manual-po-pr-id"
+            type="text"
+            formControlName="prId"
+            autocomplete="off"
+            [placeholder]="'finance.po.create.placeholder.prId' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'finance.po.create.field.vendorId' | translate"
+          [error]="fieldError('vendorId') ? (fieldError('vendorId')! | translate) : null">
+          <input
+            id="manual-po-vendor-id"
+            type="text"
+            formControlName="vendorId"
+            autocomplete="off"
+            [placeholder]="'finance.po.create.placeholder.vendorId' | translate">
+        </ep-form-field>
+      </div>
+    </section>
+
+    <section class="po-create-panel" aria-labelledby="po-delivery-heading">
+      <div class="panel-heading">
+        <ep-icon name="truck" />
+        <div>
+          <h2 id="po-delivery-heading">{{ 'finance.po.create.section.delivery' | translate }}</h2>
+          <p>{{ 'finance.po.create.section.deliveryHint' | translate }}</p>
+        </div>
+      </div>
+
+      <ep-form-field
+        [label]="'finance.po.create.field.deliveryAddress' | translate"
+        [error]="fieldError('deliveryAddress') ? (fieldError('deliveryAddress')! | translate) : null">
+        <textarea
+          id="manual-po-delivery-address"
+          rows="4"
+          formControlName="deliveryAddress"
+          [placeholder]="'finance.po.create.placeholder.deliveryAddress' | translate">
+        </textarea>
+      </ep-form-field>
+
+      <div class="form-grid">
+        <ep-form-field [label]="'finance.po.create.field.deliveryDeadline' | translate">
+          <input id="manual-po-delivery-deadline" type="date" formControlName="deliveryDeadline">
+        </ep-form-field>
+
+        <ep-form-field [label]="'finance.po.create.field.paymentTerms' | translate">
+          <input
+            id="manual-po-payment-terms"
+            type="text"
+            formControlName="paymentTerms"
+            autocomplete="off"
+            [placeholder]="'finance.po.create.placeholder.paymentTerms' | translate">
+        </ep-form-field>
+      </div>
+
+      <ep-form-field [label]="'finance.po.create.field.notes' | translate">
+        <textarea
+          id="manual-po-notes"
+          rows="3"
+          formControlName="notes"
+          [placeholder]="'finance.po.create.placeholder.notes' | translate">
+        </textarea>
+      </ep-form-field>
+    </section>
+
+    <aside class="po-create-summary" aria-labelledby="po-create-summary-heading">
+      <div class="panel-heading">
+        <ep-icon name="shield-check" />
+        <div>
+          <h2 id="po-create-summary-heading">{{ 'finance.po.create.summary.title' | translate }}</h2>
+          <p>{{ 'finance.po.create.summary.subtitle' | translate }}</p>
+        </div>
+      </div>
+
+      <ul class="summary-list">
+        <li>
+          <span>{{ 'finance.po.create.summary.prCheck' | translate }}</span>
+          <strong>{{ 'finance.po.create.summary.backendOwned' | translate }}</strong>
+        </li>
+        <li>
+          <span>{{ 'finance.po.create.summary.vendorCheck' | translate }}</span>
+          <strong>{{ 'finance.po.create.summary.backendOwned' | translate }}</strong>
+        </li>
+        <li>
+          <span>{{ 'finance.po.create.summary.callback' | translate }}</span>
+          <strong>{{ 'finance.po.create.summary.outbox' | translate }}</strong>
+        </li>
+      </ul>
+
+      <div class="po-create-actions">
+        <ep-button id="btn-cancel-create-po" variant="ghost" icon="x" (click)="navigateBack()">
+          {{ 'finance.po.create.action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-submit-create-po"
+          type="submit"
+          variant="primary"
+          icon="file-plus-2"
+          [loading]="isSubmitting()"
+          [disabled]="isSubmitting()">
+          {{ 'finance.po.create.action.submit' | translate }}
+        </ep-button>
+      </div>
+    </aside>
+  </form>
+</section>

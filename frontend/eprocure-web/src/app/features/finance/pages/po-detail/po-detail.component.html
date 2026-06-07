@@ -1,0 +1,141 @@
+<section class="po-detail-page" aria-labelledby="po-detail-heading">
+  <ep-breadcrumb />
+
+  <div class="po-detail-page__nav">
+    <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="navigateBack()">
+      {{ 'finance.po.detail.action.back' | translate }}
+    </ep-button>
+    <ep-button variant="ghost" size="sm" icon="refresh-cw" [loading]="isLoading()" (click)="reload()">
+      {{ 'finance.po.detail.action.refresh' | translate }}
+    </ep-button>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (!po()) {
+    <ep-empty-state
+      icon="file-text"
+      [title]="'finance.po.detail.empty.title' | translate"
+      [message]="'finance.po.detail.empty.message' | translate" />
+  } @else if (po(); as data) {
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'finance.po.detail.eyebrow' | translate }}</span>
+        <h1 id="po-detail-heading" class="page-header__title">{{ data.poNumber }}</h1>
+        <p class="page-header__subtitle">
+          {{ 'finance.po.detail.subtitle' | translate: { prNumber: data.prNumber, vendor: data.vendor.name } }}
+        </p>
+      </div>
+      <div class="page-header__badges">
+        <ep-badge [tone]="statusTone()" [labelKey]="'finance.po.status.' + data.status" />
+        <ep-badge
+          [tone]="callbackTone()"
+          [labelKey]="data.prConversionStatus ? 'finance.po.callback.' + data.prConversionStatus : 'finance.po.callback.none'" />
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <ep-icon name="receipt-text" />
+        <span class="summary-card__label">{{ 'finance.po.detail.stat.totalAmount' | translate }}</span>
+        <ep-amount class="summary-card__amount" [value]="amount(data)" />
+      </div>
+      <div class="summary-card">
+        <ep-icon name="list" />
+        <span class="summary-card__label">{{ 'finance.po.detail.stat.lines' | translate }}</span>
+        <span class="summary-card__value">{{ totalLines() }}</span>
+      </div>
+      <div class="summary-card">
+        <ep-icon name="calendar-days" />
+        <span class="summary-card__label">{{ 'finance.po.detail.stat.deadline' | translate }}</span>
+        <span class="summary-card__value summary-card__value--date">{{ formatDate(data.deliveryDeadline) }}</span>
+      </div>
+      <div class="summary-card">
+        <ep-icon name="send" />
+        <span class="summary-card__label">{{ 'finance.po.detail.stat.sentAt' | translate }}</span>
+        <span class="summary-card__value summary-card__value--date">{{ formatDateTime(data.sentToVendorAt) }}</span>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <section class="detail-panel" aria-labelledby="po-vendor-heading">
+        <div class="panel-heading">
+          <ep-icon name="building-2" />
+          <h2 id="po-vendor-heading">{{ 'finance.po.detail.section.vendor' | translate }}</h2>
+        </div>
+        <dl class="info-list">
+          <div>
+            <dt>{{ 'finance.po.detail.field.vendorName' | translate }}</dt>
+            <dd>{{ data.vendor.name }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.po.detail.field.vendorEmail' | translate }}</dt>
+            <dd>{{ data.vendor.email || '--' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.po.detail.field.vendorTaxCode' | translate }}</dt>
+            <dd>{{ data.vendor.taxCode || '--' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="detail-panel" aria-labelledby="po-delivery-heading">
+        <div class="panel-heading">
+          <ep-icon name="truck" />
+          <h2 id="po-delivery-heading">{{ 'finance.po.detail.section.delivery' | translate }}</h2>
+        </div>
+        <dl class="info-list">
+          <div>
+            <dt>{{ 'finance.po.detail.field.deliveryAddress' | translate }}</dt>
+            <dd>{{ data.deliveryAddress || '--' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.po.detail.field.paymentTerms' | translate }}</dt>
+            <dd>{{ data.paymentTerms || '--' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.po.detail.field.officer' | translate }}</dt>
+            <dd>{{ data.purchasingOfficer.fullName || shortId(data.purchasingOfficer.id) }}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+
+    <section class="line-panel" aria-labelledby="po-lines-heading">
+      <div class="panel-heading">
+        <ep-icon name="rows-3" />
+        <h2 id="po-lines-heading">{{ 'finance.po.detail.section.lines' | translate }}</h2>
+      </div>
+
+      <div class="line-table-wrapper">
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'finance.po.detail.line.lineNumber' | translate }}</th>
+              <th scope="col">{{ 'finance.po.detail.line.item' | translate }}</th>
+              <th scope="col">{{ 'finance.po.detail.line.category' | translate }}</th>
+              <th scope="col" class="align-right">{{ 'finance.po.detail.line.quantity' | translate }}</th>
+              <th scope="col" class="align-right">{{ 'finance.po.detail.line.unitPrice' | translate }}</th>
+              <th scope="col" class="align-right">{{ 'finance.po.detail.line.totalPrice' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of data.lineItems; track line.id) {
+              <tr>
+                <td class="mono">{{ line.lineNumber }}</td>
+                <td>
+                  <span class="line-table__primary">{{ line.itemName }}</span>
+                  <span class="line-table__subtitle">{{ shortId(line.prLineItemId) }}</span>
+                </td>
+                <td>{{ line.categoryCode }}</td>
+                <td class="align-right mono">{{ quantityLabel(line) }}</td>
+                <td class="align-right"><ep-amount [value]="lineUnitAmount(line)" /></td>
+                <td class="align-right"><ep-amount [value]="lineTotalAmount(line)" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</section>

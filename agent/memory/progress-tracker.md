@@ -193,7 +193,7 @@
 |---|---|
 | E13-A: Admin Portal (User/RBAC/Org Tree UI) | ✅ |
 | E06: RFQ & Vendor | ✅ |
-| E07: Purchase Order | 🔄 |
+| E07: Purchase Order | ✅ |
 | E08: Goods Receipt & Inventory | ✅ |
 | E09: Invoice & Payment | ✅ |
 | E10: Budget Management | ✅ |
@@ -253,7 +253,10 @@
 | PO send/cancel actions | ✅ | `POST /api/v1/purchase-orders/{id}/send` and `PATCH /api/v1/purchase-orders/{id}/cancel`; idempotent Redis replay + status fallback |
 | PO issue event | ✅ | Finance publishes `procurement.po.issued`; Notification subscribes and creates `PO_ISSUED` in-app notification |
 | Vendor email handoff on PO send | ✅ | Finance publishes `notification.email.send` with rendered subject/body for vendor email dispatch |
-| Manual PO create API | ⬜ | `POST /api/v1/purchase-orders` from approved PR is ready for implementation from E07 source contracts; MVP creates one PO for all PR lines |
+| PR PO source + converted callback | ✅ | `GET /internal/purchase-requests/{id}/po-source` + `PATCH /internal/purchase-requests/{id}/converted-to-po`; purchase-request-service tests pass |
+| Vendor PO source contract | ✅ | `GET /internal/vendors/{id}/po-source`; vendor-service tests pass |
+| Manual PO create API | ✅ | `POST /api/v1/purchase-orders` creates DRAFT PO from approved PR + AVL vendor, stores callback outbox, exposes `prConversionStatus`, and blocks send until callback delivered |
+| Frontend: Manual PO create UI | ✅ | Angular `/finance/purchase-orders` list/detail/create screens, PR detail handoff, PO navigation/i18n; `npm run build` passes |
 
 ### E08: Goods Receipt & Inventory
 | Task | Status | Ghi chú |

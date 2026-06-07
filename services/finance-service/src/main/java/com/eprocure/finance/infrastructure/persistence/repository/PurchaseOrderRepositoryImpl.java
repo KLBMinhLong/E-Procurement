@@ -42,6 +42,12 @@ public class PurchaseOrderRepositoryImpl implements PurchaseOrderRepository {
     }
 
     @Override
+    public Optional<PurchaseOrder> findActiveManualByPrId(UUID prId) {
+        return purchaseOrderMapper.findActiveManualHeaderByPrId(prId)
+                .map(this::toDomain);
+    }
+
+    @Override
     public List<PurchaseOrder> findByFilter(PurchaseOrderFilter filter) {
         List<PurchaseOrderDbEntity> headers = purchaseOrderMapper.findHeadersByFilter(filter);
         if (headers.isEmpty()) {

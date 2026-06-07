@@ -3,6 +3,7 @@ package com.eprocure.finance.presentation.controller;
 import com.eprocure.finance.application.service.PageResult;
 import com.eprocure.finance.application.service.PurchaseOrderActionResult;
 import com.eprocure.finance.application.usecase.CancelPurchaseOrderUseCase;
+import com.eprocure.finance.application.usecase.CreateManualPurchaseOrderUseCase;
 import com.eprocure.finance.application.usecase.GetPurchaseOrderUseCase;
 import com.eprocure.finance.application.usecase.ListPurchaseOrdersUseCase;
 import com.eprocure.finance.application.usecase.SendPurchaseOrderUseCase;
@@ -14,6 +15,7 @@ import com.eprocure.finance.common.util.LogMaskingUtil;
 import com.eprocure.finance.domain.model.PurchaseOrderStatus;
 import com.eprocure.finance.presentation.mapper.PurchaseOrderPresentationMapper;
 import com.eprocure.finance.presentation.request.CancelPurchaseOrderRequest;
+import com.eprocure.finance.presentation.request.CreatePurchaseOrderRequest;
 import com.eprocure.finance.presentation.request.SendPurchaseOrderRequest;
 import com.eprocure.finance.presentation.request.UpdatePurchaseOrderDraftRequest;
 import com.eprocure.finance.presentation.response.PurchaseOrderResponse;
@@ -25,6 +27,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,6 +48,7 @@ public class PurchaseOrderController {
 
     private final ListPurchaseOrdersUseCase listPurchaseOrdersUseCase;
     private final GetPurchaseOrderUseCase getPurchaseOrderUseCase;
+    private final CreateManualPurchaseOrderUseCase createManualPurchaseOrderUseCase;
     private final UpdatePurchaseOrderDraftUseCase updatePurchaseOrderDraftUseCase;
     private final SendPurchaseOrderUseCase sendPurchaseOrderUseCase;
     private final CancelPurchaseOrderUseCase cancelPurchaseOrderUseCase;
@@ -53,16 +57,41 @@ public class PurchaseOrderController {
     public PurchaseOrderController(
             ListPurchaseOrdersUseCase listPurchaseOrdersUseCase,
             GetPurchaseOrderUseCase getPurchaseOrderUseCase,
+            CreateManualPurchaseOrderUseCase createManualPurchaseOrderUseCase,
             UpdatePurchaseOrderDraftUseCase updatePurchaseOrderDraftUseCase,
             SendPurchaseOrderUseCase sendPurchaseOrderUseCase,
             CancelPurchaseOrderUseCase cancelPurchaseOrderUseCase,
             PurchaseOrderPresentationMapper mapper) {
         this.listPurchaseOrdersUseCase = listPurchaseOrdersUseCase;
         this.getPurchaseOrderUseCase = getPurchaseOrderUseCase;
+        this.createManualPurchaseOrderUseCase = createManualPurchaseOrderUseCase;
         this.updatePurchaseOrderDraftUseCase = updatePurchaseOrderDraftUseCase;
         this.sendPurchaseOrderUseCase = sendPurchaseOrderUseCase;
         this.cancelPurchaseOrderUseCase = cancelPurchaseOrderUseCase;
         this.mapper = mapper;
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('PO_CREATE')")
+    public ResponseEntity<ApiResponse<PurchaseOrderResponse>> create(
+            @Valid @RequestBody CreatePurchaseOrderRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/purchase-orders | userId={} | prId={} | vendorId={}",
+                LogMaskingUtil.maskId(principal.getId()),
+                LogMaskingUtil.maskId(body.prId()),
+                LogMaskingUtil.maskId(body.vendorId()));
+        PurchaseOrderActionResult result = createManualPurchaseOrderUseCase.execute(
+                mapper.toCreateCommand(principal, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = result.replayed()
+                ? ResponseEntity.ok()
+                : ResponseEntity.status(HttpStatus.CREATED);
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result.view()), RequestIdUtil.resolve(request)));
     }
 
     @GetMapping

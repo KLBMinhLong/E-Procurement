@@ -32,6 +32,8 @@ eprocure:
       kafka-enabled: ${FINANCE_KAFKA_ENABLED:true}
       kafka-auto-startup: ${FINANCE_KAFKA_AUTO_STARTUP:true}
       default-gl-account-code: ${FINANCE_DEFAULT_GL_ACCOUNT_CODE:6002}
+      purchase-request-base-url: ${PURCHASE_REQUEST_SERVICE_URL:http://purchase-request-service:8082}
+      vendor-base-url: ${VENDOR_SERVICE_URL:http://vendor-service:8086}
     kafka:
       topics:
         rfq-awarded: ${FINANCE_KAFKA_TOPIC_RFQ_AWARDED:procurement.rfq.awarded}

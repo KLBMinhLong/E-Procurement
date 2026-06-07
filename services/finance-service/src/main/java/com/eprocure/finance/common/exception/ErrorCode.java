@@ -20,6 +20,9 @@ public enum ErrorCode {
     FIN_014("FIN_014", "Invoice is not ready for dispute", HttpStatus.UNPROCESSABLE_ENTITY),
     FIN_015("FIN_015", "Invoice is not ready for payment", HttpStatus.UNPROCESSABLE_ENTITY),
     FIN_016("FIN_016", "Payment amount must match invoice total", HttpStatus.UNPROCESSABLE_ENTITY),
+    FIN_017("FIN_017", "Purchase request is not eligible for manual PO creation", HttpStatus.UNPROCESSABLE_ENTITY),
+    FIN_018("FIN_018", "Active purchase order already exists for the purchase request", HttpStatus.CONFLICT),
+    FIN_019("FIN_019", "Vendor is not eligible for PO creation", HttpStatus.UNPROCESSABLE_ENTITY),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
     VAL_001("VAL_001", "Validation failed", HttpStatus.BAD_REQUEST);

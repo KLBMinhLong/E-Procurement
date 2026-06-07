@@ -65,6 +65,7 @@ export class ShellComponent implements OnInit {
     { icon: 'layout-dashboard', labelKey: 'nav.dashboard', route: '/dashboard' },
     { icon: 'shopping-cart', labelKey: 'nav.purchaseRequest', route: '/procurement', permissions: ['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'] },
     { icon: 'inbox', labelKey: 'nav.approvals', route: '/approvals', permissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY'] },
+    { icon: 'receipt-text', labelKey: 'nav.purchaseOrders', route: '/finance/purchase-orders', permissions: ['PO_VIEW_OWN', 'PO_VIEW_ALL', 'PO_CREATE'] },
     { icon: 'users', labelKey: 'nav.adminUsers', route: '/admin/users', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] },
     { icon: 'user-cog', labelKey: 'nav.adminRoles', route: '/admin/roles', permissions: ['ADMIN_ROLE_MANAGE'] },
     { icon: 'shield', labelKey: 'nav.adminRbac', route: '/admin/rbac', permissions: ['ADMIN_ROLE_MANAGE'] },
