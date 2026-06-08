@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ConfirmPaymentUseCase {
     private static final Logger log = LogManager.getLogger(ConfirmPaymentUseCase.class);
     private static final String PURCHASE_REQUEST_REFERENCE = "PURCHASE_REQUEST";
+    private static final String PURCHASE_ORDER_REFERENCE = "PURCHASE_ORDER";
     private static final String INVOICE_REFERENCE = "INVOICE";
 
     private final InvoiceRepository invoiceRepository;
@@ -113,8 +114,8 @@ public class ConfirmPaymentUseCase {
                         budgetId,
                         BudgetTransactionType.RELEASE,
                         hold.amount(),
-                        PURCHASE_REQUEST_REFERENCE,
-                        po.prId(),
+                        PURCHASE_ORDER_REFERENCE,
+                        po.id(),
                         "Release commitment hold for Purchase Order payment: " + po.poNumber(),
                         command.actorId(),
                         confirmedAt,

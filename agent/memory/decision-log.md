@@ -594,3 +594,15 @@
 - Reason: The E12 report branch should produce useful, explicit output for every exported report while preserving service DB boundaries and documenting source limitations in the report rows.
 - Impact: `BUDGET_VS_PLAN` renders actual PO spend and category totals while budget plan snapshots are pending; `MAVERICK_SPENDING` uses emergency PRs as a controlled proxy; `AUDIT_TRAIL` uses analytics event-processing log rows for ingestion audit.
 - Constraint: Source-enrichment remains future work for finance budget plan snapshots, `procurement.emergency.abuse`, immutable system audit projection, RFQ baseline pricing, IAM department labels, and `departmentId`/`status` report filters.
+
+## [2026-06-07] E15-A runtime/API smoke baseline
+
+- Decision: Add a dependency-free Node smoke script as the first E15 runtime baseline before creating Newman/JMeter/CI layers.
+- Reason: The highest current risk is cross-service runtime wiring through Docker, gateway auth, Kafka, DB migrations and API contracts; a script can poll asynchronous steps and expose contract failures quickly without adding tooling dependencies.
+- Impact: `tests/smoke/e15-runtime-smoke.mjs` checks Docker/HTTP health and the manual-PO E2E path from login through PR approval, PO, GR, invoice match, payment, notification count and analytics dashboard/KPI reads. IAM, finance, PR and inventory seed migrations add missing smoke actors, budget, catalog item and inventory item data needed for real auth/RBAC/budget/stock checks.
+- Runtime note: Local smoke runs use alternate host ports plus container DNS service URLs to avoid `.env` collisions, and set `OTEL_TRACES_EXPORTER=none` so the smoke baseline does not depend on the optional monitoring profile. Compose still defaults to OTLP when the override is absent.
+- Runtime fix: Approval and Finance RestClient configs use `JdkClientHttpRequestFactory` so PATCH callbacks work under Docker, and Finance PR callback URL resolves from `PR_SERVICE_URL` before legacy aliases.
+- Runtime fix: PR `FallbackInventoryCheckAdapter` remains registered even when broader integration fallback flags are disabled because no real PR-to-Inventory availability adapter exists yet; the smoke still validates Inventory runtime through GR completion.
+- Runtime fix: Payment confirmation releases the budget commitment by `PURCHASE_ORDER/{poId}` instead of replaying the earlier `PURCHASE_REQUEST/{prId}` release reference, avoiding duplicate ledger references while preserving the spend transition.
+- Runtime fix: Analytics cycle-time KPI casts nullable UUID filters before comparison so PostgreSQL can type `departmentId=null` requests from the smoke dashboard/KPI read.
+- Constraint: Newman collection, JMeter thresholds, Jenkins pipeline gating, and a real PR-to-Inventory availability adapter remain follow-up once this runtime script is green in Docker.

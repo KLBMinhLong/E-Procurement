@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record PendingTaskProjection(
         String camundaTaskId,
+        UUID stepId,
         UUID processId,
         String entityType,
         UUID entityId,

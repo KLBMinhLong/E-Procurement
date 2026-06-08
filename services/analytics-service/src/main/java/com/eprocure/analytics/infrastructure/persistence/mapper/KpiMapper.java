@@ -26,7 +26,7 @@ public interface KpiMapper {
                   AND po.issued_at >= pr.submitted_at
                   AND pr.submitted_at >= #{fromInclusive}
                   AND pr.submitted_at < #{toExclusive}
-                  AND (#{departmentId,jdbcType=OTHER} IS NULL OR pr.department_id = #{departmentId,jdbcType=OTHER})
+                  AND (#{departmentId,jdbcType=OTHER}::UUID IS NULL OR pr.department_id = #{departmentId,jdbcType=OTHER}::UUID)
                 GROUP BY pr.pr_id, pr.submitted_at
             )
             SELECT
@@ -53,7 +53,7 @@ public interface KpiMapper {
                   AND po.issued_at >= pr.submitted_at
                   AND pr.submitted_at >= #{fromInclusive}
                   AND pr.submitted_at < #{toExclusive}
-                  AND (#{departmentId,jdbcType=OTHER} IS NULL OR pr.department_id = #{departmentId,jdbcType=OTHER})
+                  AND (#{departmentId,jdbcType=OTHER}::UUID IS NULL OR pr.department_id = #{departmentId,jdbcType=OTHER}::UUID)
                 GROUP BY pr.pr_id, pr.priority, pr.submitted_at
             )
             SELECT priority, ROUND(AVG(cycle_hours)::NUMERIC, 2) AS avg_hours
@@ -79,7 +79,7 @@ public interface KpiMapper {
                   AND po.issued_at >= pr.submitted_at
                   AND pr.submitted_at >= #{fromInclusive}
                   AND pr.submitted_at < #{toExclusive}
-                  AND (#{departmentId,jdbcType=OTHER} IS NULL OR pr.department_id = #{departmentId,jdbcType=OTHER})
+                  AND (#{departmentId,jdbcType=OTHER}::UUID IS NULL OR pr.department_id = #{departmentId,jdbcType=OTHER}::UUID)
                 GROUP BY pr.pr_id, pr.submitted_at
             )
             SELECT

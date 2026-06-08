@@ -112,7 +112,9 @@ public class GetApprovalInboxUseCase {
                     null;
 
             return new ApprovalTaskSummary(
-                    p.camundaTaskId(),
+                    p.camundaTaskId() == null || p.camundaTaskId().isBlank()
+                            ? p.stepId().toString()
+                            : p.camundaTaskId(),
                     p.processId(),
                     p.entityType(),
                     p.entityId(),
