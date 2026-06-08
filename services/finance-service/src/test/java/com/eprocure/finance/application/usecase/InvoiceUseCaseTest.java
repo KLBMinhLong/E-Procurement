@@ -278,8 +278,8 @@ class InvoiceUseCaseTest {
         assertThat(releaseTx.budgetId()).isEqualTo(budgetId);
         assertThat(releaseTx.transactionType()).isEqualTo(BudgetTransactionType.RELEASE);
         assertThat(releaseTx.money().amount()).isEqualByComparingTo("1100.0000");
-        assertThat(releaseTx.referenceType()).isEqualTo("PURCHASE_REQUEST");
-        assertThat(releaseTx.referenceId()).isEqualTo(PR_ID);
+        assertThat(releaseTx.referenceType()).isEqualTo("PURCHASE_ORDER");
+        assertThat(releaseTx.referenceId()).isEqualTo(PO_ID);
 
         var spendTx = budgetRepository.transactions.get(1);
         assertThat(spendTx.budgetId()).isEqualTo(budgetId);

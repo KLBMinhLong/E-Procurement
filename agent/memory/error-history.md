@@ -160,3 +160,51 @@
 - Root cause: The approval rules table rendered every approval step card directly inside the `Chuỗi duyệt` column. Long chains increased row height and consumed horizontal space, causing the action buttons to wrap and clip labels such as `Vô hiệu hóa`.
 - Fix: Replace the table cell with a compact approval-chain summary and move the full ordered step/SLA view into a modal diagram opened by `Xem sơ đồ`; keep row action buttons in a no-wrap action group.
 - Prevention: Dense operational tables should show bounded summaries for expandable workflow data, while full workflow diagrams belong in detail drawers/modals rather than primary rows.
+
+## [2026-06-07] Bug: Runtime smoke path lacked valid seed actors and requester budget
+
+- Root cause: Unit-tested service foundations had enough isolated seed data, but the Docker E2E path had no dedicated Purchasing/Warehouse/Accountant users for RBAC-gated endpoints and no active finance budget for the seeded requester department `22222222-2222-2222-2222-222222222222`.
+- Fix: Add IAM Flyway `V8__seed_e15_smoke_actors.sql` for smoke roles/users/permissions and finance Flyway `V10__seed_procurement_smoke_budget.sql` for active PROCUREMENT budget.
+- Prevention: Full-product smoke must include deterministic actor and reference-data seeds for every role in the product backbone, then verify through gateway auth instead of bypassing service security.
+
+## [2026-06-07] Bug: Runtime smoke exposed missing catalog and inventory reference data
+
+- Symptom: PR creation or GR completion failed in Docker even though isolated service tests compiled.
+- Root cause: The smoke flow used a deterministic office package item, but PR catalog and Inventory item seeds did not contain matching active data across both services.
+- Fix: Add PR Flyway `V5__seed_e15_smoke_catalog_item.sql` and Inventory Flyway `V6__seed_e15_smoke_inventory_item.sql` for `E15-OFFICE-KIT`.
+- Prevention: E2E smoke data must cover every cross-service reference used by the flow, not only user and budget records.
+
+## [2026-06-07] Bug: PR submit could not boot with integration fallback disabled
+
+- Symptom: Docker PR service startup failed when smoke env disabled the broad integration fallback flag.
+- Root cause: `FallbackInventoryCheckAdapter` was conditional on the same fallback flag, but there is not yet a real PR-to-Inventory availability adapter implementing `InventoryCheckPort`.
+- Fix: Keep the fallback inventory adapter registered so submit PR can boot; E15 smoke separately verifies Inventory runtime through goods receipt completion.
+- Prevention: Do not bind fallback bean existence to a feature flag until the production adapter exists, and record the gap as follow-up rather than letting runtime smoke fail at Spring context startup.
+
+## [2026-06-07] Bug: Runtime PATCH callbacks failed with default JDK HTTP client
+
+- Symptom: Approval and Finance callbacks to PR failed at runtime with invalid HTTP method errors for PATCH.
+- Root cause: Spring `RestClient` used the default request factory, which did not support PATCH in this Docker runtime path.
+- Fix: Configure Approval and Finance RestClient customization with `JdkClientHttpRequestFactory`.
+- Prevention: Any service-to-service adapter using PATCH must have an explicit request factory and be covered by Docker smoke, not just unit-level mock verification.
+
+## [2026-06-07] Bug: Approval inbox returned null task ids after runtime approval start
+
+- Symptom: The smoke script could see a pending approval row but could not perform the action because `taskId` was null.
+- Root cause: The inbox projection preferred Camunda task id, while the runtime fallback path persisted approval steps before a Camunda task id was always available.
+- Fix: Include `stepId` in `PendingTaskProjection` and return `camundaTaskId` first, falling back to `stepId.toString()`.
+- Prevention: API action identifiers must always be non-null and durable even when the workflow engine-specific task id is delayed or absent.
+
+## [2026-06-07] Bug: Finance runtime service URL and budget release references diverged from E2E flow
+
+- Symptom: Manual PO creation initially tried the wrong PR service DNS name, and payment confirmation later failed on duplicate budget ledger release reference.
+- Root cause: Finance config did not prefer the compose `PR_SERVICE_URL` used by the smoke runtime, and payment reused the earlier PR approval release reference instead of a payment-stage reference.
+- Fix: Resolve purchase-request callback base URL from `PR_SERVICE_URL` first, then release payment commitments by `PURCHASE_ORDER/{poId}`.
+- Prevention: Runtime smoke env must use one service URL vocabulary, and budget ledger reference types must be unique per lifecycle transition.
+
+## [2026-06-07] Bug: Analytics cycle-time KPI failed on nullable UUID filter
+
+- Symptom: `GET /api/v1/kpi/cycle-time` returned HTTP 500 with PostgreSQL `could not determine data type of parameter` when `department_id` was omitted.
+- Root cause: MyBatis bound a nullable UUID parameter into `? IS NULL OR pr.department_id = ?`; PostgreSQL could not infer the type of the null placeholder.
+- Fix: Cast the nullable `departmentId` placeholders to UUID in all cycle-time KPI queries.
+- Prevention: PostgreSQL nullable UUID filters in annotation/XML mappers should cast placeholders or use dynamic SQL branches, and dashboard smoke should include the omitted-filter path.

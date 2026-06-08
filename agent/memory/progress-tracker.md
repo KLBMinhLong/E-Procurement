@@ -201,7 +201,7 @@
 | E12: Analytics & Reports | ✅ |
 | E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
 | E14: Security Hardening | ⬜ |
-| E15: Testing & CI/CD | ⬜ |
+| E15: Testing & CI/CD | 🔄 | E15-A Runtime/API Smoke Pack baseline passed on Docker; Newman/perf/CI hardening remain |
 
 ### E10: Budget Management
 | Task | Status | Ghi chú |
@@ -293,3 +293,15 @@
 | Projection/event ingestion | ✅ | Consumes `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`, `approval.step.assigned`, `procurement.rfq.awarded`, `inventory.gr.created`; stores idempotent projections and refreshes executive dashboard snapshots where applicable |
 | Manager/purchasing/requester dashboards | ✅ | `/purchasing` reads PO + invoice projections; `/manager` reads PR submitted + SLA breach projections scoped by dept; `/requester` reads PR submitted projections scoped by requester; RFQ/GR-specific purchasing metrics remain follow-up |
 | KPI/report export APIs | ✅ | Async report export API, cycle-time KPI from PR submitted + PO issued projections, SLA KPI with assigned-step denominator, local PDF worker with JasperReports templates, POI-based XLSX workbook export, and type-specific report datasets for all report types. Source-enrichment contracts remain future work for IAM department labels, `departmentId`/`status` filters, RFQ baseline prices, finance budget plan snapshots, maverick-abuse events, and immutable system audit projection. |
+
+### E15: Testing & CI/CD
+| Task | Status | Ghi chú |
+|---|---|---|
+| E15-A Runtime/API Smoke Pack | ✅ | `tests/smoke/e15-runtime-smoke.mjs` passed on 2026-06-07: Docker compose health, HTTP health, and gateway API flow login -> PR -> approval -> manual PO -> PO send -> GR -> invoice -> match/approve/pay -> notification -> analytics dashboard/KPI |
+| Smoke seed actors | ✅ | IAM Flyway `V8__seed_e15_smoke_actors.sql` adds `purchasing`, `warehouse`, `accountant`, `superadmin`, `PURCHASING`/`WAREHOUSE`/`ACCOUNTANT`/`SUPER_ADMIN`, and `NOTIFICATION_VIEW_OWN` mapping for runtime smoke |
+| Smoke budget seed | ✅ | Finance Flyway `V10__seed_procurement_smoke_budget.sql` adds active 2026 PROCUREMENT budget for requester department so PR submit uses real finance budget check |
+| Smoke catalog/inventory seed | ✅ | PR Flyway `V5__seed_e15_smoke_catalog_item.sql` and Inventory Flyway `V6__seed_e15_smoke_inventory_item.sql` add deterministic `E15-OFFICE-KIT` item data used by create PR and GR completion |
+| Runtime smoke local docs | ✅ | `tests/smoke/README.md` documents alternate host ports, service DNS overrides, disabled local trace export, seed actors, and script modes |
+| Newman/Postman CI pack | ⬜ | Follow-up after runtime script baseline is green on Docker |
+| JMeter/performance baseline | ⬜ | Follow-up after runtime script baseline is green on Docker |
+| Jenkins pipeline hardening | ⬜ | Follow-up after smoke/Newman/perf baseline |

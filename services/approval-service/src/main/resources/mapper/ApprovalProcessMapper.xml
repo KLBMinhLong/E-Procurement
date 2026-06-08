@@ -7,6 +7,7 @@
     <select id="findPendingTasks" resultType="com.eprocure.approval.domain.repository.PendingTaskProjection">
         SELECT
             s.camunda_task_id AS camundaTaskId,
+            s.id AS stepId,
             p.id AS processId,
             p.entity_type AS entityType,
             p.entity_id AS entityId,

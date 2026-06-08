@@ -39,6 +39,10 @@ manager
 director
 finance
 admin
+purchasing
+warehouse
+accountant
+superadmin
 ```
 
 IAM still owns user business data, roles, permissions, password hashes and sessions. Keycloak is only for credential verification through the custom provider.
