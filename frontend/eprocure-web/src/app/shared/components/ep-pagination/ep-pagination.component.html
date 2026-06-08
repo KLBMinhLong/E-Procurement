@@ -1,0 +1,52 @@
+<nav class="ep-pagination" aria-label="Pagination">
+  <div class="ep-pagination__summary">
+    @if (totalElements() !== undefined) {
+      <span class="ep-pagination__text">
+        {{ 'shared.pagination.showing' | translate }} 
+        <span class="font-medium">{{ (activePage() - 1) * size() + 1 }}</span>
+        {{ 'shared.pagination.to' | translate }} 
+        <span class="font-medium">{{ activePage() * size() > totalElements()! ? totalElements() : activePage() * size() }}</span>
+        {{ 'shared.pagination.of' | translate }} 
+        <span class="font-medium">{{ totalElements() }}</span>
+        {{ 'shared.pagination.results' | translate }}
+      </span>
+    }
+  </div>
+
+  <div class="ep-pagination__controls">
+    <ep-button 
+      variant="secondary" 
+      [disabled]="!hasPrevious()" 
+      (click)="onPrevious()"
+      class="ep-pagination__prev">
+      <ep-icon name="chevron-left" [size]="16"></ep-icon>
+      <span class="sr-only">{{ 'shared.pagination.previous' | translate }}</span>
+    </ep-button>
+
+    <div class="ep-pagination__pages">
+      @for (p of pages(); track $index) {
+        @if (p === '...') {
+          <span class="ep-pagination__ellipsis">...</span>
+        } @else {
+          <button 
+            type="button"
+            class="ep-pagination__page"
+            [class.ep-pagination__page--active]="p === activePage()"
+            [attr.aria-current]="p === activePage() ? 'page' : null"
+            (click)="onPageClick(p)">
+            {{ p }}
+          </button>
+        }
+      }
+    </div>
+
+    <ep-button 
+      variant="secondary" 
+      [disabled]="!hasNext()" 
+      (click)="onNext()"
+      class="ep-pagination__next">
+      <ep-icon name="chevron-right" [size]="16"></ep-icon>
+      <span class="sr-only">{{ 'shared.pagination.next' | translate }}</span>
+    </ep-button>
+  </div>
+</nav>

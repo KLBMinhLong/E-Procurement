@@ -171,7 +171,10 @@
     "primary": "Primary navigation",
     "procurement": "Procurement",
     "purchaseRequest": "Purchase Requests",
-    "purchaseOrders": "Purchase Orders"
+    "purchaseOrders": "Purchase Orders",
+    "vendors": "Vendors",
+    "rfq": "RFQs",
+    "inventory": "Inventory"
   },
   "notification": {
     "empty": "No notifications",
@@ -1312,6 +1315,37 @@
       "empty": {
         "title": "No matching rules",
         "message": "Create the first approval rule or adjust the search filter."
+      }
+    }
+  },
+  "inventory": {
+    "gr": {
+      "list": {
+        "title": "Goods Receipts",
+        "subtitle": "Manage and view all goods receipts.",
+        "filterPo": "PO Number",
+        "filterPoPlaceholder": "Search by PO...",
+        "filterStatus": "Status"
+      },
+      "action": {
+        "create": "Create Receipt"
+      },
+      "col": {
+        "number": "GR Number",
+        "poNumber": "PO Number",
+        "warehouse": "Warehouse",
+        "status": "Status",
+        "receivedAt": "Received At"
+      },
+      "status": {
+        "DRAFT": "Draft",
+        "PARTIAL": "Partial",
+        "COMPLETE": "Complete",
+        "DISCREPANCY": "Discrepancy"
+      },
+      "empty": {
+        "title": "No receipts found",
+        "message": "Try adjusting your filters or create a new receipt."
       }
     }
   }

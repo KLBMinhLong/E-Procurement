@@ -1,0 +1,96 @@
+.gr-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6);
+  max-width: 1440px;
+  margin: 0 auto;
+
+  .gr-list-header {
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: var(--spacing-4);
+
+      .title-text {
+        h1 {
+          margin: 0 0 var(--spacing-2) 0;
+        }
+        p {
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  .gr-list-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+
+    .table-card {
+      background-color: var(--surface-default);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-neutral);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+
+      .table-responsive {
+        overflow-x: auto;
+      }
+
+      .ep-table {
+        width: 100%;
+        border-collapse: collapse;
+        
+        th, td {
+          padding: var(--spacing-4);
+          text-align: left;
+          border-bottom: 1px solid var(--border-neutral);
+        }
+
+        th {
+          background-color: var(--surface-subdued);
+          font-weight: 600;
+          color: var(--text-neutral-700);
+          white-space: nowrap;
+        }
+
+        tr.clickable {
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+
+          &:hover {
+            background-color: var(--surface-hover);
+          }
+        }
+
+        td {
+          color: var(--text-neutral-900);
+          vertical-align: middle;
+        }
+
+        .empty-state {
+          padding: var(--spacing-12) var(--spacing-4);
+          text-align: center;
+          
+          h3 {
+            margin-bottom: var(--spacing-1);
+          }
+          
+          p {
+            margin: 0;
+          }
+        }
+      }
+
+      .pagination-wrapper {
+        padding: var(--spacing-4);
+        border-top: 1px solid var(--border-neutral);
+        display: flex;
+        justify-content: flex-end;
+      }
+    }
+  }
+}

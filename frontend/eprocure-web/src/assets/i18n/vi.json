@@ -171,7 +171,10 @@
     "primary": "Điều hướng chính",
     "procurement": "Mua sắm",
     "purchaseRequest": "Yêu cầu mua sắm",
-    "purchaseOrders": "Đơn mua hàng"
+    "purchaseOrders": "Đơn mua hàng",
+    "vendors": "Nhà cung cấp",
+    "rfq": "Yêu cầu báo giá (RFQ)",
+    "inventory": "Tồn kho"
   },
   "notification": {
     "empty": "Chưa có thông báo",
@@ -1312,6 +1315,37 @@
       "empty": {
         "title": "Chưa có quy tắc phù hợp",
         "message": "Tạo quy tắc phê duyệt đầu tiên hoặc thay đổi bộ lọc tìm kiếm."
+      }
+    }
+  },
+  "inventory": {
+    "gr": {
+      "list": {
+        "title": "Phiếu nhận hàng",
+        "subtitle": "Quản lý và theo dõi tất cả phiếu nhận hàng.",
+        "filterPo": "Số PO",
+        "filterPoPlaceholder": "Tìm kiếm theo số PO...",
+        "filterStatus": "Trạng thái"
+      },
+      "action": {
+        "create": "Tạo phiếu"
+      },
+      "col": {
+        "number": "Mã phiếu",
+        "poNumber": "Mã PO",
+        "warehouse": "Kho hàng",
+        "status": "Trạng thái",
+        "receivedAt": "Ngày nhận"
+      },
+      "status": {
+        "DRAFT": "Nháp",
+        "PARTIAL": "Một phần",
+        "COMPLETE": "Đã nhận đủ",
+        "DISCREPANCY": "Có sai lệch"
+      },
+      "empty": {
+        "title": "Không tìm thấy phiếu nhận hàng",
+        "message": "Thử thay đổi bộ lọc hoặc tạo phiếu nhận hàng mới."
       }
     }
   }

@@ -1,0 +1,93 @@
+<div class="gr-list-container fade-in">
+  <div class="gr-list-header">
+    <div class="header-content">
+      <ep-breadcrumb />
+      
+      <div class="title-row">
+        <div class="title-text">
+          <h1 class="text-heading-xl text-neutral-900">{{ 'inventory.gr.list.title' | translate }}</h1>
+          <p class="text-body-md text-neutral-500">{{ 'inventory.gr.list.subtitle' | translate }}</p>
+        </div>
+
+        <div class="title-actions">
+          <ep-button *epHasPermission="['GR_CREATE']"
+                     variant="primary" 
+                     icon="plus" 
+                     (click)="navigateToCreate()">
+            {{ 'inventory.gr.action.create' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gr-list-content">
+    <ep-filter-bar
+      [fields]="filterFields"
+      [totalItems]="meta()?.totalElements || 0"
+      (filterChange)="onFilterChange($event)">
+    </ep-filter-bar>
+
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="ep-table">
+          <thead>
+            <tr>
+              <th>{{ 'inventory.gr.col.number' | translate }}</th>
+              <th>{{ 'inventory.gr.col.poNumber' | translate }}</th>
+              <th>{{ 'inventory.gr.col.warehouse' | translate }}</th>
+              <th>{{ 'inventory.gr.col.status' | translate }}</th>
+              <th>{{ 'inventory.gr.col.receivedAt' | translate }}</th>
+            </tr>
+          </thead>
+          
+          <tbody>
+            @if (isLoading()) {
+              @for (i of [1,2,3,4,5]; track i) {
+                <tr>
+                  <td><ep-skeleton width="120px" /></td>
+                  <td><ep-skeleton width="120px" /></td>
+                  <td><ep-skeleton width="150px" /></td>
+                  <td><ep-skeleton width="80px" /></td>
+                  <td><ep-skeleton width="100px" /></td>
+                </tr>
+              }
+            } @else if (grs().length === 0) {
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <ep-icon name="package-search" [size]="48" class="text-neutral-300" />
+                    <h3 class="text-heading-sm mt-4">{{ 'inventory.gr.empty.title' | translate }}</h3>
+                    <p class="text-body-sm text-neutral-500 mt-1">{{ 'inventory.gr.empty.message' | translate }}</p>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              @for (gr of grs(); track gr.id) {
+                <tr class="clickable" (click)="navigateToDetail(gr.id)">
+                  <td class="font-medium text-primary-600">{{ gr.grNumber }}</td>
+                  <td>{{ gr.po.poNumber }}</td>
+                  <td>{{ gr.warehouse.name }}</td>
+                  <td>
+                    <ep-badge [tone]="statusTone[gr.status]">{{ 'inventory.gr.status.' + gr.status | translate }}</ep-badge>
+                  </td>
+                  <td>{{ formatDate(gr.receivedAt) }}</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (meta() && meta()!.totalPages > 1) {
+        <div class="pagination-wrapper">
+          <ep-pagination
+            [currentPage]="meta()!.page"
+            [totalPages]="meta()!.totalPages"
+            (pageChange)="onPageChange($event)">
+          </ep-pagination>
+        </div>
+      }
+    </div>
+  </div>
+</div>

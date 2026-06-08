@@ -1,15 +1,50 @@
 <div class="ep-filter-bar">
-  <label class="ep-filter-bar__search">
-    <ep-icon name="search" [size]="18"></ep-icon>
-    <input
-      type="search"
-      [ngModel]="value()"
-      (ngModelChange)="valueChange.emit($event)"
-      [placeholder]="placeholderKey() | translate"
-      autocomplete="off"
-      spellcheck="false" />
-  </label>
-  <ep-button variant="secondary" icon="filter" (click)="refresh.emit()">
-    {{ 'shared.filter.apply' | translate }}
-  </ep-button>
+  @if (fields().length === 0) {
+    <label class="ep-filter-bar__search">
+      <ep-icon name="search" [size]="18"></ep-icon>
+      <input
+        type="search"
+        [ngModel]="value()"
+        (ngModelChange)="valueChange.emit($event)"
+        [placeholder]="placeholderKey() | translate"
+        autocomplete="off"
+        spellcheck="false" />
+    </label>
+    <ep-button variant="secondary" icon="filter" (click)="refresh.emit()">
+      {{ 'shared.filter.apply' | translate }}
+    </ep-button>
+  } @else {
+    <div class="ep-filter-bar__fields">
+      @for (field of fields(); track field.key) {
+        @if (field.type === 'text') {
+          <label class="ep-filter-bar__search">
+            <ep-icon name="search" [size]="18"></ep-icon>
+            <input
+              type="text"
+              [ngModel]="filterValues[field.key]"
+              (ngModelChange)="onFieldValueChange(field.key, $event)"
+              [placeholder]="(field.placeholder || field.label) | translate"
+              autocomplete="off"
+              spellcheck="false" />
+          </label>
+        } @else if (field.type === 'select') {
+          <select 
+            class="ep-filter-bar__select"
+            [ngModel]="filterValues[field.key]"
+            (ngModelChange)="onFieldValueChange(field.key, $event)">
+            @for (opt of field.options; track opt.value) {
+              <option [value]="opt.value">{{ opt.label | translate }}</option>
+            }
+          </select>
+        }
+      }
+    </div>
+    @if (totalItems() > 0) {
+      <div class="ep-filter-bar__total">
+        <span class="text-sm text-neutral-500">
+          {{ 'shared.pagination.total' | translate: { count: totalItems() } }}
+        </span>
+      </div>
+    }
+  }
 </div>

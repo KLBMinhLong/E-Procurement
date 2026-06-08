@@ -1,0 +1,107 @@
+<div class="stock-dashboard-container">
+  <div class="header">
+    <div class="title-row">
+      <div class="title-text">
+        <h1 class="ep-text-heading-xl">Stock Dashboard</h1>
+        <p class="ep-text-body-md text-neutral-600">
+          Overview of inventory alerts and recent activities.
+        </p>
+      </div>
+      <div class="actions">
+        <a routerLink="/inventory/issue-out" class="ep-button ep-button-primary">
+          Issue Out Stock
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="content" *ngIf="!loading(); else loader">
+    
+    <!-- Metrics Row -->
+    <div class="metrics-grid">
+      <div class="metric-card danger">
+        <div class="metric-icon">!</div>
+        <div class="metric-content">
+          <span class="metric-value">{{ metrics().criticalItems }}</span>
+          <span class="metric-label">Items Below Reorder Level</span>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-icon">🔄</div>
+        <div class="metric-content">
+          <span class="metric-value">{{ metrics().recentMovementsCount }}</span>
+          <span class="metric-label">Recent Movements</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <!-- Critical Items List -->
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Critical Stock Alerts</h3>
+        </div>
+        <div class="panel-content">
+          <table class="ep-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of itemsBelowReorder()">
+                <td>
+                  <div class="item-info">
+                    <span class="item-name">{{ item.name }}</span>
+                    <span class="item-code">{{ item.itemCode }}</span>
+                  </div>
+                </td>
+                <td>{{ item.categoryCode }}</td>
+              </tr>
+              <tr *ngIf="itemsBelowReorder().length === 0">
+                <td colspan="2" class="empty-state">No critical stock alerts.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Movements -->
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Recent Activity</h3>
+          <a routerLink="/inventory/movements" class="view-all">View All</a>
+        </div>
+        <div class="panel-content">
+          <div class="activity-list">
+            <div class="activity-item" *ngFor="let move of recentMovements()">
+              <div class="activity-icon" [ngClass]="move.movementType.toLowerCase()">
+                {{ move.movementType === 'RECEIPT_IN' ? '↓' : move.movementType === 'ISSUE_OUT' ? '↑' : '⟷' }}
+              </div>
+              <div class="activity-details">
+                <p class="activity-desc">
+                  <strong>{{ move.itemCode }}</strong> moved <strong>{{ move.movementType }}</strong> 
+                  ({{ move.quantity }} {{ move.unit }})
+                </p>
+                <span class="activity-time">{{ move.performedAt | date:'short' }}</span>
+              </div>
+            </div>
+            <div *ngIf="recentMovements().length === 0" class="empty-state">
+              No recent activity found.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<ng-template #loader>
+  <div class="loading-state">
+    <div class="spinner-large"></div>
+    <p>Loading dashboard...</p>
+  </div>
+</ng-template>

@@ -1,0 +1,78 @@
+<section class="rfq-list-page" aria-labelledby="rfq-list-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <h1 id="rfq-list-heading" class="page-header__title">{{ 'rfq.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'rfq.list.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <ep-filter-bar
+    [fields]="filterFields"
+    (filterChange)="onFilterChange($event)"
+  />
+
+  <div class="list-card">
+    <div class="table-container">
+      @if (isLoading()) {
+        <ep-skeleton [rows]="10" />
+      } @else if (rfqs().length === 0) {
+        <div class="empty-state">
+          <ep-icon name="inbox" [size]="48" />
+          <p>{{ 'rfq.list.empty' | translate }}</p>
+        </div>
+      } @else {
+        <table class="ep-table">
+          <thead>
+            <tr>
+              <th class="sortable" (click)="onSort('rfqNumber')">
+                {{ 'rfq.list.col.rfqNumber' | translate }}
+                <ep-icon [name]="getSortIcon('rfqNumber')" [size]="14" />
+              </th>
+              <th>{{ 'rfq.list.col.prNumber' | translate }}</th>
+              <th>{{ 'rfq.list.col.title' | translate }}</th>
+              <th class="text-right">{{ 'rfq.list.col.estimatedAmount' | translate }}</th>
+              <th class="sortable" (click)="onSort('status')">
+                {{ 'rfq.list.col.status' | translate }}
+                <ep-icon [name]="getSortIcon('status')" [size]="14" />
+              </th>
+              <th class="sortable" (click)="onSort('submissionDeadline')">
+                {{ 'rfq.list.col.deadline' | translate }}
+                <ep-icon [name]="getSortIcon('submissionDeadline')" [size]="14" />
+              </th>
+              <th>{{ 'rfq.list.col.awardedVendor' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rfq of rfqs(); track rfq.id) {
+              <tr class="clickable-row" (click)="navigateToDetail(rfq.id)">
+                <td class="mono font-semibold">{{ rfq.rfqNumber }}</td>
+                <td class="mono text-muted">{{ rfq.prNumber }}</td>
+                <td class="truncate" [title]="rfq.title">{{ rfq.title }}</td>
+                <td class="text-right font-semibold">{{ formatMoney(rfq.totalEstimatedAmount) }}</td>
+                <td>
+                  <ep-badge [tone]="statusTone[rfq.status] || 'neutral'" [labelKey]="'rfq.status.' + rfq.status" />
+                </td>
+                <td class="mono">{{ formatDate(rfq.submissionDeadline) }}</td>
+                <td class="truncate" [title]="rfq.awardedVendorName || '--'">{{ rfq.awardedVendorName || '--' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    @if (meta() && meta()!.totalElements > 0) {
+      <div class="list-card__footer">
+        <ep-pagination
+          [page]="state().page"
+          [size]="state().size"
+          [totalElements]="meta()!.totalElements"
+          [totalPages]="meta()!.totalPages"
+          (pageChange)="onPageChange($event)"
+        />
+      </div>
+    }
+  </div>
+</section>

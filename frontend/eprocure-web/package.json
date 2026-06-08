@@ -23,12 +23,14 @@
     "@stomp/stompjs": "^7.3.0",
     "rxjs": "~7.8.0",
     "sockjs-client": "^1.6.1",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@angular/build": "^21.2.11",
     "@angular/cli": "^21.2.11",
     "@angular/compiler-cli": "^21.2.0",
+    "@types/uuid": "^10.0.0",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",

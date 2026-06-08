@@ -1,0 +1,123 @@
+<div class="gr-create-container">
+  <div class="header">
+    <div class="title-row">
+      <div class="title-text">
+        <h1 class="ep-text-heading-xl">{{ 'inventory.gr.action.create' | translate }}</h1>
+        <p class="ep-text-body-md text-neutral-600">
+          Create a new Goods Receipt for an existing Purchase Order.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="gr-form">
+      
+      <!-- Basic Info -->
+      <div class="form-section">
+        <h3 class="section-title">Basic Information</h3>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="poId" class="ep-label">Purchase Order <span class="required">*</span></label>
+            <select
+              id="poId"
+              formControlName="poId"
+              class="ep-input"
+              (change)="onPoSelected($event)"
+              [class.error]="form.get('poId')?.invalid && form.get('poId')?.touched"
+            >
+              <option value="" disabled>Select a Purchase Order</option>
+              <option *ngFor="let po of pos()" [value]="po.id">
+                {{ po.poNumber }} - {{ po.vendor.name }}
+              </option>
+            </select>
+            <span class="ep-error-text" *ngIf="form.get('poId')?.invalid && form.get('poId')?.touched">
+              Purchase order is required
+            </span>
+          </div>
+          
+          <div class="form-group flex-1">
+            <label for="warehouse" class="ep-label">Warehouse <span class="required">*</span></label>
+            <input
+              type="text"
+              id="warehouse"
+              formControlName="warehouse"
+              class="ep-input"
+              placeholder="e.g. Main Warehouse"
+              [class.error]="form.get('warehouse')?.invalid && form.get('warehouse')?.touched"
+            />
+            <span class="ep-error-text" *ngIf="form.get('warehouse')?.invalid && form.get('warehouse')?.touched">
+              Warehouse is required
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes" class="ep-label">Notes</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            class="ep-input"
+            rows="3"
+            placeholder="Additional notes for this receipt"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Line Items -->
+      <div class="form-section" *ngIf="selectedPo()">
+        <h3 class="section-title">Line Items to Receive</h3>
+        <div class="table-container">
+          <table class="ep-table">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Ordered Qty</th>
+                <th>Received Qty</th>
+                <th>Item Notes</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <tr *ngFor="let itemForm of items.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <input type="text" formControlName="itemName" class="ep-input ep-input-disabled" />
+                </td>
+                <td>
+                  <input type="number" formControlName="orderedQty" class="ep-input ep-input-disabled" />
+                </td>
+                <td>
+                  <input type="number" formControlName="receivedQuantity" class="ep-input" min="0" />
+                  <span class="ep-error-text" *ngIf="itemForm.get('receivedQuantity')?.invalid && itemForm.get('receivedQuantity')?.touched">
+                    Invalid quantity
+                  </span>
+                </td>
+                <td>
+                  <input type="text" formControlName="notes" class="ep-input" placeholder="Condition, remarks..." />
+                </td>
+              </tr>
+              <tr *ngIf="items.length === 0">
+                <td colspan="4" class="empty-state">
+                  No line items found for this PO.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="ep-button ep-button-secondary" (click)="cancel()">
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="ep-button ep-button-primary"
+          [disabled]="form.invalid || submitting() || items.length === 0"
+        >
+          <span class="spinner" *ngIf="submitting()"></span>
+          {{ submitting() ? 'Submitting...' : 'Create Receipt' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

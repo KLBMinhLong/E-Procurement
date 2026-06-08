@@ -1,0 +1,226 @@
+<section class="rfq-detail-page" aria-labelledby="rfq-detail-heading">
+  <ep-breadcrumb />
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="10" />
+  } @else if (rfq(); as rfqData) {
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'rfq.detail.eyebrow' | translate }}</span>
+        <h1 id="rfq-detail-heading" class="page-header__title">{{ rfqData.title }}</h1>
+        <div class="page-header__badges">
+          <ep-badge [tone]="statusTone[rfqData.status] || 'neutral'" [labelKey]="'rfq.status.' + rfqData.status" />
+          <span class="mono">{{ rfqData.rfqNumber }}</span>
+          <span class="mono text-muted">PR: {{ rfqData.prNumber }}</span>
+        </div>
+      </div>
+      <div class="page-header__actions">
+        <ep-button variant="ghost" icon="arrow-left" (click)="navigateBack()">
+          {{ 'shared.back' | translate }}
+        </ep-button>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- RFQ Info -->
+      <div class="detail-card">
+        <h2 class="detail-card__title">
+          <ep-icon name="info" [size]="18" />
+          {{ 'rfq.detail.info.title' | translate }}
+        </h2>
+        <dl class="detail-dl">
+          <div class="detail-dl__row">
+            <dt>{{ 'rfq.detail.info.deadline' | translate }}</dt>
+            <dd class="mono font-semibold" [class.text-danger]="rfqData.status === 'OPEN'">
+              {{ formatDate(rfqData.submissionDeadline) }}
+            </dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'rfq.detail.info.estimatedTotal' | translate }}</dt>
+            <dd class="font-semibold">{{ formatMoney(rfqData.totalEstimatedAmount) }}</dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'rfq.detail.info.awardedVendor' | translate }}</dt>
+            <dd>
+              @if (rfqData.awardedVendorName) {
+                <span class="text-success font-semibold">{{ rfqData.awardedVendorName }}</span>
+              } @else {
+                --
+              }
+            </dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'rfq.detail.info.createdAt' | translate }}</dt>
+            <dd class="mono">{{ formatDate(rfqData.createdAt) }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Invitations -->
+      <div class="detail-card">
+        <h2 class="detail-card__title">
+          <ep-icon name="users" [size]="18" />
+          {{ 'rfq.detail.invitations.title' | translate }}
+        </h2>
+        @if (rfqData.invitations.length) {
+          <ul class="invitation-list">
+            @for (inv of rfqData.invitations; track inv.id) {
+              <li class="invitation-item">
+                <div class="invitation-item__vendor">{{ inv.vendorName }}</div>
+                <div class="invitation-item__meta">
+                  <ep-badge
+                    [tone]="inv.status === 'QUOTED' ? 'success' : inv.status === 'DECLINED' ? 'danger' : 'warning'"
+                    [labelKey]="'rfq.invitation.status.' + inv.status" />
+                  <span class="mono">{{ formatDate(inv.invitedAt) }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="detail-empty">{{ 'rfq.detail.invitations.empty' | translate }}</p>
+        }
+      </div>
+
+      <!-- Line Items -->
+      <div class="detail-card detail-card--wide">
+        <h2 class="detail-card__title">
+          <ep-icon name="list" [size]="18" />
+          {{ 'rfq.detail.items.title' | translate }}
+        </h2>
+        <table class="ep-table">
+          <thead>
+            <tr>
+              <th width="50">#</th>
+              <th>{{ 'rfq.detail.items.name' | translate }}</th>
+              <th>{{ 'rfq.detail.items.category' | translate }}</th>
+              <th class="text-right">{{ 'rfq.detail.items.quantity' | translate }}</th>
+              <th>{{ 'rfq.detail.items.specs' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of rfqData.lineItems; track item.id) {
+              <tr>
+                <td class="mono">{{ item.lineNumber }}</td>
+                <td class="font-semibold">{{ item.itemName }}</td>
+                <td>{{ item.categoryCode }}</td>
+                <td class="text-right mono">{{ item.quantity.amount }} {{ item.quantity.unit }}</td>
+                <td class="text-muted text-sm">{{ item.specifications || '--' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Quotes & Evaluation -->
+      <div class="detail-card detail-card--wide">
+        <div class="detail-card__header">
+          <h2 class="detail-card__title">
+            <ep-icon name="file-text" [size]="18" />
+            {{ 'rfq.detail.quotes.title' | translate }}
+          </h2>
+        </div>
+
+        @if (isLoadingQuotes()) {
+          <ep-skeleton [rows]="3" />
+        } @else if (quotes().length) {
+          <div class="quotes-grid">
+            @for (quote of quotes(); track quote.id) {
+              <div class="quote-card" [class.quote-card--awarded]="rfqData.awardedQuoteId === quote.id">
+                @if (rfqData.awardedQuoteId === quote.id) {
+                  <div class="quote-card__ribbon">
+                    {{ 'rfq.detail.quotes.awardedRibbon' | translate }}
+                  </div>
+                }
+                <div class="quote-card__header">
+                  <h3>{{ quote.vendorName }}</h3>
+                  <div class="quote-card__price">{{ formatMoney(quote.totalAmount) }}</div>
+                </div>
+
+                <div class="quote-card__body">
+                  <div class="quote-detail-row">
+                    <span>{{ 'rfq.detail.quotes.submittedAt' | translate }}:</span>
+                    <span class="mono">{{ formatDate(quote.submittedAt) }}</span>
+                  </div>
+                  <div class="quote-detail-row">
+                    <span>{{ 'rfq.detail.quotes.validUntil' | translate }}:</span>
+                    <span class="mono" [class.text-danger]="!quote.validUntil">{{ formatDate(quote.validUntil) }}</span>
+                  </div>
+                  @if (quote.paymentTerms) {
+                    <div class="quote-detail-row">
+                      <span>{{ 'rfq.detail.quotes.paymentTerms' | translate }}:</span>
+                      <span>{{ quote.paymentTerms }}</span>
+                    </div>
+                  }
+                  
+                  <div class="quote-score">
+                    @if (quote.score !== null) {
+                      <div class="score-display">
+                        <span class="score-display__label">{{ 'rfq.detail.quotes.score' | translate }}</span>
+                        <span class="score-display__value">{{ quote.score }} / 100</span>
+                      </div>
+                      @if (quote.evaluationNote) {
+                        <p class="score-note">"{{ quote.evaluationNote }}"</p>
+                      }
+                    } @else {
+                      <span class="score-pending">{{ 'rfq.detail.quotes.notEvaluated' | translate }}</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="quote-card__actions">
+                  @if (selectedQuoteId() === quote.id) {
+                    <div class="eval-form">
+                      <label class="form-field">
+                        <span>{{ 'rfq.detail.eval.score' | translate }} (0-100)</span>
+                        <input type="number" class="form-control" [(ngModel)]="evalScore" min="0" max="100">
+                      </label>
+                      <label class="form-field">
+                        <span>{{ 'rfq.detail.eval.note' | translate }}</span>
+                        <textarea class="form-control" [(ngModel)]="evalNote" rows="2"></textarea>
+                      </label>
+                      <div class="eval-form__actions">
+                        <ep-button size="sm" variant="ghost" (click)="cancelEvaluation()">
+                          {{ 'shared.cancel' | translate }}
+                        </ep-button>
+                        <ep-button size="sm" variant="primary" [disabled]="isEvaluating()" (click)="saveEvaluation(quote.id)">
+                          {{ 'shared.save' | translate }}
+                        </ep-button>
+                      </div>
+                    </div>
+                  } @else {
+                    @if (rfqData.status === 'EVALUATING') {
+                      <ep-button
+                        *epHasPermission="'RFQ_EVALUATE'"
+                        size="sm"
+                        variant="secondary"
+                        (click)="startEvaluation(quote)">
+                        {{ quote.score === null ? ('rfq.detail.action.evaluate' | translate) : ('rfq.detail.action.reEvaluate' | translate) }}
+                      </ep-button>
+                    }
+                    
+                    @if (rfqData.status === 'EVALUATING' && quote.score !== null) {
+                      <ep-button
+                        *epHasPermission="'RFQ_AWARD'"
+                        size="sm"
+                        variant="primary"
+                        icon="award"
+                        [disabled]="isActioning()"
+                        (click)="awardQuote(quote.id)">
+                        {{ 'rfq.detail.action.award' | translate }}
+                      </ep-button>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <ep-icon name="inbox" [size]="48" />
+            <p>{{ 'rfq.detail.quotes.empty' | translate }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

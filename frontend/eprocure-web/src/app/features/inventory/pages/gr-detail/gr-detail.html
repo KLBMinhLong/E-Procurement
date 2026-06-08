@@ -1,0 +1,159 @@
+<div class="gr-detail-container" *ngIf="gr() as detail; else loader">
+  
+  <div class="header">
+    <div class="breadcrumb">
+      <a (click)="goBack()" class="back-link">&larr; Back to Goods Receipts</a>
+    </div>
+    
+    <div class="title-row">
+      <div class="title-text">
+        <h1 class="ep-text-heading-xl">{{ detail.grNumber }}</h1>
+        <div class="status-badge" [ngClass]="detail.status.toLowerCase()">
+          {{ 'inventory.gr.status.' + detail.status | translate }}
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button 
+          *ngIf="detail.status !== 'COMPLETE' && detail.status !== 'DISCREPANCY'"
+          class="ep-button ep-button-primary"
+          (click)="completeGr()"
+          [disabled]="submitting()"
+        >
+          <span class="spinner" *ngIf="submitting()"></span>
+          {{ submitting() ? 'Completing...' : 'Complete Receipt' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <!-- Left Column: Primary Details & Line Items -->
+    <div class="main-content">
+      <div class="card">
+        <h3 class="card-title">Receipt Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">PO Number</span>
+            <span class="value">{{ detail.po.poNumber }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Warehouse</span>
+            <span class="value">{{ detail.warehouse.name }} ({{ detail.warehouse.code }})</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Received By</span>
+            <span class="value">{{ detail.warehouseKeeper.fullName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Received Date</span>
+            <span class="value">{{ detail.receivedAt | date:'medium' }}</span>
+          </div>
+        </div>
+        
+        <div class="info-full" *ngIf="detail.notes">
+          <span class="label">Notes</span>
+          <p class="value">{{ detail.notes }}</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-flex">
+          <h3 class="card-title">Received Line Items</h3>
+          <span class="item-count">{{ detail.lineItems.length }} items</span>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="ep-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Ordered</th>
+                <th>Received</th>
+                <th>Rejected</th>
+                <th>Condition/Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let line of detail.lineItems">
+                <td>
+                  <div class="item-info">
+                    <span class="item-name">{{ line.itemName }}</span>
+                    <span class="item-code" *ngIf="line.itemCode">{{ line.itemCode }}</span>
+                  </div>
+                </td>
+                <td>{{ line.orderedQuantity }} {{ line.unit }}</td>
+                <td class="success-text">{{ line.receivedQuantity }} {{ line.unit }}</td>
+                <td [class.danger-text]="line.rejectedQuantity !== '0'">
+                  {{ line.rejectedQuantity }} {{ line.unit }}
+                </td>
+                <td>{{ line.rejectionReason || '-' }}</td>
+              </tr>
+              <tr *ngIf="detail.lineItems.length === 0">
+                <td colspan="5" class="empty-state">No line items recorded for this receipt.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: System info & 3-way match preview -->
+    <div class="side-content">
+      <div class="card system-card">
+        <h3 class="card-title">System Information</h3>
+        <div class="info-list">
+          <div class="list-item">
+            <span class="label">Created At</span>
+            <span class="value">{{ detail.createdAt | date:'medium' }}</span>
+          </div>
+          <div class="list-item">
+            <span class="label">System ID</span>
+            <span class="value system-id" [title]="detail.id">{{ detail.id }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card match-card">
+        <h3 class="card-title">3-Way Match Status</h3>
+        <p class="description text-neutral-600">
+          This receipt is part of a 3-way match sequence.
+        </p>
+        
+        <div class="match-steps">
+          <div class="step completed">
+            <div class="icon">✓</div>
+            <div class="step-content">
+              <h4>Purchase Order</h4>
+              <p>{{ detail.po.poNumber }}</p>
+            </div>
+          </div>
+          
+          <div class="step" [ngClass]="{'completed': detail.status === 'COMPLETE' || detail.status === 'PARTIAL', 'pending': detail.status === 'DRAFT'}">
+            <div class="icon" *ngIf="detail.status === 'COMPLETE' || detail.status === 'PARTIAL'">✓</div>
+            <div class="icon-dot" *ngIf="detail.status === 'DRAFT'"></div>
+            <div class="step-content">
+              <h4>Goods Receipt</h4>
+              <p>{{ detail.grNumber }}</p>
+            </div>
+          </div>
+          
+          <div class="step pending">
+            <div class="icon-dot"></div>
+            <div class="step-content">
+              <h4>Invoice</h4>
+              <p>Pending receipt completion</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loader>
+  <div class="loading-state">
+    <div class="spinner-large"></div>
+    <p>Loading goods receipt details...</p>
+  </div>
+</ng-template>
