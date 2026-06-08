@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
+
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -122,7 +122,7 @@ export class GrCreate {
       notes: this.form.getRawValue().notes || null
     };
 
-    const idempotencyKey = uuidv4();
+    const idempotencyKey = crypto.randomUUID();
 
     this.grService.create(request, idempotencyKey)
       .pipe(

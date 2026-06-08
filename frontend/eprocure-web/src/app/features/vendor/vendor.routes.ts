@@ -24,14 +24,6 @@ export const vendorRoutes: Routes = [
     title: 'route.vendor.create'
   },
   {
-    path: ':id',
-    loadComponent: () =>
-      import('./pages/vendor-detail/vendor-detail.component').then((m) => m.VendorDetailComponent),
-    canActivate: [permissionGuard],
-    data: { requiredPermissions: ['VENDOR_VIEW'] },
-    title: 'route.vendor.detail'
-  },
-  {
     path: 'rfq',
     children: [
       {
@@ -51,5 +43,13 @@ export const vendorRoutes: Routes = [
         title: 'route.rfq.detail'
       }
     ]
+  },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./pages/vendor-detail/vendor-detail.component').then((m) => m.VendorDetailComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['VENDOR_VIEW'] },
+    title: 'route.vendor.detail'
   }
 ];
