@@ -11,6 +11,7 @@ import com.eprocure.approval.common.api.RequestIdUtil;
 import com.eprocure.approval.common.security.UserPrincipal;
 import com.eprocure.approval.common.util.LogMaskingUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class ApprovalInboxController {
 
     @GetMapping("/inbox")
     @PreAuthorize("hasAnyAuthority('PR_APPROVE_L1','PR_APPROVE_L2','PR_APPROVE_L3','PR_APPROVE_FINANCE','PR_APPROVE_EMERGENCY')")
-    public ResponseEntity<ApiResponse<PageResult<ApprovalTaskSummary>>> getInbox(
+    public ResponseEntity<ApiResponse<List<ApprovalTaskSummary>>> getInbox(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort,
@@ -63,7 +64,7 @@ public class ApprovalInboxController {
         );
 
         PageResult<ApprovalTaskSummary> result = getApprovalInboxUseCase.execute(query);
-        return ResponseEntity.ok(ApiResponse.success(result, RequestIdUtil.resolve(request)));
+        return ResponseEntity.ok(ApiResponse.success(result.items(), result.meta(), RequestIdUtil.resolve(request)));
     }
 
     @GetMapping("/inbox/count")

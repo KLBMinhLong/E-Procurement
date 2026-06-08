@@ -242,8 +242,8 @@
 | RFQ quote submit/evaluate/award | ✅ | `vendor_quotes`, `vendor_quote_line_items`; `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award` |
 | PO handoff after award event | ✅ | `procurement.rfq.awarded` published after award commit; finance-service consumes it and creates/list/detail DRAFT PO |
 | Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |
-| Frontend: Vendor Management | ✅ | UI for Vendor List, Detail, and Create |
-| Frontend: RFQ Management | ✅ | UI for RFQ List, Detail, and Quote processing |
+| Frontend: Vendor Management | 🔄 | UI for Vendor List, Detail, and Create |
+| Frontend: RFQ Management | 🔄 | UI for RFQ List, Detail, and Quote processing |
 
 ### E07: Purchase Order
 | Task | Status | Ghi chú |
@@ -271,10 +271,10 @@
 | Complete GR + stock receipt movement | ✅ | `POST /api/v1/goods-receipts/{id}/complete`; resolves catalog `itemCode`, updates `stock_entries`, creates `RECEIPT_IN` movements, publishes `inventory.gr.created` |
 | Stock list/movement API | ✅ | `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, `GET /api/v1/stock/movements`; read-only stock projections with `GR_VIEW` |
 | Issue-out API | ✅ | `POST /api/v1/stock/issue-out`; validates active item/warehouse, decrements stock atomically, stores idempotent request header, creates `ISSUE_OUT` movements |
-| Frontend: GR List & Create | ✅ | UI to list and create Draft GR from PO |
-| Frontend: GR Detail & Complete | ✅ | UI to view GR details, line items, 3-way match preview, and action to complete GR |
-| Frontend: Stock Dashboard & Movements | ✅ | UI for warehouse stock overview, reorder alerts, and movement history |
-| Frontend: Issue Out Stock | ✅ | Form to issue stock out with dynamic line items |
+| Frontend: GR List & Create | 🔄 | UI to list and create Draft GR from PO |
+| Frontend: GR Detail & Complete | 🔄 | UI to view GR details, line items, 3-way match preview, and action to complete GR |
+| Frontend: Stock Dashboard & Movements | 🔄 | UI for warehouse stock overview, reorder alerts, and movement history |
+| Frontend: Issue Out Stock | 🔄 | Form to issue stock out with dynamic line items |
 
 ### E09: Invoice & Payment
 | Task | Status | Ghi chú |
