@@ -65,6 +65,17 @@
             {{ 'pr.detail.action.createPo' | translate }}
           </ep-button>
         }
+
+        @if (canCreateRfq()) {
+          <ep-button
+            *epHasPermission="'RFQ_CREATE'"
+            id="btn-create-rfq-from-pr"
+            variant="secondary"
+            icon="file-search"
+            (click)="navigateCreateRfq()">
+            {{ 'pr.detail.action.createRfq' | translate }}
+          </ep-button>
+        }
       </div>
     </div>
 

@@ -121,6 +121,8 @@ export class PrDetailComponent implements OnInit {
 
   readonly canCreatePo = computed(() => this.pr()?.status === 'APPROVED');
 
+  readonly canCreateRfq = computed(() => this.pr()?.status === 'APPROVED');
+
   readonly approvalStepTone = APPROVAL_STEP_TONE;
   readonly budgetTone = BUDGET_TONE;
 
@@ -151,6 +153,16 @@ export class PrDetailComponent implements OnInit {
         prId: data.id,
         vendorId: this.preferredVendorId(data)
       }
+    });
+  }
+
+  navigateCreateRfq(): void {
+    const data = this.pr();
+    if (!data) {
+      return;
+    }
+    this.router.navigate(['/vendors', 'rfq', 'create'], {
+      queryParams: { prId: data.id }
     });
   }
 

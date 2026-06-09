@@ -414,7 +414,8 @@
       "action": {
         "submit": "Gửi phê duyệt",
         "confirmCancel": "Xác nhận hủy",
-        "createPo": "Tạo PO"
+        "createPo": "Tạo PO",
+        "createRfq": "Tạo RFQ"
       },
       "label": {
         "justification": "Lý do mua sắm",

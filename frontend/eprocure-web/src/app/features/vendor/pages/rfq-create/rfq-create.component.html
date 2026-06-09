@@ -24,12 +24,25 @@
             class="form-field--full"
             [label]="'rfq.create.field.pr' | translate"
             [error]="fieldError('prId') ? (fieldError('prId')! | translate) : null">
-            <select id="rfq-pr" class="form-control" formControlName="prId">
-              <option value="">{{ 'rfq.create.field.prPlaceholder' | translate }}</option>
+            @if (preselectedPrId()) {
+              <!-- Pre-selected from PR Detail — show locked PR info -->
               @for (pr of approvedPrs(); track pr.id) {
-                <option [value]="pr.id">{{ pr.prNumber }} — {{ pr.title }}</option>
+                @if (pr.id === preselectedPrId()) {
+                  <div class="form-control form-control--locked">
+                    <ep-icon name="lock" [size]="14" />
+                    <span>{{ pr.prNumber }} — {{ pr.title }}</span>
+                  </div>
+                }
               }
-            </select>
+              <input type="hidden" formControlName="prId">
+            } @else {
+              <select id="rfq-pr" class="form-control" formControlName="prId">
+                <option value="">{{ 'rfq.create.field.prPlaceholder' | translate }}</option>
+                @for (pr of approvedPrs(); track pr.id) {
+                  <option [value]="pr.id">{{ pr.prNumber }} — {{ pr.title }}</option>
+                }
+              </select>
+            }
           </ep-form-field>
 
           <ep-form-field

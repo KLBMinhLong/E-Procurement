@@ -414,7 +414,8 @@
       "action": {
         "submit": "Submit for Approval",
         "confirmCancel": "Confirm Cancel",
-        "createPo": "Create PO"
+        "createPo": "Create PO",
+        "createRfq": "Create RFQ"
       },
       "label": {
         "justification": "Justification",

@@ -108,6 +108,24 @@ ep-form-field {
   resize: vertical;
 }
 
+.form-control--locked {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  height: var(--control-height);
+  padding: 0 var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-2);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+  cursor: not-allowed;
+
+  ep-icon { color: var(--color-accent); flex-shrink: 0; }
+  span { font-weight: 500; color: var(--color-text-primary); }
+}
+
 .form-hint {
   margin: 0;
   color: var(--color-text-muted);
