@@ -1,93 +1,219 @@
-<div class="gr-list-container fade-in">
-  <div class="gr-list-header">
-    <div class="header-content">
-      <ep-breadcrumb />
-      
-      <div class="title-row">
-        <div class="title-text">
-          <h1 class="text-heading-xl text-neutral-900">{{ 'inventory.gr.list.title' | translate }}</h1>
-          <p class="text-body-md text-neutral-500">{{ 'inventory.gr.list.subtitle' | translate }}</p>
-        </div>
+<section class="gr-list-page" aria-labelledby="gr-list-heading">
+  <ep-breadcrumb />
 
-        <div class="title-actions">
-          <ep-button *epHasPermission="['GR_CREATE']"
-                     variant="primary" 
-                     icon="plus" 
-                     (click)="navigateToCreate()">
-            {{ 'inventory.gr.action.create' | translate }}
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'inventory.gr.list.eyebrow' | translate }}</span>
+      <h1 id="gr-list-heading" class="page-header__title">{{ 'inventory.gr.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'inventory.gr.list.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        *epHasPermission="'GR_CREATE'"
+        id="btn-create-gr"
+        variant="primary"
+        icon="plus"
+        (click)="navigateCreate()">
+        {{ 'inventory.gr.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="summary-grid" [attr.aria-label]="'inventory.gr.list.summaryLabel' | translate">
+    <div class="summary-card">
+      <ep-icon name="file-text" />
+      <span class="summary-card__label">{{ 'inventory.gr.list.stat.total' | translate }}</span>
+      <span class="summary-card__value">{{ meta()?.totalElements ?? items().length }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="file-pen-line" />
+      <span class="summary-card__label">{{ 'inventory.gr.status.DRAFT' | translate }}</span>
+      <span class="summary-card__value">{{ draftCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="clock" />
+      <span class="summary-card__label">{{ 'inventory.gr.status.PARTIAL' | translate }}</span>
+      <span class="summary-card__value">{{ partialCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="check-circle" />
+      <span class="summary-card__label">{{ 'inventory.gr.status.COMPLETE' | translate }}</span>
+      <span class="summary-card__value">{{ completeCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="alert-triangle" />
+      <span class="summary-card__label">{{ 'inventory.gr.status.DISCREPANCY' | translate }}</span>
+      <span class="summary-card__value">{{ discrepancyCount() }}</span>
+    </div>
+  </div>
+
+  <div class="gr-toolbar">
+    <div class="gr-toolbar__top">
+      <ep-filter-bar
+        id="gr-po-filter"
+        placeholderKey="inventory.gr.list.filterPoPlaceholder"
+        [value]="poId()"
+        (valueChange)="onPoSearch($event)"
+        (refresh)="loadData()">
+      </ep-filter-bar>
+
+      @if (hasActiveFilters()) {
+        <ep-button id="btn-clear-gr-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'inventory.gr.list.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
+
+    <div class="filter-chip-group" [attr.aria-label]="'inventory.gr.list.filterStatus' | translate">
+      <button
+        id="filter-gr-status-all"
+        class="filter-chip"
+        [class.filter-chip--active]="activeStatus() === ''"
+        (click)="onStatusChange('')">
+        {{ 'shared.all' | translate }}
+      </button>
+      @for (status of statuses; track status) {
+        <button
+          [id]="'filter-gr-status-' + status"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === status"
+          (click)="onStatusChange(status)">
+          {{ ('inventory.gr.status.' + status) | translate }}
+        </button>
+      }
+    </div>
+
+    <div class="advanced-filters">
+      <label class="compact-field">
+        <span>{{ 'inventory.gr.list.filter.fromDate' | translate }}</span>
+        <input
+          id="filter-gr-from-date"
+          type="date"
+          class="compact-field__control"
+          [value]="fromDate()"
+          (change)="onDateFilterChange('from', $any($event.target).value)">
+      </label>
+      <label class="compact-field">
+        <span>{{ 'inventory.gr.list.filter.toDate' | translate }}</span>
+        <input
+          id="filter-gr-to-date"
+          type="date"
+          class="compact-field__control"
+          [value]="toDate()"
+          (change)="onDateFilterChange('to', $any($event.target).value)">
+      </label>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="package-search"
+      [title]="'inventory.gr.empty.title' | translate"
+      [message]="'inventory.gr.empty.message' | translate" />
+  } @else {
+    <div class="gr-table-wrapper">
+      <table class="gr-table" role="grid" aria-labelledby="gr-list-heading">
+        <thead>
+          <tr>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('grNumber')">
+                {{ 'inventory.gr.col.number' | translate }}
+                <ep-icon [name]="sortIcon('grNumber')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('poNumber')">
+                {{ 'inventory.gr.col.poNumber' | translate }}
+                <ep-icon [name]="sortIcon('poNumber')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col">{{ 'inventory.gr.col.warehouse' | translate }}</th>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('status')">
+                {{ 'inventory.gr.col.status' | translate }}
+                <ep-icon [name]="sortIcon('status')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('receivedAt')">
+                {{ 'inventory.gr.col.receivedAt' | translate }}
+                <ep-icon [name]="sortIcon('receivedAt')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('createdAt')">
+                {{ 'inventory.gr.col.createdAt' | translate }}
+                <ep-icon [name]="sortIcon('createdAt')" [size]="14" />
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (gr of items(); track gr.id) {
+            <tr
+              [id]="'gr-row-' + gr.id"
+              class="gr-table__row"
+              role="button"
+              tabindex="0"
+              (click)="navigateDetail(gr.id)"
+              (keydown.enter)="navigateDetail(gr.id)">
+              <td class="gr-table__number">
+                <span class="mono">{{ gr.grNumber }}</span>
+                <span class="gr-table__subtitle">{{ shortId(gr.id) }}</span>
+              </td>
+              <td>
+                <span class="mono">{{ gr.po.poNumber }}</span>
+              </td>
+              <td>
+                <span class="gr-table__primary">{{ gr.warehouse.name }}</span>
+              </td>
+              <td>
+                <ep-badge
+                  [tone]="statusTone[gr.status] || 'neutral'"
+                  [labelKey]="'inventory.gr.status.' + gr.status" />
+              </td>
+              <td class="align-right gr-table__date">
+                {{ formatDate(gr.receivedAt) }}
+              </td>
+              <td class="align-right gr-table__date">
+                {{ formatDate(gr.createdAt) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as metaData) {
+      <div class="gr-pagination">
+        <span class="gr-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="gr-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'inventory.gr.list.totalItems' | translate }}
+        </span>
+        <div class="gr-pagination__controls">
+          <ep-button
+            id="btn-prev-gr-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange({ page: metaData.page - 1, size: metaData.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-gr-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="metaData.isLast"
+            (click)="onPageChange({ page: metaData.page + 1, size: metaData.size })">
+            {{ 'shared.table.next' | translate }}
           </ep-button>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="gr-list-content">
-    <ep-filter-bar
-      [fields]="filterFields"
-      [totalItems]="meta()?.totalElements || 0"
-      (filterChange)="onFilterChange($event)">
-    </ep-filter-bar>
-
-    <div class="table-card">
-      <div class="table-responsive">
-        <table class="ep-table">
-          <thead>
-            <tr>
-              <th>{{ 'inventory.gr.col.number' | translate }}</th>
-              <th>{{ 'inventory.gr.col.poNumber' | translate }}</th>
-              <th>{{ 'inventory.gr.col.warehouse' | translate }}</th>
-              <th>{{ 'inventory.gr.col.status' | translate }}</th>
-              <th>{{ 'inventory.gr.col.receivedAt' | translate }}</th>
-            </tr>
-          </thead>
-          
-          <tbody>
-            @if (isLoading()) {
-              @for (i of [1,2,3,4,5]; track i) {
-                <tr>
-                  <td><ep-skeleton width="120px" /></td>
-                  <td><ep-skeleton width="120px" /></td>
-                  <td><ep-skeleton width="150px" /></td>
-                  <td><ep-skeleton width="80px" /></td>
-                  <td><ep-skeleton width="100px" /></td>
-                </tr>
-              }
-            } @else if (grs().length === 0) {
-              <tr>
-                <td colspan="5">
-                  <div class="empty-state">
-                    <ep-icon name="package-search" [size]="48" class="text-neutral-300" />
-                    <h3 class="text-heading-sm mt-4">{{ 'inventory.gr.empty.title' | translate }}</h3>
-                    <p class="text-body-sm text-neutral-500 mt-1">{{ 'inventory.gr.empty.message' | translate }}</p>
-                  </div>
-                </td>
-              </tr>
-            } @else {
-              @for (gr of grs(); track gr.id) {
-                <tr class="clickable" (click)="navigateToDetail(gr.id)">
-                  <td class="font-medium text-primary-600">{{ gr.grNumber }}</td>
-                  <td>{{ gr.po.poNumber }}</td>
-                  <td>{{ gr.warehouse.name }}</td>
-                  <td>
-                    <ep-badge [tone]="statusTone[gr.status]">{{ 'inventory.gr.status.' + gr.status | translate }}</ep-badge>
-                  </td>
-                  <td>{{ formatDate(gr.receivedAt) }}</td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-
-      @if (meta() && meta()!.totalPages > 1) {
-        <div class="pagination-wrapper">
-          <ep-pagination
-            [currentPage]="meta()!.page"
-            [totalPages]="meta()!.totalPages"
-            (pageChange)="onPageChange($event)">
-          </ep-pagination>
-        </div>
-      }
-    </div>
-  </div>
-</div>
+    }
+  }
+</section>
