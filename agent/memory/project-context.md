@@ -337,7 +337,7 @@ docs/
   logging.mdc                → Log4j2, layer prefix, masking, log4j2.xml
   testing.mdc                → JUnit, Postman, JMeter, coverage targets
 
-.cursor/memory/
+agent/memory/
   architecture-map.md        → Sơ đồ service relationships
   coding-patterns.md         → Code patterns tái sử dụng
   decision-log.md            → Quyết định kỹ thuật đã chốt
@@ -346,3 +346,40 @@ docs/
   project-context.md         ← File này — đọc đầu tiên
   tech-stack.md              → Chi tiết tech stack + version
 ```
+
+---
+
+## 16. FRONTEND VENDOR / RFQ (E06) — CẬP NHẬT 2026-06-08
+
+**Module:** `frontend/eprocure-web/src/app/features/vendor/`
+
+| Route | Permission | Mô tả |
+|---|---|---|
+| `/vendors/list` | `VENDOR_VIEW` | Danh sách NCC, filter status/AVL, sort, pagination (page bắt đầu 1) |
+| `/vendors/create` | `VENDOR_CREATE` | Form đăng ký NCC — address object, categories, contacts |
+| `/vendors/:id` | `VENDOR_VIEW` | Chi tiết + scorecard + approve (reload sau approve) |
+| `/vendors/rfq` | `RFQ_VIEW` | Danh sách RFQ, filter status |
+| `/vendors/rfq/create` | `RFQ_CREATE` | Tạo RFQ từ PR APPROVED + ≥2 vendor AVL |
+| `/vendors/rfq/:id` | `RFQ_VIEW` | Chi tiết RFQ, quotes, evaluate/award/close/submit quote |
+
+**API contract FE phải nhớ (vendor-service):**
+```
+Vendor status: PENDING | APPROVED | BLACKLISTED | INACTIVE
+Vendor list: overallScore, isOnApprovedVendorList (không có createdAt trong summary)
+Vendor approve / RFQ close: response data = null → reload detail
+RFQ list/detail: RfqDetailResponse (quotes embedded, không có GET /rfq/{id}/quotes)
+RFQ invitation: { vendor: {id,name}, hasSubmitted } — không có status INVITED/QUOTED
+VendorQuote: totalAmount+currency (string), evaluationScore, evaluationNote
+Award: POST body { awardedQuoteId, awardReason } — awardReason min 20 chars
+Create RFQ: { prId, title, submissionDeadline, invitedVendorIds[], requirements? }
+Pagination: page default 1 (không dùng page 0)
+```
+
+**i18n keys:** `vendor.*`, `rfq.*`, `route.vendor.*`, `route.rfq.*` trong `assets/i18n/en.json` + `vi.json`
+
+**Chưa làm / follow-up P1:**
+- PR detail → link tạo RFQ (`/vendors/rfq/create?prId=...`)
+- Vendor edit/blacklist/deactivate (backend OpenAPI có, chưa implement)
+- RFQ quote comparison table side-by-side
+- Frontend unit tests cho vendor/rfq module
+- E15 smoke chưa cover RFQ award path (chỉ manual PO)

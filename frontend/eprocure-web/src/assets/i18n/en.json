@@ -213,6 +213,17 @@
     "pr": {
       "create": "Create Request",
       "detail": "Request Details"
+    },
+    "vendor": {
+      "self": "Vendors",
+      "list": "Vendor Directory",
+      "create": "Register Vendor",
+      "detail": "Vendor Details"
+    },
+    "rfq": {
+      "list": "RFQ List",
+      "create": "Create RFQ",
+      "detail": "RFQ Details"
     }
   },
   "shared": {
@@ -1315,6 +1326,296 @@
       "empty": {
         "title": "No matching rules",
         "message": "Create the first approval rule or adjust the search filter."
+      }
+    }
+  },
+  "vendor": {
+    "status": {
+      "PENDING": "Pending approval",
+      "APPROVED": "Approved",
+      "BLACKLISTED": "Blacklisted",
+      "INACTIVE": "Inactive"
+    },
+    "list": {
+      "eyebrow": "Supplier management",
+      "title": "Vendor directory",
+      "subtitle": "Manage supplier master data, AVL status, and performance scores.",
+      "summaryLabel": "Vendor summary",
+      "totalItems": "vendors",
+      "avlBadge": "AVL",
+      "action": {
+        "create": "Register vendor"
+      },
+      "stat": {
+        "total": "Total vendors",
+        "approved": "Approved (page)",
+        "pending": "Pending (page)",
+        "avl": "On AVL (page)"
+      },
+      "filter": {
+        "searchPlaceholder": "Search by name, code, tax ID, email...",
+        "clear": "Clear filters",
+        "status": "Filter by status",
+        "allStatus": "All statuses",
+        "avlOnly": "AVL only"
+      },
+      "col": {
+        "code": "Vendor code",
+        "name": "Vendor name",
+        "taxCode": "Tax ID",
+        "email": "Email",
+        "categories": "Categories",
+        "status": "Status",
+        "avl": "AVL",
+        "score": "Score"
+      },
+      "empty": {
+        "title": "No vendors found",
+        "message": "Adjust your filters or register a new vendor."
+      }
+    },
+    "detail": {
+      "eyebrow": "Vendor profile",
+      "avlBadge": "Approved Vendor List",
+      "action": {
+        "approve": "Approve vendor"
+      },
+      "modal": {
+        "approveTitle": "Approve vendor",
+        "approveMessage": "Approve {{name}} and add to the Approved Vendor List (AVL)?"
+      },
+      "toast": {
+        "approved": "Vendor approved successfully."
+      },
+      "info": {
+        "title": "Company information",
+        "taxCode": "Tax ID",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "categories": "Categories",
+        "createdAt": "Registered at",
+        "notes": "Notes"
+      },
+      "score": {
+        "title": "Performance scorecard",
+        "quality": "Quality",
+        "delivery": "Delivery",
+        "pricing": "Pricing",
+        "responsiveness": "Responsiveness",
+        "overall": "Overall",
+        "lastEvaluated": "Last evaluated",
+        "totalOrders": "Total orders",
+        "onTimeRate": "On-time delivery",
+        "empty": "No scorecard data yet."
+      },
+      "contacts": {
+        "title": "Contact persons",
+        "name": "Name",
+        "role": "Role",
+        "email": "Email",
+        "phone": "Phone",
+        "primary": "Primary",
+        "isPrimary": "Primary",
+        "empty": "No contacts registered."
+      }
+    },
+    "create": {
+      "eyebrow": "New supplier",
+      "title": "Register vendor",
+      "subtitle": "Enter company details to create a new vendor record. Required fields are marked.",
+      "section": {
+        "info": "Company information",
+        "contacts": "Contact persons"
+      },
+      "field": {
+        "name": "Company name",
+        "namePlaceholder": "e.g. ABC Technology Co., Ltd.",
+        "taxCode": "Tax ID",
+        "taxCodePlaceholder": "e.g. 0123456789",
+        "email": "Company email",
+        "emailPlaceholder": "contact@company.com",
+        "phone": "Phone number",
+        "phonePlaceholder": "e.g. 028 1234 5678",
+        "street": "Street address",
+        "streetPlaceholder": "House number, street name",
+        "district": "District",
+        "districtPlaceholder": "District / ward",
+        "city": "City / Province",
+        "cityPlaceholder": "e.g. Ho Chi Minh City",
+        "country": "Country",
+        "countryPlaceholder": "e.g. Vietnam",
+        "categories": "Categories",
+        "categoriesPlaceholder": "IT_EQUIPMENT, OFFICE_SUPPLIES",
+        "categoriesHint": "Separate multiple categories with commas. At least one is required.",
+        "notes": "Notes",
+        "notesPlaceholder": "Additional information (optional)"
+      },
+      "contact": {
+        "name": "Contact name",
+        "role": "Role / title",
+        "email": "Email",
+        "phone": "Phone"
+      },
+      "action": {
+        "addContact": "Add contact",
+        "save": "Save vendor"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "email": "Enter a valid email address.",
+        "maxLength": "Value is too long.",
+        "categoriesRequired": "Enter at least one category."
+      },
+      "toast": {
+        "success": "Vendor registered successfully."
+      }
+    }
+  },
+  "rfq": {
+    "status": {
+      "OPEN": "Open",
+      "EVALUATING": "Evaluating",
+      "AWARDED": "Awarded",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled"
+    },
+    "invitation": {
+      "submitted": "Quoted",
+      "pending": "Awaiting quote"
+    },
+    "list": {
+      "eyebrow": "Sourcing",
+      "title": "Request for Quotation",
+      "subtitle": "Create RFQs from approved PRs, collect vendor quotes, and award suppliers.",
+      "summaryLabel": "RFQ summary",
+      "totalItems": "RFQs",
+      "action": {
+        "create": "Create RFQ"
+      },
+      "stat": {
+        "total": "Total RFQs",
+        "open": "Open (page)",
+        "evaluating": "Evaluating (page)",
+        "awarded": "Awarded (page)"
+      },
+      "filter": {
+        "status": "Filter by status",
+        "allStatus": "All statuses"
+      },
+      "col": {
+        "rfqNumber": "RFQ number",
+        "prNumber": "PR number",
+        "title": "Title",
+        "invitations": "Quotes",
+        "status": "Status",
+        "deadline": "Deadline",
+        "awardedVendor": "Awarded vendor"
+      },
+      "empty": {
+        "title": "No RFQs found",
+        "message": "Create an RFQ from an approved purchase request."
+      }
+    },
+    "detail": {
+      "eyebrow": "RFQ workspace",
+      "info": {
+        "title": "RFQ information",
+        "deadline": "Submission deadline",
+        "awardedVendor": "Awarded vendor",
+        "awardReason": "Award reason",
+        "createdAt": "Created at"
+      },
+      "invitations": {
+        "title": "Invited vendors",
+        "empty": "No vendors invited."
+      },
+      "items": {
+        "title": "Line items",
+        "name": "Item",
+        "category": "Category",
+        "quantity": "Quantity",
+        "specs": "Specifications"
+      },
+      "quotes": {
+        "title": "Vendor quotes",
+        "awardedRibbon": "Awarded",
+        "submittedAt": "Submitted",
+        "validUntil": "Valid until",
+        "paymentTerms": "Payment terms",
+        "score": "Evaluation score",
+        "notEvaluated": "Not evaluated yet",
+        "empty": "No quotes submitted yet."
+      },
+      "eval": {
+        "score": "Score",
+        "note": "Evaluation note"
+      },
+      "action": {
+        "evaluate": "Evaluate",
+        "reEvaluate": "Re-evaluate",
+        "award": "Award RFQ",
+        "close": "Close RFQ",
+        "submitQuote": "Submit quote"
+      },
+      "modal": {
+        "awardTitle": "Award RFQ",
+        "awardMessage": "Confirm awarding this RFQ to the selected quote. A draft PO will be created automatically.",
+        "awardReason": "Award reason",
+        "awardReasonPlaceholder": "Explain why this vendor was selected (min. 20 characters)",
+        "awardReasonMin": "Award reason must be at least 20 characters.",
+        "closeTitle": "Close RFQ",
+        "closeMessage": "Close this RFQ for evaluation? Vendors will no longer be able to submit quotes.",
+        "submitQuoteTitle": "Submit vendor quote"
+      },
+      "submit": {
+        "vendor": "Vendor",
+        "currency": "Currency",
+        "validUntil": "Valid until",
+        "paymentTerms": "Payment terms",
+        "notes": "Notes",
+        "lineItems": "Quoted line items",
+        "unitPrice": "Unit price",
+        "deliveryDays": "Delivery days"
+      },
+      "toast": {
+        "evaluated": "Quote evaluated successfully.",
+        "awarded": "RFQ awarded successfully.",
+        "closed": "RFQ closed for evaluation.",
+        "quoteSubmitted": "Quote submitted successfully.",
+        "submitValidation": "Complete vendor, validity date, and at least one unit price."
+      }
+    },
+    "create": {
+      "eyebrow": "New RFQ",
+      "title": "Create RFQ",
+      "subtitle": "Select an approved PR and invite at least two AVL vendors.",
+      "section": {
+        "rfq": "RFQ details",
+        "vendors": "Invite vendors (AVL)"
+      },
+      "field": {
+        "pr": "Purchase request",
+        "prPlaceholder": "Select approved PR...",
+        "title": "RFQ title",
+        "titlePlaceholder": "e.g. IT equipment RFQ Q2",
+        "deadline": "Submission deadline",
+        "requirements": "Requirements / notes",
+        "requirementsPlaceholder": "Technical or commercial requirements (optional)"
+      },
+      "vendorCount": "{{count}} vendors selected (min. 2)",
+      "noAvlVendors": "Not enough AVL vendors available. Approve vendors first.",
+      "action": {
+        "save": "Create RFQ"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "maxLength": "Value is too long.",
+        "vendorsMin": "Select at least two AVL vendors.",
+        "deadlineFuture": "Submission deadline must be in the future."
+      },
+      "toast": {
+        "success": "RFQ created successfully."
       }
     }
   },

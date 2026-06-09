@@ -36,9 +36,9 @@
       <span class="summary-card__value">{{ pendingCount() }}</span>
     </div>
     <div class="summary-card">
-      <ep-icon name="alert-triangle" />
-      <span class="summary-card__label">{{ 'vendor.list.stat.suspended' | translate }}</span>
-      <span class="summary-card__value">{{ suspendedCount() }}</span>
+      <ep-icon name="shield-check" />
+      <span class="summary-card__label">{{ 'vendor.list.stat.avl' | translate }}</span>
+      <span class="summary-card__value">{{ avlCount() }}</span>
     </div>
   </div>
 
@@ -76,6 +76,14 @@
           {{ ('vendor.status.' + status) | translate }}
         </button>
       }
+      <button
+        id="filter-vendor-avl-only"
+        class="filter-chip"
+        [class.filter-chip--active]="avlOnly()"
+        (click)="onAvlToggle()">
+        <ep-icon name="shield-check" [size]="14" />
+        {{ 'vendor.list.filter.avlOnly' | translate }}
+      </button>
     </div>
   </div>
 
@@ -112,11 +120,11 @@
                 <ep-icon [name]="sortIcon('status')" [size]="14" />
               </button>
             </th>
-            <th scope="col" class="align-center">{{ 'vendor.list.col.score' | translate }}</th>
-            <th scope="col" class="align-right">
-              <button class="sort-button sort-button--right" type="button" (click)="onSort('createdAt')">
-                {{ 'vendor.list.col.createdAt' | translate }}
-                <ep-icon [name]="sortIcon('createdAt')" [size]="14" />
+            <th scope="col" class="align-center">{{ 'vendor.list.col.avl' | translate }}</th>
+            <th scope="col" class="align-center">
+              <button class="sort-button" type="button" (click)="onSort('overallScore')">
+                {{ 'vendor.list.col.score' | translate }}
+                <ep-icon [name]="sortIcon('overallScore')" [size]="14" />
               </button>
             </th>
           </tr>
@@ -152,12 +160,18 @@
                   [labelKey]="'vendor.status.' + vendor.status" />
               </td>
               <td class="align-center">
-                <span class="vendor-table__score" [class.vendor-table__score--good]="(vendor.score?.overall ?? 0) >= 4">
+                @if (vendor.isOnApprovedVendorList) {
+                  <ep-badge tone="success" labelKey="vendor.list.avlBadge" />
+                } @else {
+                  <span class="vendor-table__muted">--</span>
+                }
+              </td>
+              <td class="align-center">
+                <span
+                  class="vendor-table__score"
+                  [class.vendor-table__score--good]="(vendor.overallScore ?? 0) >= 4">
                   {{ vendorScore(vendor) }}
                 </span>
-              </td>
-              <td class="align-right vendor-table__date">
-                {{ formatDate(vendor.createdAt) }}
               </td>
             </tr>
           }

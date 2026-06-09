@@ -35,6 +35,14 @@ export const vendorRoutes: Routes = [
         title: 'route.rfq.list'
       },
       {
+        path: 'create',
+        loadComponent: () =>
+          import('./pages/rfq-create/rfq-create.component').then((m) => m.RfqCreateComponent),
+        canActivate: [permissionGuard],
+        data: { requiredPermissions: ['RFQ_CREATE'] },
+        title: 'route.rfq.create'
+      },
+      {
         path: ':id',
         loadComponent: () =>
           import('./pages/rfq-detail/rfq-detail.component').then((m) => m.RfqDetailComponent),

@@ -16,16 +16,17 @@ import { EpBadgeComponent, EpBadgeTone } from '../../../../shared/components/ep-
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { ToastService } from '../../../../core/services/toast.service';
-import { Vendor } from '../../models/vendor.model';
+import { formatVendorAddress, VendorDetail } from '../../models/vendor.model';
 import { VendorService } from '../../services/vendor.service';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
   PENDING: 'warning',
   APPROVED: 'success',
-  SUSPENDED: 'danger',
-  DEACTIVATED: 'neutral'
+  BLACKLISTED: 'danger',
+  INACTIVE: 'neutral'
 };
 
 @Component({
@@ -38,6 +39,7 @@ const STATUS_TONE: Record<string, EpBadgeTone> = {
     EpBreadcrumbComponent,
     EpButtonComponent,
     EpIconComponent,
+    EpModalComponent,
     EpSkeletonComponent,
     HasPermissionDirective
   ],
@@ -51,9 +53,10 @@ export class VendorDetailComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly vendor = signal<Vendor | null>(null);
+  readonly vendor = signal<VendorDetail | null>(null);
   readonly isLoading = signal(false);
   readonly isActioning = signal(false);
+  readonly showApproveModal = signal(false);
   readonly statusTone = STATUS_TONE;
 
   ngOnInit(): void {
@@ -74,7 +77,15 @@ export class VendorDetailComponent implements OnInit {
       });
   }
 
-  approveVendor(): void {
+  openApproveModal(): void {
+    this.showApproveModal.set(true);
+  }
+
+  closeApproveModal(): void {
+    this.showApproveModal.set(false);
+  }
+
+  confirmApprove(): void {
     const v = this.vendor();
     if (!v) return;
 
@@ -85,27 +96,10 @@ export class VendorDetailComponent implements OnInit {
         finalize(() => this.isActioning.set(false))
       )
       .subscribe({
-        next: (res) => {
-          this.vendor.set(res.data);
+        next: () => {
+          this.showApproveModal.set(false);
           this.toastService.success('vendor.detail.toast.approved');
-        }
-      });
-  }
-
-  deactivateVendor(): void {
-    const v = this.vendor();
-    if (!v) return;
-
-    this.isActioning.set(true);
-    this.vendorService.deactivate(v.id)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isActioning.set(false))
-      )
-      .subscribe({
-        next: (res) => {
-          this.vendor.set(res.data);
-          this.toastService.success('vendor.detail.toast.deactivated');
+          this.loadVendor(v.id);
         }
       });
   }
@@ -116,11 +110,27 @@ export class VendorDetailComponent implements OnInit {
 
   formatDate(iso: string | null | undefined): string {
     if (!iso) return '--';
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+    return new Intl.DateTimeFormat('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(iso));
+  }
+
+  formatAddress(vendor: VendorDetail): string {
+    const formatted = formatVendorAddress(vendor.address);
+    return formatted || '--';
   }
 
   scoreLabel(value: number | null | undefined): string {
-    if (!value) return '--';
+    if (value == null) return '--';
     return value.toFixed(1);
+  }
+
+  formatPercent(value: number | null | undefined): string {
+    if (value == null) return '--';
+    return `${(value * 100).toFixed(1)}%`;
   }
 }

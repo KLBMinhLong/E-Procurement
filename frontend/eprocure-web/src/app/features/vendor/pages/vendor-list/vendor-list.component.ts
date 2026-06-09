@@ -22,17 +22,17 @@ import { EpFilterBarComponent } from '../../../../shared/components/ep-filter-ba
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { EpPageChangeEvent } from '../../../../shared/shared.index';
-import { Vendor, VendorListFilter, VendorStatus } from '../../models/vendor.model';
+import { VendorListFilter, VendorStatus, VendorSummary } from '../../models/vendor.model';
 import { VendorService } from '../../services/vendor.service';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
   PENDING: 'warning',
   APPROVED: 'success',
-  SUSPENDED: 'danger',
-  DEACTIVATED: 'neutral'
+  BLACKLISTED: 'danger',
+  INACTIVE: 'neutral'
 };
 
-type SortKey = 'createdAt' | 'name' | 'vendorCode' | 'status';
+type SortKey = 'name' | 'vendorCode' | 'status' | 'overallScore';
 type SortDirection = 'asc' | 'desc';
 
 @Component({
@@ -58,34 +58,37 @@ export class VendorListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly items = signal<Vendor[]>([]);
+  readonly items = signal<VendorSummary[]>([]);
   readonly meta = signal<PageMeta | null>(null);
   readonly isLoading = signal(false);
   readonly searchQuery = signal('');
   readonly activeStatus = signal<VendorStatus | ''>('');
+  readonly avlOnly = signal(false);
   readonly page = signal(1);
   readonly size = signal(20);
-  readonly sortKey = signal<SortKey>('createdAt');
-  readonly sortDirection = signal<SortDirection>('desc');
+  readonly sortKey = signal<SortKey>('name');
+  readonly sortDirection = signal<SortDirection>('asc');
 
   readonly statusTone = STATUS_TONE;
-  readonly statuses: VendorStatus[] = ['PENDING', 'APPROVED', 'SUSPENDED', 'DEACTIVATED'];
+  readonly statuses: VendorStatus[] = ['PENDING', 'APPROVED', 'BLACKLISTED', 'INACTIVE'];
 
   readonly filter = computed<VendorListFilter>(() => ({
     page: this.page(),
     size: this.size(),
     sort: `${this.sortKey()},${this.sortDirection()}`,
     status: (this.activeStatus() as VendorStatus) || undefined,
-    q: this.searchQuery().trim() || undefined
+    q: this.searchQuery().trim() || undefined,
+    onAvlOnly: this.avlOnly() || undefined
   }));
 
   readonly hasActiveFilters = computed(() =>
-    Boolean(this.activeStatus() || this.searchQuery().trim())
+    Boolean(this.activeStatus() || this.searchQuery().trim() || this.avlOnly())
   );
 
   readonly approvedCount = computed(() => this.items().filter((v) => v.status === 'APPROVED').length);
   readonly pendingCount = computed(() => this.items().filter((v) => v.status === 'PENDING').length);
-  readonly suspendedCount = computed(() => this.items().filter((v) => v.status === 'SUSPENDED').length);
+  readonly avlCount = computed(() => this.items().filter((v) => v.isOnApprovedVendorList).length);
+  readonly blacklistedCount = computed(() => this.items().filter((v) => v.status === 'BLACKLISTED').length);
 
   ngOnInit(): void {
     this.loadData();
@@ -116,6 +119,11 @@ export class VendorListComponent implements OnInit {
     this.resetPageAndLoad();
   }
 
+  onAvlToggle(): void {
+    this.avlOnly.update((v) => !v);
+    this.resetPageAndLoad();
+  }
+
   onSearch(value: string): void {
     this.searchQuery.set(value);
     this.resetPageAndLoad();
@@ -124,6 +132,7 @@ export class VendorListComponent implements OnInit {
   clearFilters(): void {
     this.activeStatus.set('');
     this.searchQuery.set('');
+    this.avlOnly.set(false);
     this.resetPageAndLoad();
   }
 
@@ -132,7 +141,7 @@ export class VendorListComponent implements OnInit {
       this.sortDirection.update((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       this.sortKey.set(key);
-      this.sortDirection.set(key === 'createdAt' ? 'desc' : 'asc');
+      this.sortDirection.set(key === 'overallScore' ? 'desc' : 'asc');
     }
     this.resetPageAndLoad();
   }
@@ -156,19 +165,14 @@ export class VendorListComponent implements OnInit {
     this.router.navigate(['/vendors', vendorId]);
   }
 
-  formatDate(iso: string | null | undefined): string {
-    if (!iso) return '--';
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso));
-  }
-
   shortId(value: string | null | undefined): string {
     if (!value) return '--';
     return value.length <= 12 ? value : `${value.slice(0, 8)}...${value.slice(-4)}`;
   }
 
-  vendorScore(vendor: Vendor): string {
-    if (!vendor.score?.overall) return '--';
-    return vendor.score.overall.toFixed(1);
+  vendorScore(vendor: VendorSummary): string {
+    if (vendor.overallScore == null) return '--';
+    return vendor.overallScore.toFixed(1);
   }
 
   private resetPageAndLoad(): void {

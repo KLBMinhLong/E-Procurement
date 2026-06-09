@@ -9,7 +9,7 @@
     </div>
   </div>
 
-  <form class="vendor-form" (ngSubmit)="save()" #vendorForm="ngForm">
+  <form class="vendor-form" [formGroup]="form" (ngSubmit)="save()">
     <div class="form-card">
       <h2 class="form-card__title">
         <ep-icon name="building-2" [size]="18" />
@@ -17,73 +17,119 @@
       </h2>
 
       <div class="form-grid">
-        <label class="form-field form-field--required">
-          <span>{{ 'vendor.create.field.name' | translate }}</span>
+        <ep-form-field
+          [label]="'vendor.create.field.name' | translate"
+          [error]="fieldError('name') ? (fieldError('name')! | translate) : null">
           <input
             id="vendor-name"
             type="text"
             class="form-control"
-            [(ngModel)]="name"
-            name="name"
-            required
+            formControlName="name"
             [placeholder]="'vendor.create.field.namePlaceholder' | translate">
-        </label>
+        </ep-form-field>
 
-        <label class="form-field">
-          <span>{{ 'vendor.create.field.taxCode' | translate }}</span>
+        <ep-form-field
+          [label]="'vendor.create.field.taxCode' | translate"
+          [error]="fieldError('taxCode') ? (fieldError('taxCode')! | translate) : null">
           <input
             id="vendor-tax-code"
             type="text"
             class="form-control mono"
-            [(ngModel)]="taxCode"
-            name="taxCode"
+            formControlName="taxCode"
             [placeholder]="'vendor.create.field.taxCodePlaceholder' | translate">
-        </label>
+        </ep-form-field>
 
-        <label class="form-field">
-          <span>{{ 'vendor.create.field.email' | translate }}</span>
+        <ep-form-field
+          [label]="'vendor.create.field.email' | translate"
+          [error]="fieldError('email') ? (fieldError('email')! | translate) : null">
           <input
             id="vendor-email"
             type="email"
             class="form-control"
-            [(ngModel)]="email"
-            name="email"
+            formControlName="email"
             [placeholder]="'vendor.create.field.emailPlaceholder' | translate">
-        </label>
+        </ep-form-field>
 
-        <label class="form-field">
-          <span>{{ 'vendor.create.field.phone' | translate }}</span>
+        <ep-form-field
+          [label]="'vendor.create.field.phone' | translate"
+          [error]="fieldError('phone') ? (fieldError('phone')! | translate) : null">
           <input
             id="vendor-phone"
             type="tel"
             class="form-control mono"
-            [(ngModel)]="phone"
-            name="phone"
+            formControlName="phone"
             [placeholder]="'vendor.create.field.phonePlaceholder' | translate">
-        </label>
+        </ep-form-field>
 
-        <label class="form-field form-field--full">
-          <span>{{ 'vendor.create.field.address' | translate }}</span>
-          <textarea
-            id="vendor-address"
-            class="form-control form-control--textarea"
-            [(ngModel)]="address"
-            name="address"
-            rows="2"
-            [placeholder]="'vendor.create.field.addressPlaceholder' | translate"></textarea>
-        </label>
+        <ep-form-field
+          class="form-field--full"
+          [label]="'vendor.create.field.street' | translate"
+          [error]="null">
+          <input
+            id="vendor-street"
+            type="text"
+            class="form-control"
+            formControlName="street"
+            [placeholder]="'vendor.create.field.streetPlaceholder' | translate">
+        </ep-form-field>
 
-        <label class="form-field form-field--full">
-          <span>{{ 'vendor.create.field.categories' | translate }}</span>
+        <ep-form-field
+          [label]="'vendor.create.field.district' | translate"
+          [error]="null">
+          <input
+            id="vendor-district"
+            type="text"
+            class="form-control"
+            formControlName="district"
+            [placeholder]="'vendor.create.field.districtPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.city' | translate"
+          [error]="null">
+          <input
+            id="vendor-city"
+            type="text"
+            class="form-control"
+            formControlName="city"
+            [placeholder]="'vendor.create.field.cityPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.country' | translate"
+          [error]="null">
+          <input
+            id="vendor-country"
+            type="text"
+            class="form-control"
+            formControlName="country"
+            [placeholder]="'vendor.create.field.countryPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          class="form-field--full"
+          [label]="'vendor.create.field.categories' | translate"
+          [error]="fieldError('categoriesRaw') ? (fieldError('categoriesRaw')! | translate) : null">
           <input
             id="vendor-categories"
             type="text"
             class="form-control"
-            [(ngModel)]="categoriesRaw"
-            name="categories"
+            formControlName="categoriesRaw"
             [placeholder]="'vendor.create.field.categoriesPlaceholder' | translate">
           <small class="form-hint">{{ 'vendor.create.field.categoriesHint' | translate }}</small>
-        </label>
+        </ep-form-field>
+
+        <ep-form-field
+          class="form-field--full"
+          [label]="'vendor.create.field.notes' | translate"
+          [error]="null">
+          <textarea
+            id="vendor-notes"
+            class="form-control form-control--textarea"
+            formControlName="notes"
+            rows="2"
+            [placeholder]="'vendor.create.field.notesPlaceholder' | translate"></textarea>
+        </ep-form-field>
       </div>
     </div>
 
@@ -98,43 +144,49 @@
         </ep-button>
       </div>
 
-      @for (contact of contacts; track $index; let i = $index) {
-        <div class="contact-row">
-          <label class="form-field">
-            <span>{{ 'vendor.create.contact.name' | translate }}</span>
-            <input type="text" class="form-control" [(ngModel)]="contact.name" [name]="'contactName' + i">
-          </label>
-          <label class="form-field">
-            <span>{{ 'vendor.create.contact.email' | translate }}</span>
-            <input type="email" class="form-control" [(ngModel)]="contact.email" [name]="'contactEmail' + i">
-          </label>
-          <label class="form-field">
-            <span>{{ 'vendor.create.contact.phone' | translate }}</span>
-            <input type="tel" class="form-control mono" [(ngModel)]="contact.phone" [name]="'contactPhone' + i">
-          </label>
-          <label class="form-field">
-            <span>{{ 'vendor.create.contact.position' | translate }}</span>
-            <input type="text" class="form-control" [(ngModel)]="contact.position" [name]="'contactPosition' + i">
-          </label>
-          <div class="contact-actions">
-            @if (contacts.length > 1) {
-              <ep-button type="button" variant="ghost" size="sm" icon="trash-2" (click)="removeContact(i)" />
-            }
+      <div formArrayName="contacts">
+        @for (contact of contacts.controls; track $index; let i = $index) {
+          <div class="contact-row" [formGroupName]="i">
+            <ep-form-field
+              [label]="'vendor.create.contact.name' | translate"
+              [error]="contactFieldError(i, 'name') ? (contactFieldError(i, 'name')! | translate) : null">
+              <input type="text" class="form-control" formControlName="name">
+            </ep-form-field>
+            <ep-form-field
+              [label]="'vendor.create.contact.role' | translate"
+              [error]="null">
+              <input type="text" class="form-control" formControlName="role">
+            </ep-form-field>
+            <ep-form-field
+              [label]="'vendor.create.contact.email' | translate"
+              [error]="contactFieldError(i, 'email') ? (contactFieldError(i, 'email')! | translate) : null">
+              <input type="email" class="form-control" formControlName="email">
+            </ep-form-field>
+            <ep-form-field
+              [label]="'vendor.create.contact.phone' | translate"
+              [error]="contactFieldError(i, 'phone') ? (contactFieldError(i, 'phone')! | translate) : null">
+              <input type="tel" class="form-control mono" formControlName="phone">
+            </ep-form-field>
+            <div class="contact-actions">
+              @if (contacts.length > 1) {
+                <ep-button type="button" variant="ghost" size="sm" icon="trash-2" (click)="removeContact(i)" />
+              }
+            </div>
           </div>
-        </div>
-      }
+        }
+      </div>
     </div>
 
     <div class="form-footer">
       <ep-button type="button" variant="ghost" (click)="cancel()">
-        {{ 'shared.cancel' | translate }}
+        {{ 'action.cancel' | translate }}
       </ep-button>
       <ep-button
         id="btn-save-vendor"
         type="submit"
         variant="primary"
         icon="save"
-        [disabled]="!isValid || isSaving()">
+        [disabled]="isSaving()">
         {{ 'vendor.create.action.save' | translate }}
       </ep-button>
     </div>

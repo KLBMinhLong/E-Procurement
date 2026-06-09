@@ -22,7 +22,12 @@ const PATH_MAP: Record<string, string> = {
   '/admin/rbac': 'route.admin.rbac',
   '/admin/org-chart': 'route.admin.orgChart',
   '/profile': 'route.profile',
-  '/ui-showcase': 'route.uiShowcase'
+  '/ui-showcase': 'route.uiShowcase',
+  '/vendors': 'route.vendor.self',
+  '/vendors/list': 'route.vendor.list',
+  '/vendors/create': 'route.vendor.create',
+  '/vendors/rfq': 'route.rfq.list',
+  '/vendors/rfq/create': 'route.rfq.create'
 };
 
 @Component({
@@ -67,6 +72,10 @@ export class EpBreadcrumbComponent {
           labelKey = 'route.pr.detail';
         } else if (/^\/approvals\/[^/]+$/.test(path)) {
           labelKey = 'route.approvals.detail';
+        } else if (/^\/vendors\/rfq\/[^/]+$/.test(path)) {
+          labelKey = 'route.rfq.detail';
+        } else if (/^\/vendors\/[^/]+$/.test(path) && segment !== 'list' && segment !== 'create' && segment !== 'rfq') {
+          labelKey = 'route.vendor.detail';
         }
       }
 

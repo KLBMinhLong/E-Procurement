@@ -91,6 +91,9 @@ import {
   LucideTrash2,
   LucideX,
   LucideXCircle,
+  LucideFilePlus,
+  LucideScale,
+  LucideAward,
   provideLucideConfig,
   provideLucideIcons
 } from '@lucide/angular';
@@ -214,7 +217,10 @@ export const appConfig: ApplicationConfig = {
       LucideWorkflow,
       LucideTrash2,
       LucideX,
-      LucideXCircle
+      LucideXCircle,
+      LucideFilePlus,
+      LucideScale,
+      LucideAward
     ),
     provideLucideConfig({
       strokeWidth: 1.8,

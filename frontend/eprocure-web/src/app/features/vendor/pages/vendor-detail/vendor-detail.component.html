@@ -10,12 +10,15 @@
         <h1 id="vendor-detail-heading" class="page-header__title">{{ v.name }}</h1>
         <div class="page-header__badges">
           <ep-badge [tone]="statusTone[v.status] || 'neutral'" [labelKey]="'vendor.status.' + v.status" />
+          @if (v.isOnApprovedVendorList) {
+            <ep-badge tone="success" labelKey="vendor.detail.avlBadge" />
+          }
           <span class="mono">{{ v.vendorCode }}</span>
         </div>
       </div>
       <div class="page-header__actions">
         <ep-button variant="ghost" icon="arrow-left" (click)="navigateBack()">
-          {{ 'shared.back' | translate }}
+          {{ 'action.back' | translate }}
         </ep-button>
         @if (v.status === 'PENDING') {
           <ep-button
@@ -24,19 +27,8 @@
             variant="primary"
             icon="check-circle"
             [disabled]="isActioning()"
-            (click)="approveVendor()">
+            (click)="openApproveModal()">
             {{ 'vendor.detail.action.approve' | translate }}
-          </ep-button>
-        }
-        @if (v.status === 'APPROVED') {
-          <ep-button
-            *epHasPermission="'VENDOR_MANAGE'"
-            id="btn-deactivate-vendor"
-            variant="danger"
-            icon="x-circle"
-            [disabled]="isActioning()"
-            (click)="deactivateVendor()">
-            {{ 'vendor.detail.action.deactivate' | translate }}
           </ep-button>
         }
       </div>
@@ -63,7 +55,7 @@
           </div>
           <div class="detail-dl__row">
             <dt>{{ 'vendor.detail.info.address' | translate }}</dt>
-            <dd>{{ v.address || '--' }}</dd>
+            <dd>{{ formatAddress(v) }}</dd>
           </div>
           <div class="detail-dl__row">
             <dt>{{ 'vendor.detail.info.categories' | translate }}</dt>
@@ -81,10 +73,12 @@
             <dt>{{ 'vendor.detail.info.createdAt' | translate }}</dt>
             <dd class="mono">{{ formatDate(v.createdAt) }}</dd>
           </div>
-          <div class="detail-dl__row">
-            <dt>{{ 'vendor.detail.info.updatedAt' | translate }}</dt>
-            <dd class="mono">{{ formatDate(v.updatedAt) }}</dd>
-          </div>
+          @if (v.notes) {
+            <div class="detail-dl__row">
+              <dt>{{ 'vendor.detail.info.notes' | translate }}</dt>
+              <dd>{{ v.notes }}</dd>
+            </div>
+          }
         </dl>
       </div>
 
@@ -93,26 +87,40 @@
           <ep-icon name="star" [size]="18" />
           {{ 'vendor.detail.score.title' | translate }}
         </h2>
-        @if (v.score) {
+        @if (v.scorecard) {
           <div class="score-grid">
             <div class="score-item">
               <span class="score-item__label">{{ 'vendor.detail.score.quality' | translate }}</span>
-              <span class="score-item__value">{{ scoreLabel(v.score.quality) }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.qualityScore) }}</span>
             </div>
             <div class="score-item">
               <span class="score-item__label">{{ 'vendor.detail.score.delivery' | translate }}</span>
-              <span class="score-item__value">{{ scoreLabel(v.score.delivery) }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.deliveryScore) }}</span>
             </div>
             <div class="score-item">
               <span class="score-item__label">{{ 'vendor.detail.score.pricing' | translate }}</span>
-              <span class="score-item__value">{{ scoreLabel(v.score.pricing) }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.priceScore) }}</span>
+            </div>
+            <div class="score-item">
+              <span class="score-item__label">{{ 'vendor.detail.score.responsiveness' | translate }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.responsivenessScore) }}</span>
             </div>
             <div class="score-item score-item--overall">
               <span class="score-item__label">{{ 'vendor.detail.score.overall' | translate }}</span>
-              <span class="score-item__value">{{ scoreLabel(v.score.overall) }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.overallScore) }}</span>
             </div>
           </div>
-          <small class="score-date">{{ 'vendor.detail.score.lastEvaluated' | translate }}: {{ formatDate(v.score.lastEvaluatedAt) }}</small>
+          <div class="score-meta">
+            <small class="score-date">
+              {{ 'vendor.detail.score.lastEvaluated' | translate }}: {{ formatDate(v.scorecard.lastEvaluatedAt) }}
+            </small>
+            <small class="score-date">
+              {{ 'vendor.detail.score.totalOrders' | translate }}: {{ v.scorecard.totalOrders }}
+            </small>
+            <small class="score-date">
+              {{ 'vendor.detail.score.onTimeRate' | translate }}: {{ formatPercent(v.scorecard.onTimeDeliveryRate) }}
+            </small>
+          </div>
         } @else {
           <p class="detail-empty">{{ 'vendor.detail.score.empty' | translate }}</p>
         }
@@ -128,9 +136,9 @@
             <thead>
               <tr>
                 <th>{{ 'vendor.detail.contacts.name' | translate }}</th>
+                <th>{{ 'vendor.detail.contacts.role' | translate }}</th>
                 <th>{{ 'vendor.detail.contacts.email' | translate }}</th>
                 <th>{{ 'vendor.detail.contacts.phone' | translate }}</th>
-                <th>{{ 'vendor.detail.contacts.position' | translate }}</th>
                 <th>{{ 'vendor.detail.contacts.primary' | translate }}</th>
               </tr>
             </thead>
@@ -138,9 +146,9 @@
               @for (contact of v.contacts; track contact.id) {
                 <tr>
                   <td class="contact-name">{{ contact.name }}</td>
+                  <td>{{ contact.role || '--' }}</td>
                   <td>{{ contact.email || '--' }}</td>
                   <td class="mono">{{ contact.phone || '--' }}</td>
-                  <td>{{ contact.position || '--' }}</td>
                   <td>
                     @if (contact.isPrimary) {
                       <ep-badge tone="success" labelKey="vendor.detail.contacts.isPrimary" />
@@ -156,4 +164,24 @@
       </div>
     </div>
   }
+
+  <ep-modal
+    [open]="showApproveModal()"
+    [title]="'vendor.detail.modal.approveTitle' | translate"
+    (close)="closeApproveModal()">
+    <p>{{ 'vendor.detail.modal.approveMessage' | translate: { name: vendor()?.name } }}</p>
+    <div class="modal-actions">
+      <ep-button variant="ghost" (click)="closeApproveModal()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button
+        id="btn-confirm-approve-vendor"
+        variant="primary"
+        icon="check-circle"
+        [disabled]="isActioning()"
+        (click)="confirmApprove()">
+        {{ 'vendor.detail.action.approve' | translate }}
+      </ep-button>
+    </div>
+  </ep-modal>
 </section>

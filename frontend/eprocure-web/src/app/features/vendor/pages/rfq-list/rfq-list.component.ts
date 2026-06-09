@@ -1,29 +1,27 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   OnInit,
-  signal,
-  computed
+  signal
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
 
+import { PageMeta } from '../../../../core/models/api-response.model';
 import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
 import { EpBadgeComponent, EpBadgeTone } from '../../../../shared/components/ep-badge/ep-badge.component';
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
-import { EpFilterBarComponent, EpFilterField } from '../../../../shared/components/ep-filter-bar/ep-filter-bar.component';
+import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
-import { EpPaginationComponent } from '../../../../shared/components/ep-pagination/ep-pagination.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
-import { PageMeta } from '../../../../core/models/api-response.model';
-import { ToastService } from '../../../../core/services/toast.service';
-
-import { Rfq, RfqListFilter, RfqStatus } from '../../models/vendor.model';
+import { EpPageChangeEvent } from '../../../../shared/shared.index';
+import { resolveAwardedVendorName, RfqDetail, RfqListFilter, RfqStatus } from '../../models/vendor.model';
 import { RfqService } from '../../services/rfq.service';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
@@ -34,6 +32,9 @@ const STATUS_TONE: Record<string, EpBadgeTone> = {
   CANCELLED: 'danger'
 };
 
+type SortKey = 'rfqNumber' | 'status' | 'submissionDeadline' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+
 @Component({
   selector: 'ep-rfq-list',
   standalone: true,
@@ -43,9 +44,8 @@ const STATUS_TONE: Record<string, EpBadgeTone> = {
     EpBadgeComponent,
     EpBreadcrumbComponent,
     EpButtonComponent,
-    EpFilterBarComponent,
+    EpEmptyStateComponent,
     EpIconComponent,
-    EpPaginationComponent,
     EpSkeletonComponent,
     HasPermissionDirective
   ],
@@ -56,43 +56,29 @@ export class RfqListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly rfqService = inject(RfqService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly toastService = inject(ToastService);
 
-  readonly rfqs = signal<Rfq[]>([]);
+  readonly items = signal<RfqDetail[]>([]);
   readonly meta = signal<PageMeta | null>(null);
   readonly isLoading = signal(false);
+  readonly activeStatus = signal<RfqStatus | ''>('');
+  readonly page = signal(1);
+  readonly size = signal(20);
+  readonly sortKey = signal<SortKey>('createdAt');
+  readonly sortDirection = signal<SortDirection>('desc');
 
   readonly statusTone = STATUS_TONE;
+  readonly statuses: RfqStatus[] = ['OPEN', 'EVALUATING', 'AWARDED', 'CLOSED', 'CANCELLED'];
 
-  readonly filterFields: EpFilterField[] = [
-    {
-      key: 'q',
-      label: 'shared.search',
-      type: 'text',
-      placeholder: 'rfq.list.searchPlaceholder'
-    },
-    {
-      key: 'status',
-      label: 'rfq.list.filterStatus',
-      type: 'select',
-      options: [
-        { label: 'shared.all', value: '' },
-        { label: 'rfq.status.OPEN', value: 'OPEN' },
-        { label: 'rfq.status.EVALUATING', value: 'EVALUATING' },
-        { label: 'rfq.status.AWARDED', value: 'AWARDED' },
-        { label: 'rfq.status.CLOSED', value: 'CLOSED' },
-        { label: 'rfq.status.CANCELLED', value: 'CANCELLED' }
-      ]
-    }
-  ];
+  readonly filter = computed<RfqListFilter>(() => ({
+    page: this.page(),
+    size: this.size(),
+    sort: `${this.sortKey()},${this.sortDirection()}`,
+    status: (this.activeStatus() as RfqStatus) || undefined
+  }));
 
-  readonly state = signal<RfqListFilter>({
-    page: 0,
-    size: 20,
-    sort: 'createdAt,desc',
-    q: '',
-    status: undefined
-  });
+  readonly openCount = computed(() => this.items().filter((r) => r.status === 'OPEN').length);
+  readonly evaluatingCount = computed(() => this.items().filter((r) => r.status === 'EVALUATING').length);
+  readonly awardedCount = computed(() => this.items().filter((r) => r.status === 'AWARDED').length);
 
   ngOnInit(): void {
     this.loadData();
@@ -100,68 +86,76 @@ export class RfqListComponent implements OnInit {
 
   loadData(): void {
     this.isLoading.set(true);
-    this.rfqService.list(this.state())
+    this.rfqService
+      .list(this.filter())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isLoading.set(false))
       )
       .subscribe({
         next: (res) => {
-          this.rfqs.set(res.data);
-          this.meta.set(res.meta || null);
+          this.items.set(res.data ?? []);
+          this.meta.set(res.meta ?? null);
         },
         error: () => {
-          this.toastService.error('shared.error.loadFailed');
+          this.items.set([]);
+          this.meta.set(null);
         }
       });
   }
 
-  onFilterChange(filters: Record<string, string>): void {
-    this.state.update(s => ({
-      ...s,
-      page: 0,
-      q: filters['q'] || '',
-      status: (filters['status'] as RfqStatus) || undefined
-    }));
+  onStatusChange(status: string): void {
+    this.activeStatus.set(status as RfqStatus | '');
+    this.page.set(1);
     this.loadData();
   }
 
-  onPageChange(page: number): void {
-    this.state.update(s => ({ ...s, page }));
+  onSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDirection.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortKey.set(key);
+      this.sortDirection.set(key === 'createdAt' || key === 'submissionDeadline' ? 'desc' : 'asc');
+    }
+    this.page.set(1);
     this.loadData();
   }
 
-  onSort(field: string): void {
-    this.state.update(s => {
-      const currentField = s.sort.split(',')[0];
-      const currentDir = s.sort.split(',')[1] || 'asc';
-      let newDir = 'asc';
-      if (currentField === field && currentDir === 'asc') {
-        newDir = 'desc';
-      }
-      return { ...s, sort: `${field},${newDir}` };
-    });
+  sortIcon(key: SortKey): string {
+    if (this.sortKey() !== key) return 'chevron-down';
+    return this.sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down';
+  }
+
+  onPageChange(event: EpPageChangeEvent): void {
+    this.page.set(event.page);
+    this.size.set(event.size);
     this.loadData();
   }
 
-  navigateToDetail(rfqId: string): void {
+  navigateCreate(): void {
+    this.router.navigate(['/vendors/rfq/create']);
+  }
+
+  navigateDetail(rfqId: string): void {
     this.router.navigate(['/vendors/rfq', rfqId]);
   }
 
   formatDate(iso: string | null | undefined): string {
     if (!iso) return '--';
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso));
+    return new Intl.DateTimeFormat('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(new Date(iso));
   }
 
-  formatMoney(amount: { amount: string; currency: string } | null | undefined): string {
-    if (!amount) return '--';
-    return `${new Intl.NumberFormat('vi-VN').format(Number(amount.amount))} ${amount.currency}`;
+  awardedVendorName(rfq: RfqDetail): string {
+    return resolveAwardedVendorName(rfq) ?? '--';
   }
 
-  getSortIcon(field: string): string {
-    const currentSort = this.state().sort;
-    if (currentSort === `${field},asc`) return 'chevron-up';
-    if (currentSort === `${field},desc`) return 'chevron-down';
-    return 'chevrons-up-down';
+  invitationSummary(rfq: RfqDetail): string {
+    const total = rfq.invitations.length;
+    const quoted = rfq.invitations.filter((inv) => inv.hasSubmitted).length;
+    return `${quoted}/${total}`;
   }
 }

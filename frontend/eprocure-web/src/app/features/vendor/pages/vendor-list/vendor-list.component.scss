@@ -304,6 +304,15 @@
   color: var(--color-success);
 }
 
+.vendor-table__muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.filter-chip ep-icon {
+  margin-right: var(--spacing-1);
+}
+
 .vendor-pagination {
   display: flex;
   align-items: center;

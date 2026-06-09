@@ -6,8 +6,9 @@ import { API_BASE_URL } from '../../../core/http/api-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
   CreateVendorRequest,
-  Vendor,
-  VendorListFilter
+  VendorDetail,
+  VendorListFilter,
+  VendorSummary
 } from '../models/vendor.model';
 
 @Injectable({ providedIn: 'root' })
@@ -15,7 +16,7 @@ export class VendorService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  list(filter: VendorListFilter): Observable<ApiResponse<Vendor[]> & { meta: PageMeta }> {
+  list(filter: VendorListFilter): Observable<ApiResponse<VendorSummary[]> & { meta: PageMeta }> {
     let params = new HttpParams()
       .set('page', filter.page)
       .set('size', filter.size)
@@ -24,39 +25,32 @@ export class VendorService {
     if (filter.status) params = params.set('status', filter.status);
     if (filter.q) params = params.set('q', filter.q);
     if (filter.category) params = params.set('category', filter.category);
+    if (filter.onAvlOnly) params = params.set('on_avl_only', 'true');
 
-    return this.http.get<ApiResponse<Vendor[]> & { meta: PageMeta }>(
+    return this.http.get<ApiResponse<VendorSummary[]> & { meta: PageMeta }>(
       `${this.baseUrl}/vendors`,
       { params, withCredentials: true }
     );
   }
 
-  getById(id: string): Observable<ApiResponse<Vendor>> {
-    return this.http.get<ApiResponse<Vendor>>(
+  getById(id: string): Observable<ApiResponse<VendorDetail>> {
+    return this.http.get<ApiResponse<VendorDetail>>(
       `${this.baseUrl}/vendors/${id}`,
       { withCredentials: true }
     );
   }
 
-  create(request: CreateVendorRequest): Observable<ApiResponse<Vendor>> {
-    return this.http.post<ApiResponse<Vendor>>(
+  create(request: CreateVendorRequest): Observable<ApiResponse<VendorDetail>> {
+    return this.http.post<ApiResponse<VendorDetail>>(
       `${this.baseUrl}/vendors`,
       request,
       { withCredentials: true }
     );
   }
 
-  approve(id: string): Observable<ApiResponse<Vendor>> {
-    return this.http.patch<ApiResponse<Vendor>>(
+  approve(id: string): Observable<ApiResponse<null>> {
+    return this.http.patch<ApiResponse<null>>(
       `${this.baseUrl}/vendors/${id}/approve`,
-      {},
-      { withCredentials: true }
-    );
-  }
-
-  deactivate(id: string): Observable<ApiResponse<Vendor>> {
-    return this.http.patch<ApiResponse<Vendor>>(
-      `${this.baseUrl}/vendors/${id}/deactivate`,
       {},
       { withCredentials: true }
     );

@@ -1,40 +1,55 @@
-import { Money, Quantity } from '../../procurement/models/purchase-request.model';
-
 // ── Vendor ──────────────────────────────────────────────────────────
-export type VendorStatus = 'PENDING' | 'APPROVED' | 'SUSPENDED' | 'DEACTIVATED';
+export type VendorStatus = 'PENDING' | 'APPROVED' | 'BLACKLISTED' | 'INACTIVE';
+
+export interface VendorAddress {
+  street: string | null;
+  district: string | null;
+  city: string | null;
+  country: string | null;
+}
 
 export interface VendorContact {
   id: string;
   name: string;
-  email: string | null;
-  phone: string | null;
-  position: string | null;
+  role: string | null;
+  email: string;
+  phone: string;
   isPrimary: boolean;
 }
 
-export interface VendorScore {
-  quality: number | null;
-  delivery: number | null;
-  pricing: number | null;
-  overall: number | null;
+export interface VendorScorecard {
+  qualityScore: number;
+  deliveryScore: number;
+  priceScore: number;
+  responsivenessScore: number;
+  overallScore: number;
   lastEvaluatedAt: string | null;
+  totalOrders: number;
+  onTimeDeliveryRate: number | null;
 }
 
-export interface Vendor {
+/** Summary row returned by GET /vendors */
+export interface VendorSummary {
   id: string;
   vendorCode: string;
   name: string;
-  taxCode: string | null;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
+  taxCode: string;
+  email: string;
+  phone: string;
   status: VendorStatus;
+  isOnApprovedVendorList: boolean;
   categories: string[];
+  overallScore: number | null;
+}
+
+/** Full detail returned by GET /vendors/{id} and POST /vendors */
+export interface VendorDetail extends VendorSummary {
+  address: VendorAddress | null;
   contacts: VendorContact[];
-  score: VendorScore | null;
-  isActive: boolean;
+  scorecard: VendorScorecard | null;
+  contractIds: string[];
+  notes: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface VendorListFilter {
@@ -44,16 +59,33 @@ export interface VendorListFilter {
   status?: VendorStatus;
   q?: string;
   category?: string;
+  onAvlOnly?: boolean;
+}
+
+export interface CreateVendorContactRequest {
+  name: string;
+  role?: string | null;
+  email: string;
+  phone: string;
+  isPrimary: boolean;
 }
 
 export interface CreateVendorRequest {
   name: string;
-  taxCode?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  address?: string | null;
+  taxCode: string;
+  email: string;
+  phone: string;
+  address: VendorAddress;
   categories: string[];
-  contacts?: VendorContact[];
+  contacts?: CreateVendorContactRequest[];
+  notes?: string | null;
+}
+
+export function formatVendorAddress(address: VendorAddress | null | undefined): string {
+  if (!address) return '';
+  return [address.street, address.district, address.city, address.country]
+    .filter((part) => Boolean(part?.trim()))
+    .join(', ');
 }
 
 // ── RFQ ─────────────────────────────────────────────────────────────
@@ -61,23 +93,27 @@ export type RfqStatus = 'OPEN' | 'EVALUATING' | 'AWARDED' | 'CLOSED' | 'CANCELLE
 
 export interface RfqLineItem {
   id: string;
-  lineNumber: number;
-  prLineItemId: string;
   itemName: string;
   categoryCode: string;
-  quantity: Quantity;
+  quantity: string;
+  unit: string;
   specifications: string | null;
+}
+
+export interface RfqInvitationVendor {
+  id: string;
+  name: string;
 }
 
 export interface RfqInvitation {
   id: string;
-  vendorId: string;
-  vendorName: string;
-  status: 'INVITED' | 'QUOTED' | 'DECLINED';
+  vendor: RfqInvitationVendor;
   invitedAt: string;
+  hasSubmitted: boolean;
+  submittedAt: string | null;
 }
 
-export interface Rfq {
+export interface RfqDetail {
   id: string;
   rfqNumber: string;
   prId: string;
@@ -86,13 +122,12 @@ export interface Rfq {
   status: RfqStatus;
   lineItems: RfqLineItem[];
   invitations: RfqInvitation[];
+  quotes: VendorQuote[];
   submissionDeadline: string;
-  totalEstimatedAmount: Money | null;
   awardedVendorId: string | null;
-  awardedVendorName: string | null;
   awardedQuoteId: string | null;
+  awardReason: string | null;
   createdAt: string;
-  closedAt: string | null;
 }
 
 export interface RfqListFilter {
@@ -100,24 +135,39 @@ export interface RfqListFilter {
   size: number;
   sort: string;
   status?: RfqStatus;
-  q?: string;
+  prId?: string;
 }
 
 export interface CreateRfqRequest {
   prId: string;
-  vendorIds: string[];
+  title: string;
   submissionDeadline: string;
-  notes?: string | null;
+  invitedVendorIds: string[];
+  requirements?: string | null;
+}
+
+export function resolveAwardedVendorName(rfq: RfqDetail): string | null {
+  if (!rfq.awardedVendorId) return null;
+  const invitation = rfq.invitations.find((inv) => inv.vendor.id === rfq.awardedVendorId);
+  if (invitation) return invitation.vendor.name;
+  const quote = rfq.quotes.find((q) => q.vendorId === rfq.awardedVendorId);
+  return quote?.vendorName ?? null;
+}
+
+export function formatRfqLineQuantity(item: RfqLineItem): string {
+  return `${item.quantity} ${item.unit}`;
 }
 
 // ── Quotes ──────────────────────────────────────────────────────────
-export interface QuoteLineItem {
+export interface VendorQuoteLineItem {
   rfqLineItemId: string;
-  unitPrice: Money;
-  quantity: Quantity;
-  totalPrice: Money;
-  leadTimeDays: number | null;
-  notes: string | null;
+  itemName: string;
+  unitPrice: string;
+  currency: string;
+  quantity: string;
+  totalPrice: string;
+  deliveryDays: number | null;
+  warranty: string | null;
 }
 
 export interface VendorQuote {
@@ -125,38 +175,50 @@ export interface VendorQuote {
   rfqId: string;
   vendorId: string;
   vendorName: string;
-  totalAmount: Money;
-  paymentTerms: string | null;
-  deliveryTerms: string | null;
+  lineItems: VendorQuoteLineItem[];
+  totalAmount: string;
+  currency: string;
   validUntil: string | null;
-  lineItems: QuoteLineItem[];
-  score: number | null;
-  evaluationNote: string | null;
+  paymentTerms: string | null;
+  notes: string | null;
   submittedAt: string;
+  evaluationScore: number | null;
+  evaluationNote: string | null;
+}
+
+export function formatQuoteTotal(quote: VendorQuote): string {
+  const amount = Number(quote.totalAmount);
+  const formatted = Number.isFinite(amount)
+    ? new Intl.NumberFormat('vi-VN').format(amount)
+    : quote.totalAmount;
+  return `${formatted} ${quote.currency}`;
 }
 
 export interface SubmitQuoteRequest {
   vendorId: string;
+  currency: string;
+  validUntil: string;
   lineItems: {
     rfqLineItemId: string;
     unitPrice: string;
-    currency: string;
-    quantity: string;
-    unit: string;
-    leadTimeDays?: number | null;
-    notes?: string | null;
+    deliveryDays?: number | null;
+    warranty?: string | null;
   }[];
   paymentTerms?: string | null;
-  deliveryTerms?: string | null;
-  validUntil?: string | null;
+  notes?: string | null;
 }
 
 export interface EvaluateQuoteRequest {
-  score: number;
-  note?: string | null;
+  evaluationScore: number;
+  evaluationNote?: string | null;
 }
 
 export interface AwardRfqRequest {
   awardedQuoteId: string;
-  reason?: string | null;
+  awardReason: string;
+}
+
+export interface AwardRfqResponse {
+  awardedVendor: RfqInvitationVendor;
+  awardedQuote: VendorQuote;
 }

@@ -242,8 +242,10 @@
 | RFQ quote submit/evaluate/award | ✅ | `vendor_quotes`, `vendor_quote_line_items`; `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award` |
 | PO handoff after award event | ✅ | `procurement.rfq.awarded` published after award commit; finance-service consumes it and creates/list/detail DRAFT PO |
 | Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |
-| Frontend: Vendor Management | 🔄 | UI for Vendor List, Detail, and Create |
-| Frontend: RFQ Management | 🔄 | UI for RFQ List, Detail, and Quote processing |
+| Frontend: Vendor Management | ✅ | 2026-06-08: `/vendors/list`, `/vendors/create`, `/vendors/:id` — i18n VI/EN, models khớp backend (`VendorSummary`/`VendorDetail`, address object, scorecard, AVL filter), approve modal + reload; bỏ deactivate (API chưa có) |
+| Frontend: RFQ Management | ✅ | 2026-06-08: `/vendors/rfq`, `/vendors/rfq/create`, `/vendors/rfq/:id` — list/detail/create, quotes từ `GET /rfq/{id}`, submit/evaluate/award/close, award reason ≥20 chars; i18n đầy đủ; `npm run build` pass |
+| Frontend: PR → RFQ handoff | ⬜ | PR detail chưa có nút "Tạo RFQ" cho PR APPROVED |
+| Frontend: Inventory/GR UI | 🔄 | Scaffold cơ bản, chưa production-ready |
 
 ### E07: Purchase Order
 | Task | Status | Ghi chú |

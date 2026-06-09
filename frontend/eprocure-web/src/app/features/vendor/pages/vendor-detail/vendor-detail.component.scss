@@ -135,8 +135,22 @@
 
 .score-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--spacing-3);
+}
+
+.score-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  margin-top: var(--spacing-3);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-4);
 }
 
 .score-item {
@@ -230,7 +244,11 @@
   }
 
   .score-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .score-item--overall {
+    grid-column: 1 / -1;
   }
 
   .detail-dl__row {

@@ -213,6 +213,17 @@
     "pr": {
       "create": "Tạo yêu cầu",
       "detail": "Chi tiết yêu cầu"
+    },
+    "vendor": {
+      "self": "Nhà cung cấp",
+      "list": "Danh mục NCC",
+      "create": "Đăng ký NCC",
+      "detail": "Chi tiết NCC"
+    },
+    "rfq": {
+      "list": "Danh sách RFQ",
+      "create": "Tạo RFQ",
+      "detail": "Chi tiết RFQ"
     }
   },
   "shared": {
@@ -1315,6 +1326,296 @@
       "empty": {
         "title": "Chưa có quy tắc phù hợp",
         "message": "Tạo quy tắc phê duyệt đầu tiên hoặc thay đổi bộ lọc tìm kiếm."
+      }
+    }
+  },
+  "vendor": {
+    "status": {
+      "PENDING": "Chờ duyệt",
+      "APPROVED": "Đã duyệt",
+      "BLACKLISTED": "Danh sách đen",
+      "INACTIVE": "Ngừng hoạt động"
+    },
+    "list": {
+      "eyebrow": "Quản lý nhà cung cấp",
+      "title": "Danh mục nhà cung cấp",
+      "subtitle": "Quản lý hồ sơ NCC, trạng thái AVL và điểm đánh giá hiệu suất.",
+      "summaryLabel": "Tổng quan nhà cung cấp",
+      "totalItems": "nhà cung cấp",
+      "avlBadge": "AVL",
+      "action": {
+        "create": "Đăng ký NCC"
+      },
+      "stat": {
+        "total": "Tổng NCC",
+        "approved": "Đã duyệt (trang)",
+        "pending": "Chờ duyệt (trang)",
+        "avl": "Trong AVL (trang)"
+      },
+      "filter": {
+        "searchPlaceholder": "Tìm theo tên, mã, MST, email...",
+        "clear": "Xóa bộ lọc",
+        "status": "Lọc theo trạng thái",
+        "allStatus": "Tất cả trạng thái",
+        "avlOnly": "Chỉ AVL"
+      },
+      "col": {
+        "code": "Mã NCC",
+        "name": "Tên NCC",
+        "taxCode": "Mã số thuế",
+        "email": "Email",
+        "categories": "Danh mục",
+        "status": "Trạng thái",
+        "avl": "AVL",
+        "score": "Điểm"
+      },
+      "empty": {
+        "title": "Không tìm thấy nhà cung cấp",
+        "message": "Thử thay đổi bộ lọc hoặc đăng ký nhà cung cấp mới."
+      }
+    },
+    "detail": {
+      "eyebrow": "Hồ sơ nhà cung cấp",
+      "avlBadge": "Danh sách NCC được duyệt",
+      "action": {
+        "approve": "Duyệt NCC"
+      },
+      "modal": {
+        "approveTitle": "Duyệt nhà cung cấp",
+        "approveMessage": "Duyệt {{name}} và thêm vào Danh sách NCC được duyệt (AVL)?"
+      },
+      "toast": {
+        "approved": "Đã duyệt nhà cung cấp thành công."
+      },
+      "info": {
+        "title": "Thông tin công ty",
+        "taxCode": "Mã số thuế",
+        "email": "Email",
+        "phone": "Điện thoại",
+        "address": "Địa chỉ",
+        "categories": "Danh mục hàng hóa",
+        "createdAt": "Ngày đăng ký",
+        "notes": "Ghi chú"
+      },
+      "score": {
+        "title": "Bảng điểm hiệu suất",
+        "quality": "Chất lượng",
+        "delivery": "Giao hàng",
+        "pricing": "Giá cả",
+        "responsiveness": "Phản hồi",
+        "overall": "Tổng thể",
+        "lastEvaluated": "Đánh giá gần nhất",
+        "totalOrders": "Tổng đơn hàng",
+        "onTimeRate": "Giao đúng hạn",
+        "empty": "Chưa có dữ liệu đánh giá."
+      },
+      "contacts": {
+        "title": "Người liên hệ",
+        "name": "Họ tên",
+        "role": "Chức vụ",
+        "email": "Email",
+        "phone": "Điện thoại",
+        "primary": "Liên hệ chính",
+        "isPrimary": "Chính",
+        "empty": "Chưa có người liên hệ."
+      }
+    },
+    "create": {
+      "eyebrow": "Nhà cung cấp mới",
+      "title": "Đăng ký nhà cung cấp",
+      "subtitle": "Nhập thông tin công ty để tạo hồ sơ NCC mới. Các trường bắt buộc được đánh dấu.",
+      "section": {
+        "info": "Thông tin công ty",
+        "contacts": "Người liên hệ"
+      },
+      "field": {
+        "name": "Tên công ty",
+        "namePlaceholder": "VD: Công ty TNHH Công nghệ ABC",
+        "taxCode": "Mã số thuế",
+        "taxCodePlaceholder": "VD: 0123456789",
+        "email": "Email công ty",
+        "emailPlaceholder": "lienhe@congty.com",
+        "phone": "Số điện thoại",
+        "phonePlaceholder": "VD: 028 1234 5678",
+        "street": "Địa chỉ",
+        "streetPlaceholder": "Số nhà, tên đường",
+        "district": "Quận / Huyện",
+        "districtPlaceholder": "Quận / Phường",
+        "city": "Tỉnh / Thành phố",
+        "cityPlaceholder": "VD: TP. Hồ Chí Minh",
+        "country": "Quốc gia",
+        "countryPlaceholder": "VD: Việt Nam",
+        "categories": "Danh mục hàng hóa",
+        "categoriesPlaceholder": "IT_EQUIPMENT, OFFICE_SUPPLIES",
+        "categoriesHint": "Phân cách nhiều danh mục bằng dấu phẩy. Cần ít nhất một danh mục.",
+        "notes": "Ghi chú",
+        "notesPlaceholder": "Thông tin bổ sung (tùy chọn)"
+      },
+      "contact": {
+        "name": "Họ tên",
+        "role": "Chức vụ",
+        "email": "Email",
+        "phone": "Điện thoại"
+      },
+      "action": {
+        "addContact": "Thêm liên hệ",
+        "save": "Lưu NCC"
+      },
+      "validation": {
+        "required": "Trường này là bắt buộc.",
+        "email": "Nhập địa chỉ email hợp lệ.",
+        "maxLength": "Giá trị quá dài.",
+        "categoriesRequired": "Cần ít nhất một danh mục hàng hóa."
+      },
+      "toast": {
+        "success": "Đã đăng ký nhà cung cấp thành công."
+      }
+    }
+  },
+  "rfq": {
+    "status": {
+      "OPEN": "Đang mở",
+      "EVALUATING": "Đang đánh giá",
+      "AWARDED": "Đã chọn thầu",
+      "CLOSED": "Đã đóng",
+      "CANCELLED": "Đã hủy"
+    },
+    "invitation": {
+      "submitted": "Đã báo giá",
+      "pending": "Chờ báo giá"
+    },
+    "list": {
+      "eyebrow": "Mua sắm cạnh tranh",
+      "title": "Yêu cầu báo giá (RFQ)",
+      "subtitle": "Tạo RFQ từ PR đã duyệt, thu thập báo giá NCC và chọn nhà cung cấp.",
+      "summaryLabel": "Tổng quan RFQ",
+      "totalItems": "RFQ",
+      "action": {
+        "create": "Tạo RFQ"
+      },
+      "stat": {
+        "total": "Tổng RFQ",
+        "open": "Đang mở (trang)",
+        "evaluating": "Đang đánh giá (trang)",
+        "awarded": "Đã chọn thầu (trang)"
+      },
+      "filter": {
+        "status": "Lọc theo trạng thái",
+        "allStatus": "Tất cả trạng thái"
+      },
+      "col": {
+        "rfqNumber": "Mã RFQ",
+        "prNumber": "Mã PR",
+        "title": "Tiêu đề",
+        "invitations": "Báo giá",
+        "status": "Trạng thái",
+        "deadline": "Hạn chót",
+        "awardedVendor": "NCC được chọn"
+      },
+      "empty": {
+        "title": "Không tìm thấy RFQ",
+        "message": "Tạo RFQ từ yêu cầu mua hàng đã được duyệt."
+      }
+    },
+    "detail": {
+      "eyebrow": "Chi tiết RFQ",
+      "info": {
+        "title": "Thông tin RFQ",
+        "deadline": "Hạn nộp báo giá",
+        "awardedVendor": "NCC được chọn",
+        "awardReason": "Lý do chọn thầu",
+        "createdAt": "Ngày tạo"
+      },
+      "invitations": {
+        "title": "NCC được mời",
+        "empty": "Chưa mời nhà cung cấp."
+      },
+      "items": {
+        "title": "Hạng mục",
+        "name": "Tên hàng",
+        "category": "Danh mục",
+        "quantity": "Số lượng",
+        "specs": "Quy cách"
+      },
+      "quotes": {
+        "title": "Báo giá NCC",
+        "awardedRibbon": "Được chọn",
+        "submittedAt": "Nộp lúc",
+        "validUntil": "Hiệu lực đến",
+        "paymentTerms": "Điều khoản thanh toán",
+        "score": "Điểm đánh giá",
+        "notEvaluated": "Chưa đánh giá",
+        "empty": "Chưa có báo giá."
+      },
+      "eval": {
+        "score": "Điểm",
+        "note": "Ghi chú đánh giá"
+      },
+      "action": {
+        "evaluate": "Đánh giá",
+        "reEvaluate": "Đánh giá lại",
+        "award": "Chọn thầu",
+        "close": "Đóng RFQ",
+        "submitQuote": "Nộp báo giá"
+      },
+      "modal": {
+        "awardTitle": "Chọn thầu RFQ",
+        "awardMessage": "Xác nhận chọn NCC cho RFQ này. Hệ thống sẽ tự tạo PO nháp.",
+        "awardReason": "Lý do chọn thầu",
+        "awardReasonPlaceholder": "Giải thích lý do chọn NCC (tối thiểu 20 ký tự)",
+        "awardReasonMin": "Lý do chọn thầu cần ít nhất 20 ký tự.",
+        "closeTitle": "Đóng RFQ",
+        "closeMessage": "Đóng RFQ để chuyển sang đánh giá? NCC sẽ không thể nộp thêm báo giá.",
+        "submitQuoteTitle": "Nộp báo giá NCC"
+      },
+      "submit": {
+        "vendor": "Nhà cung cấp",
+        "currency": "Tiền tệ",
+        "validUntil": "Hiệu lực đến",
+        "paymentTerms": "Điều khoản thanh toán",
+        "notes": "Ghi chú",
+        "lineItems": "Chi tiết báo giá",
+        "unitPrice": "Đơn giá",
+        "deliveryDays": "Ngày giao"
+      },
+      "toast": {
+        "evaluated": "Đã đánh giá báo giá.",
+        "awarded": "Đã chọn thầu RFQ thành công.",
+        "closed": "Đã đóng RFQ để đánh giá.",
+        "quoteSubmitted": "Đã nộp báo giá thành công.",
+        "submitValidation": "Vui lòng chọn NCC, ngày hiệu lực và ít nhất một đơn giá."
+      }
+    },
+    "create": {
+      "eyebrow": "RFQ mới",
+      "title": "Tạo RFQ",
+      "subtitle": "Chọn PR đã duyệt và mời ít nhất hai NCC trong danh sách AVL.",
+      "section": {
+        "rfq": "Thông tin RFQ",
+        "vendors": "Mời nhà cung cấp (AVL)"
+      },
+      "field": {
+        "pr": "Yêu cầu mua hàng",
+        "prPlaceholder": "Chọn PR đã duyệt...",
+        "title": "Tiêu đề RFQ",
+        "titlePlaceholder": "VD: RFQ thiết bị IT Q2",
+        "deadline": "Hạn nộp báo giá",
+        "requirements": "Yêu cầu / ghi chú",
+        "requirementsPlaceholder": "Yêu cầu kỹ thuật hoặc thương mại (tùy chọn)"
+      },
+      "vendorCount": "Đã chọn {{count}} NCC (tối thiểu 2)",
+      "noAvlVendors": "Không đủ NCC trong AVL. Hãy duyệt nhà cung cấp trước.",
+      "action": {
+        "save": "Tạo RFQ"
+      },
+      "validation": {
+        "required": "Trường này là bắt buộc.",
+        "maxLength": "Giá trị quá dài.",
+        "vendorsMin": "Cần chọn ít nhất hai NCC trong AVL.",
+        "deadlineFuture": "Hạn nộp báo giá phải ở tương lai."
+      },
+      "toast": {
+        "success": "Đã tạo RFQ thành công."
       }
     }
   },
