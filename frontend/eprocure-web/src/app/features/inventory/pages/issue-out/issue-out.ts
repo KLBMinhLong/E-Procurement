@@ -3,17 +3,30 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { StockService, IssueOutCommand } from '../../services/stock.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
+import { EpCardComponent } from '../../../../shared/components/ep-card/ep-card.component';
+import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
+import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
+import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
+
 @Component({
   selector: 'app-issue-out',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    TranslateModule,
+    EpCardComponent,
+    EpButtonComponent,
+    EpFormFieldComponent,
+    EpBreadcrumbComponent
+  ],
   templateUrl: './issue-out.html',
   styleUrls: ['./issue-out.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -78,7 +91,7 @@ export class IssueOut {
       }))
     };
 
-    const idempotencyKey = uuidv4();
+    const idempotencyKey = crypto.randomUUID();
 
     this.stockService.issueOutStock(request, idempotencyKey)
       .pipe(

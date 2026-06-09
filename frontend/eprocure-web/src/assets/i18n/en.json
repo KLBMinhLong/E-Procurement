@@ -1621,6 +1621,82 @@
     }
   },
   "inventory": {
+    "dashboard": {
+      "title": "Stock Dashboard",
+      "subtitle": "Overview of inventory alerts and recent activities.",
+      "criticalItems": "Items Below Reorder Level",
+      "recentMovements": "Recent Movements",
+      "alerts": "Critical Stock Alerts",
+      "activity": "Recent Activity",
+      "moved": "moved",
+      "table": {
+        "item": "Item",
+        "category": "Category"
+      },
+      "empty": {
+        "alerts": "No critical stock alerts.",
+        "activity": "No recent activity found."
+      }
+    },
+    "action": {
+      "issueOut": "Issue Out Stock"
+    },
+    "issueOut": {
+      "eyebrow": "Issue Stock",
+      "title": "Issue Out Stock",
+      "section": {
+        "basic": "General Information",
+        "items": "Items to Issue",
+        "summary": "Summary"
+      },
+      "field": {
+        "warehouse": "Warehouse",
+        "warehousePlaceholder": "e.g. WH-001",
+        "recipient": "Recipient ID",
+        "recipientPlaceholder": "User ID or Department ID",
+        "prId": "Related PR ID (Optional)",
+        "prIdPlaceholder": "e.g. PR-2023-001",
+        "notes": "Notes / Justification",
+        "notesPlaceholder": "Reason for issuing out..."
+      },
+      "item": {
+        "code": "Item Code",
+        "codePlaceholder": "e.g. IT-LAP-01",
+        "qty": "Quantity",
+        "unit": "Unit"
+      },
+      "summary": {
+        "totalItems": "Total Items"
+      },
+      "action": {
+        "submit": "Issue Out"
+      }
+    },
+    "movements": {
+      "title": "Stock Movements",
+      "description": "History of all inventory transactions.",
+      "filter": {
+        "itemCode": "Item Code",
+        "itemCodePlaceholder": "Search item...",
+        "warehouse": "Warehouse",
+        "warehousePlaceholder": "Warehouse ID...",
+        "type": "Movement Type",
+        "allTypes": "All Types"
+      },
+      "table": {
+        "date": "Date",
+        "type": "Type",
+        "itemCode": "Item Code",
+        "warehouse": "Warehouse",
+        "quantity": "Quantity",
+        "reference": "Reference",
+        "reason": "Reason"
+      },
+      "empty": {
+        "title": "No movements found",
+        "description": "Try adjusting your search filters."
+      }
+    },
     "gr": {
       "list": {
         "title": "Goods Receipts",
@@ -1648,6 +1724,89 @@
       "empty": {
         "title": "No receipts found",
         "message": "Try adjusting your filters or create a new receipt."
+      },
+      "create": {
+        "eyebrow": "Create Receipt",
+        "title": "New Goods Receipt",
+        "section": {
+          "basic": "Basic Information",
+          "lineItems": "Line Items",
+          "summary": "Summary"
+        },
+        "field": {
+          "poId": "Purchase Order",
+          "poIdPlaceholder": "Select a PO",
+          "warehouse": "Warehouse",
+          "warehousePlaceholder": "Enter warehouse name",
+          "notes": "Notes",
+          "notesPlaceholder": "Add any notes..."
+        },
+        "lineItem": {
+          "label": "Item",
+          "itemName": "Item Name",
+          "orderedQty": "Ordered Qty",
+          "unit": "Unit",
+          "receivedQty": "Received Qty",
+          "notes": "Notes",
+          "notesPlaceholder": "Condition...",
+          "total": "Total Value",
+          "empty": "No items found for this PO."
+        },
+        "summary": {
+          "lineItems": "Total Items",
+          "totalValue": "Total Value"
+        },
+        "action": {
+          "submit": "Create Receipt"
+        },
+        "errorNoItems": "Please receive at least one item",
+        "success": "Goods Receipt created successfully",
+        "failed": "Failed to create Goods Receipt"
+      },
+      "detail": {
+        "eyebrow": "Receipt Details",
+        "action": {
+          "complete": "Complete Receipt",
+          "completing": "Completing..."
+        },
+        "section": {
+          "info": "Receipt Information",
+          "lineItems": "Received Line Items",
+          "system": "System Information",
+          "match": "3-Way Match Status"
+        },
+        "info": {
+          "poNumber": "PO Number",
+          "warehouse": "Warehouse",
+          "receivedBy": "Received By",
+          "receivedDate": "Received Date",
+          "notes": "Notes"
+        },
+        "line": {
+          "item": "Item",
+          "ordered": "Ordered",
+          "received": "Received",
+          "rejected": "Rejected",
+          "condition": "Condition/Reason",
+          "empty": "No line items recorded for this receipt.",
+          "count": "{{count}} items"
+        },
+        "system": {
+          "createdAt": "Created At",
+          "systemId": "System ID",
+          "matchDesc": "This receipt is part of a 3-way match sequence."
+        },
+        "match": {
+          "po": "Purchase Order",
+          "gr": "Goods Receipt",
+          "invoice": "Invoice",
+          "pendingInvoice": "Pending receipt completion"
+        },
+        "notFound": "Goods receipt not found",
+        "loadFailed": "Failed to load goods receipt",
+        "completeSuccess": "Goods receipt completed successfully",
+        "completeFailed": "Failed to complete goods receipt",
+        "confirmComplete": "Are you sure you want to complete this goods receipt? This will trigger inventory movement and update stock balances."
       }
     }
   }

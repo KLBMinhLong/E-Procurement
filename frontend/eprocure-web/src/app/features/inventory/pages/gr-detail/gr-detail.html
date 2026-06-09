@@ -1,159 +1,182 @@
-<div class="gr-detail-container" *ngIf="gr() as detail; else loader">
-  
-  <div class="header">
-    <div class="breadcrumb">
-      <a (click)="goBack()" class="back-link">&larr; Back to Goods Receipts</a>
-    </div>
-    
-    <div class="title-row">
-      <div class="title-text">
-        <h1 class="ep-text-heading-xl">{{ detail.grNumber }}</h1>
-        <div class="status-badge" [ngClass]="detail.status.toLowerCase()">
-          {{ 'inventory.gr.status.' + detail.status | translate }}
-        </div>
-      </div>
-      
-      <div class="actions">
-        <button 
-          *ngIf="detail.status !== 'COMPLETE' && detail.status !== 'DISCREPANCY'"
-          class="ep-button ep-button-primary"
-          (click)="completeGr()"
-          [disabled]="submitting()"
-        >
-          <span class="spinner" *ngIf="submitting()"></span>
-          {{ submitting() ? 'Completing...' : 'Complete Receipt' }}
-        </button>
-      </div>
-    </div>
+<section class="gr-detail-page" aria-labelledby="gr-detail-heading">
+  <div class="gr-detail-page__nav">
+    <ep-breadcrumb />
+    <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="goBack()">
+      {{ 'action.back' | translate }}
+    </ep-button>
   </div>
 
-  <div class="content-grid">
-    <!-- Left Column: Primary Details & Line Items -->
-    <div class="main-content">
-      <div class="card">
-        <h3 class="card-title">Receipt Information</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">PO Number</span>
-            <span class="value">{{ detail.po.poNumber }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Warehouse</span>
-            <span class="value">{{ detail.warehouse.name }} ({{ detail.warehouse.code }})</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Received By</span>
-            <span class="value">{{ detail.warehouseKeeper.fullName }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Received Date</span>
-            <span class="value">{{ detail.receivedAt | date:'medium' }}</span>
-          </div>
-        </div>
-        
-        <div class="info-full" *ngIf="detail.notes">
-          <span class="label">Notes</span>
-          <p class="value">{{ detail.notes }}</p>
+  @if (loading()) {
+    <ep-skeleton [rows]="10" />
+  } @else if (gr(); as detail) {
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'inventory.gr.detail.eyebrow' | translate }}</span>
+        <h1 id="gr-detail-heading" class="page-header__title mono">{{ detail.grNumber }}</h1>
+        <div class="page-header__badges">
+          <ep-badge [tone]="statusTone(detail.status)" [labelKey]="'inventory.gr.status.' + detail.status" />
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header-flex">
-          <h3 class="card-title">Received Line Items</h3>
-          <span class="item-count">{{ detail.lineItems.length }} items</span>
-        </div>
-        
-        <div class="table-responsive">
-          <table class="ep-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Ordered</th>
-                <th>Received</th>
-                <th>Rejected</th>
-                <th>Condition/Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let line of detail.lineItems">
-                <td>
-                  <div class="item-info">
-                    <span class="item-name">{{ line.itemName }}</span>
-                    <span class="item-code" *ngIf="line.itemCode">{{ line.itemCode }}</span>
-                  </div>
-                </td>
-                <td>{{ line.orderedQuantity }} {{ line.unit }}</td>
-                <td class="success-text">{{ line.receivedQuantity }} {{ line.unit }}</td>
-                <td [class.danger-text]="line.rejectedQuantity !== '0'">
-                  {{ line.rejectedQuantity }} {{ line.unit }}
-                </td>
-                <td>{{ line.rejectionReason || '-' }}</td>
-              </tr>
-              <tr *ngIf="detail.lineItems.length === 0">
-                <td colspan="5" class="empty-state">No line items recorded for this receipt.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="page-header__actions">
+        @if (detail.status !== 'COMPLETE' && detail.status !== 'DISCREPANCY') {
+          <ep-button
+            id="btn-complete-gr"
+            variant="primary"
+            icon="check-circle"
+            [loading]="submitting()"
+            (click)="completeGr()">
+            {{ 'inventory.gr.detail.action.complete' | translate }}
+          </ep-button>
+        }
       </div>
     </div>
 
-    <!-- Right Column: System info & 3-way match preview -->
-    <div class="side-content">
-      <div class="card system-card">
-        <h3 class="card-title">System Information</h3>
-        <div class="info-list">
-          <div class="list-item">
-            <span class="label">Created At</span>
-            <span class="value">{{ detail.createdAt | date:'medium' }}</span>
+    <div class="gr-detail-layout">
+      <div class="gr-detail-layout__main">
+        <ep-card>
+          <div class="card-section">
+            <h2 class="card-section__title">{{ 'inventory.gr.detail.section.info' | translate }}</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.poNumber' | translate }}</span>
+                <strong class="mono">{{ detail.po.poNumber }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.warehouse' | translate }}</span>
+                <strong>{{ detail.warehouse.name }}</strong>
+                <small class="entity-ref">{{ detail.warehouse.code }}</small>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.receivedBy' | translate }}</span>
+                <strong>{{ detail.warehouseKeeper.fullName }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.receivedDate' | translate }}</span>
+                <strong class="mono">{{ formatDateTime(detail.receivedAt) }}</strong>
+              </div>
+            </div>
+
+            @if (detail.notes) {
+              <div class="narrative-block mt-4">
+                <span class="info-label">{{ 'inventory.gr.detail.info.notes' | translate }}</span>
+                <p>{{ detail.notes }}</p>
+              </div>
+            }
           </div>
-          <div class="list-item">
-            <span class="label">System ID</span>
-            <span class="value system-id" [title]="detail.id">{{ detail.id }}</span>
+        </ep-card>
+
+        <ep-card>
+          <div class="card-section card-section--compact">
+            <div class="section-title-row">
+              <h2 class="card-section__title">{{ 'inventory.gr.detail.section.lineItems' | translate }}</h2>
+              <span class="info-pill">{{ 'inventory.gr.detail.line.count' | translate:{ count: detail.lineItems.length } }}</span>
+            </div>
           </div>
-        </div>
+
+          <div class="gr-table-wrapper">
+            <table class="gr-table">
+              <thead>
+                <tr>
+                  <th>{{ 'inventory.gr.detail.line.item' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.ordered' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.received' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.rejected' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.condition' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of detail.lineItems; track line.id) {
+                  <tr>
+                    <td>
+                      <div class="item-name">
+                        <strong>{{ line.itemName }}</strong>
+                      </div>
+                      <div class="item-meta">
+                        @if (line.itemCode) {
+                          <span class="mono">{{ line.itemCode }}</span>
+                        }
+                      </div>
+                    </td>
+                    <td>{{ line.orderedQuantity }} {{ line.unit }}</td>
+                    <td class="success-text">{{ line.receivedQuantity }} {{ line.unit }}</td>
+                    <td [class.danger-text]="line.rejectedQuantity !== '0'">
+                      {{ line.rejectedQuantity }} {{ line.unit }}
+                    </td>
+                    <td>{{ line.rejectionReason || '-' }}</td>
+                  </tr>
+                }
+                @if (detail.lineItems.length === 0) {
+                  <tr>
+                    <td colspan="5" class="empty-state">{{ 'inventory.gr.detail.line.empty' | translate }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </ep-card>
       </div>
 
-      <div class="card match-card">
-        <h3 class="card-title">3-Way Match Status</h3>
-        <p class="description text-neutral-600">
-          This receipt is part of a 3-way match sequence.
-        </p>
-        
-        <div class="match-steps">
-          <div class="step completed">
-            <div class="icon">✓</div>
-            <div class="step-content">
-              <h4>Purchase Order</h4>
-              <p>{{ detail.po.poNumber }}</p>
+      <div class="gr-detail-layout__side">
+        <ep-card>
+          <div class="card-section">
+            <h3 class="card-section__title">{{ 'inventory.gr.detail.section.system' | translate }}</h3>
+            <div class="info-list">
+              <div class="list-item">
+                <span class="label">{{ 'inventory.gr.detail.system.createdAt' | translate }}</span>
+                <span class="value mono">{{ formatDateTime(detail.createdAt) }}</span>
+              </div>
+              <div class="list-item">
+                <span class="label">{{ 'inventory.gr.detail.system.systemId' | translate }}</span>
+                <span class="value mono" [title]="detail.id">{{ shortId(detail.id) }}</span>
+              </div>
             </div>
           </div>
-          
-          <div class="step" [ngClass]="{'completed': detail.status === 'COMPLETE' || detail.status === 'PARTIAL', 'pending': detail.status === 'DRAFT'}">
-            <div class="icon" *ngIf="detail.status === 'COMPLETE' || detail.status === 'PARTIAL'">✓</div>
-            <div class="icon-dot" *ngIf="detail.status === 'DRAFT'"></div>
-            <div class="step-content">
-              <h4>Goods Receipt</h4>
-              <p>{{ detail.grNumber }}</p>
+        </ep-card>
+
+        <ep-card>
+          <div class="card-section">
+            <h3 class="card-section__title">{{ 'inventory.gr.detail.section.match' | translate }}</h3>
+            <p class="text-neutral-600 mb-4 text-sm">{{ 'inventory.gr.detail.system.matchDesc' | translate }}</p>
+            
+            <div class="workflow-steps">
+              <div class="step completed">
+                <div class="step-icon">
+                  <ep-icon name="check" [size]="14"></ep-icon>
+                </div>
+                <div class="step-content">
+                  <h4>{{ 'inventory.gr.detail.match.po' | translate }}</h4>
+                  <p class="mono">{{ detail.po.poNumber }}</p>
+                </div>
+              </div>
+              
+              <div class="step" [ngClass]="{'completed': detail.status === 'COMPLETE' || detail.status === 'PARTIAL', 'active': detail.status === 'DRAFT'}">
+                <div class="step-icon">
+                  @if (detail.status === 'COMPLETE' || detail.status === 'PARTIAL') {
+                    <ep-icon name="check" [size]="14"></ep-icon>
+                  } @else {
+                    <div class="dot"></div>
+                  }
+                </div>
+                <div class="step-content">
+                  <h4>{{ 'inventory.gr.detail.match.gr' | translate }}</h4>
+                  <p class="mono">{{ detail.grNumber }}</p>
+                </div>
+              </div>
+              
+              <div class="step pending">
+                <div class="step-icon">
+                  <div class="dot"></div>
+                </div>
+                <div class="step-content">
+                  <h4>{{ 'inventory.gr.detail.match.invoice' | translate }}</h4>
+                  <p>{{ 'inventory.gr.detail.match.pendingInvoice' | translate }}</p>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div class="step pending">
-            <div class="icon-dot"></div>
-            <div class="step-content">
-              <h4>Invoice</h4>
-              <p>Pending receipt completion</p>
-            </div>
-          </div>
-        </div>
+        </ep-card>
       </div>
     </div>
-  </div>
-</div>
-
-<ng-template #loader>
-  <div class="loading-state">
-    <div class="spinner-large"></div>
-    <p>Loading goods receipt details...</p>
-  </div>
-</ng-template>
+  }
+</section>

@@ -18,7 +18,7 @@ export const inventoryRoutes: Routes = [
   {
     path: 'goods-receipts/create',
     loadComponent: () =>
-      import('./pages/gr-create/gr-create').then((m) => m.GrCreate),
+      import('./pages/gr-create/gr-create').then((m) => m.GrCreateComponent),
     canActivate: [permissionGuard],
     data: { requiredPermissions: ['GR_CREATE'] },
     title: 'route.inventory.gr.create'

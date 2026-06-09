@@ -1,107 +1,130 @@
-<div class="stock-movements-container">
-  <div class="header">
-    <div class="title-row">
-      <div class="title-text">
-        <h1 class="ep-text-heading-xl">Stock Movements</h1>
-        <p class="ep-text-body-md text-neutral-600">
-          History of all inventory transactions.
-        </p>
+<section class="movements-page">
+  <div class="page-header">
+    <div class="page-header__meta">
+      <h1 class="page-header__title">{{ 'inventory.movements.title' | translate }}</h1>
+      <p class="page-header__description">{{ 'inventory.movements.description' | translate }}</p>
+    </div>
+  </div>
+
+  <ep-card class="filter-card">
+    <form [formGroup]="filterForm" class="filter-bar">
+      <ep-form-field [label]="'inventory.movements.filter.itemCode' | translate">
+        <input type="text" formControlName="item_code" class="ep-input w-full" [placeholder]="'inventory.movements.filter.itemCodePlaceholder' | translate" />
+      </ep-form-field>
+      
+      <ep-form-field [label]="'inventory.movements.filter.warehouse' | translate">
+        <input type="text" formControlName="warehouse_id" class="ep-input w-full" [placeholder]="'inventory.movements.filter.warehousePlaceholder' | translate" />
+      </ep-form-field>
+
+      <ep-form-field [label]="'inventory.movements.filter.type' | translate">
+        <select formControlName="movement_type" class="ep-input w-full">
+          <option value="">{{ 'inventory.movements.filter.allTypes' | translate }}</option>
+          <option value="IN">IN</option>
+          <option value="OUT">OUT</option>
+          <option value="TRANSFER">TRANSFER</option>
+          <option value="ADJUSTMENT">ADJUSTMENT</option>
+        </select>
+      </ep-form-field>
+
+      <div class="filter-actions">
+        <ep-button type="button" variant="secondary" (click)="resetFilters()">
+          {{ 'action.clear' | translate }}
+        </ep-button>
       </div>
-    </div>
-  </div>
+    </form>
+  </ep-card>
 
-  <div class="filter-bar" [formGroup]="filterForm">
-    <div class="filter-group search-group">
-      <label class="ep-label">Item Code</label>
-      <input type="text" formControlName="item_code" class="ep-input" placeholder="Search item..." />
-    </div>
-    
-    <div class="filter-group">
-      <label class="ep-label">Warehouse</label>
-      <input type="text" formControlName="warehouse_id" class="ep-input" placeholder="Warehouse ID..." />
-    </div>
-
-    <div class="filter-group">
-      <label class="ep-label">Movement Type</label>
-      <select formControlName="movement_type" class="ep-input">
-        <option value="">All Types</option>
-        <option value="IN">IN</option>
-        <option value="OUT">OUT</option>
-        <option value="TRANSFER">TRANSFER</option>
-        <option value="ADJUSTMENT">ADJUSTMENT</option>
-      </select>
-    </div>
-
-    <div class="filter-actions">
-      <button class="ep-button ep-button-secondary" (click)="resetFilters()">Clear</button>
-    </div>
-  </div>
-
-  <div class="content">
-    <div class="table-card">
-      <div class="table-responsive">
-        <table class="ep-table">
-          <thead>
+  <ep-card class="table-card">
+    <div class="ep-table-wrapper">
+      <table class="ep-table">
+        <thead>
+          <tr>
+            <th>{{ 'inventory.movements.table.date' | translate }}</th>
+            <th>{{ 'inventory.movements.table.type' | translate }}</th>
+            <th>{{ 'inventory.movements.table.itemCode' | translate }}</th>
+            <th>{{ 'inventory.movements.table.warehouse' | translate }}</th>
+            <th>{{ 'inventory.movements.table.quantity' | translate }}</th>
+            <th>{{ 'inventory.movements.table.reference' | translate }}</th>
+            <th>{{ 'inventory.movements.table.reason' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
             <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Item Code</th>
-              <th>Warehouse</th>
-              <th>Quantity</th>
-              <th>Reference</th>
-              <th>Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="loading()">
-              <td colspan="7" class="loading-state">
-                <div class="spinner-small"></div>
-                <span>Loading movements...</span>
+              <td colspan="7" class="state-cell">
+                <div class="loading-state">
+                  <ep-icon name="loader-2" class="spin"></ep-icon>
+                  <span>{{ 'common.loading' | translate }}</span>
+                </div>
               </td>
             </tr>
-            <ng-container *ngIf="!loading()">
-              <tr *ngFor="let move of movements()">
+          } @else if (movements().length === 0) {
+            <tr>
+              <td colspan="7" class="state-cell">
+                <div class="empty-state">
+                  <h3 class="empty-state__title">{{ 'inventory.movements.empty.title' | translate }}</h3>
+                  <p class="empty-state__description">{{ 'inventory.movements.empty.description' | translate }}</p>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (move of movements(); track move.id) {
+              <tr>
                 <td>{{ move.performedAt | date:'medium' }}</td>
                 <td>
-                  <span class="movement-badge" [ngClass]="move.movementType.toLowerCase()">
+                  <span class="ep-badge" [ngClass]="{
+                    'ep-badge--success': move.movementType === 'RECEIPT_IN',
+                    'ep-badge--danger': move.movementType === 'ISSUE_OUT',
+                    'ep-badge--warning': move.movementType === 'ADJUSTMENT',
+                    'ep-badge--info': move.movementType === 'TRANSFER'
+                  }">
                     {{ move.movementType }}
                   </span>
                 </td>
                 <td class="font-medium">{{ move.itemCode }}</td>
                 <td>{{ move.warehouseId }}</td>
-                <td class="font-medium" [ngClass]="{'text-success': move.movementType === 'RECEIPT_IN', 'text-danger': move.movementType === 'ISSUE_OUT'}">
+                <td class="font-medium" [ngClass]="{
+                  'text-success': move.movementType === 'RECEIPT_IN', 
+                  'text-danger': move.movementType === 'ISSUE_OUT'}">
                   {{ move.movementType === 'RECEIPT_IN' ? '+' : move.movementType === 'ISSUE_OUT' ? '-' : '' }}{{ move.quantity }} {{ move.unit }}
                 </td>
                 <td>
-                  <span class="reference-link" *ngIf="move.sourceRefId" [title]="move.sourceRefId">
-                    {{ move.sourceRefType }}: {{ move.sourceRefId | slice:0:8 }}...
-                  </span>
-                  <span *ngIf="!move.sourceRefId">-</span>
+                  @if (move.sourceRefId) {
+                    <span class="reference-link" [title]="move.sourceRefId">
+                      {{ move.sourceRefType }}: {{ move.sourceRefId | slice:0:8 }}...
+                    </span>
+                  } @else {
+                    <span class="text-neutral-400">-</span>
+                  }
                 </td>
                 <td class="text-neutral-600">{{ move.notes || '-' }}</td>
               </tr>
-              <tr *ngIf="movements().length === 0">
-                <td colspan="7" class="empty-state">
-                  <h3>No movements found</h3>
-                  <p>Try adjusting your search filters.</p>
-                </td>
-              </tr>
-            </ng-container>
-          </tbody>
-        </table>
-      </div>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
 
-      <div class="pagination-wrapper" *ngIf="meta() && meta()!.totalPages > 1">
+    @if (meta() && meta()!.totalPages > 1) {
+      <div class="pagination-wrapper">
         <div class="pagination">
-          <button class="ep-button ep-button-icon" [disabled]="meta()!.page === 0" (click)="onPageChange(meta()!.page - 1)">
-            &lt;
-          </button>
-          <span class="page-info">Page {{ meta()!.page + 1 }} of {{ meta()!.totalPages }}</span>
-          <button class="ep-button ep-button-icon" [disabled]="meta()!.page === meta()!.totalPages - 1" (click)="onPageChange(meta()!.page + 1)">
-            &gt;
-          </button>
+          <ep-button 
+            variant="ghost" 
+            icon="chevron-left" 
+            [disabled]="meta()!.page === 0" 
+            (click)="onPageChange(meta()!.page - 1)">
+          </ep-button>
+          <span class="page-info">
+            {{ 'common.page' | translate }} {{ meta()!.page + 1 }} {{ 'common.of' | translate }} {{ meta()!.totalPages }}
+          </span>
+          <ep-button 
+            variant="ghost" 
+            icon="chevron-right" 
+            [disabled]="meta()!.page === meta()!.totalPages - 1" 
+            (click)="onPageChange(meta()!.page + 1)">
+          </ep-button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+    }
+  </ep-card>
+</section>

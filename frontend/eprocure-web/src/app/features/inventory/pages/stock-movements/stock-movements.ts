@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
@@ -10,15 +10,28 @@ import { StockMovement } from '../../models/stock.model';
 import { PageMeta } from '../../../../core/models/api-response.model';
 import { ToastService } from '../../../../core/services/toast.service';
 
+import { EpCardComponent } from '../../../../shared/components/ep-card/ep-card.component';
+import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
+import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
+import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+
 @Component({
   selector: 'app-stock-movements',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    TranslateModule,
+    EpCardComponent,
+    EpButtonComponent,
+    EpFormFieldComponent,
+    EpIconComponent
+  ],
   templateUrl: './stock-movements.html',
   styleUrls: ['./stock-movements.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class StockMovements {
+export class StockMovements implements OnInit {
   private readonly stockService = inject(StockService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);

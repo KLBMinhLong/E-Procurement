@@ -1,140 +1,147 @@
-<div class="issue-out-container">
-  <div class="header">
-    <div class="breadcrumb">
-      <a (click)="cancel()" class="back-link">&larr; Back to Dashboard</a>
+<section class="issue-out-page">
+  <div class="page-header">
+    <div class="page-header__nav">
+      <ep-breadcrumb />
+      <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="cancel()">
+        {{ 'action.back' | translate }}
+      </ep-button>
     </div>
-    <div class="title-row">
-      <div class="title-text">
-        <h1 class="ep-text-heading-xl">Issue Out Stock</h1>
-        <p class="ep-text-body-md text-neutral-600">
-          Record stock leaving the warehouse to fulfill internal requests or projects.
-        </p>
-      </div>
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'inventory.issueOut.eyebrow' | translate }}</span>
+      <h1 class="page-header__title">{{ 'inventory.issueOut.title' | translate }}</h1>
     </div>
   </div>
 
-  <div class="content">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="issue-form">
-      
-      <!-- General Info -->
-      <div class="form-section">
-        <h3 class="section-title">General Information</h3>
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label for="warehouseId" class="ep-label">Warehouse <span class="required">*</span></label>
-            <input
-              type="text"
-              id="warehouseId"
-              formControlName="warehouseId"
-              class="ep-input"
-              placeholder="e.g. WH-001"
-              [class.error]="form.get('warehouseId')?.invalid && form.get('warehouseId')?.touched"
-            />
-            <span class="ep-error-text" *ngIf="form.get('warehouseId')?.invalid && form.get('warehouseId')?.touched">
-              Warehouse is required
-            </span>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="issue-out-layout">
+    
+    <div class="issue-out-layout__main">
+      <ep-card class="form-section">
+        <div class="form-section__header">
+          <h2 class="form-section__title">{{ 'inventory.issueOut.section.basic' | translate }}</h2>
+        </div>
+        <div class="form-section__content">
+          <div class="form-row">
+            <ep-form-field 
+              [label]="'inventory.issueOut.field.warehouse' | translate" 
+              [required]="true"
+              [error]="form.get('warehouseId')?.touched && form.get('warehouseId')?.invalid ? ('validation.required' | translate) : ''"
+              class="flex-1">
+              <input type="text" formControlName="warehouseId" class="ep-input" [placeholder]="'inventory.issueOut.field.warehousePlaceholder' | translate" />
+            </ep-form-field>
+
+            <ep-form-field 
+              [label]="'inventory.issueOut.field.recipient' | translate" 
+              [required]="true"
+              [error]="form.get('recipientId')?.touched && form.get('recipientId')?.invalid ? ('validation.required' | translate) : ''"
+              class="flex-1">
+              <input type="text" formControlName="recipientId" class="ep-input" [placeholder]="'inventory.issueOut.field.recipientPlaceholder' | translate" />
+            </ep-form-field>
           </div>
 
-          <div class="form-group flex-1">
-            <label for="recipientId" class="ep-label">Recipient ID <span class="required">*</span></label>
-            <input
-              type="text"
-              id="recipientId"
-              formControlName="recipientId"
-              class="ep-input"
-              placeholder="User ID or Department ID"
-              [class.error]="form.get('recipientId')?.invalid && form.get('recipientId')?.touched"
-            />
-            <span class="ep-error-text" *ngIf="form.get('recipientId')?.invalid && form.get('recipientId')?.touched">
-              Recipient is required
-            </span>
+          <div class="form-row">
+            <ep-form-field 
+              [label]="'inventory.issueOut.field.prId' | translate" 
+              class="flex-1">
+              <input type="text" formControlName="prId" class="ep-input" [placeholder]="'inventory.issueOut.field.prIdPlaceholder' | translate" />
+            </ep-form-field>
+          </div>
+
+          <div class="form-row">
+            <ep-form-field 
+              [label]="'inventory.issueOut.field.notes' | translate"
+              class="flex-1">
+              <textarea formControlName="notes" class="ep-input" rows="3" [placeholder]="'inventory.issueOut.field.notesPlaceholder' | translate"></textarea>
+            </ep-form-field>
           </div>
         </div>
+      </ep-card>
 
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label for="prId" class="ep-label">Related PR ID (Optional)</label>
-            <input
-              type="text"
-              id="prId"
-              formControlName="prId"
-              class="ep-input"
-              placeholder="e.g. PR-2023-001"
-            />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="notes" class="ep-label">Notes / Justification</label>
-          <textarea
-            id="notes"
-            formControlName="notes"
-            class="ep-input"
-            rows="3"
-            placeholder="Reason for issuing out..."
-          ></textarea>
-        </div>
-      </div>
-
-      <!-- Line Items -->
-      <div class="form-section">
-        <div class="section-header-flex">
-          <h3 class="section-title">Items to Issue</h3>
-          <button type="button" class="ep-button ep-button-secondary ep-button-sm" (click)="addItem()">
-            + Add Item
-          </button>
+      <ep-card class="form-section">
+        <div class="form-section__header flex justify-between items-center">
+          <h2 class="form-section__title">{{ 'inventory.issueOut.section.items' | translate }}</h2>
+          <ep-button type="button" variant="secondary" size="sm" icon="plus" (click)="addItem()">
+            {{ 'action.add' | translate }}
+          </ep-button>
         </div>
         
-        <div class="table-container">
-          <table class="ep-table">
-            <thead>
-              <tr>
-                <th>Item Code <span class="required">*</span></th>
-                <th>Quantity <span class="required">*</span></th>
-                <th>Unit <span class="required">*</span></th>
-                <th class="action-col"></th>
-              </tr>
-            </thead>
-            <tbody formArrayName="items">
-              <tr *ngFor="let itemForm of items.controls; let i = index" [formGroupName]="i">
-                <td>
-                  <input type="text" formControlName="itemCode" class="ep-input" placeholder="e.g. IT-LAP-01" />
-                </td>
-                <td>
-                  <input type="number" formControlName="quantity" class="ep-input" min="0.01" step="0.01" />
-                </td>
-                <td>
-                  <select formControlName="unit" class="ep-input">
-                    <option value="EA">Each (EA)</option>
-                    <option value="BOX">Box (BOX)</option>
-                    <option value="KG">Kilogram (KG)</option>
-                    <option value="L">Liter (L)</option>
-                  </select>
-                </td>
-                <td class="action-col">
-                  <button type="button" class="icon-button danger" (click)="removeItem(i)" [disabled]="items.length === 1" title="Remove item">
-                    ✕
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="form-section__content no-padding">
+          <div class="ep-table-wrapper">
+            <table class="ep-table">
+              <thead>
+                <tr>
+                  <th>{{ 'inventory.issueOut.item.code' | translate }} <span class="required">*</span></th>
+                  <th>{{ 'inventory.issueOut.item.qty' | translate }} <span class="required">*</span></th>
+                  <th>{{ 'inventory.issueOut.item.unit' | translate }} <span class="required">*</span></th>
+                  <th class="w-16"></th>
+                </tr>
+              </thead>
+              <tbody formArrayName="items">
+                @for (itemCtrl of items.controls; track $index) {
+                  <tr [formGroupName]="$index">
+                    <td>
+                      <input type="text" formControlName="itemCode" class="ep-input w-full" [placeholder]="'inventory.issueOut.item.codePlaceholder' | translate" />
+                    </td>
+                    <td>
+                      <input type="number" formControlName="quantity" class="ep-input w-full" min="0.01" step="0.01" />
+                    </td>
+                    <td>
+                      <select formControlName="unit" class="ep-input w-full">
+                        <option value="EA">Each (EA)</option>
+                        <option value="BOX">Box (BOX)</option>
+                        <option value="KG">Kilogram (KG)</option>
+                        <option value="L">Liter (L)</option>
+                      </select>
+                    </td>
+                    <td class="text-right">
+                      <ep-button 
+                        type="button" 
+                        variant="ghost" 
+                        icon="trash" 
+                        class="text-danger"
+                        [disabled]="items.length === 1"
+                        (click)="removeItem($index)">
+                      </ep-button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </ep-card>
+    </div>
 
-      <div class="actions">
-        <button type="button" class="ep-button ep-button-secondary" (click)="cancel()">
-          Cancel
-        </button>
-        <button 
-          type="submit" 
-          class="ep-button ep-button-primary"
-          [disabled]="form.invalid || submitting() || items.length === 0"
-        >
-          <span class="spinner" *ngIf="submitting()"></span>
-          {{ submitting() ? 'Processing...' : 'Issue Out' }}
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+    <div class="issue-out-layout__side">
+      <ep-card class="form-section sticky-top">
+        <div class="form-section__header">
+          <h2 class="form-section__title">{{ 'inventory.issueOut.section.summary' | translate }}</h2>
+        </div>
+        <div class="form-section__content">
+          <div class="summary-row">
+            <span class="summary-label">{{ 'inventory.issueOut.summary.totalItems' | translate }}</span>
+            <span class="summary-value">{{ items.length }}</span>
+          </div>
+          
+          <div class="summary-actions">
+            <ep-button 
+              type="button" 
+              variant="secondary" 
+              class="w-full"
+              (click)="cancel()">
+              {{ 'action.cancel' | translate }}
+            </ep-button>
+            <ep-button 
+              type="submit" 
+              variant="primary" 
+              class="w-full"
+              icon="arrow-up-right"
+              [loading]="submitting()"
+              [disabled]="form.invalid || submitting() || items.length === 0">
+              {{ 'inventory.issueOut.action.submit' | translate }}
+            </ep-button>
+          </div>
+        </div>
+      </ep-card>
+    </div>
+  </form>
+</section>

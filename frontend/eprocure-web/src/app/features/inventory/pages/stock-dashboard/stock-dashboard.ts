@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -7,16 +7,28 @@ import { finalize, forkJoin } from 'rxjs';
 
 import { StockService } from '../../services/stock.service';
 import { CatalogItemDetail, StockMovement } from '../../models/stock.model';
+import { EpCardComponent } from '../../../../shared/components/ep-card/ep-card.component';
+import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
+import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 
 @Component({
   selector: 'app-stock-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule],
+  imports: [
+    CommonModule, 
+    RouterModule, 
+    TranslateModule,
+    EpCardComponent,
+    EpButtonComponent,
+    EpIconComponent,
+    EpSkeletonComponent
+  ],
   templateUrl: './stock-dashboard.html',
   styleUrls: ['./stock-dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class StockDashboard {
+export class StockDashboard implements OnInit {
   private readonly stockService = inject(StockService);
   private readonly destroyRef = inject(DestroyRef);
 

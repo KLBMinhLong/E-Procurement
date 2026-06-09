@@ -273,10 +273,10 @@
 | Complete GR + stock receipt movement | ✅ | `POST /api/v1/goods-receipts/{id}/complete`; resolves catalog `itemCode`, updates `stock_entries`, creates `RECEIPT_IN` movements, publishes `inventory.gr.created` |
 | Stock list/movement API | ✅ | `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, `GET /api/v1/stock/movements`; read-only stock projections with `GR_VIEW` |
 | Issue-out API | ✅ | `POST /api/v1/stock/issue-out`; validates active item/warehouse, decrements stock atomically, stores idempotent request header, creates `ISSUE_OUT` movements |
-| Frontend: GR List & Create | 🔄 | UI to list and create Draft GR from PO |
-| Frontend: GR Detail & Complete | 🔄 | UI to view GR details, line items, 3-way match preview, and action to complete GR |
-| Frontend: Stock Dashboard & Movements | 🔄 | UI for warehouse stock overview, reorder alerts, and movement history |
-| Frontend: Issue Out Stock | 🔄 | Form to issue stock out with dynamic line items |
+| Frontend: GR List & Create | ✅ | UI to list and create Draft GR from PO |
+| Frontend: GR Detail & Complete | ✅ | UI to view GR details, line items, 3-way match preview, and action to complete GR |
+| Frontend: Stock Dashboard & Movements | ✅ | UI for warehouse stock overview, reorder alerts, and movement history |
+| Frontend: Issue Out Stock | ✅ | Form to issue stock out with dynamic line items |
 
 ### E09: Invoice & Payment
 | Task | Status | Ghi chú |

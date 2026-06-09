@@ -1,26 +1,42 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal, OnInit, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslatePipe } from '@ngx-translate/core';
 
 import { GoodsReceiptService } from '../../services/goods-receipt.service';
 import { PurchaseOrderService } from '../../../finance/services/purchase-order.service';
 import { PurchaseOrder } from '../../../finance/models/purchase-order.model';
 import { ToastService } from '../../../../core/services/toast.service';
 
+import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
+import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
+import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
+import { EpCardComponent } from '../../../../shared/components/ep-card/ep-card.component';
+// removed EpIconComponent and EpSkeletonComponent
+import { EpAmountComponent } from '../../../../shared/components/ep-amount/ep-amount.component';
+
 @Component({
   selector: 'app-gr-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    TranslateModule,
+    TranslatePipe,
+    EpButtonComponent,
+    EpFormFieldComponent,
+    EpBreadcrumbComponent,
+    EpCardComponent,
+    EpAmountComponent
+  ],
   templateUrl: './gr-create.html',
   styleUrls: ['./gr-create.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GrCreate {
+export class GrCreateComponent implements OnInit {
   private readonly grService = inject(GoodsReceiptService);
   private readonly poService = inject(PurchaseOrderService);
   private readonly fb = inject(FormBuilder);
@@ -32,6 +48,16 @@ export class GrCreate {
   readonly loadingPos = signal(false);
   readonly pos = signal<PurchaseOrder[]>([]);
   readonly selectedPo = signal<PurchaseOrder | null>(null);
+
+  readonly totalReceivedAmount = computed(() => {
+    let total = 0;
+    this.items.controls.forEach((ctrl) => {
+      const qty = parseFloat(ctrl.get('receivedQuantity')?.value || '0');
+      const price = parseFloat(ctrl.get('unitPrice')?.value || '0');
+      if (!isNaN(qty) && !isNaN(price)) total += qty * price;
+    });
+    return total.toFixed(4);
+  });
 
   readonly form: FormGroup = this.fb.group({
     poId: ['', Validators.required],
@@ -83,11 +109,30 @@ export class GrCreate {
           poLineItemId: [item.id, Validators.required],
           itemName: [{ value: item.itemName, disabled: true }],
           orderedQty: [{ value: item.quantity.amount, disabled: true }],
+          orderedUnit: [{ value: item.quantity.unit, disabled: true }],
+          unitPrice: [{ value: item.unitPrice, disabled: true }],
+          currency: [{ value: item.currency, disabled: true }],
           receivedQuantity: [0, [Validators.required, Validators.min(0)]],
           notes: ['']
         }));
       });
     }
+  }
+
+  fieldError(field: string): string | null {
+    const ctrl = this.form.get(field);
+    if (!ctrl?.invalid || !ctrl.touched) return null;
+    if (ctrl.errors?.['required']) return 'validation.required';
+    return null;
+  }
+
+  getLineItemError(index: number, field: string): string | null {
+    const ctrl = this.items.at(index).get(field);
+    if (ctrl?.invalid && ctrl.touched) {
+      if (ctrl.errors?.['required']) return 'validation.required';
+      if (ctrl.errors?.['min']) return 'validation.min';
+    }
+    return null;
   }
 
   onSubmit(): void {

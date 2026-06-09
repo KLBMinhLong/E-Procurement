@@ -1,5 +1,10 @@
 <label class="ep-form-field">
-  <span>{{ label() }}</span>
+  <span>
+    {{ label() }}
+    @if (required()) {
+      <span class="text-danger">*</span>
+    }
+  </span>
   <ng-content></ng-content>
   @if (error()) {
     <small>{{ error() }}</small>
