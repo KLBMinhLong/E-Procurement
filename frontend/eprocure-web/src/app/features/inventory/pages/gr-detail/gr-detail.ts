@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
 
 import { GoodsReceiptService } from '../../services/goods-receipt.service';
@@ -14,25 +13,28 @@ import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badg
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
+import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
+import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
 
 @Component({
   selector: 'app-gr-detail',
   standalone: true,
   imports: [
-    CommonModule,
-    TranslateModule,
+    TranslatePipe,
     EpCardComponent,
     EpButtonComponent,
     EpBadgeComponent,
     EpIconComponent,
     EpBreadcrumbComponent,
-    EpSkeletonComponent
+    EpSkeletonComponent,
+    EpModalComponent,
+    HasPermissionDirective
   ],
   templateUrl: './gr-detail.html',
   styleUrls: ['./gr-detail.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GrDetail {
+export class GrDetail implements OnInit {
   private readonly grService = inject(GoodsReceiptService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -41,6 +43,7 @@ export class GrDetail {
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
+  readonly showCompleteModal = signal(false);
   readonly gr = signal<GoodsReceiptDetail | null>(null);
 
   ngOnInit(): void {
@@ -48,7 +51,7 @@ export class GrDetail {
     if (id) {
       this.loadGoodsReceipt(id);
     } else {
-      this.toast.error('inventory.gr.detail.notFound');
+      this.toast.error('inventory.gr.detail.toast.notFound');
       this.router.navigate(['/inventory/goods-receipts']);
     }
   }
@@ -61,41 +64,37 @@ export class GrDetail {
         finalize(() => this.loading.set(false))
       )
       .subscribe({
-        next: (res) => {
-          this.gr.set(res.data);
-        },
-        error: (err) => {
-          console.error('Failed to load GR', err);
-          this.toast.error('inventory.gr.detail.loadFailed');
+        next: (res) => this.gr.set(res.data),
+        error: () => {
+          this.toast.error('inventory.gr.detail.toast.loadFailed');
           this.router.navigate(['/inventory/goods-receipts']);
         }
       });
   }
 
-  completeGr(): void {
+  openCompleteModal(): void {
+    this.showCompleteModal.set(true);
+  }
+
+  closeCompleteModal(): void {
+    this.showCompleteModal.set(false);
+  }
+
+  confirmComplete(): void {
     const currentGr = this.gr();
     if (!currentGr) return;
 
-    if (!confirm('Are you sure you want to complete this goods receipt? This will trigger inventory movement and update stock balances.')) {
-      return;
-    }
-
     this.submitting.set(true);
-    const idempotencyKey = crypto.randomUUID();
-
-    this.grService.complete(currentGr.id, idempotencyKey)
+    this.grService.complete(currentGr.id, crypto.randomUUID())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.submitting.set(false))
       )
       .subscribe({
-        next: (res) => {
-          this.toast.success('inventory.gr.detail.completeSuccess');
-          this.loadGoodsReceipt(currentGr.id); // Reload
-        },
-        error: (err) => {
-          console.error('Failed to complete GR', err);
-          this.toast.error('inventory.gr.detail.completeFailed');
+        next: () => {
+          this.toast.success('inventory.gr.detail.toast.completeSuccess');
+          this.showCompleteModal.set(false);
+          this.loadGoodsReceipt(currentGr.id);
         }
       });
   }
@@ -104,29 +103,33 @@ export class GrDetail {
     this.router.navigate(['/inventory/goods-receipts']);
   }
 
+  canComplete(): boolean {
+    return this.gr()?.status === 'DRAFT';
+  }
+
   statusTone(status?: string): 'neutral' | 'success' | 'warning' | 'danger' | 'info' {
     switch (status) {
-      case 'COMPLETE':
-        return 'success';
-      case 'PARTIAL':
-        return 'warning';
-      case 'DRAFT':
-        return 'neutral';
-      case 'DISCREPANCY':
-        return 'danger';
-      default:
-        return 'neutral';
+      case 'COMPLETE': return 'success';
+      case 'PARTIAL': return 'warning';
+      case 'DRAFT': return 'neutral';
+      case 'DISCREPANCY': return 'danger';
+      default: return 'neutral';
     }
   }
 
   shortId(id?: string): string {
     if (!id) return '';
-    return id.split('-')[0];
+    return id.length <= 12 ? id : `${id.slice(0, 8)}...${id.slice(-4)}`;
   }
 
   formatDateTime(isoString?: string): string {
     if (!isoString) return '--';
-    const date = new Date(isoString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Intl.DateTimeFormat('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(isoString));
   }
 }

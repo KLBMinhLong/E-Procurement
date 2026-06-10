@@ -224,6 +224,14 @@
       "list": "Danh sách RFQ",
       "create": "Tạo RFQ",
       "detail": "Chi tiết RFQ"
+    },
+    "inventory": {
+      "self": "Kho hàng",
+      "gr": {
+        "list": "Phiếu nhận hàng",
+        "create": "Tạo phiếu nhận",
+        "detail": "Chi tiết phiếu nhận"
+      }
     }
   },
   "shared": {
@@ -414,8 +422,7 @@
       "action": {
         "submit": "Gửi phê duyệt",
         "confirmCancel": "Xác nhận hủy",
-        "createPo": "Tạo PO",
-        "createRfq": "Tạo RFQ"
+        "createPo": "Tạo PO"
       },
       "label": {
         "justification": "Lý do mua sắm",
@@ -1621,89 +1628,25 @@
     }
   },
   "inventory": {
-    "dashboard": {
-      "title": "Tổng quan Kho",
-      "subtitle": "Tổng quan về cảnh báo hàng tồn kho và các hoạt động gần đây.",
-      "criticalItems": "Mặt hàng dưới mức tái đặt",
-      "recentMovements": "Hoạt động gần đây",
-      "alerts": "Cảnh báo Kho Tới hạn",
-      "activity": "Lịch sử Giao dịch",
-      "moved": "đã xuất/nhập",
-      "table": {
-        "item": "Mặt hàng",
-        "category": "Danh mục"
-      },
-      "empty": {
-        "alerts": "Không có cảnh báo kho nào.",
-        "activity": "Không có hoạt động gần đây."
-      }
-    },
-    "action": {
-      "issueOut": "Xuất Kho"
-    },
-    "issueOut": {
-      "eyebrow": "Xuất Kho",
-      "title": "Xuất Kho",
-      "section": {
-        "basic": "Thông tin chung",
-        "items": "Danh sách mặt hàng",
-        "summary": "Tổng hợp"
-      },
-      "field": {
-        "warehouse": "Kho",
-        "warehousePlaceholder": "VD: WH-001",
-        "recipient": "Mã Người Nhận",
-        "recipientPlaceholder": "ID Người dùng hoặc Phòng ban",
-        "prId": "Mã PR (Tùy chọn)",
-        "prIdPlaceholder": "VD: PR-2023-001",
-        "notes": "Ghi chú / Lý do",
-        "notesPlaceholder": "Lý do xuất kho..."
-      },
-      "item": {
-        "code": "Mã Hàng",
-        "codePlaceholder": "VD: IT-LAP-01",
-        "qty": "Số lượng",
-        "unit": "Đơn vị"
-      },
-      "summary": {
-        "totalItems": "Tổng số mặt hàng"
-      },
-      "action": {
-        "submit": "Xác nhận xuất kho"
-      }
-    },
-    "movements": {
-      "title": "Lịch Sử Nhập Xuất",
-      "description": "Lịch sử của tất cả các giao dịch kho.",
-      "filter": {
-        "itemCode": "Mã Hàng",
-        "itemCodePlaceholder": "Tìm kiếm mã hàng...",
-        "warehouse": "Kho",
-        "warehousePlaceholder": "Mã kho...",
-        "type": "Loại Giao Dịch",
-        "allTypes": "Tất Cả"
-      },
-      "table": {
-        "date": "Ngày",
-        "type": "Loại",
-        "itemCode": "Mã Hàng",
-        "warehouse": "Kho",
-        "quantity": "Số Lượng",
-        "reference": "Tham Chiếu",
-        "reason": "Lý Do"
-      },
-      "empty": {
-        "title": "Không tìm thấy giao dịch",
-        "description": "Hãy thử thay đổi bộ lọc tìm kiếm."
-      }
-    },
     "gr": {
       "list": {
+        "eyebrow": "Vận hành kho",
         "title": "Phiếu nhận hàng",
-        "subtitle": "Quản lý và theo dõi tất cả phiếu nhận hàng.",
-        "filterPo": "Số PO",
-        "filterPoPlaceholder": "Tìm kiếm theo số PO...",
-        "filterStatus": "Trạng thái"
+        "subtitle": "Ghi nhận hàng nhập theo đơn mua hàng và cập nhật tồn kho.",
+        "summaryLabel": "Tổng quan phiếu nhận",
+        "totalItems": "phiếu",
+        "filterStatus": "Lọc theo trạng thái",
+        "filter": {
+          "allStatus": "Tất cả trạng thái",
+          "allWarehouses": "Tất cả kho",
+          "warehouse": "Kho hàng",
+          "fromDate": "Từ ngày",
+          "toDate": "Đến ngày",
+          "clear": "Xóa bộ lọc"
+        },
+        "stat": {
+          "total": "Tổng phiếu"
+        }
       },
       "action": {
         "create": "Tạo phiếu"
@@ -1713,7 +1656,8 @@
         "poNumber": "Mã PO",
         "warehouse": "Kho hàng",
         "status": "Trạng thái",
-        "receivedAt": "Ngày nhận"
+        "receivedAt": "Ngày nhận",
+        "createdAt": "Ngày tạo"
       },
       "status": {
         "DRAFT": "Nháp",
@@ -1726,87 +1670,97 @@
         "message": "Thử thay đổi bộ lọc hoặc tạo phiếu nhận hàng mới."
       },
       "create": {
-        "eyebrow": "Tạo phiếu nhận",
-        "title": "Phiếu nhận hàng mới",
+        "eyebrow": "Phiếu mới",
+        "title": "Tạo phiếu nhận hàng",
         "section": {
-          "basic": "Thông tin cơ bản",
-          "lineItems": "Chi tiết hàng hóa",
+          "basic": "Thông tin phiếu",
+          "lineItems": "Chi tiết hàng",
           "summary": "Tóm tắt"
         },
         "field": {
-          "poId": "Đơn mua hàng (PO)",
-          "poIdPlaceholder": "Chọn một PO",
-          "warehouse": "Kho hàng",
-          "warehousePlaceholder": "Nhập tên kho",
+          "poId": "Đơn mua hàng",
+          "poIdPlaceholder": "Chọn PO đã gửi NCC...",
+          "warehouse": "Kho nhận",
+          "warehousePlaceholder": "Chọn kho...",
           "notes": "Ghi chú",
-          "notesPlaceholder": "Thêm ghi chú..."
+          "notesPlaceholder": "Ghi chú giao hàng (tùy chọn)"
         },
         "lineItem": {
-          "label": "Mặt hàng",
-          "itemName": "Tên hàng",
-          "orderedQty": "SL Đặt",
+          "label": "Dòng",
+          "itemName": "Hàng hóa",
+          "orderedQty": "SL đặt",
           "unit": "ĐVT",
-          "receivedQty": "SL Nhận",
-          "notes": "Ghi chú",
-          "notesPlaceholder": "Tình trạng...",
-          "total": "Tổng giá trị",
-          "empty": "Không có mặt hàng nào cho PO này."
+          "receivedQty": "SL nhận",
+          "notes": "Ghi chú dòng",
+          "notesPlaceholder": "Tùy chọn",
+          "total": "Thành tiền dòng",
+          "empty": "Chọn PO để tải chi tiết hàng."
         },
         "summary": {
-          "lineItems": "Tổng số mặt hàng",
-          "totalValue": "Tổng giá trị"
+          "lineItems": "Số dòng",
+          "totalValue": "Giá trị ước tính"
         },
         "action": {
-          "submit": "Tạo phiếu nhận"
+          "submit": "Tạo phiếu"
         },
-        "errorNoItems": "Vui lòng nhận ít nhất một mặt hàng",
-        "success": "Tạo phiếu nhận hàng thành công",
-        "failed": "Tạo phiếu nhận hàng thất bại"
+        "validation": {
+          "required": "Trường này là bắt buộc.",
+          "min": "Giá trị phải lớn hơn hoặc bằng 0."
+        },
+        "toast": {
+          "success": "Đã tạo phiếu nhận hàng thành công.",
+          "failed": "Không thể tạo phiếu nhận hàng.",
+          "errorNoItems": "Nhập số lượng nhận cho ít nhất một dòng hàng."
+        }
       },
       "detail": {
-        "eyebrow": "Chi tiết phiếu nhận",
-        "action": {
-          "complete": "Hoàn tất phiếu",
-          "completing": "Đang hoàn tất..."
-        },
+        "eyebrow": "Phiếu nhận hàng",
         "section": {
-          "info": "Thông tin phiếu nhận",
-          "lineItems": "Chi tiết hàng hóa",
-          "system": "Thông tin hệ thống",
-          "match": "Trạng thái đối chiếu 3 bước (3-Way Match)"
+          "info": "Thông tin phiếu",
+          "lineItems": "Chi tiết hàng",
+          "system": "Hệ thống",
+          "match": "Đối soát 3 chiều"
         },
         "info": {
           "poNumber": "Số PO",
-          "warehouse": "Kho hàng",
+          "warehouse": "Kho nhận",
           "receivedBy": "Người nhận",
           "receivedDate": "Ngày nhận",
           "notes": "Ghi chú"
         },
         "line": {
-          "item": "Mặt hàng",
-          "ordered": "SL Đặt",
-          "received": "SL Nhận",
-          "rejected": "SL Từ chối",
-          "condition": "Tình trạng/Lý do",
-          "empty": "Không có mặt hàng nào cho phiếu nhận này.",
-          "count": "{{count}} mặt hàng"
+          "count": "{{count}} dòng",
+          "item": "Hàng hóa",
+          "ordered": "Đặt",
+          "received": "Nhận",
+          "rejected": "Từ chối",
+          "condition": "Lý do từ chối",
+          "empty": "Không có dòng hàng."
         },
         "system": {
           "createdAt": "Ngày tạo",
-          "systemId": "ID Hệ thống",
-          "matchDesc": "Phiếu nhận này là một phần của quy trình đối chiếu 3 bước."
+          "systemId": "Mã hệ thống",
+          "matchDesc": "Theo dõi tiến độ đối soát từ PO đến hóa đơn."
         },
         "match": {
           "po": "Đơn mua hàng",
           "gr": "Phiếu nhận hàng",
           "invoice": "Hóa đơn",
-          "pendingInvoice": "Chờ hoàn tất phiếu nhận"
+          "pendingInvoice": "Chờ hóa đơn"
         },
-        "notFound": "Không tìm thấy phiếu nhận hàng",
-        "loadFailed": "Tải phiếu nhận hàng thất bại",
-        "completeSuccess": "Hoàn tất phiếu nhận hàng thành công",
-        "completeFailed": "Hoàn tất phiếu nhận hàng thất bại",
-        "confirmComplete": "Bạn có chắc chắn muốn hoàn tất phiếu nhận này? Thao tác này sẽ cập nhật tồn kho."
+        "action": {
+          "complete": "Hoàn tất phiếu"
+        },
+        "modal": {
+          "completeTitle": "Hoàn tất phiếu nhận",
+          "completeMessage": "Hoàn tất phiếu này? Hệ thống sẽ tạo biến động kho và cập nhật tồn."
+        },
+        "toast": {
+          "notFound": "Không tìm thấy phiếu nhận hàng.",
+          "loadFailed": "Không thể tải phiếu nhận hàng.",
+          "completeSuccess": "Đã hoàn tất phiếu nhận hàng.",
+          "completeFailed": "Không thể hoàn tất phiếu nhận hàng."
+        }
       }
     }
   }

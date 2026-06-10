@@ -4,6 +4,7 @@ import com.eprocure.inventory.application.service.PageResult;
 import com.eprocure.inventory.application.usecase.GetItemStockUseCase;
 import com.eprocure.inventory.application.usecase.IssueOutStockUseCase;
 import com.eprocure.inventory.application.usecase.ListStockMovementsUseCase;
+import com.eprocure.inventory.application.usecase.ListWarehousesUseCase;
 import com.eprocure.inventory.application.usecase.ListWarehouseStockUseCase;
 import com.eprocure.inventory.common.api.ApiResponse;
 import com.eprocure.inventory.common.api.RequestIdUtil;
@@ -15,6 +16,7 @@ import com.eprocure.inventory.presentation.request.IssueOutStockRequest;
 import com.eprocure.inventory.presentation.response.IssueOutStockResponse;
 import com.eprocure.inventory.presentation.response.StockEntryResponse;
 import com.eprocure.inventory.presentation.response.StockMovementResponse;
+import com.eprocure.inventory.presentation.response.WarehouseListResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -41,6 +43,7 @@ public class StockController {
     private static final Logger log = LogManager.getLogger(StockController.class);
 
     private final GetItemStockUseCase getItemStockUseCase;
+    private final ListWarehousesUseCase listWarehousesUseCase;
     private final ListWarehouseStockUseCase listWarehouseStockUseCase;
     private final ListStockMovementsUseCase listStockMovementsUseCase;
     private final IssueOutStockUseCase issueOutStockUseCase;
@@ -48,15 +51,29 @@ public class StockController {
 
     public StockController(
             GetItemStockUseCase getItemStockUseCase,
+            ListWarehousesUseCase listWarehousesUseCase,
             ListWarehouseStockUseCase listWarehouseStockUseCase,
             ListStockMovementsUseCase listStockMovementsUseCase,
             IssueOutStockUseCase issueOutStockUseCase,
             StockPresentationMapper mapper) {
         this.getItemStockUseCase = getItemStockUseCase;
+        this.listWarehousesUseCase = listWarehousesUseCase;
         this.listWarehouseStockUseCase = listWarehouseStockUseCase;
         this.listStockMovementsUseCase = listStockMovementsUseCase;
         this.issueOutStockUseCase = issueOutStockUseCase;
         this.mapper = mapper;
+    }
+
+    @GetMapping("/warehouses")
+    @PreAuthorize("hasAuthority('GR_VIEW')")
+    public ResponseEntity<ApiResponse<List<WarehouseListResponse>>> listWarehouses(
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] GET /api/v1/warehouses | userId={}",
+                LogMaskingUtil.maskId(principal.getId()));
+        return ResponseEntity.ok(ApiResponse.success(
+                listWarehousesUseCase.execute(),
+                RequestIdUtil.resolve(request)));
     }
 
     @GetMapping("/items/{itemCode}/stock")

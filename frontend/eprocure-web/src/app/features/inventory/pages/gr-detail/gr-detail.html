@@ -19,13 +19,14 @@
       </div>
 
       <div class="page-header__actions">
-        @if (detail.status !== 'COMPLETE' && detail.status !== 'DISCREPANCY') {
+        @if (canComplete()) {
           <ep-button
+            *epHasPermission="'GR_CREATE'"
             id="btn-complete-gr"
             variant="primary"
             icon="check-circle"
-            [loading]="submitting()"
-            (click)="completeGr()">
+            [disabled]="submitting()"
+            (click)="openCompleteModal()">
             {{ 'inventory.gr.detail.action.complete' | translate }}
           </ep-button>
         }
@@ -45,7 +46,7 @@
               <div class="info-item">
                 <span class="info-label">{{ 'inventory.gr.detail.info.warehouse' | translate }}</span>
                 <strong>{{ detail.warehouse.name }}</strong>
-                <small class="entity-ref">{{ detail.warehouse.code }}</small>
+                <small class="entity-ref mono">{{ shortId(detail.warehouse.id) }}</small>
               </div>
               <div class="info-item">
                 <span class="info-label">{{ 'inventory.gr.detail.info.receivedBy' | translate }}</span>
@@ -150,7 +151,7 @@
                 </div>
               </div>
               
-              <div class="step" [ngClass]="{'completed': detail.status === 'COMPLETE' || detail.status === 'PARTIAL', 'active': detail.status === 'DRAFT'}">
+              <div class="step" [class.completed]="detail.status === 'COMPLETE' || detail.status === 'PARTIAL'" [class.active]="detail.status === 'DRAFT'">
                 <div class="step-icon">
                   @if (detail.status === 'COMPLETE' || detail.status === 'PARTIAL') {
                     <ep-icon name="check" [size]="14"></ep-icon>
@@ -179,4 +180,21 @@
       </div>
     </div>
   }
+
+  <ep-modal
+    [open]="showCompleteModal()"
+    [title]="'inventory.gr.detail.modal.completeTitle' | translate"
+    (close)="closeCompleteModal()">
+    <p>{{ 'inventory.gr.detail.modal.completeMessage' | translate }}</p>
+    <div class="modal-actions">
+      <ep-button variant="ghost" (click)="closeCompleteModal()">{{ 'action.cancel' | translate }}</ep-button>
+      <ep-button
+        variant="primary"
+        icon="check-circle"
+        [disabled]="submitting()"
+        (click)="confirmComplete()">
+        {{ 'inventory.gr.detail.action.complete' | translate }}
+      </ep-button>
+    </div>
+  </ep-modal>
 </section>

@@ -12,6 +12,9 @@
     </div>
   </div>
 
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else {
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="gr-form" novalidate>
     <div class="gr-form__layout">
 
@@ -43,14 +46,16 @@
 
               <ep-form-field
                 [label]="'inventory.gr.create.field.warehouse' | translate"
-                [error]="fieldError('warehouse') ? (fieldError('warehouse')! | translate) : null">
-                <input
-                  id="warehouse"
-                  type="text"
-                  formControlName="warehouse"
-                  class="ep-input"
-                  [placeholder]="'inventory.gr.create.field.warehousePlaceholder' | translate"
-                  autocomplete="off">
+                [error]="fieldError('warehouseId') ? (fieldError('warehouseId')! | translate) : null">
+                <select
+                  id="warehouseId"
+                  formControlName="warehouseId"
+                  class="ep-select">
+                  <option value="" disabled>{{ 'inventory.gr.create.field.warehousePlaceholder' | translate }}</option>
+                  @for (wh of warehouses(); track wh.id) {
+                    <option [value]="wh.id">{{ wh.code }} — {{ wh.name }}</option>
+                  }
+                </select>
               </ep-form-field>
             </div>
 
@@ -193,4 +198,5 @@
 
     </div><!-- /layout -->
   </form>
+  }
 </section>

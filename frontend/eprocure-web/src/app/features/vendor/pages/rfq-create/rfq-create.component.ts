@@ -7,7 +7,7 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -46,7 +46,6 @@ export class RfqCreateComponent implements OnInit {
   private readonly vendorService = inject(VendorService);
   private readonly prService = inject(PurchaseRequestService);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
@@ -57,7 +56,6 @@ export class RfqCreateComponent implements OnInit {
   readonly approvedPrs = signal<PurchaseRequestSummary[]>([]);
   readonly avlVendors = signal<VendorSummary[]>([]);
   readonly selectedVendorIds = signal<Set<string>>(new Set());
-  readonly preselectedPrId = signal<string | null>(null);
 
   readonly form: FormGroup = this.fb.group({
     prId: ['', Validators.required],
@@ -70,12 +68,6 @@ export class RfqCreateComponent implements OnInit {
   readonly canSubmit = computed(() => this.selectedVendorCount() >= 2);
 
   ngOnInit(): void {
-    const prIdParam = this.route.snapshot.queryParamMap.get('prId');
-    if (prIdParam) {
-      this.preselectedPrId.set(prIdParam);
-      this.form.patchValue({ prId: prIdParam });
-    }
-
     forkJoin({
       prs: this.prService.list({
         page: 1,

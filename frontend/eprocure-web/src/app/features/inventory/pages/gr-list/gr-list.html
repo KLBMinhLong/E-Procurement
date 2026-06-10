@@ -49,13 +49,19 @@
 
   <div class="gr-toolbar">
     <div class="gr-toolbar__top">
-      <ep-filter-bar
-        id="gr-po-filter"
-        placeholderKey="inventory.gr.list.filterPoPlaceholder"
-        [value]="poId()"
-        (valueChange)="onPoSearch($event)"
-        (refresh)="loadData()">
-      </ep-filter-bar>
+      <label class="compact-field">
+        <span>{{ 'inventory.gr.list.filter.warehouse' | translate }}</span>
+        <select
+          id="filter-gr-warehouse"
+          class="compact-field__control"
+          [value]="warehouseId()"
+          (change)="onWarehouseChange($any($event.target).value)">
+          <option value="">{{ 'inventory.gr.list.filter.allWarehouses' | translate }}</option>
+          @for (wh of warehouses(); track wh.id) {
+            <option [value]="wh.id">{{ wh.code }} — {{ wh.name }}</option>
+          }
+        </select>
+      </label>
 
       @if (hasActiveFilters()) {
         <ep-button id="btn-clear-gr-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
@@ -70,7 +76,7 @@
         class="filter-chip"
         [class.filter-chip--active]="activeStatus() === ''"
         (click)="onStatusChange('')">
-        {{ 'shared.all' | translate }}
+        {{ 'inventory.gr.list.filter.allStatus' | translate }}
       </button>
       @for (status of statuses; track status) {
         <button
@@ -117,37 +123,12 @@
       <table class="gr-table" role="grid" aria-labelledby="gr-list-heading">
         <thead>
           <tr>
-            <th scope="col">
-              <button class="sort-button" type="button" (click)="onSort('grNumber')">
-                {{ 'inventory.gr.col.number' | translate }}
-                <ep-icon [name]="sortIcon('grNumber')" [size]="14" />
-              </button>
-            </th>
-            <th scope="col">
-              <button class="sort-button" type="button" (click)="onSort('poNumber')">
-                {{ 'inventory.gr.col.poNumber' | translate }}
-                <ep-icon [name]="sortIcon('poNumber')" [size]="14" />
-              </button>
-            </th>
+            <th scope="col">{{ 'inventory.gr.col.number' | translate }}</th>
+            <th scope="col">{{ 'inventory.gr.col.poNumber' | translate }}</th>
             <th scope="col">{{ 'inventory.gr.col.warehouse' | translate }}</th>
-            <th scope="col">
-              <button class="sort-button" type="button" (click)="onSort('status')">
-                {{ 'inventory.gr.col.status' | translate }}
-                <ep-icon [name]="sortIcon('status')" [size]="14" />
-              </button>
-            </th>
-            <th scope="col" class="align-right">
-              <button class="sort-button sort-button--right" type="button" (click)="onSort('receivedAt')">
-                {{ 'inventory.gr.col.receivedAt' | translate }}
-                <ep-icon [name]="sortIcon('receivedAt')" [size]="14" />
-              </button>
-            </th>
-            <th scope="col" class="align-right">
-              <button class="sort-button sort-button--right" type="button" (click)="onSort('createdAt')">
-                {{ 'inventory.gr.col.createdAt' | translate }}
-                <ep-icon [name]="sortIcon('createdAt')" [size]="14" />
-              </button>
-            </th>
+            <th scope="col">{{ 'inventory.gr.col.status' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.gr.col.receivedAt' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.gr.col.createdAt' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -163,23 +144,15 @@
                 <span class="mono">{{ gr.grNumber }}</span>
                 <span class="gr-table__subtitle">{{ shortId(gr.id) }}</span>
               </td>
-              <td>
-                <span class="mono">{{ gr.po.poNumber }}</span>
-              </td>
-              <td>
-                <span class="gr-table__primary">{{ gr.warehouse.name }}</span>
-              </td>
+              <td><span class="mono">{{ gr.po.poNumber }}</span></td>
+              <td><span class="gr-table__primary">{{ gr.warehouse.name }}</span></td>
               <td>
                 <ep-badge
                   [tone]="statusTone[gr.status] || 'neutral'"
                   [labelKey]="'inventory.gr.status.' + gr.status" />
               </td>
-              <td class="align-right gr-table__date">
-                {{ formatDate(gr.receivedAt) }}
-              </td>
-              <td class="align-right gr-table__date">
-                {{ formatDate(gr.createdAt) }}
-              </td>
+              <td class="align-right gr-table__date">{{ formatDate(gr.receivedAt) }}</td>
+              <td class="align-right gr-table__date">{{ formatDate(gr.createdAt) }}</td>
             </tr>
           }
         </tbody>

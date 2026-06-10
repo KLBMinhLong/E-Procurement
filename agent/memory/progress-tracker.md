@@ -245,7 +245,7 @@
 | Frontend: Vendor Management | ✅ | 2026-06-08: `/vendors/list`, `/vendors/create`, `/vendors/:id` — i18n VI/EN, models khớp backend (`VendorSummary`/`VendorDetail`, address object, scorecard, AVL filter), approve modal + reload; bỏ deactivate (API chưa có) |
 | Frontend: RFQ Management | ✅ | 2026-06-08: `/vendors/rfq`, `/vendors/rfq/create`, `/vendors/rfq/:id` — list/detail/create, quotes từ `GET /rfq/{id}`, submit/evaluate/award/close, award reason ≥20 chars; i18n đầy đủ; `npm run build` pass |
 | Frontend: PR → RFQ handoff | ⬜ | PR detail chưa có nút "Tạo RFQ" cho PR APPROVED |
-| Frontend: Inventory/GR UI | 🔄 | Scaffold cơ bản, chưa production-ready |
+| Frontend: Inventory/GR UI | ✅ | 2026-06-08: `/inventory/goods-receipts` list/create/detail — warehouse dropdown (`GET /warehouses` mới), PO page=1, complete modal DRAFT-only, i18n đầy đủ; Stock/catalog UI ⬜ |
 
 ### E07: Purchase Order
 | Task | Status | Ghi chú |

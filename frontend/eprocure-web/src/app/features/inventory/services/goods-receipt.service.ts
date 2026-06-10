@@ -6,15 +6,14 @@ import { API_BASE_URL } from '../../../core/http/api-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
   GoodsReceiptCreateCommand,
-  GoodsReceiptDetail,
-  GoodsReceiptUpdateCommand
+  GoodsReceiptDetail
 } from '../models/goods-receipt.model';
+import { CompleteGrResponse } from '../models/stock.model';
 
 export interface GoodsReceiptListFilter {
   page: number;
   size: number;
   status?: string;
-  po_id?: string;
   warehouse_id?: string;
   from_date?: string;
   to_date?: string;
@@ -31,7 +30,6 @@ export class GoodsReceiptService {
       .set('size', filter.size);
 
     if (filter.status) params = params.set('status', filter.status);
-    if (filter.po_id) params = params.set('po_id', filter.po_id);
     if (filter.warehouse_id) params = params.set('warehouse_id', filter.warehouse_id);
     if (filter.from_date) params = params.set('from_date', filter.from_date);
     if (filter.to_date) params = params.set('to_date', filter.to_date);
@@ -60,27 +58,8 @@ export class GoodsReceiptService {
     );
   }
 
-  update(id: string, command: GoodsReceiptUpdateCommand, idempotencyKey: string): Observable<ApiResponse<GoodsReceiptDetail>> {
-    return this.http.put<ApiResponse<GoodsReceiptDetail>>(
-      `${this.baseUrl}/goods-receipts/${id}`,
-      command,
-      {
-        headers: { 'Idempotency-Key': idempotencyKey },
-        withCredentials: true
-      }
-    );
-  }
-
-  complete(id: string, idempotencyKey: string): Observable<ApiResponse<{
-    grStatus: string;
-    movementsCreated: number;
-    updatedStocks: any[];
-  }>> {
-    return this.http.post<ApiResponse<{
-      grStatus: string;
-      movementsCreated: number;
-      updatedStocks: any[];
-    }>>(
+  complete(id: string, idempotencyKey: string): Observable<ApiResponse<CompleteGrResponse>> {
+    return this.http.post<ApiResponse<CompleteGrResponse>>(
       `${this.baseUrl}/goods-receipts/${id}/complete`,
       {},
       {

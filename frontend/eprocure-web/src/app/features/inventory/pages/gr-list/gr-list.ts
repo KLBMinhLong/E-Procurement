@@ -10,7 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import { PageMeta } from '../../../../core/models/api-response.model';
 import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
@@ -18,12 +18,13 @@ import { EpBadgeComponent, EpBadgeTone } from '../../../../shared/components/ep-
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
-import { EpFilterBarComponent } from '../../../../shared/components/ep-filter-bar/ep-filter-bar.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { EpPageChangeEvent } from '../../../../shared/shared.index';
 import { GoodsReceiptDetail, GoodsReceiptStatus } from '../../models/goods-receipt.model';
+import { Warehouse } from '../../models/stock.model';
 import { GoodsReceiptService, GoodsReceiptListFilter } from '../../services/goods-receipt.service';
+import { WarehouseService } from '../../services/warehouse.service';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
   DRAFT: 'neutral',
@@ -31,9 +32,6 @@ const STATUS_TONE: Record<string, EpBadgeTone> = {
   COMPLETE: 'success',
   DISCREPANCY: 'danger'
 };
-
-type SortKey = 'receivedAt' | 'createdAt' | 'grNumber' | 'poNumber' | 'status';
-type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'ep-gr-list',
@@ -45,7 +43,6 @@ type SortDirection = 'asc' | 'desc';
     EpBreadcrumbComponent,
     EpButtonComponent,
     EpEmptyStateComponent,
-    EpFilterBarComponent,
     EpIconComponent,
     EpSkeletonComponent,
     HasPermissionDirective
@@ -56,41 +53,35 @@ type SortDirection = 'asc' | 'desc';
 export class GrList implements OnInit {
   private readonly router = inject(Router);
   private readonly grService = inject(GoodsReceiptService);
+  private readonly warehouseService = inject(WarehouseService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly items = signal<GoodsReceiptDetail[]>([]);
   readonly meta = signal<PageMeta | null>(null);
+  readonly warehouses = signal<Warehouse[]>([]);
   readonly isLoading = signal(false);
 
-  readonly poId = signal('');
   readonly activeStatus = signal<GoodsReceiptStatus | ''>('');
+  readonly warehouseId = signal('');
   readonly fromDate = signal('');
   readonly toDate = signal('');
   readonly page = signal(1);
   readonly size = signal(20);
-  readonly sortKey = signal<SortKey>('createdAt');
-  readonly sortDirection = signal<SortDirection>('desc');
 
   readonly statusTone = STATUS_TONE;
-  readonly statuses: GoodsReceiptStatus[] = [
-    'DRAFT',
-    'PARTIAL',
-    'COMPLETE',
-    'DISCREPANCY'
-  ];
+  readonly statuses: GoodsReceiptStatus[] = ['DRAFT', 'PARTIAL', 'COMPLETE', 'DISCREPANCY'];
 
   readonly filter = computed<GoodsReceiptListFilter>(() => ({
     page: this.page(),
     size: this.size(),
-    sort: `${this.sortKey()},${this.sortDirection()}`,
     status: (this.activeStatus() as GoodsReceiptStatus) || undefined,
-    po_id: this.poId().trim() || undefined,
+    warehouse_id: this.warehouseId() || undefined,
     from_date: this.fromDate() || undefined,
     to_date: this.toDate() || undefined
   }));
 
   readonly hasActiveFilters = computed(() =>
-    Boolean(this.activeStatus() || this.poId().trim() || this.fromDate() || this.toDate())
+    Boolean(this.activeStatus() || this.warehouseId() || this.fromDate() || this.toDate())
   );
 
   readonly draftCount = computed(() => this.items().filter((item) => item.status === 'DRAFT').length);
@@ -99,6 +90,13 @@ export class GrList implements OnInit {
   readonly discrepancyCount = computed(() => this.items().filter((item) => item.status === 'DISCREPANCY').length);
 
   ngOnInit(): void {
+    forkJoin({
+      warehouses: this.warehouseService.list()
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ warehouses }) => this.warehouses.set(warehouses.data ?? [])
+      });
     this.loadData();
   }
 
@@ -127,8 +125,8 @@ export class GrList implements OnInit {
     this.resetPageAndLoad();
   }
 
-  onPoSearch(value: string): void {
-    this.poId.set(value);
+  onWarehouseChange(warehouseId: string): void {
+    this.warehouseId.set(warehouseId);
     this.resetPageAndLoad();
   }
 
@@ -143,27 +141,10 @@ export class GrList implements OnInit {
 
   clearFilters(): void {
     this.activeStatus.set('');
-    this.poId.set('');
+    this.warehouseId.set('');
     this.fromDate.set('');
     this.toDate.set('');
     this.resetPageAndLoad();
-  }
-
-  onSort(key: SortKey): void {
-    if (this.sortKey() === key) {
-      this.sortDirection.update((direction) => (direction === 'asc' ? 'desc' : 'asc'));
-    } else {
-      this.sortKey.set(key);
-      this.sortDirection.set(key === 'createdAt' ? 'desc' : 'asc');
-    }
-    this.resetPageAndLoad();
-  }
-
-  sortIcon(key: SortKey): string {
-    if (this.sortKey() !== key) {
-      return 'chevron-down';
-    }
-    return this.sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down';
   }
 
   onPageChange(event: EpPageChangeEvent): void {
@@ -181,16 +162,16 @@ export class GrList implements OnInit {
   }
 
   formatDate(iso: string | null | undefined): string {
-    if (!iso) {
-      return '--';
-    }
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso));
+    if (!iso) return '--';
+    return new Intl.DateTimeFormat('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(new Date(iso));
   }
 
   shortId(value: string | null | undefined): string {
-    if (!value) {
-      return '--';
-    }
+    if (!value) return '--';
     return value.length <= 12 ? value : `${value.slice(0, 8)}...${value.slice(-4)}`;
   }
 

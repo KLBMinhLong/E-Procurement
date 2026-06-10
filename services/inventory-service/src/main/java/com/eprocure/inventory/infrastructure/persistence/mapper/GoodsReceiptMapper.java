@@ -6,6 +6,7 @@ import com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptDbEn
 import com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptLineItemDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockBalanceDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockMovementDbEntity;
+import com.eprocure.inventory.infrastructure.persistence.entity.WarehouseListDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.WarehouseSnapshotDbEntity;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -47,6 +48,15 @@ public interface GoodsReceiptMapper {
               AND is_deleted = FALSE
             """)
     Optional<WarehouseSnapshotDbEntity> findActiveWarehouseById(@Param("warehouseId") UUID warehouseId);
+
+    @Select("""
+            SELECT id, code, name
+            FROM inventory.warehouses
+            WHERE is_active = TRUE
+              AND is_deleted = FALSE
+            ORDER BY name ASC
+            """)
+    List<WarehouseListDbEntity> findActiveWarehouses();
 
     @Select("""
             SELECT item.item_code

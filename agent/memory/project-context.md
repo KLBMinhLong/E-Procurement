@@ -383,3 +383,27 @@ Pagination: page default 1 (không dùng page 0)
 - RFQ quote comparison table side-by-side
 - Frontend unit tests cho vendor/rfq module
 - E15 smoke chưa cover RFQ award path (chỉ manual PO)
+
+---
+
+## 17. FRONTEND INVENTORY / GR — CẬP NHẬT 2026-06-08
+
+**Module:** `frontend/eprocure-web/src/app/features/inventory/`
+
+| Route | Permission | Mô tả |
+|---|---|---|
+| `/inventory/goods-receipts` | `GR_VIEW` | Danh sách phiếu nhận, filter status/warehouse/date |
+| `/inventory/goods-receipts/create` | `GR_CREATE` | Tạo GR từ PO SENT_TO_VENDOR/PARTIALLY_RECEIVED + chọn warehouse UUID |
+| `/inventory/goods-receipts/:id` | `GR_VIEW` | Chi tiết + complete (chỉ DRAFT) |
+
+**API contract FE phải nhớ (inventory-service):**
+```
+GET /warehouses → { id, code, name }[] (mới thêm 2026-06-08)
+Create GR: warehouseId phải là UUID, không phải text
+Complete GR: chỉ status DRAFT; response data có grStatus, movementsCreated
+Warehouse detail snapshot: chỉ { id, name } — không có code
+Pagination: page bắt đầu 1
+PO list cho create: filter client-side SENT_TO_VENDOR | PARTIALLY_RECEIVED
+```
+
+**Chưa làm:** Stock movements UI, warehouse stock view, catalog admin, GR draft edit (PUT chưa có backend)

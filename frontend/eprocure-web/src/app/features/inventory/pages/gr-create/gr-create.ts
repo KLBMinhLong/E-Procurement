@@ -1,36 +1,46 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal, OnInit, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { TranslateModule, TranslatePipe } from '@ngx-translate/core';
+import { finalize, forkJoin } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { GoodsReceiptService } from '../../services/goods-receipt.service';
+import { WarehouseService } from '../../services/warehouse.service';
 import { PurchaseOrderService } from '../../../finance/services/purchase-order.service';
 import { PurchaseOrder } from '../../../finance/models/purchase-order.model';
+import { Warehouse } from '../../models/stock.model';
 import { ToastService } from '../../../../core/services/toast.service';
 
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpCardComponent } from '../../../../shared/components/ep-card/ep-card.component';
-// removed EpIconComponent and EpSkeletonComponent
 import { EpAmountComponent } from '../../../../shared/components/ep-amount/ep-amount.component';
+import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
+
+const RECEIVABLE_PO_STATUSES = new Set(['SENT_TO_VENDOR', 'PARTIALLY_RECEIVED']);
 
 @Component({
   selector: 'app-gr-create',
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
-    TranslateModule,
+    ReactiveFormsModule,
     TranslatePipe,
     EpButtonComponent,
     EpFormFieldComponent,
     EpBreadcrumbComponent,
     EpCardComponent,
-    EpAmountComponent
+    EpAmountComponent,
+    EpSkeletonComponent
   ],
   templateUrl: './gr-create.html',
   styleUrls: ['./gr-create.scss'],
@@ -39,14 +49,17 @@ import { EpAmountComponent } from '../../../../shared/components/ep-amount/ep-am
 export class GrCreateComponent implements OnInit {
   private readonly grService = inject(GoodsReceiptService);
   private readonly poService = inject(PurchaseOrderService);
+  private readonly warehouseService = inject(WarehouseService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
 
   readonly submitting = signal(false);
-  readonly loadingPos = signal(false);
+  readonly isLoading = signal(true);
+  readonly submitted = signal(false);
   readonly pos = signal<PurchaseOrder[]>([]);
+  readonly warehouses = signal<Warehouse[]>([]);
   readonly selectedPo = signal<PurchaseOrder | null>(null);
 
   readonly totalReceivedAmount = computed(() => {
@@ -61,7 +74,7 @@ export class GrCreateComponent implements OnInit {
 
   readonly form: FormGroup = this.fb.group({
     poId: ['', Validators.required],
-    warehouse: ['', Validators.required],
+    warehouseId: ['', Validators.required],
     notes: [''],
     items: this.fb.array([])
   });
@@ -71,23 +84,19 @@ export class GrCreateComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadPurchaseOrders();
-  }
-
-  private loadPurchaseOrders(): void {
-    this.loadingPos.set(true);
-    // Ideally we would search POs with status APPROVED, SENT_TO_VENDOR or PARTIALLY_RECEIVED
-    this.poService.list({ page: 0, size: 50, sort: 'createdAt,desc', status: 'SENT_TO_VENDOR' })
+    forkJoin({
+      pos: this.poService.list({ page: 1, size: 100, sort: 'createdAt,desc' }),
+      warehouses: this.warehouseService.list()
+    })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loadingPos.set(false))
+        finalize(() => this.isLoading.set(false))
       )
       .subscribe({
-        next: (res) => {
-          this.pos.set(res.data);
-        },
-        error: (err) => {
-          console.error('Failed to load POs', err);
+        next: ({ pos, warehouses }) => {
+          const receivable = (pos.data ?? []).filter((po) => RECEIVABLE_PO_STATUSES.has(po.status));
+          this.pos.set(receivable);
+          this.warehouses.set(warehouses.data ?? []);
         }
       });
   }
@@ -100,11 +109,11 @@ export class GrCreateComponent implements OnInit {
       return;
     }
 
-    const po = this.pos().find(p => p.id === poId);
+    const po = this.pos().find((p) => p.id === poId);
     if (po) {
       this.selectedPo.set(po);
       this.items.clear();
-      po.lineItems.forEach(item => {
+      po.lineItems.forEach((item) => {
         this.items.push(this.fb.group({
           poLineItemId: [item.id, Validators.required],
           itemName: [{ value: item.itemName, disabled: true }],
@@ -121,67 +130,60 @@ export class GrCreateComponent implements OnInit {
 
   fieldError(field: string): string | null {
     const ctrl = this.form.get(field);
-    if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'validation.required';
+    if (!ctrl || (!ctrl.touched && !this.submitted())) return null;
+    if (ctrl.errors?.['required']) return 'inventory.gr.create.validation.required';
     return null;
   }
 
   getLineItemError(index: number, field: string): string | null {
     const ctrl = this.items.at(index).get(field);
-    if (ctrl?.invalid && ctrl.touched) {
-      if (ctrl.errors?.['required']) return 'validation.required';
-      if (ctrl.errors?.['min']) return 'validation.min';
-    }
+    if (!ctrl || (!ctrl.touched && !this.submitted())) return null;
+    if (ctrl.errors?.['required']) return 'inventory.gr.create.validation.required';
+    if (ctrl.errors?.['min']) return 'inventory.gr.create.validation.min';
     return null;
   }
 
   onSubmit(): void {
-    if (this.form.invalid || this.submitting()) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    this.submitted.set(true);
+    this.form.markAllAsTouched();
 
-    this.submitting.set(true);
-    
-    // Only include items where received quantity > 0
+    if (this.form.invalid || this.submitting()) return;
+
     const rawItems = this.form.getRawValue().items;
-    const itemsToReceive = rawItems.filter((i: any) => i.receivedQuantity > 0).map((i: any) => ({
-      poLineItemId: i.poLineItemId,
-      receivedQuantity: i.receivedQuantity.toString(),
-      rejectedQuantity: "0",
-      rejectionReason: null,
-      lotNumber: null
-    }));
+    const itemsToReceive = rawItems
+      .filter((i: { receivedQuantity: number }) => i.receivedQuantity > 0)
+      .map((i: { poLineItemId: string; receivedQuantity: number }) => ({
+        poLineItemId: i.poLineItemId,
+        receivedQuantity: i.receivedQuantity.toString(),
+        rejectedQuantity: '0',
+        rejectionReason: null,
+        lotNumber: null
+      }));
 
     if (itemsToReceive.length === 0) {
-      this.toast.error('inventory.gr.create.errorNoItems');
+      this.toast.error('inventory.gr.create.toast.errorNoItems');
       this.submitting.set(false);
       return;
     }
 
-    const request: any = {
+    const request = {
       poId: this.form.getRawValue().poId,
-      warehouseId: this.form.getRawValue().warehouse,
+      warehouseId: this.form.getRawValue().warehouseId,
       receivedAt: new Date().toISOString(),
       lineItems: itemsToReceive,
       notes: this.form.getRawValue().notes || null
     };
 
-    const idempotencyKey = crypto.randomUUID();
-
-    this.grService.create(request, idempotencyKey)
+    this.submitting.set(true);
+    this.grService.create(request, crypto.randomUUID())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.submitting.set(false))
       )
       .subscribe({
         next: (res) => {
-          this.toast.success('inventory.gr.create.success');
+          this.toast.success('inventory.gr.create.toast.success');
           this.router.navigate(['/inventory/goods-receipts', res.data.id]);
-        },
-        error: (err) => {
-          console.error('Failed to create GR', err);
-          this.toast.error('inventory.gr.create.failed');
         }
       });
   }

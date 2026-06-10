@@ -1,6 +1,9 @@
-import { Warehouse } from './stock.model';
-
 export type GoodsReceiptStatus = 'DRAFT' | 'PARTIAL' | 'COMPLETE' | 'DISCREPANCY';
+
+export interface WarehouseSnapshot {
+  id: string;
+  name: string;
+}
 
 export interface GrLineItem {
   id?: string;
@@ -22,7 +25,7 @@ export interface GoodsReceiptDetail {
     id: string;
     poNumber: string;
   };
-  warehouse: Warehouse;
+  warehouse: WarehouseSnapshot;
   warehouseKeeper: {
     id: string;
     fullName: string;
@@ -48,13 +51,3 @@ export interface GoodsReceiptCreateCommand {
   notes: string | null;
 }
 
-export interface GoodsReceiptUpdateCommand {
-  lineItems: {
-    poLineItemId: string;
-    receivedQuantity: string;
-    rejectedQuantity: string;
-    rejectionReason: string | null;
-    lotNumber: string | null;
-  }[];
-  notes: string | null;
-}
