@@ -26,6 +26,10 @@ Plan này là plan kế tiếp sau `UI_MODULE_SHELL_NAV_UX.md`. Backend Finance 
 
 **Cập nhật 2026-06-13:** ✅ Slice 3b hoàn thành ở mức build: `BudgetListComponent` đã gọi `GET /budgets`, có KPI theo page/filter hiện tại, filter fiscal year/quarter/department/status/GL, sort whitelist phía UI, table amount/status/health/utilization/forecast và pagination. Chưa mở browser test theo yêu cầu dừng ở mức build.
 
+**Cập nhật 2026-06-13:** ✅ Slice 3c hoàn thành ở mức build: `BudgetDetailComponent` đã gọi `GET /budgets/{id}/dashboard`, có metric strip allocated/committed/spent/available, utilization panel, breakdown committed/spent/available, burn rate, forecast health, waterfall mini và info panel read-only. Override/Transfer modals để lại slice 3d.
+
+**Cập nhật 2026-06-13:** ✅ Slice 3d hoàn thành ở mức build: đã thêm action buttons có `*epHasPermission` cho `BUDGET_OVERRIDE` và `BUDGET_TRANSFER_APPROVE`, chỉ enable khi budget `ACTIVE`; Override modal validate UUID PR, amount > 0, currency, reason tối thiểu 50; Transfer modal validate target UUID, amount > 0 và <= available, target khác source, reason tối thiểu 20, có gợi ý target budgets ACTIVE cùng kỳ và fallback nhập UUID thủ công. Submit gọi PATCH public API, reload dashboard và toast success.
+
 ---
 
 ## 1. Hiện trạng

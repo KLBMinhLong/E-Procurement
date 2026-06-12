@@ -747,14 +747,92 @@
         "eyebrow": "Budget dashboard",
         "title": "Chi tiết ngân sách",
         "subtitle": "Dashboard read-only và action override/transfer sẽ được triển khai trong các slice tiếp theo.",
+        "subtitleData": "Năm tài chính {{fiscalYear}} · {{period}}",
         "action": {
           "back": "Quay lại danh sách ngân sách",
+          "refresh": "Làm mới",
           "override": "Duyệt vượt chi",
-          "transfer": "Điều chuyển ngân sách"
+          "transfer": "Điều chuyển ngân sách",
+          "confirmOverride": "Xác nhận duyệt vượt chi",
+          "confirmTransfer": "Xác nhận điều chuyển"
+        },
+        "actionHint": {
+          "activeOnly": "Chỉ budget đang hoạt động mới được override hoặc điều chuyển."
+        },
+        "period": {
+          "allYear": "Cả năm",
+          "quarter": "Q{{quarter}}"
+        },
+        "metric": {
+          "allocated": "Phân bổ",
+          "committed": "Đã cam kết",
+          "spent": "Đã chi",
+          "available": "Còn lại"
+        },
+        "section": {
+          "utilization": "Sử dụng ngân sách",
+          "info": "Thông tin ngân sách",
+          "waterfall": "Waterfall allocated committed spent available"
+        },
+        "utilization": {
+          "availablePercent": "còn lại",
+          "usedPercent": "Đã sử dụng {{percent}}% theo committed + spent"
+        },
+        "field": {
+          "burnRate": "Burn rate",
+          "perMonth": "mỗi tháng",
+          "forecast": "Dự báo hết ngân sách",
+          "departmentId": "Department ID",
+          "glAccountCode": "Mã GL",
+          "fiscalYear": "Năm tài chính",
+          "quarter": "Kỳ ngân sách",
+          "status": "Trạng thái",
+          "health": "Tình trạng",
+          "prId": "Purchase request ID",
+          "overrideAmount": "Số tiền vượt chi",
+          "currency": "Tiền tệ",
+          "overrideReason": "Lý do duyệt vượt chi",
+          "targetBudgetId": "Budget đích",
+          "transferAmount": "Số tiền điều chuyển",
+          "transferReason": "Lý do điều chuyển"
+        },
+        "forecast": {
+          "soon": "Trong 30 ngày",
+          "normal": "Theo dõi"
+        },
+        "modal": {
+          "overrideTitle": "Duyệt vượt ngân sách",
+          "overrideMessage": "Chỉ phê duyệt khi PR có lý do nghiệp vụ rõ ràng và số tiền vượt đã được kiểm tra với chính sách tài chính.",
+          "transferTitle": "Điều chuyển ngân sách",
+          "transferMessage": "Chọn budget đích cùng kỳ hoặc nhập UUID budget đích nếu chưa xuất hiện trong danh sách gợi ý.",
+          "loadingTargets": "Đang tải budget ACTIVE cùng kỳ để gợi ý.",
+          "noTargets": "Không có budget đích phù hợp trong danh sách gợi ý. Có thể nhập UUID budget đích thủ công."
+        },
+        "placeholder": {
+          "prId": "UUID của PR cần vượt ngân sách",
+          "amount": "0.0000",
+          "overrideReason": "Nhập lý do tối thiểu 50 ký tự",
+          "targetBudgetId": "UUID budget đích",
+          "transferReason": "Nhập lý do tối thiểu 20 ký tự"
+        },
+        "validation": {
+          "required": "Thông tin này là bắt buộc.",
+          "uuid": "Giá trị phải là UUID hợp lệ.",
+          "format": "Định dạng không hợp lệ.",
+          "amountPositive": "Số tiền phải lớn hơn 0.",
+          "amountExceedsAvailable": "Số tiền điều chuyển không được vượt quá ngân sách còn lại.",
+          "targetDifferent": "Budget đích phải khác budget nguồn.",
+          "overrideReasonMinLength": "Lý do duyệt vượt chi phải có tối thiểu 50 ký tự.",
+          "transferReasonMinLength": "Lý do điều chuyển phải có tối thiểu 20 ký tự.",
+          "maxLength": "Nội dung quá dài."
+        },
+        "toast": {
+          "overrideApproved": "Đã duyệt vượt ngân sách.",
+          "transferCompleted": "Đã điều chuyển ngân sách."
         },
         "empty": {
-          "title": "Budget detail shell đã sẵn sàng",
-          "message": "Route detail đã hoạt động. Dữ liệu dashboard sẽ dùng GET /budgets/{id}/dashboard ở slice 3c."
+          "title": "Không tìm thấy ngân sách",
+          "message": "Ngân sách không tồn tại, bạn không có quyền xem, hoặc backend chưa trả dữ liệu dashboard."
         }
       },
       "status": {

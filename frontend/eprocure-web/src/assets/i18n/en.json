@@ -747,14 +747,92 @@
         "eyebrow": "Budget dashboard",
         "title": "Budget Detail",
         "subtitle": "Read-only dashboard data and override/transfer actions will be implemented in the next slices.",
+        "subtitleData": "Fiscal year {{fiscalYear}} · {{period}}",
         "action": {
           "back": "Back to budget list",
+          "refresh": "Refresh",
           "override": "Approve override",
-          "transfer": "Transfer budget"
+          "transfer": "Transfer budget",
+          "confirmOverride": "Confirm override approval",
+          "confirmTransfer": "Confirm transfer"
+        },
+        "actionHint": {
+          "activeOnly": "Only active budgets can be overridden or transferred."
+        },
+        "period": {
+          "allYear": "Full year",
+          "quarter": "Q{{quarter}}"
+        },
+        "metric": {
+          "allocated": "Allocated",
+          "committed": "Committed",
+          "spent": "Spent",
+          "available": "Available"
+        },
+        "section": {
+          "utilization": "Budget utilization",
+          "info": "Budget information",
+          "waterfall": "Waterfall allocated committed spent available"
+        },
+        "utilization": {
+          "availablePercent": "available",
+          "usedPercent": "{{percent}}% used by committed + spent"
+        },
+        "field": {
+          "burnRate": "Burn rate",
+          "perMonth": "per month",
+          "forecast": "Forecast exhausted at",
+          "departmentId": "Department ID",
+          "glAccountCode": "GL account",
+          "fiscalYear": "Fiscal year",
+          "quarter": "Budget period",
+          "status": "Status",
+          "health": "Health",
+          "prId": "Purchase request ID",
+          "overrideAmount": "Override amount",
+          "currency": "Currency",
+          "overrideReason": "Override reason",
+          "targetBudgetId": "Target budget",
+          "transferAmount": "Transfer amount",
+          "transferReason": "Transfer reason"
+        },
+        "forecast": {
+          "soon": "Within 30 days",
+          "normal": "Monitor"
+        },
+        "modal": {
+          "overrideTitle": "Approve budget override",
+          "overrideMessage": "Approve only when the PR has clear business justification and the over-budget amount has been checked against finance policy.",
+          "transferTitle": "Transfer budget",
+          "transferMessage": "Choose a target budget in the same period or enter the target budget UUID when it is not listed.",
+          "loadingTargets": "Loading active budgets in the same period for suggestions.",
+          "noTargets": "No matching target budgets were found in suggestions. You can still enter the target budget UUID manually."
+        },
+        "placeholder": {
+          "prId": "UUID of the over-budget PR",
+          "amount": "0.0000",
+          "overrideReason": "Enter at least 50 characters",
+          "targetBudgetId": "Target budget UUID",
+          "transferReason": "Enter at least 20 characters"
+        },
+        "validation": {
+          "required": "This field is required.",
+          "uuid": "Value must be a valid UUID.",
+          "format": "Invalid format.",
+          "amountPositive": "Amount must be greater than 0.",
+          "amountExceedsAvailable": "Transfer amount cannot exceed available budget.",
+          "targetDifferent": "Target budget must be different from source budget.",
+          "overrideReasonMinLength": "Override reason must be at least 50 characters.",
+          "transferReasonMinLength": "Transfer reason must be at least 20 characters.",
+          "maxLength": "Content is too long."
+        },
+        "toast": {
+          "overrideApproved": "Budget override approved.",
+          "transferCompleted": "Budget transfer completed."
         },
         "empty": {
-          "title": "Budget detail shell is ready",
-          "message": "The detail route is active. Dashboard data will use GET /budgets/{id}/dashboard in slice 3c."
+          "title": "Budget not found",
+          "message": "The budget does not exist, you do not have access, or the backend has not returned dashboard data."
         }
       },
       "status": {

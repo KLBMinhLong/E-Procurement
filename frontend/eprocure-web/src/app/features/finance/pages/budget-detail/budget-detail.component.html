@@ -2,21 +2,365 @@
   <ep-breadcrumb />
 
   <div class="budget-detail-page__nav">
-    <ep-button variant="ghost" size="sm" icon="chevron-left" routerLink="/finance/budgets">
+    <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="navigateBack()">
       {{ 'finance.budget.detail.action.back' | translate }}
+    </ep-button>
+    <ep-button variant="ghost" size="sm" icon="refresh-cw" [loading]="isLoading()" (click)="reload()">
+      {{ 'finance.budget.detail.action.refresh' | translate }}
     </ep-button>
   </div>
 
-  <div class="page-header">
-    <div class="page-header__meta">
-      <span class="page-header__eyebrow">{{ 'finance.budget.detail.eyebrow' | translate }}</span>
-      <h1 id="budget-detail-heading" class="page-header__title">{{ 'finance.budget.detail.title' | translate }}</h1>
-      <p class="page-header__subtitle">{{ 'finance.budget.detail.subtitle' | translate }}</p>
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (!budget()) {
+    <ep-empty-state
+      icon="wallet-cards"
+      [title]="'finance.budget.detail.empty.title' | translate"
+      [message]="'finance.budget.detail.empty.message' | translate" />
+  } @else if (budget(); as data) {
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'finance.budget.detail.eyebrow' | translate }}</span>
+        <h1 id="budget-detail-heading" class="page-header__title">{{ detailTitle(data) }}</h1>
+        <p class="page-header__subtitle">
+          {{ 'finance.budget.detail.subtitleData' | translate: {
+            fiscalYear: data.fiscalYear,
+            period: (periodLabelKey(data) | translate: { quarter: data.quarter })
+          } }}
+        </p>
+      </div>
+      <div class="page-header__badges">
+        <ep-badge [tone]="statusTone()" [labelKey]="'finance.budget.status.' + data.status" />
+        <ep-badge [tone]="healthTone()" [labelKey]="'finance.budget.health.' + health()" />
+      </div>
+      <div class="page-header__actions">
+        @if (!canUseBudgetActions()) {
+          <span class="action-hint">{{ 'finance.budget.detail.actionHint.activeOnly' | translate }}</span>
+        }
+        <ep-button
+          *epHasPermission="'BUDGET_OVERRIDE'"
+          id="btn-budget-override"
+          variant="secondary"
+          icon="shield-check"
+          [disabled]="!canUseBudgetActions()"
+          (click)="openOverrideModal()">
+          {{ 'finance.budget.detail.action.override' | translate }}
+        </ep-button>
+        <ep-button
+          *epHasPermission="'BUDGET_TRANSFER_APPROVE'"
+          id="btn-budget-transfer"
+          variant="primary"
+          icon="arrow-left-right"
+          [disabled]="!canUseBudgetActions()"
+          (click)="openTransferModal()">
+          {{ 'finance.budget.detail.action.transfer' | translate }}
+        </ep-button>
+      </div>
     </div>
-  </div>
 
-  <ep-empty-state
-    icon="wallet-cards"
-    [title]="'finance.budget.detail.empty.title' | translate"
-    [message]="'finance.budget.detail.empty.message' | translate" />
+    <div class="metric-grid">
+      <div class="metric-card">
+        <ep-icon name="badge-dollar-sign" />
+        <span class="metric-card__label">{{ 'finance.budget.detail.metric.allocated' | translate }}</span>
+        <ep-amount class="metric-card__amount" [value]="amount(data, 'allocated')" />
+      </div>
+      <div class="metric-card">
+        <ep-icon name="lock-keyhole" />
+        <span class="metric-card__label">{{ 'finance.budget.detail.metric.committed' | translate }}</span>
+        <ep-amount class="metric-card__amount" [value]="amount(data, 'committed')" />
+      </div>
+      <div class="metric-card">
+        <ep-icon name="receipt-text" />
+        <span class="metric-card__label">{{ 'finance.budget.detail.metric.spent' | translate }}</span>
+        <ep-amount class="metric-card__amount" [value]="amount(data, 'spent')" />
+      </div>
+      <div class="metric-card" [class.metric-card--risk]="health() !== 'HEALTHY'">
+        <ep-icon name="hand-coins" />
+        <span class="metric-card__label">{{ 'finance.budget.detail.metric.available' | translate }}</span>
+        <ep-amount class="metric-card__amount" [value]="amount(data, 'available')" />
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <section class="detail-panel detail-panel--utilization" aria-labelledby="budget-utilization-heading">
+        <div class="panel-heading">
+          <ep-icon name="activity" />
+          <h2 id="budget-utilization-heading">{{ 'finance.budget.detail.section.utilization' | translate }}</h2>
+        </div>
+
+        <div class="utilization-hero">
+          <div class="utilization-hero__top">
+            <span class="utilization-hero__value">{{ data.availablePercent }}%</span>
+            <span class="utilization-hero__label">{{ 'finance.budget.detail.utilization.availablePercent' | translate }}</span>
+          </div>
+          <span class="utilization-track" aria-hidden="true">
+            <span
+              class="utilization-track__bar"
+              [class.utilization-track__bar--warning]="health() === 'WARNING'"
+              [class.utilization-track__bar--danger]="health() === 'EXCEEDED'"
+              [style.width]="utilizationWidth()">
+            </span>
+          </span>
+          <span class="utilization-hero__caption">
+            {{ 'finance.budget.detail.utilization.usedPercent' | translate: { percent: utilizationPercent() } }}
+          </span>
+        </div>
+
+        <div class="breakdown">
+          <span class="breakdown__segment breakdown__segment--spent" [style.width]="segmentWidth(data, 'spent')"></span>
+          <span class="breakdown__segment breakdown__segment--committed" [style.width]="segmentWidth(data, 'committed')"></span>
+          <span class="breakdown__segment breakdown__segment--available" [style.width]="segmentWidth(data, 'available')"></span>
+        </div>
+        <div class="breakdown-legend">
+          <span><i class="legend-dot legend-dot--spent"></i>{{ 'finance.budget.detail.metric.spent' | translate }}</span>
+          <span><i class="legend-dot legend-dot--committed"></i>{{ 'finance.budget.detail.metric.committed' | translate }}</span>
+          <span><i class="legend-dot legend-dot--available"></i>{{ 'finance.budget.detail.metric.available' | translate }}</span>
+        </div>
+
+        <div class="forecast-grid">
+          <div class="forecast-card">
+            <span class="forecast-card__label">{{ 'finance.budget.detail.field.burnRate' | translate }}</span>
+            <ep-amount class="forecast-card__amount" [value]="burnRateText(data)" currency="VND" />
+            <span class="forecast-card__hint">{{ 'finance.budget.detail.field.perMonth' | translate }}</span>
+          </div>
+          <div class="forecast-card" [class.forecast-card--danger]="forecastIsSoon()">
+            <span class="forecast-card__label">{{ 'finance.budget.detail.field.forecast' | translate }}</span>
+            <span class="forecast-card__date">{{ formatDate(data.forecastExhaustedAt) }}</span>
+            <ep-badge
+              [tone]="forecastIsSoon() ? 'danger' : 'neutral'"
+              [labelKey]="forecastIsSoon() ? 'finance.budget.detail.forecast.soon' : 'finance.budget.detail.forecast.normal'" />
+          </div>
+        </div>
+
+        <div class="waterfall" [attr.aria-label]="'finance.budget.detail.section.waterfall' | translate">
+          <div class="waterfall__item">
+            <span class="waterfall__bar waterfall__bar--allocated"></span>
+            <span class="waterfall__label">{{ 'finance.budget.detail.metric.allocated' | translate }}</span>
+            <ep-amount [value]="amount(data, 'allocated')" />
+          </div>
+          <div class="waterfall__item">
+            <span class="waterfall__bar waterfall__bar--committed"></span>
+            <span class="waterfall__label">{{ 'finance.budget.detail.metric.committed' | translate }}</span>
+            <ep-amount [value]="amount(data, 'committed')" />
+          </div>
+          <div class="waterfall__item">
+            <span class="waterfall__bar waterfall__bar--spent"></span>
+            <span class="waterfall__label">{{ 'finance.budget.detail.metric.spent' | translate }}</span>
+            <ep-amount [value]="amount(data, 'spent')" />
+          </div>
+          <div class="waterfall__item">
+            <span class="waterfall__bar waterfall__bar--available"></span>
+            <span class="waterfall__label">{{ 'finance.budget.detail.metric.available' | translate }}</span>
+            <ep-amount [value]="amount(data, 'available')" />
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-panel" aria-labelledby="budget-info-heading">
+        <div class="panel-heading">
+          <ep-icon name="clipboard-list" />
+          <h2 id="budget-info-heading">{{ 'finance.budget.detail.section.info' | translate }}</h2>
+        </div>
+        <dl class="info-list">
+          <div>
+            <dt>{{ 'finance.budget.detail.field.departmentId' | translate }}</dt>
+            <dd>
+              <span class="info-list__primary">{{ shortId(data.departmentId) }}</span>
+              <span class="info-list__secondary mono">{{ data.departmentId }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.budget.detail.field.glAccountCode' | translate }}</dt>
+            <dd class="mono">{{ data.glAccountCode }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.budget.detail.field.fiscalYear' | translate }}</dt>
+            <dd>{{ data.fiscalYear }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.budget.detail.field.quarter' | translate }}</dt>
+            <dd>{{ periodLabelKey(data) | translate: { quarter: data.quarter } }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.budget.detail.field.status' | translate }}</dt>
+            <dd>
+              <ep-badge [tone]="statusTone()" [labelKey]="'finance.budget.status.' + data.status" />
+            </dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.budget.detail.field.health' | translate }}</dt>
+            <dd>
+              <ep-badge [tone]="healthTone()" [labelKey]="'finance.budget.health.' + health()" />
+            </dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+
+    <ep-modal
+      [open]="showOverrideModal()"
+      [title]="'finance.budget.detail.modal.overrideTitle' | translate"
+      size="lg"
+      (close)="closeOverrideModal()">
+      <form class="budget-action-form" [formGroup]="overrideForm" (ngSubmit)="submitOverride()">
+        <p class="budget-action-form__hint">{{ 'finance.budget.detail.modal.overrideMessage' | translate }}</p>
+
+        <div class="budget-action-form__grid">
+          <ep-form-field
+            [required]="true"
+            [label]="'finance.budget.detail.field.prId' | translate"
+            [error]="overrideError('prId') ? (overrideError('prId')! | translate) : null">
+            <input
+              id="budget-override-pr-id"
+              type="text"
+              class="form-control"
+              formControlName="prId"
+              [placeholder]="'finance.budget.detail.placeholder.prId' | translate">
+          </ep-form-field>
+
+          <ep-form-field
+            [required]="true"
+            [label]="'finance.budget.detail.field.overrideAmount' | translate"
+            [error]="overrideError('overrideAmount') ? (overrideError('overrideAmount')! | translate) : null">
+            <input
+              id="budget-override-amount"
+              type="number"
+              min="0.0001"
+              step="0.0001"
+              class="form-control"
+              formControlName="overrideAmount"
+              [placeholder]="'finance.budget.detail.placeholder.amount' | translate">
+          </ep-form-field>
+        </div>
+
+        <ep-form-field
+          [required]="true"
+          [label]="'finance.budget.detail.field.currency' | translate"
+          [error]="overrideError('currency') ? (overrideError('currency')! | translate) : null">
+          <input
+            id="budget-override-currency"
+            type="text"
+            maxlength="3"
+            class="form-control form-control--short"
+            formControlName="currency">
+        </ep-form-field>
+
+        <ep-form-field
+          [required]="true"
+          [label]="'finance.budget.detail.field.overrideReason' | translate"
+          [error]="overrideError('overrideReason') ? (overrideError('overrideReason')! | translate) : null">
+          <textarea
+            id="budget-override-reason"
+            class="form-control form-control--textarea"
+            rows="5"
+            formControlName="overrideReason"
+            [placeholder]="'finance.budget.detail.placeholder.overrideReason' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="budget-action-form__actions">
+          <ep-button type="button" variant="ghost" (click)="closeOverrideModal()" [disabled]="isSubmittingOverride()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button
+            type="submit"
+            variant="primary"
+            icon="shield-check"
+            [loading]="isSubmittingOverride()"
+            [disabled]="overrideForm.invalid">
+            {{ 'finance.budget.detail.action.confirmOverride' | translate }}
+          </ep-button>
+        </div>
+      </form>
+    </ep-modal>
+
+    <ep-modal
+      [open]="showTransferModal()"
+      [title]="'finance.budget.detail.modal.transferTitle' | translate"
+      size="lg"
+      (close)="closeTransferModal()">
+      <form class="budget-action-form" [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+        <p class="budget-action-form__hint">{{ 'finance.budget.detail.modal.transferMessage' | translate }}</p>
+
+        @if (isLoadingTransferTargets()) {
+          <p class="budget-action-form__hint">{{ 'finance.budget.detail.modal.loadingTargets' | translate }}</p>
+        } @else if (transferTargets().length === 0) {
+          <p class="budget-action-form__hint">{{ 'finance.budget.detail.modal.noTargets' | translate }}</p>
+        }
+
+        <ep-form-field
+          [required]="true"
+          [label]="'finance.budget.detail.field.targetBudgetId' | translate"
+          [error]="transferError('targetBudgetId') ? (transferError('targetBudgetId')! | translate) : null">
+          <input
+            id="budget-transfer-target-id"
+            type="text"
+            class="form-control"
+            formControlName="targetBudgetId"
+            list="budget-transfer-targets"
+            [placeholder]="'finance.budget.detail.placeholder.targetBudgetId' | translate">
+          <datalist id="budget-transfer-targets">
+            @for (target of transferTargets(); track target.id) {
+              <option [value]="target.id" [label]="targetLabel(target)"></option>
+            }
+          </datalist>
+        </ep-form-field>
+
+        <div class="budget-action-form__grid">
+          <ep-form-field
+            [required]="true"
+            [label]="'finance.budget.detail.field.transferAmount' | translate"
+            [error]="transferError('amount') ? (transferError('amount')! | translate) : null">
+            <input
+              id="budget-transfer-amount"
+              type="number"
+              min="0.0001"
+              step="0.0001"
+              class="form-control"
+              formControlName="amount"
+              [placeholder]="'finance.budget.detail.placeholder.amount' | translate">
+          </ep-form-field>
+
+          <ep-form-field
+            [required]="true"
+            [label]="'finance.budget.detail.field.currency' | translate"
+            [error]="transferError('currency') ? (transferError('currency')! | translate) : null">
+            <input
+              id="budget-transfer-currency"
+              type="text"
+              maxlength="3"
+              class="form-control"
+              formControlName="currency">
+          </ep-form-field>
+        </div>
+
+        <ep-form-field
+          [required]="true"
+          [label]="'finance.budget.detail.field.transferReason' | translate"
+          [error]="transferError('reason') ? (transferError('reason')! | translate) : null">
+          <textarea
+            id="budget-transfer-reason"
+            class="form-control form-control--textarea"
+            rows="5"
+            formControlName="reason"
+            [placeholder]="'finance.budget.detail.placeholder.transferReason' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="budget-action-form__actions">
+          <ep-button type="button" variant="ghost" (click)="closeTransferModal()" [disabled]="isSubmittingTransfer()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button
+            type="submit"
+            variant="primary"
+            icon="arrow-left-right"
+            [loading]="isSubmittingTransfer()"
+            [disabled]="transferForm.invalid || transferAmountExceedsAvailable() || transferTargetIsCurrent()">
+            {{ 'finance.budget.detail.action.confirmTransfer' | translate }}
+          </ep-button>
+        </div>
+      </form>
+    </ep-modal>
+  }
 </section>
