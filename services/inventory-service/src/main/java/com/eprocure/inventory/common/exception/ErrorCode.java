@@ -10,6 +10,7 @@ public enum ErrorCode {
     INV_004("INV_004", "Goods Receipt not found", HttpStatus.NOT_FOUND),
     INV_005("INV_005", "Goods Receipt has already been completed", HttpStatus.CONFLICT),
     INV_006("INV_006", "Received quantity exceeds configured tolerance", HttpStatus.UNPROCESSABLE_ENTITY),
+    INV_007("INV_007", "Catalog item code already exists", HttpStatus.CONFLICT),
     INV_008("INV_008", "Invalid inventory event payload", HttpStatus.UNPROCESSABLE_ENTITY),
     INV_009("INV_009", "Issued Purchase Order snapshot not found", HttpStatus.NOT_FOUND),
     INV_010("INV_010", "Purchase Order line item not found in snapshot", HttpStatus.UNPROCESSABLE_ENTITY),

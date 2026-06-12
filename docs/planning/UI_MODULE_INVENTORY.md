@@ -310,10 +310,10 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
 
 ### Slice 4: Catalog backend
 
-- Implement Item domain/repository/use cases/controller theo mục 7.
-- Đồng bộ OpenAPI nếu response/request khác spec.
-- Unit tests backend.
-- Verify: `mvn -pl services/inventory-service test`, `git diff --check`.
+- [x] Implement Item domain/repository/use cases/controller theo mục 7.
+- [x] Đồng bộ OpenAPI nếu response/request khác spec.
+- [x] Unit tests backend.
+- [x] Verify: `mvn -pl services/inventory-service test`, `git diff --check`.
 
 ### Slice 5: Catalog UI
 

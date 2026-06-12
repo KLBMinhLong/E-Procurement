@@ -181,6 +181,7 @@ paths:
       tags: [Catalog Items]
       summary: Tìm kiếm mặt hàng trong catalog
       operationId: searchItems
+      x-required-permission: GR_VIEW
       parameters:
         - name: q
           in: query
@@ -266,6 +267,7 @@ paths:
       tags: [Catalog Items]
       summary: Chi tiết mặt hàng kèm tồn kho
       operationId: getItemByCode
+      x-required-permission: GR_VIEW
       parameters:
         - name: itemCode
           in: path

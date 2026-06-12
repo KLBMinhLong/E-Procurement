@@ -875,6 +875,12 @@ inventory.items
   preferred_vendor_id UUID, reorder_point NUMERIC(19,4), is_active BOOLEAN
   ux_items_code_active(item_code) WHERE is_deleted = FALSE
 
+inventory.catalog_item_mutation_requests
+  id UUID PK, idempotency_key UUID, operation VARCHAR(20), item_code VARCHAR(20),
+  actor_id UUID, created_at TIMESTAMPTZ
+  operation IN ('CREATE','UPDATE')
+  ux_catalog_item_mutation_idempotency_active(idempotency_key) WHERE is_deleted = FALSE
+
 inventory.stock_entries
   id UUID PK, item_code VARCHAR(20), warehouse_id UUID FK warehouses(id),
   quantity_on_hand NUMERIC(19,4), unit VARCHAR(20), last_updated TIMESTAMPTZ
