@@ -36,7 +36,7 @@
 | Slice 4 | Catalog backend (Item domain/use cases/controller) | ✅ | ✅ |
 | **Slice 5** | **Catalog UI: `/inventory/catalog` + `/inventory/catalog/:itemCode`** | ✅ | ✅ |
 | Slice 6 | GR draft edit backend + UI (`PUT /goods-receipts/{id}`) | ✅ | ✅ |
-| Slice 7 | Stock Adjustment backend + UI (`POST /stock/adjustment`) | ⬜ | ⬜ |
+| Slice 7 | Stock Adjustment backend + UI (`POST /stock/adjustment`) | ✅ | ✅ |
 | Slice 8 | E2E / runtime hardening | ⬜ | ⬜ |
 
 **Mục tiêu hoàn thành:** Warehouse user và Admin catalog manager có thể thao tác end-to-end không cần dùng DB trực tiếp.

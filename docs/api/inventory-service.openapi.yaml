@@ -560,7 +560,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [warehouseId, itemCode, newQuantity, reason]
+              required: [warehouseId, itemCode, newQuantity, unit, reason]
               properties:
                 warehouseId:  { type: string, format: uuid }
                 itemCode:     { type: string }
@@ -579,6 +579,24 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/StockMovement'
+        '400':
+          description: Validation hoặc Idempotency-Key không hợp lệ (VAL_001/SYS_005)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Item hoặc warehouse không tìm thấy (INV_001/INV_002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Tồn mới trùng tồn hiện tại (INV_011)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Goods Receipt ─────────────────────────────────────────────
   /goods-receipts:

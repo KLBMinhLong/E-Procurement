@@ -931,6 +931,7 @@ inventory.stock_movements -- immutable, no soft delete
   movement_type IN ('RECEIPT_IN','ISSUE_OUT','ADJUSTMENT','TRANSFER')
   Complete GR writes RECEIPT_IN rows with source_ref_type = 'GOODS_RECEIPT'
   Issue-out writes ISSUE_OUT rows with negative quantity and source_ref_type = 'STOCK_ISSUE_OUT'
+  Stock adjustment writes signed ADJUSTMENT rows with source_ref_type = 'STOCK_ADJUSTMENT'
   ix_stock_movements_type_performed(movement_type, performed_at DESC)
 
 inventory.stock_issue_out_requests
@@ -939,6 +940,15 @@ inventory.stock_issue_out_requests
   ux_stock_issue_out_idempotency_active(idempotency_key) WHERE is_deleted = FALSE
   ix_stock_issue_out_warehouse_issued_active(warehouse_id, issued_at DESC) WHERE is_deleted = FALSE
   ix_stock_issue_out_recipient_issued_active(recipient_id, issued_at DESC) WHERE is_deleted = FALSE
+
+inventory.stock_adjustment_requests
+  id UUID PK, idempotency_key UUID, warehouse_id UUID FK warehouses(id),
+  item_code VARCHAR(20), previous_quantity NUMERIC(19,4), new_quantity NUMERIC(19,4),
+  unit VARCHAR(20), adjusted_by UUID, adjusted_at TIMESTAMPTZ, reason TEXT
+  previous_quantity >= 0, new_quantity >= 0, previous_quantity <> new_quantity
+  ux_stock_adjustment_idempotency_active(idempotency_key) WHERE is_deleted = FALSE
+  ix_stock_adjustment_item_adjusted_active(item_code, adjusted_at DESC) WHERE is_deleted = FALSE
+  ix_stock_adjustment_warehouse_adjusted_active(warehouse_id, adjusted_at DESC) WHERE is_deleted = FALSE
 
 inventory.event_processing_log -- immutable Kafka idempotency log
   event_id VARCHAR(100) PK, topic VARCHAR(200), partition_id INTEGER,

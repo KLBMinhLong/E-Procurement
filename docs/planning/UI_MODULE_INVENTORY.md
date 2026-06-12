@@ -252,20 +252,17 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
 
 ## 8. Stock Adjustment / Kiểm kê
 
-- OpenAPI có `POST /api/v1/stock/adjustment`, backend code chưa implement.
-- Không bật UI trước khi có backend use case vì đây là mutation tài chính/kho có rủi ro.
-- Backend cần implement:
-  - `AdjustStockUseCase` với `@Transactional`.
-  - Validate active warehouse/item, unit consistency, reason min length.
-  - Lock/update stock atomically.
-  - Tạo `ADJUSTMENT` movement signed theo delta và `balanceAfter`.
-  - Idempotency-Key required.
-  - Permission `ADMIN_CATALOG_MANAGE`.
-  - Unit tests cho increase, decrease, duplicate idempotency, missing item/warehouse, negative invalid.
+- `POST /api/v1/stock/adjustment` đã implement backend và UI trong Slice 7.
+- Backend:
+  - `AdjustStockUseCase` đặt `@Transactional`, xử lý idempotency bằng `inventory.stock_adjustment_requests`.
+  - Validate active warehouse/item, `newQuantity >= 0`, reason min length qua request validation.
+  - Update `stock_entries` atomically bằng upsert `ON CONFLICT`, tạo `ADJUSTMENT` movement signed theo delta và `balanceAfter`.
+  - Permission `ADMIN_CATALOG_MANAGE`, `Idempotency-Key` bắt buộc.
+  - Unit tests cover decrease/increase, duplicate idempotency, missing item/warehouse, delta zero.
 - UI:
-  - Modal từ `/inventory/stock`.
-  - Form: warehouse, itemCode, currentQuantity read-only, newQuantity, reason.
-  - Sau success reload stock và link sang movement ledger.
+  - Modal từ `/inventory/stock` trên từng dòng tồn.
+  - Form: itemCode/unit read-only, currentQuantity read-only summary, newQuantity, computed delta, reason.
+  - Sau success reload stock; movement ledger vẫn truy cập từ action "Xem biến động".
 
 ## 9. Backend/OpenAPI drift cần xử lý
 
@@ -332,9 +329,9 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
 
 ### Slice 7: Stock Adjustment backend + UI
 
-- Implement backend `POST /stock/adjustment`.
-- Thêm modal adjustment từ stock dashboard.
-- Verify: `mvn -pl services/inventory-service test`, `npm run build`.
+- [x] Implement backend `POST /stock/adjustment`.
+- [x] Thêm modal adjustment từ stock dashboard.
+- [x] Verify: `mvn -pl services/inventory-service test`, `npm run build`.
 
 ### Slice 8: E2E/runtime hardening
 
