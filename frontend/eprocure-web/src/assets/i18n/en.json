@@ -207,6 +207,7 @@
     "profile": "Personal Profile",
     "uiShowcase": "UI library",
     "finance": {
+      "self": "Finance",
       "purchaseOrders": "Purchase Orders",
       "createPo": "Create Purchase Order",
       "poDetail": "Purchase Order Detail",
@@ -633,8 +634,8 @@
           "send": "Send vendor",
           "confirmSend": "Confirm send",
           "cancelPo": "Cancel PO",
-        "confirmCancel": "Confirm cancel",
-        "createInvoice": "Create invoice"
+          "confirmCancel": "Confirm cancel",
+          "createInvoice": "Create invoice"
         },
         "actionHint": {
           "noData": "PO data is not loaded.",
@@ -1366,7 +1367,6 @@
       "select": "Set as Profile Picture"
     }
   },
-
   "approvals": {
     "inbox": {
       "eyebrow": "Business Approvals",
