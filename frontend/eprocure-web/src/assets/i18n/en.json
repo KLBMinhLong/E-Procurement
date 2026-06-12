@@ -94,44 +94,213 @@
     "logout": "Sign out"
   },
   "dashboard": {
-    "badge": {
-      "live": "Live data"
+    "eyebrow": "Analytics center",
+    "title": "Dashboard & report exports",
+    "subtitle": "Monitor procurement KPIs, budgets, PO/GR/Invoice flow, and generate PDF/Excel reports from projection data.",
+    "action": {
+      "apply": "Apply",
+      "refresh": "Refresh"
     },
-    "eyebrow": "Command center",
-    "panel": {
-      "monthSpend": "Month spend",
-      "pipeline": "Purchase request pipeline",
-      "sla": "Approval SLA"
+    "filter": {
+      "fiscalYear": "Fiscal year",
+      "quarter": "Quarter",
+      "allQuarters": "All quarters",
+      "quarterValue": "Q{{quarter}}",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "departmentId": "Department UUID",
+      "departmentPlaceholder": "Filter KPI by department if needed"
     },
-    "sla": {
-      "finance": "Finance approval",
-      "procurement": "Procurement review"
+    "tabs": {
+      "label": "Dashboard group",
+      "executive": "Executive",
+      "manager": "Manager",
+      "purchasing": "Purchasing",
+      "requester": "Personal",
+      "reports": "Reports"
     },
-    "stat": {
-      "completed": {
-        "hint": "Last 30 days",
-        "title": "On-time completion"
-      },
-      "pending": {
-        "hint": "Needs action today",
-        "title": "Pending"
-      },
-      "sla": {
-        "hint": "Near breach",
-        "title": "SLA risk"
-      },
-      "spend": {
-        "hint": "VND this month",
-        "title": "Total spend"
+    "trend": {
+      "UP": "up",
+      "DOWN": "down",
+      "FLAT": "flat"
+    },
+    "empty": {
+      "title": "No data",
+      "message": "Projection data may not be seeded yet or the current filters returned no results.",
+      "noPermissionTitle": "No dashboard available",
+      "noPermissionMessage": "The current account does not have permission to view analytics dashboards."
+    },
+    "kpi": {
+      "title": "Operational KPIs",
+      "subtitle": "PR-to-PO cycle time and approval SLA compliance for the selected date range.",
+      "trend": "{{direction}} {{percent}}% · {{label}}",
+      "cycleTime": "Cycle time",
+      "slaCompliance": "SLA compliance",
+      "overallCompliance": "Overall compliance",
+      "avg": "Average",
+      "median": "Median",
+      "p95": "P95",
+      "target": "Target",
+      "role": "Role",
+      "compliance": "Compliance",
+      "overdue": "Overdue",
+      "status": {
+        "GOOD": "Good",
+        "WARNING": "Warning",
+        "CRITICAL": "Critical",
+        "UNKNOWN": "Unclassified"
       }
     },
-    "table": {
-      "amount": "Amount",
-      "code": "PR code",
-      "owner": "Owner",
-      "status": "Status"
+    "executive": {
+      "departmentSpend": "Department spend",
+      "departmentSpendHint": "Compare actual spend with budget and utilization status.",
+      "categorySpend": "Category spend",
+      "categorySpendHint": "Top spending categories for the period.",
+      "monthlyTrend": "Monthly trend",
+      "monthlyTrendHint": "Accent column is spend; info column is budget.",
+      "approvalSla": "Approval SLA",
+      "approvalSlaHint": "On-time rate, average cycle time, and overdue count.",
+      "topVendors": "Top vendors",
+      "topVendorsHint": "Ranked by total spend, orders, and average score.",
+      "prCount": "PR",
+      "onTime": "on time",
+      "avgCycle": "Average cycle",
+      "overdue": "Overdue",
+      "orders": "orders"
     },
-    "title": "Procurement overview"
+    "manager": {
+      "budget": "Department budget",
+      "budgetHint": "Allocated, committed, spent, and available values for the current department.",
+      "allocated": "Allocated",
+      "committed": "Committed",
+      "spent": "Spent",
+      "available": "Available",
+      "pendingApprovals": "Pending approvals",
+      "pendingApprovalsHint": "Workload requiring action and SLA risk.",
+      "pending": "Pending",
+      "overdue": "Overdue",
+      "urgent": "Urgent",
+      "recentPrs": "Recent PRs",
+      "recentPrsHint": "Latest requests in the department scope.",
+      "slaWarnings": "SLA warnings",
+      "slaWarningsHint": "Tasks near or past due.",
+      "slaOverdue": "Overdue",
+      "slaNear": "Near due",
+      "col": {
+        "pr": "PR",
+        "title": "Title",
+        "requester": "Requester",
+        "status": "Status",
+        "amount": "Amount"
+      }
+    },
+    "purchasing": {
+      "poPipeline": "PO pipeline",
+      "poPipelineHint": "PO distribution by issue and receiving status.",
+      "draft": "Draft",
+      "pendingApproval": "Pending approval",
+      "sentToVendor": "Sent to vendor",
+      "partiallyReceived": "Partially received",
+      "workload": "Purchasing workload",
+      "workloadHint": "RFQ, GR, and invoices requiring action.",
+      "openRfqs": "Open RFQs",
+      "grPending": "Pending GR",
+      "invoicesPendingMatch": "Invoices pending match",
+      "vendorPerformance": "Vendor performance",
+      "vendorPerformanceHint": "On-time delivery, quality score, and pending orders.",
+      "col": {
+        "vendor": "Vendor",
+        "onTime": "On time",
+        "quality": "Quality",
+        "pendingOrders": "Pending orders"
+      }
+    },
+    "requester": {
+      "myPrStats": "My PRs",
+      "myPrStatsHint": "Status distribution for your purchase requests.",
+      "departmentBudget": "Department budget",
+      "departmentBudgetHint": "Available department budget balance.",
+      "recentPrs": "Recent requests",
+      "recentPrsHint": "Latest PRs for the current account.",
+      "col": {
+        "pr": "PR",
+        "title": "Title",
+        "approver": "Current approver",
+        "status": "Status",
+        "amount": "Amount"
+      }
+    },
+    "reports": {
+      "title": "Report export",
+      "subtitle": "Create async report jobs, check status, and download files when completed.",
+      "field": {
+        "reportType": "Report type",
+        "format": "Format",
+        "vendorId": "Vendor UUID",
+        "categoryCode": "Category code"
+      },
+      "placeholder": {
+        "vendorId": "Filter by vendor if needed",
+        "categoryCode": "Example: IT, OFFICE"
+      },
+      "action": {
+        "export": "Create report",
+        "refreshJob": "Check",
+        "download": "Download"
+      },
+      "empty": {
+        "title": "No report jobs",
+        "message": "Create a new report to track processing status here."
+      },
+      "toast": {
+        "created": "Report export job created.",
+        "downloadFailed": "Could not download report file."
+      },
+      "col": {
+        "type": "Type",
+        "format": "Format",
+        "status": "Status",
+        "createdAt": "Created at",
+        "actions": "Actions"
+      },
+      "format": {
+        "PDF": "PDF",
+        "EXCEL": "Excel"
+      },
+      "status": {
+        "QUEUED": "Queued",
+        "PROCESSING": "Processing",
+        "COMPLETED": "Completed",
+        "FAILED": "Failed"
+      },
+      "type": {
+        "SPENDING_BY_DEPARTMENT": "Spending by department",
+        "BUDGET_VS_PLAN": "Budget vs plan",
+        "VENDOR_SCORECARD": "Vendor scorecard",
+        "CYCLE_TIME_ANALYSIS": "Cycle time analysis",
+        "SLA_COMPLIANCE": "SLA compliance",
+        "THREE_WAY_MATCH": "Three-way match",
+        "INVENTORY_PENDING": "Inventory pending",
+        "RFQ_SAVINGS": "RFQ savings",
+        "MAVERICK_SPENDING": "Maverick spending",
+        "AUDIT_TRAIL": "Audit trail",
+        "PR_SUMMARY": "PR summary",
+        "PO_SUMMARY": "PO summary"
+      }
+    }
+  },
+  "analytics": {
+    "kpi": {
+      "totalSpendYtd": "Total spend YTD",
+      "approvedPrCount": "Approved PRs",
+      "rfqSavings": "RFQ savings",
+      "submittedPrCount": "Submitted PRs",
+      "submittedPrTotal": "Submitted PR value",
+      "slaBreachCount": "SLA breaches",
+      "issuedPoCount": "Issued POs",
+      "issuedPoTotal": "Issued PO value",
+      "matchedInvoiceCount": "Matched invoices"
+    }
   },
   "error": {
     "backDashboard": "Back to overview",

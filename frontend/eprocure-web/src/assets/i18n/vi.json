@@ -94,44 +94,213 @@
     "logout": "Đăng xuất"
   },
   "dashboard": {
-    "badge": {
-      "live": "Dữ liệu trực tiếp"
+    "eyebrow": "Trung tâm phân tích",
+    "title": "Dashboard & xuất báo cáo",
+    "subtitle": "Theo dõi KPI mua sắm, ngân sách, PO/GR/Invoice và tạo báo cáo PDF/Excel từ dữ liệu projection.",
+    "action": {
+      "apply": "Áp dụng",
+      "refresh": "Tải lại"
     },
-    "eyebrow": "Trung tâm điều hành",
-    "panel": {
-      "monthSpend": "Chi tiêu tháng",
-      "pipeline": "Luồng yêu cầu mua sắm",
-      "sla": "SLA phê duyệt"
+    "filter": {
+      "fiscalYear": "Năm tài chính",
+      "quarter": "Quý",
+      "allQuarters": "Tất cả quý",
+      "quarterValue": "Quý {{quarter}}",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày",
+      "departmentId": "Department UUID",
+      "departmentPlaceholder": "Lọc KPI theo phòng ban nếu cần"
     },
-    "sla": {
-      "finance": "Phê duyệt tài chính",
-      "procurement": "Kiểm tra mua hàng"
+    "tabs": {
+      "label": "Nhóm dashboard",
+      "executive": "Điều hành",
+      "manager": "Trưởng phòng",
+      "purchasing": "Thu mua",
+      "requester": "Cá nhân",
+      "reports": "Xuất báo cáo"
     },
-    "stat": {
-      "completed": {
-        "hint": "Trong 30 ngày",
-        "title": "Hoàn tất đúng hạn"
-      },
-      "pending": {
-        "hint": "Cần xử lý hôm nay",
-        "title": "Đang chờ"
-      },
-      "sla": {
-        "hint": "Gần quá hạn",
-        "title": "Rủi ro SLA"
-      },
-      "spend": {
-        "hint": "VND trong tháng",
-        "title": "Tổng chi"
+    "trend": {
+      "UP": "tăng",
+      "DOWN": "giảm",
+      "FLAT": "không đổi"
+    },
+    "empty": {
+      "title": "Chưa có dữ liệu",
+      "message": "Dữ liệu projection có thể chưa được seed hoặc bộ lọc hiện tại chưa có kết quả.",
+      "noPermissionTitle": "Không có dashboard phù hợp",
+      "noPermissionMessage": "Tài khoản hiện tại chưa có permission để xem dashboard phân tích."
+    },
+    "kpi": {
+      "title": "KPI vận hành",
+      "subtitle": "Cycle time PR -> PO và tuân thủ SLA phê duyệt theo khoảng ngày đã chọn.",
+      "trend": "{{direction}} {{percent}}% · {{label}}",
+      "cycleTime": "Cycle time",
+      "slaCompliance": "SLA compliance",
+      "overallCompliance": "Tỷ lệ tuân thủ tổng",
+      "avg": "Trung bình",
+      "median": "Median",
+      "p95": "P95",
+      "target": "Mục tiêu",
+      "role": "Vai trò",
+      "compliance": "Tuân thủ",
+      "overdue": "Quá hạn",
+      "status": {
+        "GOOD": "Tốt",
+        "WARNING": "Cảnh báo",
+        "CRITICAL": "Nguy cấp",
+        "UNKNOWN": "Chưa phân loại"
       }
     },
-    "table": {
-      "amount": "Giá trị",
-      "code": "Mã PR",
-      "owner": "Người tạo",
-      "status": "Trạng thái"
+    "executive": {
+      "departmentSpend": "Chi tiêu theo phòng ban",
+      "departmentSpendHint": "So sánh chi tiêu thực tế với ngân sách và trạng thái sử dụng.",
+      "categorySpend": "Chi tiêu theo danh mục",
+      "categorySpendHint": "Danh mục có giá trị chi tiêu lớn trong kỳ.",
+      "monthlyTrend": "Xu hướng theo tháng",
+      "monthlyTrendHint": "Cột màu nhấn là spend, cột thông tin là budget.",
+      "approvalSla": "SLA phê duyệt",
+      "approvalSlaHint": "Tỷ lệ đúng hạn, cycle time trung bình và số lượng quá hạn.",
+      "topVendors": "Nhà cung cấp nổi bật",
+      "topVendorsHint": "Xếp hạng theo tổng chi tiêu, số đơn và điểm trung bình.",
+      "prCount": "PR",
+      "onTime": "đúng hạn",
+      "avgCycle": "Cycle trung bình",
+      "overdue": "Quá hạn",
+      "orders": "đơn"
     },
-    "title": "Tổng quan mua sắm"
+    "manager": {
+      "budget": "Ngân sách phòng ban",
+      "budgetHint": "Allocated, committed, spent và available theo department hiện tại.",
+      "allocated": "Allocated",
+      "committed": "Committed",
+      "spent": "Spent",
+      "available": "Available",
+      "pendingApprovals": "Phê duyệt đang chờ",
+      "pendingApprovalsHint": "Khối lượng cần xử lý và rủi ro SLA.",
+      "pending": "Đang chờ",
+      "overdue": "Quá hạn",
+      "urgent": "Khẩn cấp",
+      "recentPrs": "PR gần đây",
+      "recentPrsHint": "Các yêu cầu mới nhất trong phạm vi phòng ban.",
+      "slaWarnings": "Cảnh báo SLA",
+      "slaWarningsHint": "Task gần hoặc đã quá hạn.",
+      "slaOverdue": "Quá hạn",
+      "slaNear": "Gần quá hạn",
+      "col": {
+        "pr": "PR",
+        "title": "Tiêu đề",
+        "requester": "Người tạo",
+        "status": "Trạng thái",
+        "amount": "Giá trị"
+      }
+    },
+    "purchasing": {
+      "poPipeline": "PO pipeline",
+      "poPipelineHint": "Phân bổ PO theo trạng thái phát hành và nhận hàng.",
+      "draft": "Nháp",
+      "pendingApproval": "Chờ duyệt",
+      "sentToVendor": "Đã gửi NCC",
+      "partiallyReceived": "Nhận một phần",
+      "workload": "Khối lượng thu mua",
+      "workloadHint": "RFQ, GR và invoice cần xử lý.",
+      "openRfqs": "RFQ mở",
+      "grPending": "GR chờ",
+      "invoicesPendingMatch": "Invoice chờ match",
+      "vendorPerformance": "Hiệu suất nhà cung cấp",
+      "vendorPerformanceHint": "On-time delivery, điểm chất lượng và đơn đang chờ.",
+      "col": {
+        "vendor": "Nhà cung cấp",
+        "onTime": "Đúng hạn",
+        "quality": "Chất lượng",
+        "pendingOrders": "Đơn chờ"
+      }
+    },
+    "requester": {
+      "myPrStats": "PR của tôi",
+      "myPrStatsHint": "Phân bổ trạng thái các yêu cầu mua sắm cá nhân.",
+      "departmentBudget": "Ngân sách phòng ban",
+      "departmentBudgetHint": "Số dư ngân sách còn khả dụng cho phòng ban.",
+      "recentPrs": "Yêu cầu gần đây",
+      "recentPrsHint": "Các PR mới nhất của tài khoản hiện tại.",
+      "col": {
+        "pr": "PR",
+        "title": "Tiêu đề",
+        "approver": "Người duyệt hiện tại",
+        "status": "Trạng thái",
+        "amount": "Giá trị"
+      }
+    },
+    "reports": {
+      "title": "Xuất báo cáo",
+      "subtitle": "Tạo job xuất báo cáo async, kiểm tra trạng thái và tải file khi hoàn tất.",
+      "field": {
+        "reportType": "Loại báo cáo",
+        "format": "Định dạng",
+        "vendorId": "Vendor UUID",
+        "categoryCode": "Mã danh mục"
+      },
+      "placeholder": {
+        "vendorId": "Lọc theo nhà cung cấp nếu cần",
+        "categoryCode": "VD: IT, OFFICE"
+      },
+      "action": {
+        "export": "Tạo báo cáo",
+        "refreshJob": "Kiểm tra",
+        "download": "Tải file"
+      },
+      "empty": {
+        "title": "Chưa có job báo cáo",
+        "message": "Tạo báo cáo mới để theo dõi trạng thái xử lý tại đây."
+      },
+      "toast": {
+        "created": "Đã tạo job xuất báo cáo.",
+        "downloadFailed": "Không thể tải file báo cáo."
+      },
+      "col": {
+        "type": "Loại",
+        "format": "Định dạng",
+        "status": "Trạng thái",
+        "createdAt": "Ngày tạo",
+        "actions": "Thao tác"
+      },
+      "format": {
+        "PDF": "PDF",
+        "EXCEL": "Excel"
+      },
+      "status": {
+        "QUEUED": "Đang chờ",
+        "PROCESSING": "Đang xử lý",
+        "COMPLETED": "Hoàn tất",
+        "FAILED": "Lỗi"
+      },
+      "type": {
+        "SPENDING_BY_DEPARTMENT": "Chi tiêu theo phòng ban",
+        "BUDGET_VS_PLAN": "Ngân sách so với kế hoạch",
+        "VENDOR_SCORECARD": "Điểm nhà cung cấp",
+        "CYCLE_TIME_ANALYSIS": "Phân tích cycle time",
+        "SLA_COMPLIANCE": "Tuân thủ SLA",
+        "THREE_WAY_MATCH": "Đối soát 3-way",
+        "INVENTORY_PENDING": "Tồn kho chờ xử lý",
+        "RFQ_SAVINGS": "Tiết kiệm RFQ",
+        "MAVERICK_SPENDING": "Maverick spending",
+        "AUDIT_TRAIL": "Audit trail",
+        "PR_SUMMARY": "Tổng hợp PR",
+        "PO_SUMMARY": "Tổng hợp PO"
+      }
+    }
+  },
+  "analytics": {
+    "kpi": {
+      "totalSpendYtd": "Tổng chi YTD",
+      "approvedPrCount": "PR đã phê duyệt",
+      "rfqSavings": "Tiết kiệm RFQ",
+      "submittedPrCount": "PR đã gửi",
+      "submittedPrTotal": "Tổng giá trị PR",
+      "slaBreachCount": "SLA breach",
+      "issuedPoCount": "PO đã phát hành",
+      "issuedPoTotal": "Tổng giá trị PO",
+      "matchedInvoiceCount": "Invoice đã match"
+    }
   },
   "error": {
     "backDashboard": "Về tổng quan",

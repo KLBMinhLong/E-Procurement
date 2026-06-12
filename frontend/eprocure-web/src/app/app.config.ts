@@ -99,6 +99,15 @@ import {
   LucideBanknote,
   LucideCalculator,
   LucideCalendarClock,
+  LucideFileDown,
+  LucideGauge,
+  LucideBarChart3,
+  LucideWalletCards,
+  LucideFactory,
+  LucideWallet,
+  LucideAlarmClock,
+  LucideTimer,
+  LucideLineChart,
   provideLucideConfig,
   provideLucideIcons
 } from '@lucide/angular';
@@ -230,7 +239,16 @@ export const appConfig: ApplicationConfig = {
       LucideScanSearch,
       LucideBanknote,
       LucideCalculator,
-      LucideCalendarClock
+      LucideCalendarClock,
+      LucideFileDown,
+      LucideGauge,
+      LucideBarChart3,
+      LucideWalletCards,
+      LucideFactory,
+      LucideWallet,
+      LucideAlarmClock,
+      LucideTimer,
+      LucideLineChart
     ),
     provideLucideConfig({
       strokeWidth: 1.8,

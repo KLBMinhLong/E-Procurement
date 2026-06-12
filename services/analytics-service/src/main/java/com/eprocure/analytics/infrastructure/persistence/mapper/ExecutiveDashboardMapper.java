@@ -16,16 +16,25 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface ExecutiveDashboardMapper {
     @Select("""
+            <script>
             SELECT id, fiscal_year, quarter, currency, total_spent, approved_pr_count,
                    rfq_savings, approval_on_time_percent, approval_avg_cycle_hours,
                    approval_overdue_count, cached_at
             FROM analytics.executive_dashboard_snapshots
             WHERE fiscal_year = #{fiscalYear}
-              AND ((#{quarter} IS NULL AND quarter IS NULL) OR quarter = #{quarter})
+            <choose>
+              <when test="quarter != null">
+                AND quarter = #{quarter}
+              </when>
+              <otherwise>
+                AND quarter IS NULL
+              </otherwise>
+            </choose>
               AND cached_at >= #{cachedAfter}
               AND is_deleted = FALSE
             ORDER BY cached_at DESC
             LIMIT 1
+            </script>
             """)
     Optional<ExecutiveDashboardSnapshotDbEntity> findLatest(
             @Param("fiscalYear") int fiscalYear,

@@ -303,6 +303,7 @@
 | Projection/event ingestion | ✅ | Consumes `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`, `approval.step.assigned`, `procurement.rfq.awarded`, `inventory.gr.created`; stores idempotent projections and refreshes executive dashboard snapshots where applicable |
 | Manager/purchasing/requester dashboards | ✅ | `/purchasing` reads PO + invoice projections; `/manager` reads PR submitted + SLA breach projections scoped by dept; `/requester` reads PR submitted projections scoped by requester; RFQ/GR-specific purchasing metrics remain follow-up |
 | KPI/report export APIs | ✅ | Async report export API, cycle-time KPI from PR submitted + PO issued projections, SLA KPI with assigned-step denominator, local PDF worker with JasperReports templates, POI-based XLSX workbook export, and type-specific report datasets for all report types. Source-enrichment contracts remain future work for IAM department labels, `departmentId`/`status` filters, RFQ baseline prices, finance budget plan snapshots, maverick-abuse events, and immutable system audit projection. |
+| Frontend: Analytics dashboard/report export UI | ✅ | 2026-06-12: `/dashboard` thay mock bằng analytics dashboard thật, permission-aware tabs executive/manager/purchasing/requester, cycle-time/SLA KPI panels, async report export form + job refresh/download; i18n VI/EN |
 
 ### E15: Testing & CI/CD
 | Task | Status | Ghi chú |

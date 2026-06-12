@@ -1,53 +1,585 @@
-<section class="dashboard">
-  <header class="dashboard__header">
-    <div>
-      <p>{{ 'dashboard.eyebrow' | translate }}</p>
-      <h1>{{ 'dashboard.title' | translate }}</h1>
+<section class="dashboard-page" aria-labelledby="dashboard-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'dashboard.eyebrow' | translate }}</span>
+      <h1 id="dashboard-heading" class="page-header__title">{{ 'dashboard.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'dashboard.subtitle' | translate }}</p>
     </div>
-    <ep-filter-bar [value]="query()" (valueChange)="query.set($event)"></ep-filter-bar>
-  </header>
-
-  <div class="dashboard__stats">
-    <ep-stat-card icon="clipboard-list" [title]="'dashboard.stat.pending.title' | translate" value="18" [hint]="'dashboard.stat.pending.hint' | translate"></ep-stat-card>
-    <ep-stat-card icon="clock" [title]="'dashboard.stat.sla.title' | translate" value="4" [hint]="'dashboard.stat.sla.hint' | translate"></ep-stat-card>
-    <ep-stat-card icon="package-check" [title]="'dashboard.stat.completed.title' | translate" value="91%" [hint]="'dashboard.stat.completed.hint' | translate"></ep-stat-card>
-    <ep-stat-card icon="chart-no-axes-combined" [title]="'dashboard.stat.spend.title' | translate" value="2.8B" [hint]="'dashboard.stat.spend.hint' | translate"></ep-stat-card>
+    <div class="page-header__actions">
+      <ep-button id="btn-dashboard-refresh" variant="secondary" icon="refresh-cw" [loading]="isLoadingDashboard() || isLoadingKpi()" (click)="reload()">
+        {{ 'dashboard.action.refresh' | translate }}
+      </ep-button>
+    </div>
   </div>
 
-  <div class="dashboard__grid">
-    <ep-card tone="raised">
-      <div class="dashboard__panel">
-        <div class="dashboard__panel-header">
-          <h2>{{ 'dashboard.panel.pipeline' | translate }}</h2>
-          <ep-badge tone="info" labelKey="dashboard.badge.live"></ep-badge>
-        </div>
-        <ep-table [columns]="columns" [data]="rows()"></ep-table>
+  <form class="filter-panel" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+    <ep-form-field [label]="'dashboard.filter.fiscalYear' | translate">
+      <input id="dashboard-fiscal-year" type="number" formControlName="fiscalYear">
+    </ep-form-field>
+    <ep-form-field [label]="'dashboard.filter.quarter' | translate">
+      <select id="dashboard-quarter" formControlName="quarter">
+        <option [ngValue]="null">{{ 'dashboard.filter.allQuarters' | translate }}</option>
+        @for (quarter of quarters; track quarter) {
+          <option [ngValue]="quarter">{{ 'dashboard.filter.quarterValue' | translate: { quarter } }}</option>
+        }
+      </select>
+    </ep-form-field>
+    <ep-form-field [label]="'dashboard.filter.fromDate' | translate">
+      <input id="dashboard-from-date" type="date" formControlName="fromDate">
+    </ep-form-field>
+    <ep-form-field [label]="'dashboard.filter.toDate' | translate">
+      <input id="dashboard-to-date" type="date" formControlName="toDate">
+    </ep-form-field>
+    <ep-form-field [label]="'dashboard.filter.departmentId' | translate">
+      <input
+        id="dashboard-department-id"
+        type="text"
+        autocomplete="off"
+        formControlName="departmentId"
+        [placeholder]="'dashboard.filter.departmentPlaceholder' | translate">
+    </ep-form-field>
+    <ep-button id="btn-apply-dashboard-filter" type="submit" variant="primary" icon="filter">
+      {{ 'dashboard.action.apply' | translate }}
+    </ep-button>
+  </form>
+
+  <nav class="dashboard-tabs" [attr.aria-label]="'dashboard.tabs.label' | translate">
+    @for (tab of tabs(); track tab.id) {
+      <button
+        type="button"
+        class="dashboard-tab"
+        [class.dashboard-tab--active]="activeTab() === tab.id"
+        [attr.aria-current]="activeTab() === tab.id ? 'page' : null"
+        (click)="setTab(tab.id)">
+        {{ tab.labelKey | translate }}
+      </button>
+    }
+  </nav>
+
+  @if (isLoadingDashboard()) {
+    <ep-skeleton [rows]="8" />
+  }
+
+  @if (activeTab() === 'executive') {
+    @if (executiveDashboard(); as dashboard) {
+      <div class="kpi-grid">
+        @for (kpi of visibleKpis(); track kpi.label) {
+          <article class="kpi-card">
+            <div class="kpi-card__icon">
+              <ep-icon name="chart-no-axes-combined" />
+            </div>
+            <div class="kpi-card__content">
+              <span>{{ kpi.label | translate }}</span>
+              <strong>{{ kpiValue(kpi) }}</strong>
+              @if (kpi.trend) {
+                <small>{{ 'dashboard.kpi.trend' | translate: { direction: ('dashboard.trend.' + kpi.trend.direction | translate), percent: kpi.trend.percent, label: kpi.trend.vsLabel } }}</small>
+              }
+            </div>
+            <ep-badge [tone]="statusTone(kpi.status)" [labelKey]="kpi.status ? 'dashboard.kpi.status.' + kpi.status : 'dashboard.kpi.status.UNKNOWN'" />
+          </article>
+        }
       </div>
-    </ep-card>
 
-    <ep-card tone="raised">
-      <div class="dashboard__panel">
-        <div class="dashboard__panel-header">
-          <h2>{{ 'dashboard.panel.sla' | translate }}</h2>
-          <ep-badge tone="warning" labelKey="status.PENDING_APPROVAL"></ep-badge>
-        </div>
-
-        <div class="dashboard__sla-list">
-          <div>
-            <span>{{ 'dashboard.sla.finance' | translate }}</span>
-            <ep-sla-bar assignedAt="2026-05-17T08:00:00+07:00" deadline="2026-05-19T17:00:00+07:00"></ep-sla-bar>
+      <div class="dashboard-grid dashboard-grid--executive">
+        <section class="dashboard-panel" aria-labelledby="dept-spend-heading">
+          <div class="panel-heading">
+            <ep-icon name="building-2" />
+            <div>
+              <h2 id="dept-spend-heading">{{ 'dashboard.executive.departmentSpend' | translate }}</h2>
+              <p>{{ 'dashboard.executive.departmentSpendHint' | translate }}</p>
+            </div>
           </div>
+          @if (dashboard.spendByDepartment.length === 0) {
+            <ep-empty-state icon="bar-chart-3" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+          } @else {
+            <div class="metric-list">
+              @for (dept of dashboard.spendByDepartment; track dept.departmentCode) {
+                <div class="metric-row">
+                  <div class="metric-row__label">
+                    <strong>{{ dept.departmentName }}</strong>
+                    <span>{{ dept.departmentCode }} · {{ percent(dept.utilization) }}</span>
+                  </div>
+                  <div class="metric-row__bar">
+                    <span [style.width]="barWidth(dept.spent, maxDepartmentSpend())"></span>
+                  </div>
+                  <ep-amount [value]="money(dept.spent)" />
+                  <ep-badge [tone]="statusTone(dept.status)" [labelKey]="'dashboard.kpi.status.' + dept.status" />
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="dashboard-panel" aria-labelledby="category-spend-heading">
+          <div class="panel-heading">
+            <ep-icon name="layers-3" />
+            <div>
+              <h2 id="category-spend-heading">{{ 'dashboard.executive.categorySpend' | translate }}</h2>
+              <p>{{ 'dashboard.executive.categorySpendHint' | translate }}</p>
+            </div>
+          </div>
+          <div class="compact-bars">
+            @for (point of dashboard.spendByCategory; track point.label) {
+              <div class="compact-bar">
+                <span>{{ point.label }}</span>
+                <div><i [style.width]="barWidth(point.value, maxCategorySpend())"></i></div>
+                <strong>{{ point.value }}</strong>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="monthly-trend-heading">
+          <div class="panel-heading">
+            <ep-icon name="line-chart" />
+            <div>
+              <h2 id="monthly-trend-heading">{{ 'dashboard.executive.monthlyTrend' | translate }}</h2>
+              <p>{{ 'dashboard.executive.monthlyTrendHint' | translate }}</p>
+            </div>
+          </div>
+          <div class="trend-grid">
+            @for (month of dashboard.monthlyTrend; track month.month) {
+              <div class="trend-bar">
+                <div class="trend-bar__columns">
+                  <span class="trend-bar__spent" [style.height]="barWidth(month.spent, maxMonthlySpend())"></span>
+                  <span class="trend-bar__budget" [style.height]="barWidth(month.budget, maxMonthlySpend())"></span>
+                </div>
+                <strong>{{ month.month }}</strong>
+                <small>{{ month.prCount }} {{ 'dashboard.executive.prCount' | translate }}</small>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="dashboard-panel" aria-labelledby="approval-sla-heading">
+          <div class="panel-heading">
+            <ep-icon name="timer" />
+            <div>
+              <h2 id="approval-sla-heading">{{ 'dashboard.executive.approvalSla' | translate }}</h2>
+              <p>{{ 'dashboard.executive.approvalSlaHint' | translate }}</p>
+            </div>
+          </div>
+          <div class="sla-summary">
+            <strong>{{ percent(dashboard.approvalSla.onTimePercent) }}</strong>
+            <span>{{ 'dashboard.executive.onTime' | translate }}</span>
+            <dl>
+              <div>
+                <dt>{{ 'dashboard.executive.avgCycle' | translate }}</dt>
+                <dd>{{ hours(dashboard.approvalSla.avgCycleHours) }}</dd>
+              </div>
+              <div>
+                <dt>{{ 'dashboard.executive.overdue' | translate }}</dt>
+                <dd>{{ dashboard.approvalSla.overdueCount }}</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <section class="dashboard-panel" aria-labelledby="top-vendor-heading">
+          <div class="panel-heading">
+            <ep-icon name="award" />
+            <div>
+              <h2 id="top-vendor-heading">{{ 'dashboard.executive.topVendors' | translate }}</h2>
+              <p>{{ 'dashboard.executive.topVendorsHint' | translate }}</p>
+            </div>
+          </div>
+          <div class="vendor-list">
+            @for (vendor of dashboard.topVendors; track vendor.vendorName) {
+              <div class="vendor-row">
+                <strong>{{ vendor.vendorName }}</strong>
+                <span>{{ vendor.orderCount }} {{ 'dashboard.executive.orders' | translate }} · {{ percent(vendor.avgScore) }}</span>
+                <ep-amount [value]="money(vendor.totalSpent)" />
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    } @else if (!isLoadingDashboard()) {
+      <ep-empty-state icon="layout-dashboard" [title]="'dashboard.empty.noPermissionTitle' | translate" [message]="'dashboard.empty.noPermissionMessage' | translate" />
+    }
+  }
+
+  @if (activeTab() === 'manager' && managerDashboard(); as manager) {
+    <div class="dashboard-grid">
+      <section class="dashboard-panel" aria-labelledby="manager-budget-heading">
+        <div class="panel-heading">
+          <ep-icon name="wallet-cards" />
           <div>
-            <span>{{ 'dashboard.sla.procurement' | translate }}</span>
-            <ep-sla-bar assignedAt="2026-05-18T08:00:00+07:00" deadline="2026-05-18T18:00:00+07:00"></ep-sla-bar>
+            <h2 id="manager-budget-heading">{{ 'dashboard.manager.budget' | translate }}</h2>
+            <p>{{ 'dashboard.manager.budgetHint' | translate }}</p>
           </div>
         </div>
+        <div class="budget-meter">
+          <span [style.width]="utilizationWidth(manager.budgetStatus.availablePct)"></span>
+        </div>
+        <dl class="dense-dl">
+          <div><dt>{{ 'dashboard.manager.allocated' | translate }}</dt><dd><ep-amount [value]="money(manager.budgetStatus.allocated)" /></dd></div>
+          <div><dt>{{ 'dashboard.manager.committed' | translate }}</dt><dd><ep-amount [value]="money(manager.budgetStatus.committed)" /></dd></div>
+          <div><dt>{{ 'dashboard.manager.spent' | translate }}</dt><dd><ep-amount [value]="money(manager.budgetStatus.spent)" /></dd></div>
+          <div><dt>{{ 'dashboard.manager.available' | translate }}</dt><dd><ep-amount [value]="money(manager.budgetStatus.available)" /></dd></div>
+        </dl>
+      </section>
 
-        <div class="dashboard__amount">
-          <span>{{ 'dashboard.panel.monthSpend' | translate }}</span>
-          <ep-amount value="2800000000.0000"></ep-amount>
+      <section class="dashboard-panel" aria-labelledby="manager-approval-heading">
+        <div class="panel-heading">
+          <ep-icon name="inbox" />
+          <div>
+            <h2 id="manager-approval-heading">{{ 'dashboard.manager.pendingApprovals' | translate }}</h2>
+            <p>{{ 'dashboard.manager.pendingApprovalsHint' | translate }}</p>
+          </div>
+        </div>
+        <div class="three-counts">
+          <div><strong>{{ manager.pendingApprovals.count }}</strong><span>{{ 'dashboard.manager.pending' | translate }}</span></div>
+          <div><strong>{{ manager.pendingApprovals.overdueCount }}</strong><span>{{ 'dashboard.manager.overdue' | translate }}</span></div>
+          <div><strong>{{ manager.pendingApprovals.urgentCount }}</strong><span>{{ 'dashboard.manager.urgent' | translate }}</span></div>
+        </div>
+      </section>
+
+      <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="manager-recent-heading">
+        <div class="panel-heading">
+          <ep-icon name="list-checks" />
+          <div>
+            <h2 id="manager-recent-heading">{{ 'dashboard.manager.recentPrs' | translate }}</h2>
+            <p>{{ 'dashboard.manager.recentPrsHint' | translate }}</p>
+          </div>
+        </div>
+        <table class="dense-table">
+          <thead>
+            <tr>
+              <th>{{ 'dashboard.manager.col.pr' | translate }}</th>
+              <th>{{ 'dashboard.manager.col.title' | translate }}</th>
+              <th>{{ 'dashboard.manager.col.requester' | translate }}</th>
+              <th>{{ 'dashboard.manager.col.status' | translate }}</th>
+              <th class="align-right">{{ 'dashboard.manager.col.amount' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pr of manager.recentPrs; track pr.prNumber) {
+              <tr>
+                <td class="mono">{{ pr.prNumber }}</td>
+                <td>{{ pr.title }}</td>
+                <td>{{ pr.requester }}</td>
+                <td><ep-badge tone="info" [labelKey]="'pr.status.' + pr.status" /></td>
+                <td class="align-right"><ep-amount [value]="money(pr.totalAmount)" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+
+      <section class="dashboard-panel" aria-labelledby="manager-sla-heading">
+        <div class="panel-heading">
+          <ep-icon name="alarm-clock" />
+          <div>
+            <h2 id="manager-sla-heading">{{ 'dashboard.manager.slaWarnings' | translate }}</h2>
+            <p>{{ 'dashboard.manager.slaWarningsHint' | translate }}</p>
+          </div>
+        </div>
+        <div class="warning-list">
+          @for (warning of manager.slaWarnings; track warning.taskId) {
+            <div>
+              <ep-badge [tone]="warning.isOverdue ? 'danger' : 'warning'" [labelKey]="warning.isOverdue ? 'dashboard.manager.slaOverdue' : 'dashboard.manager.slaNear'" />
+              <strong>{{ warning.prNumber }}</strong>
+              <span>{{ formatDateTime(warning.slaDeadline) }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  }
+
+  @if (activeTab() === 'purchasing' && purchasingDashboard(); as purchasing) {
+    <div class="dashboard-grid">
+      <section class="dashboard-panel" aria-labelledby="po-pipeline-heading">
+        <div class="panel-heading">
+          <ep-icon name="git-branch" />
+          <div>
+            <h2 id="po-pipeline-heading">{{ 'dashboard.purchasing.poPipeline' | translate }}</h2>
+            <p>{{ 'dashboard.purchasing.poPipelineHint' | translate }}</p>
+          </div>
+        </div>
+        <div class="pipeline-stack">
+          <span class="pipeline-stack__draft" [style.width]="barWidth(purchasing.poPipeline.draft, totalPurchasingPipeline())"></span>
+          <span class="pipeline-stack__pending" [style.width]="barWidth(purchasing.poPipeline.pendingApproval, totalPurchasingPipeline())"></span>
+          <span class="pipeline-stack__sent" [style.width]="barWidth(purchasing.poPipeline.sentToVendor, totalPurchasingPipeline())"></span>
+          <span class="pipeline-stack__received" [style.width]="barWidth(purchasing.poPipeline.partiallyReceived, totalPurchasingPipeline())"></span>
+        </div>
+        <dl class="dense-dl">
+          <div><dt>{{ 'dashboard.purchasing.draft' | translate }}</dt><dd>{{ purchasing.poPipeline.draft }}</dd></div>
+          <div><dt>{{ 'dashboard.purchasing.pendingApproval' | translate }}</dt><dd>{{ purchasing.poPipeline.pendingApproval }}</dd></div>
+          <div><dt>{{ 'dashboard.purchasing.sentToVendor' | translate }}</dt><dd>{{ purchasing.poPipeline.sentToVendor }}</dd></div>
+          <div><dt>{{ 'dashboard.purchasing.partiallyReceived' | translate }}</dt><dd>{{ purchasing.poPipeline.partiallyReceived }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="dashboard-panel" aria-labelledby="purchasing-workload-heading">
+        <div class="panel-heading">
+          <ep-icon name="activity" />
+          <div>
+            <h2 id="purchasing-workload-heading">{{ 'dashboard.purchasing.workload' | translate }}</h2>
+            <p>{{ 'dashboard.purchasing.workloadHint' | translate }}</p>
+          </div>
+        </div>
+        <div class="three-counts">
+          <div><strong>{{ purchasing.openRfqs }}</strong><span>{{ 'dashboard.purchasing.openRfqs' | translate }}</span></div>
+          <div><strong>{{ purchasing.grPending }}</strong><span>{{ 'dashboard.purchasing.grPending' | translate }}</span></div>
+          <div><strong>{{ purchasing.invoicesPendingMatch }}</strong><span>{{ 'dashboard.purchasing.invoicesPendingMatch' | translate }}</span></div>
+        </div>
+      </section>
+
+      <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="vendor-performance-heading">
+        <div class="panel-heading">
+          <ep-icon name="factory" />
+          <div>
+            <h2 id="vendor-performance-heading">{{ 'dashboard.purchasing.vendorPerformance' | translate }}</h2>
+            <p>{{ 'dashboard.purchasing.vendorPerformanceHint' | translate }}</p>
+          </div>
+        </div>
+        <table class="dense-table">
+          <thead>
+            <tr>
+              <th>{{ 'dashboard.purchasing.col.vendor' | translate }}</th>
+              <th>{{ 'dashboard.purchasing.col.onTime' | translate }}</th>
+              <th>{{ 'dashboard.purchasing.col.quality' | translate }}</th>
+              <th class="align-right">{{ 'dashboard.purchasing.col.pendingOrders' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (vendor of purchasing.vendorPerformance; track vendor.vendorName) {
+              <tr>
+                <td>{{ vendor.vendorName }}</td>
+                <td>{{ percent(vendor.onTimeDelivery) }}</td>
+                <td>{{ vendor.qualityScore }}</td>
+                <td class="align-right">{{ vendor.pendingOrders }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    </div>
+  }
+
+  @if (activeTab() === 'requester' && requesterDashboard(); as requester) {
+    <div class="dashboard-grid">
+      <section class="dashboard-panel" aria-labelledby="requester-stats-heading">
+        <div class="panel-heading">
+          <ep-icon name="clipboard-list" />
+          <div>
+            <h2 id="requester-stats-heading">{{ 'dashboard.requester.myPrStats' | translate }}</h2>
+            <p>{{ 'dashboard.requester.myPrStatsHint' | translate }}</p>
+          </div>
+        </div>
+        <div class="requester-stats">
+          <div><strong>{{ requester.myPrStats.draft }}</strong><span>{{ 'pr.status.DRAFT' | translate }}</span></div>
+          <div><strong>{{ requester.myPrStats.pendingApproval }}</strong><span>{{ 'pr.status.PENDING_APPROVAL' | translate }}</span></div>
+          <div><strong>{{ requester.myPrStats.changesRequested }}</strong><span>{{ 'pr.status.CHANGES_REQUESTED' | translate }}</span></div>
+          <div><strong>{{ requester.myPrStats.approved }}</strong><span>{{ 'pr.status.APPROVED' | translate }}</span></div>
+          <div><strong>{{ requester.myPrStats.rejected }}</strong><span>{{ 'pr.status.REJECTED' | translate }}</span></div>
+        </div>
+      </section>
+
+      <section class="dashboard-panel" aria-labelledby="requester-budget-heading">
+        <div class="panel-heading">
+          <ep-icon name="wallet" />
+          <div>
+            <h2 id="requester-budget-heading">{{ 'dashboard.requester.departmentBudget' | translate }}</h2>
+            <p>{{ 'dashboard.requester.departmentBudgetHint' | translate }}</p>
+          </div>
+        </div>
+        <strong class="large-amount"><ep-amount [value]="money(requester.departmentBudget.available)" /></strong>
+        <div class="budget-meter">
+          <span [style.width]="utilizationWidth(requester.departmentBudget.availablePct)"></span>
+        </div>
+        <span class="muted">{{ percent(requester.departmentBudget.availablePct) }}</span>
+      </section>
+
+      <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="requester-recent-heading">
+        <div class="panel-heading">
+          <ep-icon name="history" />
+          <div>
+            <h2 id="requester-recent-heading">{{ 'dashboard.requester.recentPrs' | translate }}</h2>
+            <p>{{ 'dashboard.requester.recentPrsHint' | translate }}</p>
+          </div>
+        </div>
+        <table class="dense-table">
+          <thead>
+            <tr>
+              <th>{{ 'dashboard.requester.col.pr' | translate }}</th>
+              <th>{{ 'dashboard.requester.col.title' | translate }}</th>
+              <th>{{ 'dashboard.requester.col.approver' | translate }}</th>
+              <th>{{ 'dashboard.requester.col.status' | translate }}</th>
+              <th class="align-right">{{ 'dashboard.requester.col.amount' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pr of requester.recentPrs; track pr.prNumber) {
+              <tr>
+                <td class="mono">{{ pr.prNumber }}</td>
+                <td>{{ pr.title }}</td>
+                <td>{{ pr.currentApprover || '--' }}</td>
+                <td><ep-badge tone="info" [labelKey]="'pr.status.' + pr.status" /></td>
+                <td class="align-right"><ep-amount [value]="money(pr.totalAmount)" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    </div>
+  }
+
+  @if (canViewExecutive()) {
+    <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="kpi-heading">
+      <div class="panel-heading">
+        <ep-icon name="gauge" />
+        <div>
+          <h2 id="kpi-heading">{{ 'dashboard.kpi.title' | translate }}</h2>
+          <p>{{ 'dashboard.kpi.subtitle' | translate }}</p>
         </div>
       </div>
-    </ep-card>
-  </div>
+      @if (isLoadingKpi()) {
+        <ep-skeleton [rows]="4" />
+      } @else {
+        <div class="kpi-detail-grid">
+          @if (cycleTimeKpi(); as cycle) {
+            <div class="kpi-detail">
+              <h3>{{ 'dashboard.kpi.cycleTime' | translate }}</h3>
+              <dl class="dense-dl">
+                <div><dt>{{ 'dashboard.kpi.avg' | translate }}</dt><dd>{{ hours(cycle.avgCycleHours) }}</dd></div>
+                <div><dt>{{ 'dashboard.kpi.median' | translate }}</dt><dd>{{ hours(cycle.medianCycleHours) }}</dd></div>
+                <div><dt>{{ 'dashboard.kpi.p95' | translate }}</dt><dd>{{ hours(cycle.p95CycleHours) }}</dd></div>
+                <div><dt>{{ 'dashboard.kpi.target' | translate }}</dt><dd>{{ hours(cycle.target) }}</dd></div>
+              </dl>
+              <div class="compact-bars">
+                @for (item of cycle.byPriority; track item.priority) {
+                  <div class="compact-bar">
+                    <span>{{ item.priority }}</span>
+                    <div><i [style.width]="barWidth(item.avgHours, maxPriorityAvgValue())"></i></div>
+                    <strong>{{ hours(item.avgHours) }}</strong>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (slaComplianceKpi(); as sla) {
+            <div class="kpi-detail">
+              <h3>{{ 'dashboard.kpi.slaCompliance' | translate }}</h3>
+              <div class="sla-summary sla-summary--compact">
+                <strong>{{ percent(sla.overallCompliancePct) }}</strong>
+                <span>{{ 'dashboard.kpi.overallCompliance' | translate }}</span>
+              </div>
+              <table class="dense-table">
+                <thead>
+                  <tr>
+                    <th>{{ 'dashboard.kpi.role' | translate }}</th>
+                    <th>{{ 'dashboard.kpi.compliance' | translate }}</th>
+                    <th class="align-right">{{ 'dashboard.kpi.overdue' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (role of sla.byApproverRole; track role.role) {
+                    <tr>
+                      <td>{{ role.role }}</td>
+                      <td>{{ percent(role.compliancePct) }}</td>
+                      <td class="align-right">{{ role.overdueCount }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (activeTab() === 'reports') {
+    <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="report-export-heading">
+      <div class="panel-heading">
+        <ep-icon name="file-down" />
+        <div>
+          <h2 id="report-export-heading">{{ 'dashboard.reports.title' | translate }}</h2>
+          <p>{{ 'dashboard.reports.subtitle' | translate }}</p>
+        </div>
+      </div>
+
+      <form class="report-form" [formGroup]="exportForm" (ngSubmit)="exportReport()">
+        <ep-form-field [label]="'dashboard.reports.field.reportType' | translate">
+          <select id="report-type" formControlName="reportType">
+            @for (type of reportTypes; track type) {
+              <option [ngValue]="type">{{ ('dashboard.reports.type.' + type) | translate }}</option>
+            }
+          </select>
+        </ep-form-field>
+        <ep-form-field [label]="'dashboard.reports.field.format' | translate">
+          <select id="report-format" formControlName="format">
+            @for (format of reportFormats; track format) {
+              <option [ngValue]="format">{{ ('dashboard.reports.format.' + format) | translate }}</option>
+            }
+          </select>
+        </ep-form-field>
+        <ep-form-field [label]="'dashboard.filter.fromDate' | translate">
+          <input id="report-from-date" type="date" formControlName="fromDate">
+        </ep-form-field>
+        <ep-form-field [label]="'dashboard.filter.toDate' | translate">
+          <input id="report-to-date" type="date" formControlName="toDate">
+        </ep-form-field>
+        <ep-form-field [label]="'dashboard.filter.fiscalYear' | translate">
+          <input id="report-fiscal-year" type="number" formControlName="fiscalYear">
+        </ep-form-field>
+        <ep-form-field [label]="'dashboard.filter.quarter' | translate">
+          <select id="report-quarter" formControlName="quarter">
+            <option [ngValue]="null">{{ 'dashboard.filter.allQuarters' | translate }}</option>
+            @for (quarter of quarters; track quarter) {
+              <option [ngValue]="quarter">{{ 'dashboard.filter.quarterValue' | translate: { quarter } }}</option>
+            }
+          </select>
+        </ep-form-field>
+        <ep-form-field [label]="'dashboard.reports.field.vendorId' | translate">
+          <input id="report-vendor-id" type="text" autocomplete="off" formControlName="vendorId" [placeholder]="'dashboard.reports.placeholder.vendorId' | translate">
+        </ep-form-field>
+        <ep-form-field [label]="'dashboard.reports.field.categoryCode' | translate">
+          <input id="report-category-code" type="text" autocomplete="off" formControlName="categoryCode" [placeholder]="'dashboard.reports.placeholder.categoryCode' | translate">
+        </ep-form-field>
+        <ep-button id="btn-export-report" type="submit" variant="primary" icon="file-down" [loading]="isExporting()">
+          {{ 'dashboard.reports.action.export' | translate }}
+        </ep-button>
+      </form>
+
+      @if (reportJobs().length === 0) {
+        <ep-empty-state icon="file-down" [title]="'dashboard.reports.empty.title' | translate" [message]="'dashboard.reports.empty.message' | translate" />
+      } @else {
+        <table class="dense-table">
+          <thead>
+            <tr>
+              <th>{{ 'dashboard.reports.col.type' | translate }}</th>
+              <th>{{ 'dashboard.reports.col.format' | translate }}</th>
+              <th>{{ 'dashboard.reports.col.status' | translate }}</th>
+              <th>{{ 'dashboard.reports.col.createdAt' | translate }}</th>
+              <th class="align-right">{{ 'dashboard.reports.col.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (job of reportJobs(); track job.jobId) {
+              <tr>
+                <td>{{ ('dashboard.reports.type.' + job.reportType) | translate }}</td>
+                <td>{{ ('dashboard.reports.format.' + job.format) | translate }}</td>
+                <td><ep-badge [tone]="jobStatusTone(job.status)" [labelKey]="'dashboard.reports.status.' + job.status" /></td>
+                <td>{{ formatDateTime(job.createdAt) }}</td>
+                <td class="align-right job-actions">
+                  <ep-button size="sm" variant="ghost" icon="refresh-cw" [loading]="refreshingJobId() === job.jobId" (click)="refreshJob(job)">
+                    {{ 'dashboard.reports.action.refreshJob' | translate }}
+                  </ep-button>
+                  <ep-button size="sm" variant="secondary" icon="download" [disabled]="job.status !== 'COMPLETED'" [loading]="downloadingJobId() === job.jobId" (click)="downloadJob(job)">
+                    {{ 'dashboard.reports.action.download' | translate }}
+                  </ep-button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
 </section>
