@@ -35,6 +35,20 @@
       "IN_PROGRESS": "In progress",
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
+    },
+    "steps": {
+      "emptyTitle": "No approval steps yet",
+      "emptyMessage": "The approval workflow has not started or has not returned step data.",
+      "waitingAssign": "Waiting assignment",
+      "assignedAt": "Assigned at",
+      "deadline": "Deadline",
+      "actedAt": "Acted at",
+      "comment": "Comment",
+      "noComment": "No comment",
+      "forwarded": "Forwarded",
+      "skipped": "Skipped",
+      "escalated": "Escalated",
+      "stepNumber": "Step {{step}}"
     }
   },
   "auth": {

@@ -35,6 +35,20 @@
       "IN_PROGRESS": "Đang duyệt",
       "COMPLETED": "Hoàn tất",
       "CANCELLED": "Đã hủy"
+    },
+    "steps": {
+      "emptyTitle": "Chưa có bước phê duyệt",
+      "emptyMessage": "Quy trình duyệt chưa được khởi tạo hoặc chưa trả dữ liệu.",
+      "waitingAssign": "Chờ giao việc",
+      "assignedAt": "Giao lúc",
+      "deadline": "Hạn xử lý",
+      "actedAt": "Xử lý lúc",
+      "comment": "Ý kiến",
+      "noComment": "Không có ghi chú",
+      "forwarded": "Đã chuyển tiếp",
+      "skipped": "Đã bỏ qua",
+      "escalated": "Đã chuyển cấp",
+      "stepNumber": "Bước {{step}}"
     }
   },
   "auth": {

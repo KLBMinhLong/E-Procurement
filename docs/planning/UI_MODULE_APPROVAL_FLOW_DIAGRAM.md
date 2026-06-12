@@ -23,6 +23,8 @@ Plan này là plan kế tiếp sau `UI_MODULE_FINANCE_BUDGET.md`. Rà soát code
 
 **Thứ tự thực hiện đề xuất:** 4a shared `ep-approval-steps` → 4b wire Approval Detail → 4c shared `ep-pr-lifecycle` → 4d wire PR Detail → 4e links/navigation polish → 4f i18n + build verify.
 
+**Trạng thái triển khai 2026-06-13:** ✅ Slice 4a hoàn thành ở mức build: đã tạo shared component `ep-approval-steps` với horizontal/vertical compact modes, empty state, current-step highlight, status icon/tone, detail expansion, compact comments, SLA bar reuse, responsive layout, reduced-motion pulse và i18n `approval.steps.*`.
+
 ---
 
 ## 1. Hiện trạng

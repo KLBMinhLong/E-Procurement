@@ -1,0 +1,100 @@
+@if (sortedSteps().length === 0) {
+  <ep-empty-state
+    icon="workflow"
+    [title]="'approval.steps.emptyTitle' | translate"
+    [message]="'approval.steps.emptyMessage' | translate" />
+} @else {
+  <div
+    class="approval-steps"
+    [class.approval-steps--horizontal]="viewMode() === 'horizontal'"
+    [class.approval-steps--vertical]="viewMode() === 'vertical'"
+    [class.approval-steps--compact]="compact()">
+    @for (step of sortedSteps(); track step.stepIndex; let last = $last) {
+      <article
+        class="approval-step"
+        [class.approval-step--current]="isCurrent(step)"
+        [class.approval-step--complete]="isComplete(step)"
+        [class.approval-step--pending]="step.status === 'PENDING'"
+        [class.approval-step--rejected]="step.status === 'REJECTED'"
+        [class.approval-step--terminal]="step.status !== 'PENDING'">
+        <button
+          type="button"
+          class="approval-step__trigger"
+          [attr.aria-current]="isCurrent(step) ? 'step' : null"
+          [attr.aria-expanded]="!compact() ? isExpanded(step) : null"
+          [attr.aria-label]="'approval.steps.stepNumber' | translate: { step: step.stepIndex + 1 }"
+          (click)="toggleStep(step)">
+          <span class="approval-step__marker" [class.approval-step__marker--current]="isCurrent(step)">
+            <ep-icon [name]="statusIcon(step.status)" [size]="16" />
+          </span>
+
+          @if (!last) {
+            <span
+              class="approval-step__connector"
+              [class.approval-step__connector--success]="connectorTone(step) === 'success'"
+              [class.approval-step__connector--warning]="connectorTone(step) === 'warning'"
+              [class.approval-step__connector--danger]="connectorTone(step) === 'danger'">
+            </span>
+          }
+        </button>
+
+        <div class="approval-step__body">
+          <div class="approval-step__header">
+            <span class="approval-step__index">
+              {{ 'approval.steps.stepNumber' | translate: { step: step.stepIndex + 1 } }}
+            </span>
+            <ep-badge [tone]="statusTone(step.status)" [labelKey]="'approval.status.' + step.status" />
+          </div>
+
+          <strong class="approval-step__role">{{ step.approverRole }}</strong>
+
+          <span class="approval-step__approver">
+            @if (hasApprover(step)) {
+              {{ approverLabel(step) }}
+            } @else {
+              {{ 'approval.steps.waitingAssign' | translate }}
+            }
+          </span>
+
+          @if (canShowSla(step)) {
+            <div class="approval-step__sla">
+              <ep-sla-bar [assignedAt]="step.assignedAt!" [deadline]="step.slaDeadline!" />
+            </div>
+          }
+
+          @if (compact()) {
+            @if (shouldShowCompactComment(step)) {
+              <p class="approval-step__comment">{{ step.comment }}</p>
+            }
+          } @else if (isExpanded(step)) {
+            <div class="approval-step__detail">
+              <dl class="approval-step__meta">
+                <div>
+                  <dt>{{ 'approval.steps.assignedAt' | translate }}</dt>
+                  <dd>{{ formatDateTime(step.assignedAt) }}</dd>
+                </div>
+                <div>
+                  <dt>{{ 'approval.steps.deadline' | translate }}</dt>
+                  <dd>{{ formatDateTime(step.slaDeadline) }}</dd>
+                </div>
+                <div>
+                  <dt>{{ 'approval.steps.actedAt' | translate }}</dt>
+                  <dd>{{ formatDateTime(step.actedAt) }}</dd>
+                </div>
+              </dl>
+
+              @if (detailNoteKey(step); as noteKey) {
+                <p class="approval-step__note">{{ noteKey | translate }}</p>
+              }
+
+              <div class="approval-step__comment-block">
+                <span>{{ 'approval.steps.comment' | translate }}</span>
+                <p>{{ step.comment || ('approval.steps.noComment' | translate) }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </article>
+    }
+  </div>
+}

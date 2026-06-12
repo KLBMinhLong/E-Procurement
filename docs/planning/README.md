@@ -85,7 +85,7 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 
 | Bước | Nội dung |
 |---|---|
-| 4a | Tạo shared component `ep-approval-steps` (horizontal + vertical compact) |
+| 4a | ✅ Tạo shared component `ep-approval-steps` (horizontal + vertical compact) |
 | 4b | Wire Approval Detail: overview full-width + thay sidebar timeline + link PR đầy đủ |
 | 4c | Tạo shared component `ep-pr-lifecycle` (PR lifecycle status bar) |
 | 4d | Wire PR Detail: lifecycle bar + thay sidebar approval timeline |
