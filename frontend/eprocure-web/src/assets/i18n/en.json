@@ -1795,7 +1795,9 @@
       "slaHeader": "Approval SLA Deadline",
       "assignedAt": "Assigned At",
       "deadlineAt": "Deadline",
+      "processOverview": "Approval workflow overview",
       "processHeader": "Approval Workflow",
+      "viewFullPr": "View full PR",
       "step": "Step",
       "approver": "Approver",
       "empty": {

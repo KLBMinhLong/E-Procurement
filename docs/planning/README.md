@@ -12,7 +12,7 @@
 | 1 | `UI_MODULE_INVENTORY.md` | Inventory Catalog UI (Slice 5–8) | ✅ Hoàn thành | Slice 8 runtime hardening được chuyển sang E2E hardening chung theo quyết định 2026-06-12 |
 | 2 | `UI_MODULE_SHELL_NAV_UX.md` | Shell Nav + UX Gaps | ✅ Hoàn thành | Build pass 2026-06-13; Budget nav/indicator deferred sang plan #3 |
 | 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | ✅ Hoàn thành | Build pass 2026-06-13; browser test chưa mở theo yêu cầu |
-| 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | 🔄 **Đã rà soát, sẵn sàng thực hiện** | Bắt đầu 4a: shared `ep-approval-steps` |
+| 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | 🔄 **Đang thực hiện** | 4a–4b build pass; tiếp theo 4c `ep-pr-lifecycle` |
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ⬜ Chờ | Nên làm sau #4 (dùng chung ep-approval-steps) |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ⬜ Chờ | Cần GoodsReceiptService đã ổn định từ #1 |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ⬜ Chờ | Không phụ thuộc — standalone |
@@ -86,7 +86,7 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 | Bước | Nội dung |
 |---|---|
 | 4a | ✅ Tạo shared component `ep-approval-steps` (horizontal + vertical compact) |
-| 4b | Wire Approval Detail: overview full-width + thay sidebar timeline + link PR đầy đủ |
+| 4b | ✅ Wire Approval Detail: overview full-width + thay sidebar timeline + link PR đầy đủ |
 | 4c | Tạo shared component `ep-pr-lifecycle` (PR lifecycle status bar) |
 | 4d | Wire PR Detail: lifecycle bar + thay sidebar approval timeline |
 | 4e | Navigation/UX polish: Approval Inbox link + empty/keyboard/focus states |

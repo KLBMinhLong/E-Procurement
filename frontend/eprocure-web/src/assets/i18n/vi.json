@@ -1795,7 +1795,9 @@
       "slaHeader": "Hạn xử lý phê duyệt",
       "assignedAt": "Ngày giao",
       "deadlineAt": "Hạn xử lý",
+      "processOverview": "Tổng quan quy trình phê duyệt",
       "processHeader": "Quy trình phê duyệt",
+      "viewFullPr": "Xem PR đầy đủ",
       "step": "Bước",
       "approver": "Người duyệt",
       "empty": {

@@ -57,13 +57,37 @@
       </div>
     </header>
 
+    @if (approvalSteps().length) {
+      <section class="process-overview" aria-labelledby="process-overview-heading">
+        <h2 id="process-overview-heading" class="sr-only">
+          {{ 'approvals.detail.processOverview' | translate }}
+        </h2>
+        <ep-approval-steps
+          [steps]="approvalSteps()"
+          [currentStepIndex]="currentStepIndex()"
+          viewMode="horizontal"
+          [showSlaBar]="true" />
+      </section>
+    }
+
     <!-- ── Main Grid Layout ─────────────────────────────────────────── -->
     <div class="detail-grid">
       <!-- Left Main Column -->
       <main class="detail-main">
         <!-- Basic Info Card -->
         <div class="card basic-info">
-          <h2 class="card__title">{{ 'approvals.detail.title' | translate }}</h2>
+          <div class="card__title-row">
+            <h2 class="card__title">{{ 'approvals.detail.title' | translate }}</h2>
+            @if (canOpenPurchaseRequest()) {
+              <ep-button
+                variant="ghost"
+                size="sm"
+                icon="external-link"
+                (click)="navigateToPurchaseRequest()">
+                {{ 'approvals.detail.viewFullPr' | translate }}
+              </ep-button>
+            }
+          </div>
           <div class="basic-info__subject">
             <label>{{ 'approvals.detail.subject' | translate }}</label>
             <strong>{{ task()?.entityTitle }}</strong>
@@ -201,48 +225,12 @@
         <!-- Timeline Workflow Process Card -->
         <div class="card sidebar-card process-card">
           <h2 class="card__title">{{ 'approvals.detail.processHeader' | translate }}</h2>
-          <div class="timeline">
-            @for (step of process()?.steps; track step.stepIndex; let last = $last) {
-              <div class="timeline-item" [class.timeline-item--active]="step.status === 'PENDING'">
-                <!-- Visual line connectors -->
-                <div class="timeline-indicator">
-                  <div class="timeline-dot" [class]="'timeline-dot--' + step.status.toLowerCase()"></div>
-                  @if (!last) {
-                    <div class="timeline-line"></div>
-                  }
-                </div>
-
-                <div class="timeline-content">
-                  <div class="timeline-content__header">
-                    <strong>{{ 'approvals.detail.step' | translate }} {{ step.stepIndex + 1 }}: {{ step.approverRole }}</strong>
-                    <ep-badge
-                      [tone]="statusTone[step.status] || 'neutral'"
-                      [labelKey]="'status.' + step.status" />
-                  </div>
-                  <div class="timeline-content__body">
-                    @if (step.approver.fullName) {
-                      <div class="timeline-approver">
-                        <ep-icon name="user" [size]="12"></ep-icon>
-                        <span>{{ step.approver.fullName }}</span>
-                      </div>
-                    }
-
-                    @if (step.comment) {
-                      <blockquote class="timeline-comment">
-                        "{{ step.comment }}"
-                      </blockquote>
-                    }
-
-                    @if (step.actedAt) {
-                      <time class="timeline-time">
-                        {{ formatDate(step.actedAt) }}
-                      </time>
-                    }
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
+          <ep-approval-steps
+            [steps]="approvalSteps()"
+            [currentStepIndex]="currentStepIndex()"
+            viewMode="vertical"
+            [compact]="true"
+            [showSlaBar]="true" />
         </div>
       </aside>
     </div>

@@ -25,6 +25,8 @@ Plan này là plan kế tiếp sau `UI_MODULE_FINANCE_BUDGET.md`. Rà soát code
 
 **Trạng thái triển khai 2026-06-13:** ✅ Slice 4a hoàn thành ở mức build: đã tạo shared component `ep-approval-steps` với horizontal/vertical compact modes, empty state, current-step highlight, status icon/tone, detail expansion, compact comments, SLA bar reuse, responsive layout, reduced-motion pulse và i18n `approval.steps.*`.
 
+**Trạng thái triển khai 2026-06-13:** ✅ Slice 4b hoàn thành ở mức build: Approval Detail đã có workflow overview full-width, sidebar process card dùng lại `ep-approval-steps` vertical compact thay timeline riêng, nút mở PR đầy đủ khi task là `PURCHASE_REQUEST`, và i18n `approvals.detail.processOverview/viewFullPr`.
+
 ---
 
 ## 1. Hiện trạng
