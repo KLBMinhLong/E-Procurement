@@ -207,6 +207,7 @@
     "profile": "Thông tin cá nhân",
     "uiShowcase": "Thư viện giao diện",
     "finance": {
+      "self": "Tài chính",
       "purchaseOrders": "Đơn mua hàng",
       "createPo": "Tạo đơn mua hàng",
       "poDetail": "Chi tiết đơn mua hàng",

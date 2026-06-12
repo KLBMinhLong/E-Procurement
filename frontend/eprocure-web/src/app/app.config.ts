@@ -94,6 +94,11 @@ import {
   LucideFilePlus,
   LucideScale,
   LucideAward,
+  LucideFileCheck2,
+  LucideScanSearch,
+  LucideBanknote,
+  LucideCalculator,
+  LucideCalendarClock,
   provideLucideConfig,
   provideLucideIcons
 } from '@lucide/angular';
@@ -220,7 +225,12 @@ export const appConfig: ApplicationConfig = {
       LucideXCircle,
       LucideFilePlus,
       LucideScale,
-      LucideAward
+      LucideAward,
+      LucideFileCheck2,
+      LucideScanSearch,
+      LucideBanknote,
+      LucideCalculator,
+      LucideCalendarClock
     ),
     provideLucideConfig({
       strokeWidth: 1.8,
