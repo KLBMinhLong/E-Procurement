@@ -5,9 +5,12 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../../core/http/api-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
+  CancelPurchaseOrderRequest,
   CreatePurchaseOrderRequest,
   PurchaseOrder,
-  PurchaseOrderListFilter
+  PurchaseOrderListFilter,
+  SendPurchaseOrderRequest,
+  UpdatePurchaseOrderDraftRequest
 } from '../models/purchase-order.model';
 
 @Injectable({ providedIn: 'root' })
@@ -42,6 +45,30 @@ export class PurchaseOrderService {
   create(request: CreatePurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
     return this.http.post<ApiResponse<PurchaseOrder>>(
       `${this.baseUrl}/purchase-orders`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  updateDraft(id: string, request: UpdatePurchaseOrderDraftRequest): Observable<ApiResponse<PurchaseOrder>> {
+    return this.http.patch<ApiResponse<PurchaseOrder>>(
+      `${this.baseUrl}/purchase-orders/${id}`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  send(id: string, request: SendPurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
+    return this.http.post<ApiResponse<PurchaseOrder>>(
+      `${this.baseUrl}/purchase-orders/${id}/send`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  cancel(id: string, request: CancelPurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
+    return this.http.patch<ApiResponse<PurchaseOrder>>(
+      `${this.baseUrl}/purchase-orders/${id}/cancel`,
       request,
       { withCredentials: true }
     );

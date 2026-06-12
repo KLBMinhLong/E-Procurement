@@ -7,7 +7,7 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -45,6 +45,7 @@ export class RfqCreateComponent implements OnInit {
   private readonly rfqService = inject(RfqService);
   private readonly vendorService = inject(VendorService);
   private readonly prService = inject(PurchaseRequestService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
@@ -56,6 +57,7 @@ export class RfqCreateComponent implements OnInit {
   readonly approvedPrs = signal<PurchaseRequestSummary[]>([]);
   readonly avlVendors = signal<VendorSummary[]>([]);
   readonly selectedVendorIds = signal<Set<string>>(new Set());
+  readonly sourcePr = signal<PurchaseRequestSummary | null>(null);
 
   readonly form: FormGroup = this.fb.group({
     prId: ['', Validators.required],
@@ -89,8 +91,10 @@ export class RfqCreateComponent implements OnInit {
       )
       .subscribe({
         next: ({ prs, vendors }) => {
-          this.approvedPrs.set(prs.data ?? []);
+          const approvedPrs = prs.data ?? [];
+          this.approvedPrs.set(approvedPrs);
           this.avlVendors.set(vendors.data ?? []);
+          this.applySourcePr(approvedPrs);
         }
       });
   }
@@ -161,5 +165,24 @@ export class RfqCreateComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/vendors/rfq']);
+  }
+
+  private applySourcePr(approvedPrs: PurchaseRequestSummary[]): void {
+    const sourcePrId = this.route.snapshot.queryParamMap.get('prId');
+    if (!sourcePrId) {
+      return;
+    }
+
+    const matchedPr = approvedPrs.find((pr) => pr.id === sourcePrId);
+    if (!matchedPr) {
+      this.toastService.warningKey('rfq.create.toast.sourcePrUnavailable');
+      return;
+    }
+
+    this.sourcePr.set(matchedPr);
+    this.form.patchValue({
+      prId: matchedPr.id,
+      title: this.form.value.title || `RFQ ${matchedPr.prNumber} - ${matchedPr.title}`
+    });
   }
 }

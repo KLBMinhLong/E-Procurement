@@ -75,6 +75,23 @@
   gap: var(--spacing-4);
 }
 
+.source-pr-note {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-2);
+  background: var(--color-accent-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+
+  ep-icon {
+    color: var(--color-accent);
+  }
+}
+
 .form-field--full,
 ep-form-field.form-field--full {
   grid-column: 1 / -1;

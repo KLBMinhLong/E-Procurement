@@ -623,7 +623,19 @@
         "subtitle": "Source PR {{prNumber}} · Vendor {{vendor}}",
         "action": {
           "back": "Back to PO list",
-          "refresh": "Reload"
+          "refresh": "Reload",
+          "editDraft": "Edit draft",
+          "saveDraft": "Save draft",
+          "send": "Send vendor",
+          "confirmSend": "Confirm send",
+          "cancelPo": "Cancel PO",
+          "confirmCancel": "Confirm cancel"
+        },
+        "actionHint": {
+          "noData": "PO data is not loaded.",
+          "notSendableStatus": "Only draft or approved POs can be sent.",
+          "waitingPrCallback": "PR conversion must be delivered before vendor dispatch.",
+          "missingVendorEmail": "This vendor has no email for PO delivery."
         },
         "stat": {
           "totalAmount": "Total amount",
@@ -641,8 +653,35 @@
           "vendorEmail": "Email",
           "vendorTaxCode": "Tax code",
           "deliveryAddress": "Delivery address",
+          "deliveryDeadline": "Delivery deadline",
           "paymentTerms": "Payment terms",
-          "officer": "Purchasing officer"
+          "officer": "Purchasing officer",
+          "additionalNote": "Vendor note",
+          "cancelReason": "Cancellation reason"
+        },
+        "placeholder": {
+          "deliveryAddress": "Enter the full receiving address",
+          "paymentTerms": "E.g. NET30",
+          "additionalNote": "Optional note to include in the vendor email",
+          "cancelReason": "Enter why this PO is being cancelled, minimum 10 characters"
+        },
+        "modal": {
+          "editTitle": "Update draft PO",
+          "editMessage": "Delivery address, deadline, and payment terms can be changed only while the PO is still in draft.",
+          "sendTitle": "Send PO to vendor",
+          "sendMessage": "Send this PO to {{vendor}} by email and publish the receiving event for warehouse operations.",
+          "cancelTitle": "Cancel purchase order",
+          "cancelMessage": "The PO will move to cancelled status. Use this only before receiving or invoice processing starts."
+        },
+        "validation": {
+          "required": "This field is required",
+          "maxLength": "The value is too long",
+          "cancelMinLength": "Cancellation reason must be at least 10 characters"
+        },
+        "toast": {
+          "updated": "Draft PO updated.",
+          "sent": "PO sent to vendor.",
+          "cancelled": "PO cancelled."
         },
         "line": {
           "lineNumber": "Line",
@@ -1598,6 +1637,7 @@
       "eyebrow": "New RFQ",
       "title": "Create RFQ",
       "subtitle": "Select an approved PR and invite at least two AVL vendors.",
+      "sourcePrNote": "Creating this RFQ from PR {{prNumber}}.",
       "section": {
         "rfq": "RFQ details",
         "vendors": "Invite vendors (AVL)"
@@ -1623,7 +1663,8 @@
         "deadlineFuture": "Submission deadline must be in the future."
       },
       "toast": {
-        "success": "RFQ created successfully."
+        "success": "RFQ created successfully.",
+        "sourcePrUnavailable": "The source PR is no longer available as an approved RFQ source."
       }
     }
   },

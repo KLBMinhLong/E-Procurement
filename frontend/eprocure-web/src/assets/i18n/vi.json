@@ -623,7 +623,19 @@
         "subtitle": "Nguồn PR {{prNumber}} · Nhà cung cấp {{vendor}}",
         "action": {
           "back": "Quay lại danh sách PO",
-          "refresh": "Tải lại"
+          "refresh": "Tải lại",
+          "editDraft": "Sửa nháp",
+          "saveDraft": "Lưu nháp",
+          "send": "Gửi NCC",
+          "confirmSend": "Xác nhận gửi",
+          "cancelPo": "Hủy PO",
+          "confirmCancel": "Xác nhận hủy"
+        },
+        "actionHint": {
+          "noData": "Chưa có dữ liệu PO.",
+          "notSendableStatus": "Chỉ PO nháp hoặc đã duyệt mới có thể gửi.",
+          "waitingPrCallback": "Cần đồng bộ PR thành công trước khi gửi NCC.",
+          "missingVendorEmail": "Nhà cung cấp chưa có email để nhận PO."
         },
         "stat": {
           "totalAmount": "Tổng giá trị",
@@ -641,8 +653,35 @@
           "vendorEmail": "Email",
           "vendorTaxCode": "Mã số thuế",
           "deliveryAddress": "Địa chỉ giao hàng",
+          "deliveryDeadline": "Hạn giao hàng",
           "paymentTerms": "Điều khoản thanh toán",
-          "officer": "Nhân sự mua hàng"
+          "officer": "Nhân sự mua hàng",
+          "additionalNote": "Ghi chú gửi NCC",
+          "cancelReason": "Lý do hủy"
+        },
+        "placeholder": {
+          "deliveryAddress": "Nhập địa chỉ nhận hàng chi tiết",
+          "paymentTerms": "VD: NET30",
+          "additionalNote": "Ghi chú sẽ được gửi kèm email cho NCC nếu cần",
+          "cancelReason": "Nhập lý do hủy PO, tối thiểu 10 ký tự"
+        },
+        "modal": {
+          "editTitle": "Cập nhật PO nháp",
+          "editMessage": "Chỉ có thể chỉnh địa chỉ giao hàng, hạn giao và điều khoản thanh toán khi PO còn ở trạng thái nháp.",
+          "sendTitle": "Gửi PO cho nhà cung cấp",
+          "sendMessage": "Gửi PO này cho {{vendor}} qua email và phát hành sự kiện nhận hàng cho kho.",
+          "cancelTitle": "Hủy đơn mua hàng",
+          "cancelMessage": "PO sẽ chuyển sang trạng thái đã hủy. Thao tác này chỉ nên dùng trước khi quá trình nhận hàng hoặc hóa đơn bắt đầu."
+        },
+        "validation": {
+          "required": "Thông tin này là bắt buộc",
+          "maxLength": "Nội dung quá dài",
+          "cancelMinLength": "Lý do hủy cần tối thiểu 10 ký tự"
+        },
+        "toast": {
+          "updated": "Đã cập nhật PO nháp.",
+          "sent": "Đã gửi PO cho nhà cung cấp.",
+          "cancelled": "Đã hủy PO."
         },
         "line": {
           "lineNumber": "Dòng",
@@ -1598,6 +1637,7 @@
       "eyebrow": "RFQ mới",
       "title": "Tạo RFQ",
       "subtitle": "Chọn PR đã duyệt và mời ít nhất hai NCC trong danh sách AVL.",
+      "sourcePrNote": "Đang tạo RFQ từ PR {{prNumber}}.",
       "section": {
         "rfq": "Thông tin RFQ",
         "vendors": "Mời nhà cung cấp (AVL)"
@@ -1623,7 +1663,8 @@
         "deadlineFuture": "Hạn nộp báo giá phải ở tương lai."
       },
       "toast": {
-        "success": "Đã tạo RFQ thành công."
+        "success": "Đã tạo RFQ thành công.",
+        "sourcePrUnavailable": "PR nguồn không còn trong danh sách đã duyệt để tạo RFQ."
       }
     }
   },

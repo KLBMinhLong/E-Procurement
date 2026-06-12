@@ -20,6 +20,13 @@
         </h2>
 
         <div class="form-grid">
+          @if (sourcePr(); as pr) {
+            <div class="source-pr-note">
+              <ep-icon name="git-branch" [size]="16" />
+              <span>{{ 'rfq.create.sourcePrNote' | translate: { prNumber: pr.prNumber } }}</span>
+            </div>
+          }
+
           <ep-form-field
             class="form-field--full"
             [label]="'rfq.create.field.pr' | translate"

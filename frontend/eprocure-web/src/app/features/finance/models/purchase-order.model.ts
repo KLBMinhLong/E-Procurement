@@ -83,6 +83,20 @@ export interface CreatePurchaseOrderRequest {
   notes?: string | null;
 }
 
+export interface UpdatePurchaseOrderDraftRequest {
+  deliveryAddress: string;
+  deliveryDeadline?: string | null;
+  paymentTerms?: string | null;
+}
+
+export interface SendPurchaseOrderRequest {
+  additionalNote?: string | null;
+}
+
+export interface CancelPurchaseOrderRequest {
+  reason: string;
+}
+
 export interface PurchaseOrderPage {
   data: PurchaseOrder[];
   meta: PageMeta;

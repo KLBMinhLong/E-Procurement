@@ -244,7 +244,7 @@
 | Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |
 | Frontend: Vendor Management | ✅ | 2026-06-08: `/vendors/list`, `/vendors/create`, `/vendors/:id` — i18n VI/EN, models khớp backend (`VendorSummary`/`VendorDetail`, address object, scorecard, AVL filter), approve modal + reload; bỏ deactivate (API chưa có) |
 | Frontend: RFQ Management | ✅ | 2026-06-08: `/vendors/rfq`, `/vendors/rfq/create`, `/vendors/rfq/:id` — list/detail/create, quotes từ `GET /rfq/{id}`, submit/evaluate/award/close, award reason ≥20 chars; i18n đầy đủ; `npm run build` pass |
-| Frontend: PR → RFQ handoff | ⬜ | PR detail chưa có nút "Tạo RFQ" cho PR APPROVED |
+| Frontend: PR → RFQ handoff | ✅ | 2026-06-12: PR detail có nút tạo RFQ cho PR APPROVED; `/vendors/rfq/create?prId=...` tự chọn PR nguồn, gợi ý tiêu đề, hiển thị source note; `npm run build` pass |
 | Frontend: Inventory/GR UI | ✅ | 2026-06-08: `/inventory/goods-receipts` list/create/detail — warehouse dropdown (`GET /warehouses` mới), PO page=1, complete modal DRAFT-only, i18n đầy đủ; Stock/catalog UI ⬜ |
 
 ### E07: Purchase Order
@@ -261,6 +261,7 @@
 | Vendor PO source contract | ✅ | `GET /internal/vendors/{id}/po-source`; vendor-service tests pass |
 | Manual PO create API | ✅ | `POST /api/v1/purchase-orders` creates DRAFT PO from approved PR + AVL vendor, stores callback outbox, exposes `prConversionStatus`, and blocks send until callback delivered |
 | Frontend: Manual PO create UI | ✅ | Angular `/finance/purchase-orders` list/detail/create screens, PR detail handoff, PO navigation/i18n; `npm run build` passes |
+| Frontend: PO detail actions | ✅ | 2026-06-12: PO detail hỗ trợ edit DRAFT delivery/payment terms, send to vendor khi PR callback DELIVERED + vendor email sẵn sàng, cancel trước fulfillment; permission-gated modals, i18n VI/EN; `npm run build` pass |
 
 ### E08: Goods Receipt & Inventory
 | Task | Status | Ghi chú |
