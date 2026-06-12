@@ -30,6 +30,8 @@ Plan này là plan kế tiếp sau `UI_MODULE_SHELL_NAV_UX.md`. Backend Finance 
 
 **Cập nhật 2026-06-13:** ✅ Slice 3d hoàn thành ở mức build: đã thêm action buttons có `*epHasPermission` cho `BUDGET_OVERRIDE` và `BUDGET_TRANSFER_APPROVE`, chỉ enable khi budget `ACTIVE`; Override modal validate UUID PR, amount > 0, currency, reason tối thiểu 50; Transfer modal validate target UUID, amount > 0 và <= available, target khác source, reason tối thiểu 20, có gợi ý target budgets ACTIVE cùng kỳ và fallback nhập UUID thủ công. Submit gọi PATCH public API, reload dashboard và toast success.
 
+**Cập nhật 2026-06-13:** ✅ Slice 3e hoàn thành và plan được chốt ở mức build: đã rà soát i18n key coverage cho Budget List/Detail/routes/nav trên `vi.json` và `en.json`, không còn missing key; `npm run build` pass. Chưa mở browser test theo yêu cầu trước đó.
+
 ---
 
 ## 1. Hiện trạng
