@@ -108,64 +108,104 @@
       [title]="'approvals.inbox.empty.title' | translate"
       [message]="'approvals.inbox.empty.message' | translate" />
   } @else {
-    <div class="inbox-table-wrapper">
-      <table class="inbox-table" role="grid" aria-labelledby="approval-inbox-heading">
-        <thead>
-          <tr>
-            <th scope="col">{{ 'approvals.inbox.col.number' | translate }}</th>
-            <th scope="col">{{ 'approvals.inbox.col.title' | translate }}</th>
-            <th scope="col">{{ 'approvals.inbox.col.priority' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'approvals.inbox.col.amount' | translate }}</th>
-            <th scope="col">{{ 'approvals.inbox.col.requester' | translate }}</th>
-            <th scope="col" class="sla-col">{{ 'approvals.inbox.col.deadline' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'approvals.inbox.col.assignedAt' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (task of items(); track task.taskId) {
-            <tr
-              [id]="'inbox-row-' + task.taskId"
-              class="inbox-table__row"
-              [class.inbox-table__row--overdue]="task.sla.isOverdue"
-              role="button"
-              tabindex="0"
-              (click)="onRowClick({ id: task.taskId })"
-              (keydown.enter)="onRowClick({ id: task.taskId })">
+    <div class="inbox-sections">
+      @for (section of inboxSections(); track section.name) {
+        <section
+          class="inbox-section"
+          [class.inbox-section--emergency]="section.name === 'emergency'"
+          [class.inbox-section--overdue]="section.name === 'overdue'"
+          [attr.aria-labelledby]="'inbox-section-title-' + section.name">
+          <button
+            type="button"
+            class="inbox-section__header"
+            [attr.aria-expanded]="sectionOpen(section.name)"
+            [attr.aria-controls]="'inbox-section-panel-' + section.name"
+            (click)="toggleSection(section.name)">
+            <span class="inbox-section__title">
+              <ep-icon [name]="section.icon" />
+              <span [id]="'inbox-section-title-' + section.name">{{ section.titleKey | translate }}</span>
+            </span>
+            <span
+              class="count-badge"
+              [class.count-badge--danger]="section.countTone === 'danger'"
+              [class.count-badge--warning]="section.countTone === 'warning'">
+              {{ section.tasks.length }}
+            </span>
+            <ep-icon [name]="sectionOpen(section.name) ? 'chevron-up' : 'chevron-down'" />
+          </button>
 
-              <td class="inbox-table__number">
-                <span class="mono">{{ task.entityNumber }}</span>
-              </td>
+          @if (sectionOpen(section.name)) {
+            <div
+              class="inbox-table-wrapper"
+              [id]="'inbox-section-panel-' + section.name">
+              <table class="inbox-table" role="grid" aria-labelledby="approval-inbox-heading">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'approvals.inbox.col.number' | translate }}</th>
+                    <th scope="col">{{ 'approvals.inbox.col.title' | translate }}</th>
+                    <th scope="col">{{ 'approvals.inbox.col.priority' | translate }}</th>
+                    <th scope="col" class="align-right">{{ 'approvals.inbox.col.amount' | translate }}</th>
+                    <th scope="col">{{ 'approvals.inbox.col.requester' | translate }}</th>
+                    <th scope="col" class="sla-col">{{ 'approvals.inbox.col.deadline' | translate }}</th>
+                    <th scope="col" class="align-right">{{ 'approvals.inbox.col.assignedAt' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (task of section.tasks; track task.taskId) {
+                    <tr
+                      [id]="'inbox-row-' + task.taskId"
+                      class="inbox-table__row"
+                      [class.inbox-table__row--overdue]="task.sla.isOverdue"
+                      role="button"
+                      tabindex="0"
+                      (click)="onRowClick({ id: task.taskId })"
+                      (keydown.enter)="onRowClick({ id: task.taskId })">
 
-              <td class="inbox-table__title">
-                <span class="inbox-table__title-text">{{ task.entityTitle }}</span>
-              </td>
+                      <td class="inbox-table__number">
+                        <span class="mono">{{ task.entityNumber }}</span>
+                      </td>
 
-              <td>
-                <ep-badge
-                  [tone]="priorityTone[task.priority] || 'neutral'"
-                  [labelKey]="task.priority ? 'pr.priority.' + task.priority : null" />
-              </td>
+                      <td class="inbox-table__title">
+                        <span class="inbox-table__title-text">{{ task.entityTitle }}</span>
+                      </td>
 
-              <td class="align-right">
-                <ep-amount [value]="task.totalAmount.amount" [currency]="task.totalAmount.currency || 'VND'" />
-              </td>
+                      <td>
+                        <ep-badge
+                          [tone]="priorityTone[task.priority] || 'neutral'"
+                          [labelKey]="task.priority ? 'pr.priority.' + task.priority : null" />
+                      </td>
 
-              <td class="inbox-table__requester">
-                <span class="inbox-table__requester-name">{{ task.requester.fullName }}</span>
-                <span class="inbox-table__requester-dept">{{ task.requester.department || ('user.noDepartment' | translate) }}</span>
-              </td>
+                      <td class="align-right">
+                        <ep-amount [value]="task.totalAmount.amount" [currency]="task.totalAmount.currency || 'VND'" />
+                      </td>
 
-              <td class="sla-col">
-                <ep-sla-bar [assignedAt]="task.assignedAt" [deadline]="task.sla.deadlineAt" />
-              </td>
+                      <td class="inbox-table__requester">
+                        <span class="inbox-table__requester-name">{{ task.requester.fullName }}</span>
+                        <span class="inbox-table__requester-dept">{{ task.requester.department || ('user.noDepartment' | translate) }}</span>
+                      </td>
 
-              <td class="align-right inbox-table__date">
-                {{ formatDate(task.assignedAt) }}
-              </td>
-            </tr>
+                      <td class="sla-col">
+                        <ep-sla-bar [assignedAt]="task.assignedAt" [deadline]="task.sla.deadlineAt" />
+                        <span class="sla-countdown" [class.sla-countdown--overdue]="task.sla.isOverdue">
+                          {{
+                            (task.sla.isOverdue
+                              ? 'approvals.inbox.sla.overdue'
+                              : 'approvals.inbox.sla.remaining') | translate: { hours: slaDisplayHours(task) }
+                          }}
+                        </span>
+                      </td>
+
+                      <td class="align-right inbox-table__date">
+                        {{ formatDate(task.assignedAt) }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           }
-        </tbody>
-      </table>
+        </section>
+      }
     </div>
 
     <!-- Pagination -->

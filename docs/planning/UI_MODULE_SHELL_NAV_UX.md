@@ -1,6 +1,21 @@
 # Kế hoạch UI — Shell Navigation & UX Gaps
 
-> **Mục tiêu:** Sửa các thiếu sót về navigation (sidebar thiếu mục Budget, Catalog), cải thiện UX của Approval Inbox (grouping, SLA visual), PR Create form (catalog autocomplete, budget indicator real-time), và GR Create form (PO line item prefill).
+> **Mục tiêu:** Chốt lại navigation sau Inventory, rồi cải thiện UX của Approval Inbox (grouping, SLA visual), PR Create form (catalog autocomplete inline), và GR Create form (quantity validation trên prefill hiện có). Budget nav/indicator chuyển sang plan Budget để đi cùng route/service thật.
+
+---
+
+## 0. Rà soát lại theo code hiện tại — 2026-06-12
+
+Plan này là plan kế tiếp sau Inventory. Một số giả định ban đầu đã thay đổi sau các slice Inventory:
+
+| Nhóm | Trạng thái thực tế | Điều chỉnh scope |
+|---|---|---|
+| 2a Shell nav | `/inventory/catalog` đã có trong sidebar bằng `nav.inventoryCatalog`; `/finance/budgets` route chưa tồn tại | Không thêm nav Budget một mình để tránh dead link. Budget nav sẽ đi cùng plan `UI_MODULE_FINANCE_BUDGET.md` khi tạo route. |
+| 2b Approval Inbox | Inbox vẫn là table phẳng; đã có stat total/overdue/emergency và `EpSlaBarComponent` | Giữ scope grouping + SLA countdown, dùng icon đã đăng ký (`shield-alert`, `alarm-clock`, `inbox`) thay vì thêm icon mới nếu không cần. |
+| 2c PR Create | Đã có Catalog Picker Modal và `CatalogService.searchItems()`; chưa có inline autocomplete; budget indicator chưa có service public trong FE | Làm inline autocomplete trước. Budget indicator chỉ làm sau khi có `BudgetService` public từ plan Budget; không gọi `/internal/budgets/check` từ Angular. |
+| 2d GR Create | Đã prefill line items khi chọn PO từ dữ liệu `PurchaseOrderService.list()`; received default hiện là `0` | Không rebuild full flow. Chỉ polish: validate `received + rejected <= ordered`, hiển thị cảnh báo rõ, dùng `getById()` nếu list response thiếu lineItems. |
+
+**Thứ tự đề xuất cho plan này:** 2b → 2c → 2d. Nhóm 2a chỉ còn là checklist/no-op cho catalog nav; Budget nav chuyển sang plan Budget.
 
 ---
 
@@ -23,6 +38,8 @@ readonly navItems = computed<NavigationItem[]>(() => [
     permissions: ['RFQ_VIEW', 'RFQ_CREATE'] },
   { icon: 'package',           labelKey: 'nav.inventory',            route: '/inventory',
     permissions: ['GR_VIEW', 'GR_CREATE', 'GR_ISSUE_OUT', 'ADMIN_CATALOG_MANAGE'] },
+  { icon: 'boxes',             labelKey: 'nav.inventoryCatalog',     route: '/inventory/catalog',
+    permissions: ['GR_VIEW', 'ADMIN_CATALOG_MANAGE'] },
   { icon: 'receipt-text',      labelKey: 'nav.purchaseOrders',       route: '/finance/purchase-orders',
     permissions: ['PO_VIEW_OWN', 'PO_VIEW_ALL', 'PO_CREATE'] },
   { icon: 'file-check-2',      labelKey: 'nav.invoices',             route: '/finance/invoices',
@@ -42,35 +59,30 @@ readonly navItems = computed<NavigationItem[]>(() => [
 ].filter(item => this.permissionService.hasAnyPermission(item.permissions)));
 ```
 
-### 1.2 Mục thiếu
+### 1.2 Mục thiếu sau rà soát
 
 | Route | Icon | labelKey | Permissions |
 |---|---|---|---|
 | `/finance/budgets` | `wallet-cards` | `nav.budgets` | `BUDGET_VIEW_OWN_DEPT`, `BUDGET_VIEW_ALL` |
-| `/inventory/catalog` | `boxes` | `nav.catalog` | `ADMIN_CATALOG_MANAGE`, `GR_VIEW` |
 
-**Vị trí chèn vào:**
-- `/finance/budgets` chèn sau `/finance/invoices` (cùng nhóm Finance)
-- `/inventory/catalog` chèn sau `/inventory` (cùng nhóm Inventory)
+`/inventory/catalog` không còn thiếu. Không đổi sang `nav.catalog` vì i18n hiện đang dùng `nav.inventoryCatalog` nhất quán với route breadcrumb `route.inventory.catalog`.
+
+**Lưu ý quan trọng:** `/finance/budgets` chưa có route/component trong `finance.routes.ts`. Không thêm nav entry trỏ tới route chưa tồn tại trong plan này.
 
 ### 1.3 Thay đổi cần làm
 
-**Thêm 2 entries vào `navItems` trong `shell.component.ts`:**
+**Không thực hiện ngay trong plan #2 nếu chưa tạo route Budget.**
+
+Khi làm plan `UI_MODULE_FINANCE_BUDGET.md`, thêm entry sau `/finance/invoices` cùng lúc với routes `finance/budgets` và `finance/budgets/:id`:
 
 ```typescript
-// Sau '/finance/invoices':
 { icon: 'wallet-cards', labelKey: 'nav.budgets', route: '/finance/budgets',
   permissions: ['BUDGET_VIEW_OWN_DEPT', 'BUDGET_VIEW_ALL'] },
-
-// Sau '/inventory' (route: '/inventory'):
-{ icon: 'boxes', labelKey: 'nav.catalog', route: '/inventory/catalog',
-  permissions: ['ADMIN_CATALOG_MANAGE', 'GR_VIEW'] },
 ```
 
 **Thêm vào i18n:**
 ```json
-"nav.budgets": "Ngân sách",
-"nav.catalog": "Danh mục vật tư"
+"nav.budgets": "Ngân sách"
 ```
 
 ---
@@ -100,7 +112,7 @@ readonly navItems = computed<NavigationItem[]>(() => [
 @if (emergencyTasks().length) {
   <div class="inbox-section inbox-section--emergency">
     <button class="inbox-section__header" (click)="toggleSection('emergency')">
-      <ep-icon name="siren" />
+      <ep-icon name="shield-alert" />
       <h2>{{ 'approvals.inbox.section.emergency' | translate }}</h2>
       <span class="count-badge count-badge--danger">{{ emergencyTasks().length }}</span>
       <ep-icon [name]="sectionOpen('emergency') ? 'chevron-up' : 'chevron-down'" />
@@ -178,7 +190,7 @@ Thêm text countdown bên cạnh `ep-sla-bar`:
   <ep-sla-bar [assignedAt]="task.assignedAt" [deadline]="task.sla.deadlineAt" />
   <span class="sla-countdown" [class.sla-countdown--overdue]="task.sla.isOverdue">
     @if (task.sla.isOverdue) {
-      {{ 'approvals.inbox.sla.overdue' | translate: { hours: Math.abs(slaRemainingHours(task)) } }}
+      {{ 'approvals.inbox.sla.overdue' | translate: { hours: absHours(slaRemainingHours(task)) } }}
     } @else {
       {{ 'approvals.inbox.sla.remaining' | translate: { hours: slaRemainingHours(task) } }}
     }
@@ -188,9 +200,15 @@ Thêm text countdown bên cạnh `ep-sla-bar`:
 
 ```typescript
 slaRemainingHours(task: ApprovalTaskSummary): number {
+  if (task.sla.remainingHours !== null && task.sla.remainingHours !== undefined) {
+    return task.sla.remainingHours;
+  }
   const deadline = new Date(task.sla.deadlineAt).getTime();
-  const now = Date.now();
-  return Math.round((deadline - now) / (1000 * 60 * 60));
+  return Math.round((deadline - Date.now()) / (1000 * 60 * 60));
+}
+
+absHours(value: number): number {
+  return Math.abs(value);
 }
 ```
 
@@ -199,8 +217,8 @@ slaRemainingHours(task: ApprovalTaskSummary): number {
 "approvals.inbox.section.emergency": "Khẩn cấp",
 "approvals.inbox.section.overdue": "Quá hạn",
 "approvals.inbox.section.normal": "Bình thường",
-"approvals.inbox.sla.remaining": "Còn {hours}h",
-"approvals.inbox.sla.overdue": "Trễ {hours}h"
+"approvals.inbox.sla.remaining": "Còn {{hours}}h",
+"approvals.inbox.sla.overdue": "Trễ {{hours}}h"
 ```
 
 ---
@@ -289,7 +307,7 @@ onItemNameInput(index: number, value: string): void {
     return;
   }
   // Debounce 300ms
-  this.catalogService.search(value)
+  this.catalogService.searchItems({ q: value, size: 8 })
     .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe(res => {
       this.autocompleteItemsMap.update(m => { m.set(index, res.data?.slice(0, 8) ?? []); return new Map(m); });
@@ -302,9 +320,9 @@ selectAutocompleteItem(index: number, item: CatalogItem): void {
   group.patchValue({
     itemName: item.name,
     categoryCode: item.categoryCode,
-    glAccountCode: item.glAccountCode ?? '',
-    quantityUnit: item.defaultUnit ?? '',
-    unitPriceAmount: item.unitPrice?.amount ?? ''
+    quantityUnit: item.unit,
+    unitPriceAmount: item.unitPrice.amount,
+    isFromCatalog: true
   });
   this.autocompleteOpenMap.update(m => { m.set(index, false); return new Map(m); });
 }
@@ -312,7 +330,9 @@ selectAutocompleteItem(index: number, item: CatalogItem): void {
 
 **Debounce:** 300ms — tránh gọi API mỗi keystroke.
 
-### 3.3 Cải thiện 2 — Budget Remaining Indicator
+`glAccountCode` vẫn để người dùng nhập/chọn theo form hiện tại vì `CatalogItem` của PR service chưa trả GL account.
+
+### 3.3 Deferred — Budget Remaining Indicator
 
 **Thêm vào sidebar summary card (đã có):**
 ```html
@@ -363,7 +383,7 @@ readonly budgetUsageAfterThisPr = computed(() => {
 });
 ```
 
-**Load:** Gọi `GET /internal/budgets/check` (hoặc public GET nếu có) khi component init, dùng user's departmentId từ AuthService.
+**Load:** Không gọi `/internal/budgets/check` từ Angular. Indicator này chỉ thực hiện sau khi plan Budget tạo `BudgetService` dùng public API `GET /budgets` hoặc `GET /budgets/{id}/dashboard` với permission `BUDGET_VIEW_OWN_DEPT | BUDGET_VIEW_ALL`.
 
 **Lưu ý:** Budget check trong PR create chỉ là **indicator**, không chặn submit. Backend mới là source of truth khi submit.
 
@@ -382,16 +402,13 @@ readonly budgetUsageAfterThisPr = computed(() => {
 
 **File:** `features/inventory/pages/gr-create/`
 
-Dựa theo progress tracker: GR Create đã có PO dropdown (từ `GET /warehouses` và PO page=1). Nhưng cần kiểm tra: khi chọn PO, form có tự điền line items không?
+Hiện tại GR Create đã có PO dropdown và đã prefill line items từ `PurchaseOrderService.list({ page: 1, size: 100 })`. Khi chọn PO, form tạo rows gồm `poLineItemId`, item name, ordered quantity, unit, unit price, currency, received/rejected quantity, rejection reason, lot number.
 
 **Vấn đề cần giải quyết:**
 
-Khi user chọn PO ID trong GR create form → load `GET /purchase-orders/{poId}` → lấy `lineItems` → prefill GR line items với:
-- `itemName` từ PO line
-- `orderedQuantity` = `poLine.quantity.amount` (để user biết PO order bao nhiêu)
-- `acceptedQuantity` default = `orderedQuantity` (user có thể giảm xuống nếu nhận thiếu)
-- `unit` từ PO line
-- Input `rejectedQuantity` mặc định = 0
+- Thiếu validation tổng `receivedQuantity + rejectedQuantity <= orderedQuantity`.
+- `receivedQuantity` đang default `0`; giữ nguyên để tránh vô tình submit full receipt, trừ khi người dùng chủ động nhập.
+- Nếu sau này `GET /purchase-orders` không trả `lineItems` đầy đủ, dùng fallback `PurchaseOrderService.getById(poId)`.
 
 ### 4.2 Thiết kế prefill flow
 
@@ -407,7 +424,7 @@ Khi user chọn PO ID trong GR create form → load `GET /purchase-orders/{poId}
       <div class="gr-table-header">
         <span>{{ 'inventory.gr.create.col.item' | translate }}</span>
         <span>{{ 'inventory.gr.create.col.ordered' | translate }}</span>
-        <span>{{ 'inventory.gr.create.col.accepted' | translate }}</span>
+        <span>{{ 'inventory.gr.create.col.received' | translate }}</span>
         <span>{{ 'inventory.gr.create.col.rejected' | translate }}</span>
         <span>{{ 'inventory.gr.create.col.rejectReason' | translate }}</span>
       </div>
@@ -420,7 +437,7 @@ Khi user chọn PO ID trong GR create form → load `GET /purchase-orders/{poId}
           <span class="ordered-qty mono">
             {{ poLineItems()[$index]?.quantity?.amount }} {{ poLineItems()[$index]?.quantity?.unit }}
           </span>
-          <input type="number" formControlName="acceptedQuantity" class="ep-input mono"
+          <input type="number" formControlName="receivedQuantity" class="ep-input mono"
             min="0" [max]="poLineItems()[$index]?.quantity?.amount">
           <input type="number" formControlName="rejectedQuantity" class="ep-input mono" min="0">
           <input type="text" formControlName="rejectionReason" class="ep-input"
@@ -432,22 +449,17 @@ Khi user chọn PO ID trong GR create form → load `GET /purchase-orders/{poId}
 }
 ```
 
-**State mới:**
+**State cần thêm/chỉnh nhẹ:**
 ```typescript
-readonly poLineItems = signal<PoLineItem[]>([]);
 readonly isLoadingPoLines = signal(false);
 
 onPoSelect(poId: string): void {
-  this.isLoadingPoLines.set(true);
-  this.poService.getById(poId)
-    .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isLoadingPoLines.set(false)))
-    .subscribe({
-      next: (res) => {
-        const lines = res.data?.lineItems ?? [];
-        this.poLineItems.set(lines);
-        this.prefillGrLines(lines);
-      }
-    });
+  const po = this.pos().find((candidate) => candidate.id === poId);
+  if (po?.lineItems?.length) {
+    this.prefillGrLines(po);
+    return;
+  }
+  // Fallback: load detail only when list response does not carry lineItems.
 }
 
 private prefillGrLines(poLines: PoLineItem[]): void {
@@ -458,7 +470,7 @@ private prefillGrLines(poLines: PoLineItem[]): void {
   for (const line of poLines) {
     this.grLineItems.push(this.fb.group({
       poLineItemId: [line.id, Validators.required],
-      acceptedQuantity: [line.quantity?.amount ?? 0, [Validators.required, Validators.min(0)]],
+      receivedQuantity: [0, [Validators.required, Validators.min(0)]],
       rejectedQuantity: [0, [Validators.required, Validators.min(0)]],
       rejectionReason: [''],
       lotNumber: ['']
@@ -467,12 +479,12 @@ private prefillGrLines(poLines: PoLineItem[]): void {
 }
 ```
 
-**Validation:** `acceptedQuantity + rejectedQuantity ≤ orderedQuantity` — cảnh báo nếu nhận nhiều hơn order.
+**Validation:** `receivedQuantity + rejectedQuantity <= orderedQuantity` — chặn submit và hiển thị lỗi nếu nhận/từ chối nhiều hơn số đặt.
 
 ### 4.3 i18n keys
 ```json
 "inventory.gr.create.col.ordered": "SL đặt",
-"inventory.gr.create.col.accepted": "SL chấp nhận",
+"inventory.gr.create.col.received": "SL nhận",
 "inventory.gr.create.col.rejected": "SL từ chối",
 "inventory.gr.create.col.rejectReason": "Lý do từ chối",
 "inventory.gr.create.col.rejectReasonPlaceholder": "Hàng hỏng, sai chủng loại...",
@@ -485,12 +497,12 @@ private prefillGrLines(poLines: PoLineItem[]): void {
 
 | File | Loại thay đổi | Mức độ |
 |---|---|---|
-| `layout/shell/shell.component.ts` | Thêm 2 navItems | Nhỏ |
+| `layout/shell/shell.component.ts` | Không đổi trong plan này nếu chưa tạo Budget route; catalog nav đã có | No-op |
 | `features/approvals/pages/approval-inbox/approval-inbox.component.html` | Thêm section grouping | Trung bình |
 | `features/approvals/pages/approval-inbox/approval-inbox.component.ts` | Thêm 3 computed + toggleSection | Nhỏ |
-| `features/procurement/pages/pr-create/pr-create.component.html` | Thêm autocomplete dropdown + budget indicator | Trung bình |
-| `features/procurement/pages/pr-create/pr-create.component.ts` | Thêm autocomplete state + budget load | Trung bình |
-| `features/inventory/pages/gr-create/*` | Thêm PO line prefill + formArray | Trung bình |
+| `features/procurement/pages/pr-create/pr-create.component.html` | Thêm autocomplete dropdown; giữ catalog modal hiện có | Trung bình |
+| `features/procurement/pages/pr-create/pr-create.component.ts` | Thêm autocomplete state/debounce; budget indicator deferred | Trung bình |
+| `features/inventory/pages/gr-create/*` | Polish prefill hiện có, thêm over-quantity validation | Nhỏ |
 | `assets/i18n/vi.json` + `en.json` | Thêm ~20 keys mới | Nhỏ |
 
 ---
@@ -500,6 +512,6 @@ private prefillGrLines(poLines: PoLineItem[]): void {
 - Autocomplete dropdown: dùng `mousedown` (không phải `click`) để không trigger `blur` trước khi chọn
 - Autocomplete debounce: 300ms — implement bằng `Subject + debounceTime(300) + switchMap` hoặc đơn giản hơn bằng `setTimeout`
 - Budget indicator trong PR create: chỉ informational — không chặn submit
-- GR prefill: `formArray` phải re-build mỗi khi chọn PO mới
+- GR prefill: `formArray` đã re-build khi chọn PO mới; bổ sung validation tổng quantity trước khi submit
 - Section grouping trong Approval Inbox: giữ nguyên filter chips hiện tại — grouping là additional layer trên top của filtered results
 - Tất cả thay đổi backward-compatible: không xóa tính năng cũ, chỉ thêm/cải thiện

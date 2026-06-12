@@ -335,12 +335,12 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
 
 ### Slice 8: E2E/runtime hardening
 
-- Cập nhật smoke path nếu thêm issue-out/catalog/adjustment vào user flow.
-- Chạy tối thiểu:
+- [x] Bỏ qua trong plan Inventory theo quyết định 2026-06-12 để chuyển sang plan tiếp theo.
+- Runtime smoke/hardening không bị xóa; chuyển sang E2E/runtime hardening chung sau các UI plan ưu tiên.
+- Baseline verify cuối đã có ở Slice 7:
   - `mvn -pl services/inventory-service test`
   - `npm run build` trong `frontend/eprocure-web`
   - `git diff --check`
-- Nếu cần verify runtime: chạy smoke qua gateway với user có `WAREHOUSE`/`SUPER_ADMIN`, không test protected route khi chưa có authenticated session.
 
 ## 11. Definition of Done cho module Inventory
 

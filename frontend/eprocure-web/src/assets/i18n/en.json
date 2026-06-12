@@ -1555,14 +1555,23 @@
         "emergency": "Critical",
         "hint": "Need Action"
       },
-      "filter": {
-        "placeholder": "Search request code, title...",
-        "allStatus": "All Statuses",
-        "allPriority": "All Priorities",
-        "allTypes": "All Request Types",
-        "overdueOnly": "Overdue Only"
-      },
-      "empty": {
+        "filter": {
+          "placeholder": "Search request code, title...",
+          "allStatus": "All Statuses",
+          "allPriority": "All Priorities",
+          "allTypes": "All Request Types",
+          "overdueOnly": "Overdue Only"
+        },
+        "section": {
+          "emergency": "Emergency",
+          "overdue": "Overdue",
+          "normal": "Normal"
+        },
+        "sla": {
+          "remaining": "{{hours}}h remaining",
+          "overdue": "{{hours}}h late"
+        },
+        "empty": {
         "title": "Inbox is empty",
         "message": "Excellent! No tasks are awaiting your approval right now."
       },

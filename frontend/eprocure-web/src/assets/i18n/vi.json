@@ -1556,14 +1556,23 @@
         "emergency": "Nghiêm trọng",
         "hint": "Cần xử lý"
       },
-      "filter": {
-        "placeholder": "Tìm mã yêu cầu, tiêu đề...",
-        "allStatus": "Tất cả trạng thái",
-        "allPriority": "Tất cả độ ưu tiên",
-        "allTypes": "Tất cả loại yêu cầu",
-        "overdueOnly": "Chỉ quá hạn"
-      },
-      "empty": {
+        "filter": {
+          "placeholder": "Tìm mã yêu cầu, tiêu đề...",
+          "allStatus": "Tất cả trạng thái",
+          "allPriority": "Tất cả độ ưu tiên",
+          "allTypes": "Tất cả loại yêu cầu",
+          "overdueOnly": "Chỉ quá hạn"
+        },
+        "section": {
+          "emergency": "Khẩn cấp",
+          "overdue": "Quá hạn",
+          "normal": "Bình thường"
+        },
+        "sla": {
+          "remaining": "Còn {{hours}}h",
+          "overdue": "Trễ {{hours}}h"
+        },
+        "empty": {
         "title": "Hộp thư trống",
         "message": "Tuyệt vời! Không có nhiệm vụ nào cần bạn phê duyệt lúc này."
       },

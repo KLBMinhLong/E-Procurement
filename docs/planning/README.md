@@ -9,9 +9,9 @@
 
 | # | File | Module | Trạng thái | Phụ thuộc |
 |---|---|---|---|---|
-| 1 | `UI_MODULE_INVENTORY.md` | Inventory Catalog UI (Slice 5–8) | 🔄 **Đang làm** | — |
-| 2 | `UI_MODULE_SHELL_NAV_UX.md` | Shell Nav + UX Gaps | ⬜ Tiếp theo | Inventory catalog route cần có trước khi thêm nav entry |
-| 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | ⬜ Chờ | Cần nav entry từ #2 |
+| 1 | `UI_MODULE_INVENTORY.md` | Inventory Catalog UI (Slice 5–8) | ✅ Hoàn thành | Slice 8 runtime hardening được chuyển sang E2E hardening chung theo quyết định 2026-06-12 |
+| 2 | `UI_MODULE_SHELL_NAV_UX.md` | Shell Nav + UX Gaps | 🔄 **Sẵn sàng thực hiện** | Inventory catalog route đã có |
+| 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | ⬜ Chờ | Tạo Budget route và nav entry cùng lúc |
 | 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | ⬜ Chờ | Không phụ thuộc — standalone |
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ⬜ Chờ | Nên làm sau #4 (dùng chung ep-approval-steps) |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ⬜ Chờ | Cần GoodsReceiptService đã ổn định từ #1 |
@@ -22,10 +22,10 @@
 
 ## Thứ tự thực hiện
 
-### 🔄 Đang làm
+### ✅ Đã hoàn thành
 
 #### 1. `UI_MODULE_INVENTORY.md` — Inventory Catalog UI
-**Slice đang làm:** Slice 5 trở đi (Slice 0–4 đã hoàn thành theo progress-tracker).
+**Trạng thái:** hoàn thành plan này theo quyết định 2026-06-12; Slice 8 không block UI roadmap và được chuyển sang E2E/runtime hardening chung.
 
 | Slice | Nội dung | Backend | Status |
 |---|---|---|---|
@@ -37,34 +37,34 @@
 | **Slice 5** | **Catalog UI: `/inventory/catalog` + `/inventory/catalog/:itemCode`** | ✅ | ✅ |
 | Slice 6 | GR draft edit backend + UI (`PUT /goods-receipts/{id}`) | ✅ | ✅ |
 | Slice 7 | Stock Adjustment backend + UI (`POST /stock/adjustment`) | ✅ | ✅ |
-| Slice 8 | E2E / runtime hardening | ⬜ | ⬜ |
+| Slice 8 | E2E / runtime hardening | ↪ | Bỏ qua trong plan này |
 
 **Mục tiêu hoàn thành:** Warehouse user và Admin catalog manager có thể thao tác end-to-end không cần dùng DB trực tiếp.
 
 ---
 
-### ⬜ Tiếp theo — theo thứ tự ưu tiên
+### 🔄 Sẵn sàng thực hiện — theo thứ tự ưu tiên
 
 ---
 
 #### 2. `UI_MODULE_SHELL_NAV_UX.md` — Shell Navigation & UX Gaps
-**Làm ngay sau khi `/inventory/catalog` route tồn tại.**
+**Plan kế tiếp.** `/inventory/catalog` route đã tồn tại; cần rà soát lại scope để không tạo nav dead-link hoặc làm trùng phần đã có.
 
 Gồm 4 nhóm thay đổi nhỏ, độc lập, có thể làm theo thứ tự bất kỳ:
 
 | Nhóm | Thay đổi | File chính |
 |---|---|---|
-| 2a | Thêm `nav.budgets` và `nav.catalog` vào sidebar | `shell.component.ts` |
+| 2a | Verify catalog nav đã có; defer Budget nav đến plan #3 để tránh dead link | `shell.component.ts` |
 | 2b | Approval Inbox: section grouping Emergency/Overdue/Normal + SLA countdown | `approval-inbox.component.*` |
-| 2c | PR Create: autocomplete catalog inline + budget remaining indicator | `pr-create.component.*` |
-| 2d | GR Create: PO line item prefill khi chọn PO | `gr-create.*` |
+| 2c | PR Create: autocomplete catalog inline; budget indicator deferred đến plan Budget | `pr-create.component.*` |
+| 2d | GR Create: polish prefill hiện có + validate received/rejected không vượt ordered | `gr-create.*` |
 
-**Lý do ưu tiên:** Sidebar nav là điểm vào cho Budget và Catalog — cần có trước khi làm module Budget và để Catalog UI vừa xây có thể truy cập được. Các UX gap còn lại (2b, 2c, 2d) nhỏ, ít rủi ro, tăng trải nghiệm ngay lập tức.
+**Lý do ưu tiên:** Catalog UI đã có điểm vào; plan này xử lý các UX gap nhỏ, ít rủi ro. Budget nav sẽ được thêm cùng Budget route trong plan #3 để không tạo liên kết hỏng.
 
 ---
 
 #### 3. `UI_MODULE_FINANCE_BUDGET.md` — Finance Budget Management
-**Làm sau khi nav entry `nav.budgets` đã có (từ bước 2a).**
+**Làm sau plan #2.** Tạo Budget route và `nav.budgets` trong cùng slice đầu tiên của plan này.
 
 Tạo hoàn toàn mới — không có code cũ để sửa:
 
