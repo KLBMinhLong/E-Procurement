@@ -32,6 +32,10 @@ const PATH_MAP: Record<string, string> = {
   '/inventory': 'route.inventory.self',
   '/inventory/goods-receipts': 'route.inventory.gr.list',
   '/inventory/goods-receipts/create': 'route.inventory.gr.create',
+  '/inventory/stock': 'route.inventory.stock',
+  '/inventory/stock/movements': 'route.inventory.movements',
+  '/inventory/issue-out': 'route.inventory.issueOut',
+  '/inventory/catalog': 'route.inventory.catalog',
   '/finance': 'route.finance.self',
   '/finance/purchase-orders': 'route.finance.purchaseOrders',
   '/finance/purchase-orders/create': 'route.finance.createPo',
@@ -87,6 +91,8 @@ export class EpBreadcrumbComponent {
           labelKey = 'route.vendor.detail';
         } else if (/^\/inventory\/goods-receipts\/[^/]+$/.test(path) && segment !== 'create') {
           labelKey = 'route.inventory.gr.detail';
+        } else if (/^\/inventory\/catalog\/[^/]+$/.test(path)) {
+          labelKey = 'route.inventory.catalogDetail';
         } else if (/^\/finance\/purchase-orders\/[^/]+$/.test(path) && segment !== 'create') {
           labelKey = 'route.finance.poDetail';
         } else if (/^\/finance\/invoices\/[^/]+$/.test(path) && segment !== 'create') {

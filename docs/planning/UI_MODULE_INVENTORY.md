@@ -317,10 +317,10 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
 
 ### Slice 5: Catalog UI
 
-- Thêm `/inventory/catalog` và `/inventory/catalog/:itemCode`.
-- Thêm `CatalogService`, models, list/detail/create/edit modal/page.
-- Permission gate `ADMIN_CATALOG_MANAGE` cho mutation.
-- Verify: `npm run build`.
+- [x] Thêm `/inventory/catalog` và `/inventory/catalog/:itemCode`.
+- [x] Thêm `CatalogService`, models, list/detail/create/edit modal/page.
+- [x] Permission gate `ADMIN_CATALOG_MANAGE` cho mutation, read route dùng `GR_VIEW` theo backend.
+- [x] Verify: `npm run build`, i18n JSON parse.
 
 ### Slice 6: GR draft edit backend + UI
 

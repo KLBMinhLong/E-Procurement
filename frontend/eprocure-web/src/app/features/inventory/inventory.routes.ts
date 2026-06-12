@@ -54,5 +54,21 @@ export const inventoryRoutes: Routes = [
     canActivate: [permissionGuard],
     data: { requiredPermissions: ['GR_ISSUE_OUT'] },
     title: 'route.inventory.issueOut'
+  },
+  {
+    path: 'catalog',
+    loadComponent: () =>
+      import('./pages/catalog-list/catalog-list').then((m) => m.CatalogListComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['GR_VIEW'] },
+    title: 'route.inventory.catalog'
+  },
+  {
+    path: 'catalog/:itemCode',
+    loadComponent: () =>
+      import('./pages/catalog-detail/catalog-detail').then((m) => m.CatalogDetailComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['GR_VIEW'] },
+    title: 'route.inventory.catalogDetail'
   }
 ];

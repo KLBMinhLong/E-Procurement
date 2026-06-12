@@ -413,7 +413,8 @@
       "stock": "Bảng tồn kho",
       "movements": "Lịch sử biến động kho",
       "issueOut": "Xuất kho nội bộ",
-      "catalog": "Catalog hàng hóa"
+      "catalog": "Catalog hàng hóa",
+      "catalogDetail": "Chi tiết catalog"
     }
   },
   "shared": {
@@ -2353,8 +2354,111 @@
       "catalog": {
         "eyebrow": "Master data kho",
         "title": "Catalog hàng hóa",
-        "subtitle": "Quản lý item master của inventory-service sau khi backend catalog được bật.",
-        "planned": "Catalog CRUD cần backend item API trước khi bật UI."
+        "subtitle": "Quản lý item master, giá chuẩn, điểm đặt hàng lại và tồn hiện có theo kho.",
+        "summary": {
+          "label": "Tổng quan catalog",
+          "active": "Đang hoạt động",
+          "inactive": "Ngưng dùng",
+          "belowReorder": "Dưới reorder",
+          "categories": "Danh mục"
+        },
+        "filter": {
+          "search": "Tìm kiếm",
+          "searchPlaceholder": "Mã hàng hoặc tên hàng",
+          "category": "Danh mục",
+          "categoryPlaceholder": "VD: IT, OFFICE",
+          "status": "Trạng thái",
+          "allStatus": "Tất cả",
+          "belowReorder": "Dưới điểm đặt hàng",
+          "clear": "Xóa lọc"
+        },
+        "col": {
+          "itemCode": "Mã hàng",
+          "name": "Tên hàng",
+          "category": "Danh mục",
+          "unitPrice": "Đơn giá",
+          "stock": "Tồn",
+          "reorderPoint": "Reorder",
+          "status": "Trạng thái"
+        },
+        "status": {
+          "active": "Đang dùng",
+          "inactive": "Ngưng dùng",
+          "belowReorder": "Dưới reorder"
+        },
+        "action": {
+          "create": "Tạo item",
+          "edit": "Sửa",
+          "view": "Xem",
+          "movements": "Lịch sử kho"
+        },
+        "form": {
+          "itemCode": "Mã hàng",
+          "name": "Tên hàng",
+          "description": "Mô tả",
+          "categoryCode": "Mã danh mục",
+          "unit": "ĐVT",
+          "unitPrice": "Đơn giá",
+          "currency": "Tiền tệ",
+          "preferredVendorId": "NCC ưu tiên",
+          "reorderPoint": "Điểm đặt hàng lại",
+          "active": "Item đang hoạt động"
+        },
+        "modal": {
+          "createTitle": "Tạo item catalog",
+          "editTitle": "Sửa item catalog"
+        },
+        "validation": {
+          "required": "Trường này là bắt buộc.",
+          "maxLength": "Giá trị vượt quá độ dài cho phép.",
+          "numeric": "Chỉ nhập số không âm, tối đa 4 chữ số thập phân.",
+          "invalid": "Vui lòng kiểm tra lại thông tin."
+        },
+        "empty": {
+          "title": "Chưa có item",
+          "message": "Catalog chưa có dữ liệu phù hợp với bộ lọc hiện tại."
+        },
+        "toast": {
+          "loadFailed": "Không thể tải catalog.",
+          "createSuccess": "Đã tạo item catalog.",
+          "createFailed": "Không thể tạo item catalog.",
+          "updateSuccess": "Đã cập nhật item catalog.",
+          "updateFailed": "Không thể cập nhật item catalog."
+        },
+        "totalItems": "item",
+        "detail": {
+          "eyebrow": "Chi tiết item",
+          "action": {
+            "back": "Quay lại catalog"
+          },
+          "summary": {
+            "itemCode": "Mã hàng",
+            "totalStock": "Tổng tồn",
+            "warehouses": "Kho có tồn"
+          },
+          "section": {
+            "info": "Thông tin item",
+            "stockSummary": "Tồn theo kho",
+            "workflow": "Quyền & nguồn dữ liệu"
+          },
+          "stock": {
+            "count": "{{count}} dòng tồn",
+            "emptyTitle": "Chưa có tồn kho",
+            "emptyMessage": "Item này chưa phát sinh nhận/xuất trong kho nào.",
+            "warehouse": "Kho",
+            "quantity": "Tồn hiện có",
+            "unit": "ĐVT"
+          },
+          "workflow": {
+            "readPermission": "Quyền xem",
+            "mutationPermission": "Quyền sửa",
+            "stockSource": "Nguồn tồn",
+            "stockProjection": "Projection stock"
+          },
+          "emptyDescription": "Chưa có mô tả.",
+          "notFoundTitle": "Không tìm thấy item",
+          "notFoundMessage": "Item catalog không tồn tại hoặc bạn không có quyền xem."
+        }
       }
     }
   }

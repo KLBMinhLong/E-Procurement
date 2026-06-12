@@ -1,0 +1,308 @@
+<section class="catalog-page" aria-labelledby="catalog-list-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'features.inventory.catalog.eyebrow' | translate }}</span>
+      <h1 id="catalog-list-heading" class="page-header__title">
+        {{ 'features.inventory.catalog.title' | translate }}
+      </h1>
+      <p class="page-header__subtitle">{{ 'features.inventory.catalog.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        *epHasPermission="'ADMIN_CATALOG_MANAGE'"
+        id="btn-create-catalog-item"
+        variant="primary"
+        icon="plus"
+        (click)="openCreateModal()">
+        {{ 'features.inventory.catalog.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="summary-grid" [attr.aria-label]="'features.inventory.catalog.summary.label' | translate">
+    <div class="summary-card">
+      <ep-icon name="boxes" />
+      <span class="summary-card__label">{{ 'features.inventory.catalog.summary.active' | translate }}</span>
+      <span class="summary-card__value">{{ activeCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="archive-x" />
+      <span class="summary-card__label">{{ 'features.inventory.catalog.summary.inactive' | translate }}</span>
+      <span class="summary-card__value">{{ inactiveCount() }}</span>
+    </div>
+    <div class="summary-card summary-card--warning">
+      <ep-icon name="triangle-alert" />
+      <span class="summary-card__label">{{ 'features.inventory.catalog.summary.belowReorder' | translate }}</span>
+      <span class="summary-card__value">{{ belowReorderCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="tags" />
+      <span class="summary-card__label">{{ 'features.inventory.catalog.summary.categories' | translate }}</span>
+      <span class="summary-card__value">{{ categoryCount() }}</span>
+    </div>
+  </div>
+
+  <div class="catalog-toolbar">
+    <div class="catalog-toolbar__top">
+      <label class="compact-field">
+        <span>{{ 'features.inventory.catalog.filter.search' | translate }}</span>
+        <input
+          id="filter-catalog-query"
+          class="compact-field__control"
+          type="search"
+          [value]="query()"
+          [placeholder]="'features.inventory.catalog.filter.searchPlaceholder' | translate"
+          (input)="onQueryChange($any($event.target).value)" />
+      </label>
+
+      <label class="compact-field">
+        <span>{{ 'features.inventory.catalog.filter.category' | translate }}</span>
+        <input
+          id="filter-catalog-category"
+          class="compact-field__control"
+          type="text"
+          [value]="categoryCode()"
+          [placeholder]="'features.inventory.catalog.filter.categoryPlaceholder' | translate"
+          (input)="onCategoryChange($any($event.target).value)" />
+      </label>
+
+      <label class="compact-field">
+        <span>{{ 'features.inventory.catalog.filter.status' | translate }}</span>
+        <select
+          id="filter-catalog-active"
+          class="compact-field__control"
+          [value]="activeFilter()"
+          (change)="onActiveFilterChange($any($event.target).value)">
+          <option value="all">{{ 'features.inventory.catalog.filter.allStatus' | translate }}</option>
+          <option value="active">{{ 'features.inventory.catalog.status.active' | translate }}</option>
+          <option value="inactive">{{ 'features.inventory.catalog.status.inactive' | translate }}</option>
+        </select>
+      </label>
+
+      <label class="toggle-field">
+        <input
+          id="filter-catalog-below-reorder"
+          type="checkbox"
+          [checked]="belowReorder()"
+          (change)="onBelowReorderChange($any($event.target).checked)" />
+        <span>{{ 'features.inventory.catalog.filter.belowReorder' | translate }}</span>
+      </label>
+
+      @if (hasActiveFilters()) {
+        <ep-button id="btn-clear-catalog-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'features.inventory.catalog.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="package-search"
+      [title]="'features.inventory.catalog.empty.title' | translate"
+      [message]="'features.inventory.catalog.empty.message' | translate" />
+  } @else {
+    <div class="catalog-table-wrapper">
+      <table class="catalog-table" role="grid" aria-labelledby="catalog-list-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'features.inventory.catalog.col.itemCode' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.catalog.col.name' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.catalog.col.category' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.catalog.col.unitPrice' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'features.inventory.catalog.col.stock' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'features.inventory.catalog.col.reorderPoint' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.catalog.col.status' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'shared.table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.itemCode) {
+            <tr class="catalog-table__row">
+              <td class="catalog-table__number">
+                <span class="mono">{{ item.itemCode }}</span>
+              </td>
+              <td>
+                <span class="catalog-table__primary">{{ item.name }}</span>
+                <span class="catalog-table__subtitle">{{ item.description || '--' }}</span>
+              </td>
+              <td>
+                <span class="mono">{{ item.categoryCode }}</span>
+              </td>
+              <td>
+                <ep-amount [value]="item.unitPrice" />
+              </td>
+              <td class="align-right catalog-table__quantity">
+                {{ totalStock(item) }} <span class="mono">{{ item.unit }}</span>
+              </td>
+              <td class="align-right catalog-table__quantity">
+                {{ item.reorderPoint ? formatQuantity(item.reorderPoint) : '--' }}
+              </td>
+              <td>
+                <div class="status-stack">
+                  <ep-badge
+                    [tone]="statusTone(item)"
+                    [labelKey]="item.isActive
+                      ? 'features.inventory.catalog.status.active'
+                      : 'features.inventory.catalog.status.inactive'" />
+                  @if (isBelowReorder(item)) {
+                    <ep-badge tone="warning" [labelKey]="'features.inventory.catalog.status.belowReorder'" />
+                  }
+                </div>
+              </td>
+              <td class="align-right">
+                <div class="catalog-table__actions">
+                  <ep-button
+                    [id]="'btn-view-catalog-' + item.itemCode"
+                    variant="ghost"
+                    size="sm"
+                    icon="eye"
+                    (click)="viewDetail(item)">
+                    {{ 'features.inventory.catalog.action.view' | translate }}
+                  </ep-button>
+                  <ep-button
+                    [id]="'btn-catalog-movements-' + item.itemCode"
+                    variant="ghost"
+                    size="sm"
+                    icon="history"
+                    (click)="viewMovements(item)">
+                    {{ 'features.inventory.catalog.action.movements' | translate }}
+                  </ep-button>
+                  <ep-button
+                    *epHasPermission="'ADMIN_CATALOG_MANAGE'"
+                    [id]="'btn-edit-catalog-' + item.itemCode"
+                    variant="ghost"
+                    size="sm"
+                    icon="pencil"
+                    (click)="openEditModal(item)">
+                    {{ 'features.inventory.catalog.action.edit' | translate }}
+                  </ep-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as metaData) {
+      <div class="catalog-pagination">
+        <span class="catalog-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="catalog-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'features.inventory.catalog.totalItems' | translate }}
+        </span>
+        <div class="catalog-pagination__controls">
+          <ep-button
+            id="btn-prev-catalog-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange(metaData.page - 1, metaData.size)">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-catalog-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="metaData.isLast"
+            (click)="onPageChange(metaData.page + 1, metaData.size)">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+
+  <ep-modal
+    [open]="isModalOpen()"
+    [size]="'lg'"
+    [title]="(isEditMode()
+      ? 'features.inventory.catalog.modal.editTitle'
+      : 'features.inventory.catalog.modal.createTitle') | translate"
+    (close)="closeModal()">
+    <form class="catalog-form" [formGroup]="form" (ngSubmit)="save()">
+      <div class="catalog-form__grid">
+        <ep-form-field
+          [label]="'features.inventory.catalog.form.itemCode' | translate"
+          [required]="true"
+          [error]="formError('itemCode') ? (formError('itemCode')! | translate) : null">
+          <input class="form-control" formControlName="itemCode" [readonly]="isEditMode()" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'features.inventory.catalog.form.name' | translate"
+          [required]="true"
+          [error]="formError('name') ? (formError('name')! | translate) : null">
+          <input class="form-control" formControlName="name" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'features.inventory.catalog.form.categoryCode' | translate"
+          [required]="true"
+          [error]="formError('categoryCode') ? (formError('categoryCode')! | translate) : null">
+          <input class="form-control" formControlName="categoryCode" [readonly]="isEditMode()" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'features.inventory.catalog.form.unit' | translate"
+          [required]="true"
+          [error]="formError('unit') ? (formError('unit')! | translate) : null">
+          <input class="form-control" formControlName="unit" [readonly]="isEditMode()" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'features.inventory.catalog.form.unitPrice' | translate"
+          [required]="true"
+          [error]="formError('unitPrice') ? (formError('unitPrice')! | translate) : null">
+          <input class="form-control" formControlName="unitPrice" inputmode="decimal" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'features.inventory.catalog.form.currency' | translate"
+          [required]="true"
+          [error]="formError('currency') ? (formError('currency')! | translate) : null">
+          <input class="form-control" formControlName="currency" maxlength="3" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'features.inventory.catalog.form.reorderPoint' | translate"
+          [error]="formError('reorderPoint') ? (formError('reorderPoint')! | translate) : null">
+          <input class="form-control" formControlName="reorderPoint" inputmode="decimal" />
+        </ep-form-field>
+
+        <ep-form-field [label]="'features.inventory.catalog.form.preferredVendorId' | translate">
+          <input class="form-control" formControlName="preferredVendorId" />
+        </ep-form-field>
+      </div>
+
+      <ep-form-field
+        [label]="'features.inventory.catalog.form.description' | translate"
+        [error]="formError('description') ? (formError('description')! | translate) : null">
+        <textarea class="form-control form-control--textarea" formControlName="description"></textarea>
+      </ep-form-field>
+
+      @if (isEditMode()) {
+        <label class="toggle-field toggle-field--modal">
+          <input id="catalog-item-active" type="checkbox" formControlName="isActive" />
+          <span>{{ 'features.inventory.catalog.form.active' | translate }}</span>
+        </label>
+      }
+
+      <div class="modal-actions">
+        <ep-button type="button" variant="ghost" (click)="closeModal()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button type="submit" variant="primary" icon="save" [loading]="isSaving()" [disabled]="form.invalid || isSaving()">
+          {{ 'action.submit' | translate }}
+        </ep-button>
+      </div>
+    </form>
+  </ep-modal>
+</section>

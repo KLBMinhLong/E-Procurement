@@ -279,6 +279,7 @@
 | Frontend: GR Detail & Complete | ✅ | 2026-06-12: Slice 3 done — detail displays lot/rejection fields, links stock/movements by warehouse/item, stores complete response summary with movements created and updated stock balances; `npm run build` passes |
 | Frontend: Stock Dashboard & Movements | ✅ | 2026-06-12: Slice 0-1 done — `StockEntry` model aligned to backend, `StockService` added, Inventory permissions normalized away from non-seeded `STOCK_VIEW`, routes `/inventory/stock` and `/inventory/stock/movements` added, warehouse stock dashboard and immutable movement ledger implemented; `npm run build` passes |
 | Frontend: Issue Out Stock | ✅ | 2026-06-12: Slice 2 done — route `/inventory/issue-out` added with `GR_ISSUE_OUT`, form uses warehouse stock as item selector, validates available quantity before submit, posts `StockService.issueOut()` with generated `Idempotency-Key`, displays created movements and reloads stock; `npm run build` passes |
+| Frontend: Catalog UI | ✅ | 2026-06-12: Slice 5 done — added `InventoryCatalogService`, catalog models, `/inventory/catalog` list with filters/create/edit modal, `/inventory/catalog/:itemCode` detail with stock summary/edit modal, sidebar/breadcrumb/i18n wiring; read routes use `GR_VIEW`, mutation controls require `ADMIN_CATALOG_MANAGE`; `npm run build` passes |
 
 ### E09: Invoice & Payment
 | Task | Status | Ghi chú |
