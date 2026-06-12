@@ -123,7 +123,7 @@ export class CatalogListComponent implements OnInit {
         error: () => {
           this.items.set([]);
           this.meta.set(null);
-          this.toastService.errorKey('features.inventory.catalog.toast.loadFailed');
+          this.toastService.errorKey('inventory.catalog.toast.loadFailed');
         }
       });
   }
@@ -226,7 +226,7 @@ export class CatalogListComponent implements OnInit {
         next: (res) => {
           const saved = res.data;
           this.toastService.successKey(
-            item ? 'features.inventory.catalog.toast.updateSuccess' : 'features.inventory.catalog.toast.createSuccess'
+            item ? 'inventory.catalog.toast.updateSuccess' : 'inventory.catalog.toast.createSuccess'
           );
           this.isModalOpen.set(false);
           this.editingItem.set(null);
@@ -238,7 +238,7 @@ export class CatalogListComponent implements OnInit {
         },
         error: () => {
           this.toastService.errorKey(
-            item ? 'features.inventory.catalog.toast.updateFailed' : 'features.inventory.catalog.toast.createFailed'
+            item ? 'inventory.catalog.toast.updateFailed' : 'inventory.catalog.toast.createFailed'
           );
         }
       });
@@ -261,15 +261,15 @@ export class CatalogListComponent implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'features.inventory.catalog.validation.required';
+      return 'inventory.catalog.validation.required';
     }
     if (control.hasError('maxlength')) {
-      return 'features.inventory.catalog.validation.maxLength';
+      return 'inventory.catalog.validation.maxLength';
     }
     if (control.hasError('pattern')) {
-      return 'features.inventory.catalog.validation.numeric';
+      return 'inventory.catalog.validation.numeric';
     }
-    return 'features.inventory.catalog.validation.invalid';
+    return 'inventory.catalog.validation.invalid';
   }
 
   statusTone(item: CatalogItem): EpBadgeTone {

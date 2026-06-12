@@ -117,7 +117,7 @@ export class CatalogDetailComponent implements OnInit {
         next: (res) => this.item.set(res.data),
         error: () => {
           this.item.set(null);
-          this.toastService.errorKey('features.inventory.catalog.toast.loadFailed');
+          this.toastService.errorKey('inventory.catalog.toast.loadFailed');
         }
       });
   }
@@ -163,9 +163,9 @@ export class CatalogDetailComponent implements OnInit {
         next: (res) => {
           this.item.set(res.data);
           this.isModalOpen.set(false);
-          this.toastService.successKey('features.inventory.catalog.toast.updateSuccess');
+          this.toastService.successKey('inventory.catalog.toast.updateSuccess');
         },
-        error: () => this.toastService.errorKey('features.inventory.catalog.toast.updateFailed')
+        error: () => this.toastService.errorKey('inventory.catalog.toast.updateFailed')
       });
   }
 
@@ -212,15 +212,15 @@ export class CatalogDetailComponent implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'features.inventory.catalog.validation.required';
+      return 'inventory.catalog.validation.required';
     }
     if (control.hasError('maxlength')) {
-      return 'features.inventory.catalog.validation.maxLength';
+      return 'inventory.catalog.validation.maxLength';
     }
     if (control.hasError('pattern')) {
-      return 'features.inventory.catalog.validation.numeric';
+      return 'inventory.catalog.validation.numeric';
     }
-    return 'features.inventory.catalog.validation.invalid';
+    return 'inventory.catalog.validation.invalid';
   }
 
   private toUpdateRequest(): UpdateCatalogItemRequest {

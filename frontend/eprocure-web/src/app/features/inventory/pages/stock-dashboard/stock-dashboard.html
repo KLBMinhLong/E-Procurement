@@ -3,15 +3,15 @@
 
   <div class="page-header">
     <div class="page-header__meta">
-      <span class="page-header__eyebrow">{{ 'features.inventory.stock.eyebrow' | translate }}</span>
+      <span class="page-header__eyebrow">{{ 'inventory.stock.eyebrow' | translate }}</span>
       <h1 id="stock-dashboard-heading" class="page-header__title">
-        {{ 'features.inventory.stock.title' | translate }}
+        {{ 'inventory.stock.title' | translate }}
       </h1>
-      <p class="page-header__subtitle">{{ 'features.inventory.stock.subtitle' | translate }}</p>
+      <p class="page-header__subtitle">{{ 'inventory.stock.subtitle' | translate }}</p>
     </div>
     <div class="page-header__actions">
       <ep-button id="btn-view-stock-movements" variant="secondary" icon="history" (click)="navigateMovements()">
-        {{ 'features.inventory.stock.action.viewMovements' | translate }}
+        {{ 'inventory.stock.action.viewMovements' | translate }}
       </ep-button>
       <ep-button
         *epHasPermission="'GR_ISSUE_OUT'"
@@ -19,30 +19,30 @@
         variant="primary"
         icon="package-minus"
         (click)="navigateIssueOut()">
-        {{ 'features.inventory.stock.action.issueOut' | translate }}
+        {{ 'inventory.stock.action.issueOut' | translate }}
       </ep-button>
     </div>
   </div>
 
-  <div class="summary-grid" [attr.aria-label]="'features.inventory.stock.title' | translate">
+  <div class="summary-grid" [attr.aria-label]="'inventory.stock.title' | translate">
     <div class="summary-card">
       <ep-icon name="boxes" />
-      <span class="summary-card__label">{{ 'features.inventory.stock.stat.sku' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.stock.stat.sku' | translate }}</span>
       <span class="summary-card__value">{{ skuCount() }}</span>
     </div>
     <div class="summary-card summary-card--warning">
       <ep-icon name="triangle-alert" />
-      <span class="summary-card__label">{{ 'features.inventory.stock.stat.belowReorder' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.stock.stat.belowReorder' | translate }}</span>
       <span class="summary-card__value">{{ belowReorderCount() }}</span>
     </div>
     <div class="summary-card">
       <ep-icon name="warehouse" />
-      <span class="summary-card__label">{{ 'features.inventory.stock.stat.quantityRows' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.stock.stat.quantityRows' | translate }}</span>
       <span class="summary-card__value">{{ quantityRows() }}</span>
     </div>
     <div class="summary-card summary-card--wide">
       <ep-icon name="clock-3" />
-      <span class="summary-card__label">{{ 'features.inventory.stock.stat.lastUpdated' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.stock.stat.lastUpdated' | translate }}</span>
       <span class="summary-card__value summary-card__value--time">{{ lastUpdated() }}</span>
     </div>
   </div>
@@ -50,13 +50,13 @@
   <div class="stock-toolbar">
     <div class="stock-toolbar__top">
       <label class="compact-field">
-        <span>{{ 'features.inventory.stock.filter.warehouse' | translate }}</span>
+        <span>{{ 'inventory.stock.filter.warehouse' | translate }}</span>
         <select
           id="filter-stock-warehouse"
           class="compact-field__control"
           [value]="warehouseId()"
           (change)="onWarehouseChange($any($event.target).value)">
-          <option value="">{{ 'features.inventory.stock.filter.warehousePlaceholder' | translate }}</option>
+          <option value="">{{ 'inventory.stock.filter.warehousePlaceholder' | translate }}</option>
           @for (warehouse of warehouses(); track warehouse.id) {
             <option [value]="warehouse.id">{{ warehouse.code }} - {{ warehouse.name }}</option>
           }
@@ -69,12 +69,12 @@
           type="checkbox"
           [checked]="belowReorder()"
           (change)="onBelowReorderChange($any($event.target).checked)">
-        <span>{{ 'features.inventory.stock.filter.belowReorder' | translate }}</span>
+        <span>{{ 'inventory.stock.filter.belowReorder' | translate }}</span>
       </label>
 
       @if (hasActiveFilters()) {
         <ep-button id="btn-clear-stock-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
-          {{ 'features.inventory.stock.filter.clear' | translate }}
+          {{ 'inventory.stock.filter.clear' | translate }}
         </ep-button>
       }
     </div>
@@ -85,21 +85,21 @@
   } @else if (items().length === 0) {
     <ep-empty-state
       icon="package-search"
-      [title]="'features.inventory.stock.empty.title' | translate"
-      [message]="'features.inventory.stock.empty.message' | translate" />
+      [title]="'inventory.stock.empty.title' | translate"
+      [message]="'inventory.stock.empty.message' | translate" />
   } @else {
     <div class="stock-table-wrapper">
       <table class="stock-table" role="grid" aria-labelledby="stock-dashboard-heading">
         <thead>
           <tr>
-            <th scope="col">{{ 'features.inventory.stock.col.itemCode' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.stock.col.itemName' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.stock.col.warehouse' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'features.inventory.stock.col.quantityOnHand' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.stock.col.unit' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'features.inventory.stock.col.reorderPoint' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.stock.col.status' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'features.inventory.stock.col.lastUpdated' | translate }}</th>
+            <th scope="col">{{ 'inventory.stock.col.itemCode' | translate }}</th>
+            <th scope="col">{{ 'inventory.stock.col.itemName' | translate }}</th>
+            <th scope="col">{{ 'inventory.stock.col.warehouse' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.stock.col.quantityOnHand' | translate }}</th>
+            <th scope="col">{{ 'inventory.stock.col.unit' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.stock.col.reorderPoint' | translate }}</th>
+            <th scope="col">{{ 'inventory.stock.col.status' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.stock.col.lastUpdated' | translate }}</th>
             <th scope="col" class="align-right">{{ 'shared.table.actions' | translate }}</th>
           </tr>
         </thead>
@@ -127,8 +127,8 @@
                 <ep-badge
                   [tone]="item.isBelowReorder ? 'warning' : 'success'"
                   [labelKey]="item.isBelowReorder
-                    ? 'features.inventory.stock.status.belowReorder'
-                    : 'features.inventory.stock.status.normal'" />
+                    ? 'inventory.stock.status.belowReorder'
+                    : 'inventory.stock.status.normal'" />
               </td>
               <td class="align-right stock-table__date">{{ formatDateTime(item.lastUpdated) }}</td>
               <td class="align-right">
@@ -139,7 +139,7 @@
                     size="sm"
                     icon="history"
                     (click)="navigateMovements(item)">
-                    {{ 'features.inventory.stock.action.viewMovements' | translate }}
+                    {{ 'inventory.stock.action.viewMovements' | translate }}
                   </ep-button>
                   <ep-button
                     *epHasPermission="'GR_ISSUE_OUT'"
@@ -148,7 +148,7 @@
                     size="sm"
                     icon="package-minus"
                     (click)="navigateIssueOut(item)">
-                    {{ 'features.inventory.stock.action.issueOut' | translate }}
+                    {{ 'inventory.stock.action.issueOut' | translate }}
                   </ep-button>
                   <ep-button
                     *epHasPermission="'ADMIN_CATALOG_MANAGE'"
@@ -157,7 +157,7 @@
                     size="sm"
                     icon="sliders-horizontal"
                     (click)="openAdjustment(item)">
-                    {{ 'features.inventory.stock.action.adjust' | translate }}
+                    {{ 'inventory.stock.action.adjust' | translate }}
                   </ep-button>
                 </div>
               </td>
@@ -172,7 +172,7 @@
         <span class="stock-pagination__summary">
           {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
           <span class="stock-pagination__dot">·</span>
-          {{ metaData.totalElements }} {{ 'features.inventory.stock.totalItems' | translate }}
+          {{ metaData.totalElements }} {{ 'inventory.stock.totalItems' | translate }}
         </span>
         <div class="stock-pagination__controls">
           <ep-button
@@ -201,35 +201,35 @@
   <ep-modal
     [open]="isAdjustModalOpen()"
     [size]="'lg'"
-    [title]="'features.inventory.stock.adjustment.title' | translate"
+    [title]="'inventory.stock.adjustment.title' | translate"
     (close)="closeAdjustment()">
     <form class="adjustment-form" [formGroup]="adjustmentForm" (ngSubmit)="saveAdjustment()">
       <div class="adjustment-summary">
         <div>
-          <span>{{ 'features.inventory.stock.adjustment.item' | translate }}</span>
+          <span>{{ 'inventory.stock.adjustment.item' | translate }}</span>
           <strong>{{ adjustmentForm.controls.itemCode.value }} · {{ adjustmentForm.controls.itemName.value }}</strong>
         </div>
         <div>
-          <span>{{ 'features.inventory.stock.adjustment.currentQuantity' | translate }}</span>
+          <span>{{ 'inventory.stock.adjustment.currentQuantity' | translate }}</span>
           <strong>{{ formatQuantity(adjustmentForm.controls.currentQuantity.value) }} {{ adjustmentForm.controls.unit.value }}</strong>
         </div>
         <div>
-          <span>{{ 'features.inventory.stock.adjustment.delta' | translate }}</span>
+          <span>{{ 'inventory.stock.adjustment.delta' | translate }}</span>
           <strong>{{ adjustmentDelta() }} {{ adjustmentForm.controls.unit.value }}</strong>
         </div>
       </div>
 
       <div class="adjustment-form__grid">
-        <ep-form-field [label]="'features.inventory.stock.adjustment.itemCode' | translate">
+        <ep-form-field [label]="'inventory.stock.adjustment.itemCode' | translate">
           <input class="form-control" formControlName="itemCode" readonly />
         </ep-form-field>
 
-        <ep-form-field [label]="'features.inventory.stock.adjustment.unit' | translate">
+        <ep-form-field [label]="'inventory.stock.adjustment.unit' | translate">
           <input class="form-control" formControlName="unit" readonly />
         </ep-form-field>
 
         <ep-form-field
-          [label]="'features.inventory.stock.adjustment.newQuantity' | translate"
+          [label]="'inventory.stock.adjustment.newQuantity' | translate"
           [required]="true"
           [error]="adjustmentFormError('newQuantity') ? (adjustmentFormError('newQuantity')! | translate) : null">
           <input class="form-control" formControlName="newQuantity" inputmode="decimal" />
@@ -237,7 +237,7 @@
       </div>
 
       <ep-form-field
-        [label]="'features.inventory.stock.adjustment.reason' | translate"
+        [label]="'inventory.stock.adjustment.reason' | translate"
         [required]="true"
         [error]="adjustmentFormError('reason') ? (adjustmentFormError('reason')! | translate) : null">
         <textarea class="form-control form-control--textarea" formControlName="reason"></textarea>

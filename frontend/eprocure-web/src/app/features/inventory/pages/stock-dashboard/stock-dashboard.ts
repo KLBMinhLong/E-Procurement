@@ -239,12 +239,12 @@ export class StockDashboardComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.toastService.successKey('features.inventory.stock.adjustment.toast.success');
+          this.toastService.successKey('inventory.stock.adjustment.toast.success');
           this.closeAdjustment();
           this.loadData();
         },
         error: () => {
-          this.toastService.errorKey('features.inventory.stock.adjustment.toast.failed');
+          this.toastService.errorKey('inventory.stock.adjustment.toast.failed');
         }
       });
   }
@@ -267,21 +267,21 @@ export class StockDashboardComponent implements OnInit {
       return null;
     }
     if (control.errors['required']) {
-      return 'features.inventory.stock.adjustment.validation.required';
+      return 'inventory.stock.adjustment.validation.required';
     }
     if (control.errors['pattern']) {
-      return 'features.inventory.stock.adjustment.validation.numeric';
+      return 'inventory.stock.adjustment.validation.numeric';
     }
     if (control.errors['minlength']) {
-      return 'features.inventory.stock.adjustment.validation.reasonLength';
+      return 'inventory.stock.adjustment.validation.reasonLength';
     }
     if (control.errors['maxlength']) {
-      return 'features.inventory.stock.adjustment.validation.maxLength';
+      return 'inventory.stock.adjustment.validation.maxLength';
     }
     if (control.errors['unchanged']) {
-      return 'features.inventory.stock.adjustment.validation.unchanged';
+      return 'inventory.stock.adjustment.validation.unchanged';
     }
-    return 'features.inventory.stock.adjustment.validation.invalid';
+    return 'inventory.stock.adjustment.validation.invalid';
   }
 
   formatQuantity(value: string | null | undefined): string {

@@ -138,17 +138,17 @@ export class IssueOutComponent implements OnInit {
   fieldError(field: string): string | null {
     const ctrl = this.form.get(field);
     if (!ctrl || (!ctrl.touched && !this.submitted())) return null;
-    if (ctrl.errors?.['required']) return 'features.inventory.issueOut.validation.required';
+    if (ctrl.errors?.['required']) return 'inventory.issueOut.validation.required';
     return null;
   }
 
   lineError(index: number, field: 'itemCode' | 'quantity'): string | null {
     const ctrl = this.lines.at(index).get(field);
     if (!ctrl || (!ctrl.touched && !this.submitted())) return null;
-    if (ctrl.errors?.['required']) return 'features.inventory.issueOut.validation.required';
-    if (ctrl.errors?.['min']) return 'features.inventory.issueOut.validation.positive';
+    if (ctrl.errors?.['required']) return 'inventory.issueOut.validation.required';
+    if (ctrl.errors?.['min']) return 'inventory.issueOut.validation.positive';
     if (field === 'quantity' && this.isLineInsufficient(index)) {
-      return 'features.inventory.issueOut.validation.insufficient';
+      return 'inventory.issueOut.validation.insufficient';
     }
     return null;
   }
@@ -177,7 +177,7 @@ export class IssueOutComponent implements OnInit {
     this.form.markAllAsTouched();
 
     if (this.form.invalid || this.hasInvalidLines() || this.submitting()) {
-      this.toast.errorKey('features.inventory.issueOut.validation.invalid');
+      this.toast.errorKey('inventory.issueOut.validation.invalid');
       return;
     }
 
@@ -204,10 +204,10 @@ export class IssueOutComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.createdMovements.set(res.data?.movements ?? []);
-          this.toast.successKey('features.inventory.issueOut.toast.success');
+          this.toast.successKey('inventory.issueOut.toast.success');
           this.loadStock();
         },
-        error: () => this.toast.errorKey('features.inventory.issueOut.toast.failed')
+        error: () => this.toast.errorKey('inventory.issueOut.toast.failed')
       });
   }
 

@@ -3,38 +3,38 @@
 
   <div class="page-header">
     <div class="page-header__meta">
-      <span class="page-header__eyebrow">{{ 'features.inventory.movements.eyebrow' | translate }}</span>
+      <span class="page-header__eyebrow">{{ 'inventory.movements.eyebrow' | translate }}</span>
       <h1 id="stock-movements-heading" class="page-header__title">
-        {{ 'features.inventory.movements.title' | translate }}
+        {{ 'inventory.movements.title' | translate }}
       </h1>
-      <p class="page-header__subtitle">{{ 'features.inventory.movements.subtitle' | translate }}</p>
+      <p class="page-header__subtitle">{{ 'inventory.movements.subtitle' | translate }}</p>
     </div>
     <div class="page-header__actions">
       <ep-button id="btn-back-stock-dashboard" variant="secondary" icon="boxes" (click)="navigateStock()">
-        {{ 'features.inventory.stock.title' | translate }}
+        {{ 'inventory.stock.title' | translate }}
       </ep-button>
     </div>
   </div>
 
-  <div class="summary-grid" [attr.aria-label]="'features.inventory.movements.title' | translate">
+  <div class="summary-grid" [attr.aria-label]="'inventory.movements.title' | translate">
     <div class="summary-card">
       <ep-icon name="package-plus" />
-      <span class="summary-card__label">{{ 'features.inventory.movements.type.RECEIPT_IN' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.movements.type.RECEIPT_IN' | translate }}</span>
       <span class="summary-card__value">{{ receiptCount() }}</span>
     </div>
     <div class="summary-card summary-card--warning">
       <ep-icon name="package-minus" />
-      <span class="summary-card__label">{{ 'features.inventory.movements.type.ISSUE_OUT' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.movements.type.ISSUE_OUT' | translate }}</span>
       <span class="summary-card__value">{{ issueCount() }}</span>
     </div>
     <div class="summary-card">
       <ep-icon name="sliders-horizontal" />
-      <span class="summary-card__label">{{ 'features.inventory.movements.type.ADJUSTMENT' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.movements.type.ADJUSTMENT' | translate }}</span>
       <span class="summary-card__value">{{ adjustmentCount() }}</span>
     </div>
     <div class="summary-card">
       <ep-icon name="repeat-2" />
-      <span class="summary-card__label">{{ 'features.inventory.movements.type.TRANSFER' | translate }}</span>
+      <span class="summary-card__label">{{ 'inventory.movements.type.TRANSFER' | translate }}</span>
       <span class="summary-card__value">{{ transferCount() }}</span>
     </div>
   </div>
@@ -42,24 +42,24 @@
   <div class="movement-toolbar">
     <div class="movement-toolbar__top">
       <label class="compact-field">
-        <span>{{ 'features.inventory.movements.filter.itemCode' | translate }}</span>
+        <span>{{ 'inventory.movements.filter.itemCode' | translate }}</span>
         <input
           id="filter-movement-item-code"
           type="search"
           class="compact-field__control"
-          [placeholder]="'features.inventory.movements.filter.itemCodePlaceholder' | translate"
+          [placeholder]="'inventory.movements.filter.itemCodePlaceholder' | translate"
           [value]="itemCode()"
           (change)="onItemCodeChange($any($event.target).value)">
       </label>
 
       <label class="compact-field">
-        <span>{{ 'features.inventory.movements.filter.warehouse' | translate }}</span>
+        <span>{{ 'inventory.movements.filter.warehouse' | translate }}</span>
         <select
           id="filter-movement-warehouse"
           class="compact-field__control"
           [value]="warehouseId()"
           (change)="onWarehouseChange($any($event.target).value)">
-          <option value="">{{ 'features.inventory.movements.filter.allWarehouses' | translate }}</option>
+          <option value="">{{ 'inventory.movements.filter.allWarehouses' | translate }}</option>
           @for (warehouse of warehouses(); track warehouse.id) {
             <option [value]="warehouse.id">{{ warehouse.code }} - {{ warehouse.name }}</option>
           }
@@ -67,15 +67,15 @@
       </label>
 
       <label class="compact-field">
-        <span>{{ 'features.inventory.movements.filter.movementType' | translate }}</span>
+        <span>{{ 'inventory.movements.filter.movementType' | translate }}</span>
         <select
           id="filter-movement-type"
           class="compact-field__control"
           [value]="movementType()"
           (change)="onMovementTypeChange($any($event.target).value)">
-          <option value="">{{ 'features.inventory.movements.filter.allTypes' | translate }}</option>
+          <option value="">{{ 'inventory.movements.filter.allTypes' | translate }}</option>
           @for (type of movementTypes; track type) {
-            <option [value]="type">{{ ('features.inventory.movements.type.' + type) | translate }}</option>
+            <option [value]="type">{{ ('inventory.movements.type.' + type) | translate }}</option>
           }
         </select>
       </label>
@@ -83,7 +83,7 @@
 
     <div class="advanced-filters">
       <label class="compact-field">
-        <span>{{ 'features.inventory.movements.filter.fromDate' | translate }}</span>
+        <span>{{ 'inventory.movements.filter.fromDate' | translate }}</span>
         <input
           id="filter-movement-from-date"
           type="date"
@@ -92,7 +92,7 @@
           (change)="onDateFilterChange('from', $any($event.target).value)">
       </label>
       <label class="compact-field">
-        <span>{{ 'features.inventory.movements.filter.toDate' | translate }}</span>
+        <span>{{ 'inventory.movements.filter.toDate' | translate }}</span>
         <input
           id="filter-movement-to-date"
           type="date"
@@ -102,7 +102,7 @@
       </label>
       @if (hasActiveFilters()) {
         <ep-button id="btn-clear-movement-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
-          {{ 'features.inventory.movements.filter.clear' | translate }}
+          {{ 'inventory.movements.filter.clear' | translate }}
         </ep-button>
       }
     </div>
@@ -113,22 +113,22 @@
   } @else if (items().length === 0) {
     <ep-empty-state
       icon="package-search"
-      [title]="'features.inventory.movements.empty.title' | translate"
-      [message]="'features.inventory.movements.empty.message' | translate" />
+      [title]="'inventory.movements.empty.title' | translate"
+      [message]="'inventory.movements.empty.message' | translate" />
   } @else {
     <div class="movement-table-wrapper">
       <table class="movement-table" role="grid" aria-labelledby="stock-movements-heading">
         <thead>
           <tr>
-            <th scope="col">{{ 'features.inventory.movements.col.item' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.movements.col.warehouse' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.movements.col.type' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'features.inventory.movements.col.quantity' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'features.inventory.movements.col.balanceAfter' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.movements.col.source' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.movements.col.performedBy' | translate }}</th>
-            <th scope="col" class="align-right">{{ 'features.inventory.movements.col.performedAt' | translate }}</th>
-            <th scope="col">{{ 'features.inventory.movements.col.notes' | translate }}</th>
+            <th scope="col">{{ 'inventory.movements.col.item' | translate }}</th>
+            <th scope="col">{{ 'inventory.movements.col.warehouse' | translate }}</th>
+            <th scope="col">{{ 'inventory.movements.col.type' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.movements.col.quantity' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.movements.col.balanceAfter' | translate }}</th>
+            <th scope="col">{{ 'inventory.movements.col.source' | translate }}</th>
+            <th scope="col">{{ 'inventory.movements.col.performedBy' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'inventory.movements.col.performedAt' | translate }}</th>
+            <th scope="col">{{ 'inventory.movements.col.notes' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -144,7 +144,7 @@
               <td>
                 <ep-badge
                   [tone]="movementTone[movement.movementType]"
-                  [labelKey]="'features.inventory.movements.type.' + movement.movementType" />
+                  [labelKey]="'inventory.movements.type.' + movement.movementType" />
               </td>
               <td class="align-right movement-table__quantity">
                 {{ formatQuantity(movement) }} <span class="mono">{{ movement.unit }}</span>
@@ -184,7 +184,7 @@
         <span class="movement-pagination__summary">
           {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
           <span class="movement-pagination__dot">·</span>
-          {{ metaData.totalElements }} {{ 'features.inventory.movements.totalItems' | translate }}
+          {{ metaData.totalElements }} {{ 'inventory.movements.totalItems' | translate }}
         </span>
         <div class="movement-pagination__controls">
           <ep-button
