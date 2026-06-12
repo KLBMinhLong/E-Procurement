@@ -4,6 +4,28 @@
 
 ---
 
+## 0. Rà soát lại theo code hiện tại — 2026-06-13
+
+Plan này là plan kế tiếp sau `UI_MODULE_SHELL_NAV_UX.md`. Backend Finance Budget đã có public API, frontend chưa có route/service/page budget.
+
+| Nhóm | Trạng thái thực tế | Điều chỉnh scope |
+|---|---|---|
+| API list/detail | OpenAPI và `BudgetController` khớp: `GET /budgets`, `GET /budgets/{id}/dashboard` | Service frontend nên đặt method `getDashboard(id)`, không gọi `GET /budgets/{id}` vì endpoint đó không tồn tại. |
+| Budget status | Backend chỉ trả `PLANNING`, `SUBMITTED`, `APPROVED`, `ACTIVE`, `CLOSED` | UI tự tính `healthTone`: `EXCEEDED` nếu `available < 0`, `WARNING` nếu `availablePercent <= 20`, còn lại `HEALTHY`; không đưa `WARNING/EXCEEDED` vào `BudgetStatus`. |
+| Override modal | Backend validate `overrideAmount > 0`, `currency` optional length 3, `overrideReason` min 50/max 1000 | Plan cũ ghi min 20 là sai. Sửa thành min 50. |
+| Transfer modal | Backend validate `amount > 0`, `currency` optional length 3, `reason` min 20/max 1000; use case validate active/same year/currency/source available | Plan cũ ghi reason min 10 là sai. UI có thể prefilter target budget cùng fiscal year và `ACTIVE`, nhưng backend vẫn là source of truth. |
+| Idempotency | `idempotencyInterceptor` đã tự thêm `Idempotency-Key` cho POST/PUT/PATCH nếu service chưa set | `BudgetService` có thể dùng `HttpClient` pattern hiện tại của `finance` và dựa vào interceptor; không cần truyền key thủ công trừ khi muốn retry ổn định trong cùng modal submit. |
+| KPI list | API list không có aggregate toàn bộ ngoài `meta.totalElements`; data chỉ là page hiện tại | KPI strip ở slice đầu nên ghi rõ là tổng hợp trên page/filter hiện tại, trừ `totalElements`. Không giả lập global total allocated/available. |
+| Department name | API chỉ trả `departmentId`, chưa có IAM department lookup trong frontend service hiện tại | Hiển thị `shortId(departmentId)` trước; department name enrichment deferred đến slice IAM lookup sau nếu cần. |
+| Transaction timeline | API detail hiện chưa trả transaction history | Không build timeline thật trong plan này. Chỉ build dashboard/read model + Override/Transfer modals. |
+| Icon/nav | `wallet-cards` đã được đăng ký trong `app.config.ts` | Có thể thêm nav `/finance/budgets` cùng route trong slice 3a, đặt giữa Purchase Orders và Invoices. |
+
+**Thứ tự thực hiện đề xuất:** 3a model/service/routes/nav/i18n shell → 3b Budget List → 3c Budget Detail read-only → 3d Override/Transfer modals → 3e build verify.
+
+**Trạng thái triển khai 2026-06-13:** ✅ Slice 3a hoàn thành ở mức build: đã có `budget.model.ts`, `budget.service.ts`, lazy routes `/finance/budgets`, `/finance/budgets/:id`, sidebar `nav.budgets`, i18n shell và placeholder component cho list/detail.
+
+---
+
 ## 1. Hiện trạng
 
 ### 1.1 Những gì đã có
@@ -46,8 +68,8 @@
 |---|---|---|---|
 | `GET` | `/api/v1/budgets` | `BUDGET_VIEW_OWN_DEPT` hoặc `BUDGET_VIEW_ALL` | Danh sách ngân sách, filter theo `department_id`, `fiscal_year`, `quarter`, `status`, `gl_account_code` |
 | `GET` | `/api/v1/budgets/{id}/dashboard` | `BUDGET_VIEW_OWN_DEPT` hoặc `BUDGET_VIEW_ALL` | Chi tiết 1 budget: allocated, committed, spent, available, availablePercent, burnRatePerMonth, forecastExhaustedAt, status |
-| `PATCH` | `/api/v1/budgets/{id}/override-approval` | `BUDGET_OVERRIDE` | Phê duyệt chi vượt budget — body: `{ prId, overrideAmount, currency, overrideReason }` + Idempotency-Key |
-| `PATCH` | `/api/v1/budgets/{id}/transfer` | `BUDGET_TRANSFER_APPROVE` | Điều chuyển ngân sách — body: `{ targetBudgetId, amount, currency, reason }` + Idempotency-Key |
+| `PATCH` | `/api/v1/budgets/{id}/override-approval` | `BUDGET_OVERRIDE` | Phê duyệt chi vượt budget — body: `{ prId, overrideAmount, currency, overrideReason }`; `overrideReason` min 50; `Idempotency-Key` do interceptor tự thêm |
+| `PATCH` | `/api/v1/budgets/{id}/transfer` | `BUDGET_TRANSFER_APPROVE` | Điều chuyển ngân sách — body: `{ targetBudgetId, amount, currency, reason }`; `reason` min 20; `Idempotency-Key` do interceptor tự thêm |
 
 **Response model `BudgetDashboard`:**
 ```typescript
@@ -65,6 +87,17 @@ interface BudgetDashboard {
   burnRatePerMonth: string | null;
   forecastExhaustedAt: string | null; // date ISO
   status: 'PLANNING' | 'SUBMITTED' | 'APPROVED' | 'ACTIVE' | 'CLOSED';
+}
+```
+
+**Derived UI state không có trong API:**
+```typescript
+type BudgetHealthTone = 'HEALTHY' | 'WARNING' | 'EXCEEDED';
+
+function budgetHealthTone(budget: BudgetDashboard): BudgetHealthTone {
+  if (Number(budget.available) < 0) return 'EXCEEDED';
+  if (Number(budget.availablePercent) <= 20) return 'WARNING';
+  return 'HEALTHY';
 }
 ```
 
@@ -95,11 +128,13 @@ Sidebar nav cần thêm (trong `shell.component.ts`):
 
 **Layout:** Page header + KPI strip + filter bar + table list
 
-**KPI strip (4 stat cards):**
-- Tổng budget active trong fiscal year hiện tại
-- Tổng available (tổng hợp tất cả phòng ban)
-- Số budget đang WARNING (available < 20%)
-- Số budget đang EXCEEDED (available < 0)
+**KPI strip (4 stat cards, tính từ page/filter hiện tại):**
+- Tổng budget theo filter: dùng `meta.totalElements`
+- Tổng allocated đang hiển thị: sum `allocated` trong page hiện tại
+- Tổng available đang hiển thị: sum `available` trong page hiện tại
+- Số budget WARNING/EXCEEDED đang hiển thị: tính từ `availablePercent` và `available`
+
+Không hiển thị tổng allocated/available toàn hệ thống nếu chưa có aggregate API riêng.
 
 **Filter bar:**
 ```
@@ -117,12 +152,12 @@ Sidebar nav cần thêm (trong `shell.component.ts`):
 | Spent | ep-amount | Tiền đã thực chi (invoice paid) |
 | Available | ep-amount | Màu đỏ nếu < 0, amber nếu < 20% |
 | Utilization | progress bar inline | `(committed + spent) / allocated * 100` |
-| Status | ep-badge | ACTIVE=success, CLOSED=neutral, PLANNING=info, WARNING=warning |
+| Status | ep-badge | `PLANNING/SUBMITTED/APPROVED/ACTIVE/CLOSED`; health tone warning/exceeded là badge phụ do UI tính |
 | Forecast | date | forecastExhaustedAt — "Dự kiến hết ngày X" nếu có |
 
-Khi click row → navigate `/finance/budgets/:id`
+Khi click row → navigate `/finance/budgets/:id`.
 
-**Phân trang:** offset pagination, 20 items/page
+**Phân trang:** offset pagination, 20 items/page; sort default `fiscalYear,desc`.
 
 **Empty state:** icon `wallet-cards`, message khi chưa có budget nào hoặc filter không có kết quả
 
@@ -133,7 +168,7 @@ Khi click row → navigate `/finance/budgets/:id`
 **Layout:** Page header + metric strip + main grid (2 cols) + actions section
 
 **Page header:**
-- Title: `{glAccountCode} — {departmentId short}`, subtitle: `Năm {fiscalYear} Q{quarter}`
+- Title: `{glAccountCode} — {departmentId short}`, subtitle: `Năm {fiscalYear} Q{quarter}` hoặc `Cả năm`
 - Badge status
 - Action buttons (nếu có permission):
   - `[Override Approval]` — hiện khi có `BUDGET_OVERRIDE`, chỉ enabled khi status = ACTIVE
@@ -159,7 +194,7 @@ Khi click row → navigate `/finance/budgets/:id`
 - GL Account Code
 - Fiscal Year / Quarter
 - Status badge
-- Tất cả timestamps: createdAt (nếu API trả về)
+- Không hiển thị timestamps trong slice này vì `BudgetDashboardResponse` chưa trả `createdAt/updatedAt`.
 
 **Override Approval Modal** (khi click `[Override Approval]`):
 ```
@@ -167,29 +202,29 @@ Fields:
   - prId (text, required): UUID của PR cần vượt ngân sách
   - overrideAmount (number, required): Số tiền phê duyệt vượt
   - currency (text, default VND)
-  - overrideReason (textarea, required, minLength 20)
+  - overrideReason (textarea, required, minLength 50, maxLength 1000)
   
 Validation:
   - overrideAmount > 0
-  - overrideReason ≥ 20 chars
+  - overrideReason ≥ 50 chars
 
-Submit: PATCH /budgets/{id}/override-approval + Idempotency-Key header
+Submit: PATCH `/budgets/{id}/override-approval`; `Idempotency-Key` được interceptor tự thêm nếu service không set explicit
 Sau submit: reload budget detail + toast success
 ```
 
 **Transfer Budget Modal** (khi click `[Transfer Budget]`):
 ```
 Fields:
-  - targetBudgetId (text/select, required): UUID budget đích — ideally là dropdown từ GET /budgets filter cùng fiscal year
+  - targetBudgetId (text/select, required): UUID budget đích — dropdown từ `GET /budgets` filter cùng fiscal year và `status=ACTIVE`, exclude current budget; fallback nhập UUID nếu list không đủ
   - amount (number, required): Số tiền điều chuyển ≤ available
   - currency (text, default VND)
-  - reason (textarea, required, minLength 10)
+  - reason (textarea, required, minLength 20, maxLength 1000)
   
 Validation:
   - amount > 0 và ≤ available hiện tại
   - targetBudgetId ≠ id hiện tại
 
-Submit: PATCH /budgets/{id}/transfer + Idempotency-Key header
+Submit: PATCH `/budgets/{id}/transfer`; `Idempotency-Key` được interceptor tự thêm nếu service không set explicit
 Sau submit: reload budget detail + toast success với sourceDashboard/targetDashboard mới
 ```
 
@@ -220,6 +255,7 @@ export interface BudgetDashboard {
 export interface BudgetListFilter {
   page: number;
   size: number;
+  sort?: string;
   department_id?: string;
   fiscal_year?: number;
   quarter?: number;
@@ -265,6 +301,8 @@ export interface BudgetTransferResult {
   sourceDashboard: BudgetDashboard;
   targetDashboard: BudgetDashboard;
 }
+
+export type BudgetHealthTone = 'HEALTHY' | 'WARNING' | 'EXCEEDED';
 ```
 
 ---
@@ -276,11 +314,13 @@ export interface BudgetTransferResult {
 @Injectable({ providedIn: 'root' })
 export class BudgetService {
   list(filter: BudgetListFilter): Observable<ApiResponse<BudgetDashboard[]> & { meta: PageMeta }>
-  getById(id: string): Observable<ApiResponse<BudgetDashboard>>
+  getDashboard(id: string): Observable<ApiResponse<BudgetDashboard>>
   override(id: string, request: BudgetOverrideRequest): Observable<ApiResponse<BudgetOverrideResult>>
   transfer(id: string, request: BudgetTransferRequest): Observable<ApiResponse<BudgetTransferResult>>
 }
 ```
+
+**Implementation note:** dùng `HttpClient` + `API_BASE_URL` giống `PurchaseOrderService`/`InvoiceService`. `credentialsInterceptor` thêm `withCredentials` và `idempotencyInterceptor` thêm `Idempotency-Key`; vẫn có thể set header explicit nếu cần một key ổn định cho retry trong cùng submit.
 
 ---
 
@@ -329,8 +369,8 @@ export class BudgetService {
 "finance.budget.status.ACTIVE": "Đang hoạt động",
 "finance.budget.status.CLOSED": "Đã đóng",
 "finance.budget.detail.title": "Chi tiết Ngân sách",
-"finance.budget.detail.burnRate": "Tốc độ tiêu: {rate}/tháng",
-"finance.budget.detail.forecastExhausted": "Dự kiến hết ngân sách: {date}",
+"finance.budget.detail.burnRate": "Tốc độ tiêu: {{rate}}/tháng",
+"finance.budget.detail.forecastExhausted": "Dự kiến hết ngân sách: {{date}}",
 "finance.budget.detail.forecastSafe": "Ngân sách đủ đến cuối kỳ",
 "finance.budget.detail.action.override": "Duyệt vượt chi",
 "finance.budget.detail.action.transfer": "Điều chuyển ngân sách",
@@ -354,10 +394,11 @@ export class BudgetService {
 
 - Tất cả component: `standalone: true`, `ChangeDetectionStrategy.OnPush`, state bằng `signal/computed`
 - `takeUntilDestroyed(this.destroyRef)` cho mọi subscription
-- Mọi POST/PATCH gửi `Idempotency-Key: crypto.randomUUID()` header
-- `withCredentials: true` cho mọi request
+- Mọi POST/PATCH phải có `Idempotency-Key`; hiện frontend đã có `idempotencyInterceptor` tự thêm nếu service không set explicit
+- `withCredentials: true` đã được `credentialsInterceptor` thêm; service vẫn có thể khai báo explicit để giữ pattern finance hiện tại
 - Budget amount: hiển thị qua `ep-amount` component — không format thủ công
 - Utilization bar: CSS custom property `var(--color-success)` → `var(--color-warning)` → `var(--color-danger)` theo threshold 80% / 95%
 - Không hardcode màu — dùng CSS variable
-- `availablePercent` < 0 → màu `var(--color-danger)`, 0–20% → `var(--color-warning)`, > 20% → `var(--color-success)`
+- `available < 0` → màu `var(--color-danger)`, `availablePercent` 0–20% → `var(--color-warning)`, > 20% → `var(--color-success)`
 - Permission `BUDGET_OVERRIDE` và `BUDGET_TRANSFER_APPROVE` check bằng `*epHasPermission` directive trên action buttons
+- Không dùng màu/palette từ tool design bên ngoài; ưu tiên design system hiện tại của dự án: Enterprise Dark Command Center, CSS tokens, Lucide icons, layout dense/scannable.

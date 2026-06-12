@@ -1,0 +1,20 @@
+<section class="budget-list-page" aria-labelledby="budget-list-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'finance.budget.list.eyebrow' | translate }}</span>
+      <h1 id="budget-list-heading" class="page-header__title">{{ 'finance.budget.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'finance.budget.list.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__indicator">
+      <ep-icon name="wallet-cards" />
+      <span>{{ 'finance.budget.list.phase' | translate }}</span>
+    </div>
+  </div>
+
+  <ep-empty-state
+    icon="wallet-cards"
+    [title]="'finance.budget.list.empty.title' | translate"
+    [message]="'finance.budget.list.empty.message' | translate" />
+</section>

@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | 1 | `UI_MODULE_INVENTORY.md` | Inventory Catalog UI (Slice 5–8) | ✅ Hoàn thành | Slice 8 runtime hardening được chuyển sang E2E hardening chung theo quyết định 2026-06-12 |
 | 2 | `UI_MODULE_SHELL_NAV_UX.md` | Shell Nav + UX Gaps | ✅ Hoàn thành | Build pass 2026-06-13; Budget nav/indicator deferred sang plan #3 |
-| 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | 🔄 **Sẵn sàng thực hiện** | Tạo Budget route và nav entry cùng lúc |
+| 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | 🔄 **Đã rà soát, sẵn sàng thực hiện** | Bắt đầu 3a: model/service/routes/nav/i18n shell |
 | 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | ⬜ Chờ | Không phụ thuộc — standalone |
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ⬜ Chờ | Nên làm sau #4 (dùng chung ep-approval-steps) |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ⬜ Chờ | Cần GoodsReceiptService đã ổn định từ #1 |
@@ -64,17 +64,17 @@ Gồm 4 nhóm thay đổi nhỏ, độc lập, có thể làm theo thứ tự b�
 ---
 
 #### 3. `UI_MODULE_FINANCE_BUDGET.md` — Finance Budget Management
-**Làm sau plan #2.** Tạo Budget route và `nav.budgets` trong cùng slice đầu tiên của plan này.
+**Đã rà soát 2026-06-13, làm sau plan #2.** Tạo Budget route và `nav.budgets` trong cùng slice đầu tiên của plan này.
 
 Tạo hoàn toàn mới — không có code cũ để sửa:
 
 | Bước | Nội dung |
 |---|---|
-| 3a | Tạo `budget.model.ts` và `budget.service.ts` |
-| 3b | Thêm routes `finance/budgets` và `finance/budgets/:id` vào `finance.routes.ts` |
-| 3c | Build `BudgetListComponent` — list với KPI strip + filter + table |
-| 3d | Build `BudgetDetailComponent` — utilization panel + info + Override/Transfer modals |
-| 3e | i18n VI/EN, build verify |
+| 3a | ✅ Tạo `budget.model.ts`, `budget.service.ts`, routes `finance/budgets`, nav `nav.budgets`, i18n shell |
+| 3b | Build `BudgetListComponent` — KPI theo page/filter hiện tại + filter + table |
+| 3c | Build `BudgetDetailComponent` read-only — utilization panel + info + health tone |
+| 3d | Thêm Override/Transfer modals theo validation backend thật |
+| 3e | i18n hoàn chỉnh + `npm run build` verify |
 
 **Lý do ưu tiên:** Accountant và Manager hoàn toàn không có UI nào cho ngân sách — đây là gap nghiệp vụ lớn nhất sau Inventory.
 

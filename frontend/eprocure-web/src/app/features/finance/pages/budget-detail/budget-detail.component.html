@@ -1,0 +1,22 @@
+<section class="budget-detail-page" aria-labelledby="budget-detail-heading">
+  <ep-breadcrumb />
+
+  <div class="budget-detail-page__nav">
+    <ep-button variant="ghost" size="sm" icon="chevron-left" routerLink="/finance/budgets">
+      {{ 'finance.budget.detail.action.back' | translate }}
+    </ep-button>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'finance.budget.detail.eyebrow' | translate }}</span>
+      <h1 id="budget-detail-heading" class="page-header__title">{{ 'finance.budget.detail.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'finance.budget.detail.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <ep-empty-state
+    icon="wallet-cards"
+    [title]="'finance.budget.detail.empty.title' | translate"
+    [message]="'finance.budget.detail.empty.message' | translate" />
+</section>

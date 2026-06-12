@@ -341,6 +341,7 @@
     "procurement": "Mua sắm",
     "purchaseRequest": "Yêu cầu mua sắm",
     "purchaseOrders": "Đơn mua hàng",
+    "budgets": "Ngân sách",
     "invoices": "Hóa đơn & thanh toán",
     "vendors": "Nhà cung cấp",
     "rfq": "Yêu cầu báo giá (RFQ)",
@@ -384,6 +385,8 @@
       "purchaseOrders": "Đơn mua hàng",
       "createPo": "Tạo đơn mua hàng",
       "poDetail": "Chi tiết đơn mua hàng",
+      "budgets": "Ngân sách",
+      "budgetDetail": "Chi tiết ngân sách",
       "invoices": "Hóa đơn & thanh toán",
       "createInvoice": "Tạo hóa đơn",
       "invoiceDetail": "Chi tiết hóa đơn"
@@ -709,6 +712,63 @@
     }
   },
   "finance": {
+    "budget": {
+      "list": {
+        "eyebrow": "Finance",
+        "title": "Quản lý ngân sách",
+        "subtitle": "Theo dõi allocated, committed, spent và available theo phòng ban, năm tài chính, quý và mã GL.",
+        "phase": "Slice 3a",
+        "empty": {
+          "title": "Budget UI shell đã sẵn sàng",
+          "message": "Route, service và model đã được nối. Bảng dữ liệu và bộ lọc sẽ được triển khai ở slice 3b."
+        }
+      },
+      "detail": {
+        "eyebrow": "Budget dashboard",
+        "title": "Chi tiết ngân sách",
+        "subtitle": "Dashboard read-only và action override/transfer sẽ được triển khai trong các slice tiếp theo.",
+        "action": {
+          "back": "Quay lại danh sách ngân sách",
+          "override": "Duyệt vượt chi",
+          "transfer": "Điều chuyển ngân sách"
+        },
+        "empty": {
+          "title": "Budget detail shell đã sẵn sàng",
+          "message": "Route detail đã hoạt động. Dữ liệu dashboard sẽ dùng GET /budgets/{id}/dashboard ở slice 3c."
+        }
+      },
+      "status": {
+        "PLANNING": "Đang lập",
+        "SUBMITTED": "Đã nộp",
+        "APPROVED": "Đã duyệt",
+        "ACTIVE": "Đang hoạt động",
+        "CLOSED": "Đã đóng"
+      },
+      "health": {
+        "HEALTHY": "Ổn định",
+        "WARNING": "Cảnh báo",
+        "EXCEEDED": "Vượt chi"
+      },
+      "col": {
+        "department": "Phòng ban",
+        "glAccount": "Mã GL",
+        "period": "Năm / Quý",
+        "allocated": "Phân bổ",
+        "committed": "Đã cam kết",
+        "spent": "Đã chi",
+        "available": "Còn lại",
+        "utilization": "Sử dụng",
+        "status": "Trạng thái",
+        "forecast": "Dự báo hết"
+      },
+      "kpi": {
+        "totalBudgets": "Tổng budget",
+        "totalAllocated": "Tổng phân bổ",
+        "totalAvailable": "Tổng còn lại",
+        "warningCount": "Ngân sách cảnh báo",
+        "exceededCount": "Ngân sách vượt chi"
+      }
+    },
     "po": {
       "status": {
         "DRAFT": "Nháp",

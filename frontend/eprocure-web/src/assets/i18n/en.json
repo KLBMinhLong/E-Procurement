@@ -341,6 +341,7 @@
     "procurement": "Procurement",
     "purchaseRequest": "Purchase Requests",
     "purchaseOrders": "Purchase Orders",
+    "budgets": "Budgets",
     "invoices": "Invoices & Payments",
     "vendors": "Vendors",
     "rfq": "RFQs",
@@ -384,6 +385,8 @@
       "purchaseOrders": "Purchase Orders",
       "createPo": "Create Purchase Order",
       "poDetail": "Purchase Order Detail",
+      "budgets": "Budgets",
+      "budgetDetail": "Budget Detail",
       "invoices": "Invoices & Payments",
       "createInvoice": "Create Invoice",
       "invoiceDetail": "Invoice Detail"
@@ -709,6 +712,63 @@
     }
   },
   "finance": {
+    "budget": {
+      "list": {
+        "eyebrow": "Finance",
+        "title": "Budget Management",
+        "subtitle": "Track allocated, committed, spent, and available budget by department, fiscal year, quarter, and GL account.",
+        "phase": "Slice 3a",
+        "empty": {
+          "title": "Budget UI shell is ready",
+          "message": "Routes, service, and model are wired. Data tables and filters will be implemented in slice 3b."
+        }
+      },
+      "detail": {
+        "eyebrow": "Budget dashboard",
+        "title": "Budget Detail",
+        "subtitle": "Read-only dashboard data and override/transfer actions will be implemented in the next slices.",
+        "action": {
+          "back": "Back to budget list",
+          "override": "Approve override",
+          "transfer": "Transfer budget"
+        },
+        "empty": {
+          "title": "Budget detail shell is ready",
+          "message": "The detail route is active. Dashboard data will use GET /budgets/{id}/dashboard in slice 3c."
+        }
+      },
+      "status": {
+        "PLANNING": "Planning",
+        "SUBMITTED": "Submitted",
+        "APPROVED": "Approved",
+        "ACTIVE": "Active",
+        "CLOSED": "Closed"
+      },
+      "health": {
+        "HEALTHY": "Healthy",
+        "WARNING": "Warning",
+        "EXCEEDED": "Exceeded"
+      },
+      "col": {
+        "department": "Department",
+        "glAccount": "GL account",
+        "period": "Year / Quarter",
+        "allocated": "Allocated",
+        "committed": "Committed",
+        "spent": "Spent",
+        "available": "Available",
+        "utilization": "Utilization",
+        "status": "Status",
+        "forecast": "Forecast"
+      },
+      "kpi": {
+        "totalBudgets": "Total budgets",
+        "totalAllocated": "Total allocated",
+        "totalAvailable": "Total available",
+        "warningCount": "Warning budgets",
+        "exceededCount": "Exceeded budgets"
+      }
+    },
     "po": {
       "status": {
         "DRAFT": "Draft",

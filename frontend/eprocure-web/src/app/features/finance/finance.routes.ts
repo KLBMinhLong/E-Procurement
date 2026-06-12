@@ -32,6 +32,22 @@ export const financeRoutes: Routes = [
     title: 'route.finance.poDetail'
   },
   {
+    path: 'budgets',
+    loadComponent: () =>
+      import('./pages/budget-list/budget-list.component').then((m) => m.BudgetListComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['BUDGET_VIEW_OWN_DEPT', 'BUDGET_VIEW_ALL'] },
+    title: 'route.finance.budgets'
+  },
+  {
+    path: 'budgets/:id',
+    loadComponent: () =>
+      import('./pages/budget-detail/budget-detail.component').then((m) => m.BudgetDetailComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['BUDGET_VIEW_OWN_DEPT', 'BUDGET_VIEW_ALL'] },
+    title: 'route.finance.budgetDetail'
+  },
+  {
     path: 'invoices',
     loadComponent: () =>
       import('./pages/invoice-list/invoice-list.component').then((m) => m.InvoiceListComponent),
