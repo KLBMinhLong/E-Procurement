@@ -1,283 +1,320 @@
 # Kế hoạch UI — Approval Flow Diagram & Process Visualization
 
-> **Mục tiêu:** Thay thế và nâng cấp cách hiển thị tiến trình duyệt hiện tại (CSS text timeline thô) thành một component trực quan, nhất quán trên cả 3 màn hình sử dụng: Approval Detail, PR Detail sidebar, và PR Detail standalone section.
+> **Mục tiêu:** Chuẩn hóa cách hiển thị tiến trình duyệt trên Approval Detail và PR Detail bằng shared components có thể tái sử dụng, giúp approver/requester scan nhanh vị trí hiện tại trong workflow và toàn bộ lifecycle của PR.
+
+---
+
+## 0. Rà soát lại theo code hiện tại — 2026-06-13
+
+Plan này là plan kế tiếp sau `UI_MODULE_FINANCE_BUDGET.md`. Rà soát code hiện tại cho thấy hướng làm vẫn đúng, nhưng plan cũ có một số giả định cần chỉnh để khớp frontend/backend thật.
+
+| Nhóm | Trạng thái thực tế | Điều chỉnh scope |
+|---|---|---|
+| Path Approval | Code thật nằm ở `features/approvals/...`, không phải `features/approval/...` | Dùng đúng `features/approvals/pages/approval-detail/*`, `features/approvals/models/approvals.model.ts`, `features/approvals/services/approvals.service.ts`. |
+| Route Approval Detail | Route thật là `/approvals/:id`, param tên `id` là task id | Link từ PR detail về inbox dùng `/approvals`; link từ approval detail sang PR dùng `/procurement/:entityId` khi `entityType === 'PURCHASE_REQUEST'`. |
+| Approval step detail API | OpenAPI `ApprovalProcessDetail.steps` hiện có: `stepIndex`, `approverRole`, `approver`, `delegateId`, `status`, `action`, `comment`, `slaDeadline`, `assignedAt`, `actedAt`, `isEscalated` | Không thêm bắt buộc `forwardedTo`/`bypassReason` vào model. Nếu cần note forward/skipped thì render từ `action`, `delegateId`, `comment`, `isEscalated`; backend không trả tên người forward tới. |
+| Step status | Backend hiện có `PENDING`, `APPROVED`, `REJECTED`, `ESCALATED`, `SKIPPED`, `FORWARDED`; PR detail summary cũng cùng union | Không dùng `BYPASS` trong slice này. Dùng `SKIPPED` cho bước bỏ qua. Không đưa `CHANGES_REQUESTED` vào step status nếu API chưa trả ở step-level. |
+| Model khác nhau | Approval Detail dùng `ApprovalStepDetail`; PR Detail dùng `ApprovalStepSummary` trong `purchase-request.model.ts` | Tạo shared component nhận kiểu view model linh hoạt `ApprovalStepView` với field optional, không ép sửa API model nếu không cần. |
+| current step | Approval detail có `currentStepIndex`; PR detail có `currentStep` | Component nhận `currentStepIndex`; từng page map từ field hiện có. Nếu null thì tự tìm step `PENDING`. |
+| SLA | Đã có `EpSlaBarComponent` | `ep-approval-steps` dùng lại `ep-sla-bar`, không tạo progress bar mới. |
+| Icons | `app.config.ts` đã register `check`, `x`, `clock`, `send`, `circle-off`, `shield-alert`, `workflow`, `external-link`, `inbox` | Dùng các icon đã register để tránh build fail. Nếu muốn icon mới như `forward`/`skip-forward`, phải add vào `app.config.ts` cùng slice. |
+| i18n status | Đã có `approval.status.*` trong `vi.json`/`en.json` cho `PENDING/APPROVED/REJECTED/ESCALATED/SKIPPED/FORWARDED/...` | Component dùng lại `approval.status.*`; chỉ thêm key cho labels/hints mới. |
+| UI style | Skill UI gợi ý data-dense dashboard; dự án đã có Enterprise Dark Command Center tokens | Ưu tiên design system hiện tại của dự án: dense, scannable, CSS vars, Lucide icons; không đổi palette/font theo external suggestion. |
+
+**Thứ tự thực hiện đề xuất:** 4a shared `ep-approval-steps` → 4b wire Approval Detail → 4c shared `ep-pr-lifecycle` → 4d wire PR Detail → 4e links/navigation polish → 4f i18n + build verify.
 
 ---
 
 ## 1. Hiện trạng
 
-### 1.1 Approval Detail — `/approvals/:taskId`
+### 1.1 Approval Detail — `/approvals/:id`
 
-**File:** `features/approvals/pages/approval-detail/approval-detail.component.html`
+**Files thực tế:**
+- `frontend/eprocure-web/src/app/features/approvals/pages/approval-detail/approval-detail.component.ts`
+- `frontend/eprocure-web/src/app/features/approvals/pages/approval-detail/approval-detail.component.html`
+- `frontend/eprocure-web/src/app/features/approvals/pages/approval-detail/approval-detail.component.scss`
 
 **Cách hiển thị hiện tại:**
-```html
-<!-- Trong sidebar "Right Sidebar Column" -->
-<div class="card sidebar-card process-card">
-  <h2 class="card__title">{{ 'approvals.detail.processHeader' | translate }}</h2>
-  <div class="timeline">
-    @for (step of process()?.steps; track step.stepIndex; let last = $last) {
-      <div class="timeline-item" [class.timeline-item--active]="step.status === 'PENDING'">
-        <div class="timeline-indicator">
-          <div class="timeline-dot" [class]="'timeline-dot--' + step.status.toLowerCase()"></div>
-          @if (!last) { <div class="timeline-line"></div> }
-        </div>
-        <div class="timeline-content">
-          <strong>Step {{ step.stepIndex + 1 }}: {{ step.approverRole }}</strong>
-          <ep-badge [tone]="statusTone[step.status]" ... />
-          <span>{{ step.approver.fullName }}</span>
-          <blockquote>"{{ step.comment }}"</blockquote>
-          <time>{{ formatDate(step.actedAt) }}</time>
-        </div>
-      </div>
-    }
-  </div>
-</div>
-```
+- Header có task number và action buttons approve/reject/request changes/forward.
+- Main grid có basic info, line items, attachments.
+- Sidebar có requester, SLA card và process card.
+- Process card đang render timeline thủ công bằng `.timeline`, `.timeline-item`, `.timeline-dot`.
+
+**Nguồn dữ liệu:**
+- `taskDetail = approvalsService.getTaskDetail(taskId)`
+- `process = approvalsService.getProcessDetail(entityType, entityId)`
+- Model: `ApprovalProcessDetail.steps: ApprovalStepDetail[]`
 
 **Vấn đề:**
-- Timeline chỉ là danh sách dọc với chấm CSS — không thấy tổng quan ngay lập tức
-- Đặt trong sidebar nhỏ (right column) — bị ép chiều rộng, khó đọc khi có 4-5 steps
-- Không có visual indicator "bạn đang ở bước X/Y" nổi bật ở đầu trang
-- `BYPASS` và `FORWARDED` status không có giải thích — không biết ai đã forward cho ai, lý do bypass là gì
-- Không highlight bước đang chờ action của approver hiện tại
-
-**Data source:** `process()` signal → `ApprovalProcessDetail` từ `approvalsService.getProcessDetail(entityType, entityId)`
-
----
+- Timeline chỉ nằm trong sidebar nên không có overview rõ ở đầu trang.
+- Timeline approval detail và PR detail render bằng hai bộ HTML/SCSS khác nhau.
+- Active step logic đang dựa vào `step.status === 'PENDING'`, trong khi API đã có `currentStepIndex`.
+- Step status `ESCALATED/SKIPPED/FORWARDED` chưa có visual treatment rõ.
+- Không có link trực tiếp sang PR đầy đủ dù task đã có `entityId`.
 
 ### 1.2 PR Detail — `/procurement/:id`
 
-**File:** `features/procurement/pages/pr-detail/pr-detail.component.html`
+**Files thực tế:**
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.ts`
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.html`
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.scss`
 
 **Cách hiển thị hiện tại:**
-```html
-<!-- Trong aside sidebar -->
-<ep-card tone="raised">
-  <div class="approval-timeline">
-    @for (step of process.steps; track step.stepIndex) {
-      <div class="timeline-item" [class.timeline-item--active]="step.stepIndex === process.currentStep">
-        <div class="timeline-item__marker">
-          @if (step.status === 'APPROVED') { <ep-icon name="check" class="icon-success" /> }
-          @else if (step.status === 'REJECTED') { <ep-icon name="x" class="icon-danger" /> }
-          @else { <span class="dot"></span> }
-        </div>
-        <div class="timeline-item__content">
-          <span>{{ step.approverRole }}</span>
-          <ep-badge [tone]="..." />
-          <span>{{ step.approver?.fullName }}</span>
-          <!-- SLA bar cho PENDING step -->
-          @if (step.status === 'PENDING') {
-            <ep-sla-bar [assignedAt]="step.assignedAt" [deadline]="step.slaDeadline" />
-          }
-          <div>{{ step.comment }}</div>
-        </div>
-      </div>
-    }
-  </div>
-</ep-card>
-```
+- Sidebar approval card render timeline thủ công bằng `.approval-timeline`, `.timeline-item`.
+- Active step logic dùng `step.stepIndex === process.currentStep`.
+- Có SLA bar cho step pending.
+- Không có PR lifecycle tracker full-width.
+
+**Nguồn dữ liệu:**
+- `pr = PurchaseRequestService.getById(id)`
+- `pr.approvalProcess?: ApprovalProcess`
+- Model: `ApprovalProcess.steps: ApprovalStepSummary[]`
 
 **Vấn đề:**
-- Khác biệt hoàn toàn với cách render trong approval detail — không nhất quán
-- Dùng `step.stepIndex === process.currentStep` để highlight active nhưng approval detail dùng `step.status === 'PENDING'`
-- Cùng dữ liệu `ApprovalProcessDetail` nhưng 2 component render 2 kiểu khác nhau
-- Không có bước lifecycle tổng thể của PR (DRAFT → SUBMITTED → PENDING_APPROVAL → APPROVED)
+- Requester không thấy PR đang ở đâu trong toàn lifecycle: draft, submitted, pending approval, approved, converted, closed/terminal.
+- HTML/SCSS timeline trùng concept nhưng không tái sử dụng.
+- Không có link tiện lợi về Approval Inbox khi PR đang pending approval và user có quyền duyệt.
 
 ---
 
-### 1.3 Không có lifecycle status tracker
+## 2. Giải pháp tổng thể
 
-Không có màn hình nào (PR detail hay approval detail) thể hiện vị trí hiện tại trong **full lifecycle** của PR từ đầu đến cuối. Người dùng không biết bước tiếp theo là gì.
+Tạo 2 shared components:
 
----
+1. `ep-approval-steps`
+   - Dùng chung cho Approval Detail và PR Detail.
+   - Hỗ trợ horizontal overview và vertical compact timeline.
+   - Nhận view model linh hoạt, không phụ thuộc chặt vào một feature model.
+   - Dùng `ep-badge`, `ep-icon`, `ep-sla-bar`, `ep-empty-state`.
 
-## 2. Vấn đề cần giải quyết
-
-| # | Vấn đề | Ảnh hưởng |
-|---|---|---|
-| 1 | Không có "you are here" indicator rõ ràng ở đầu trang | Approver mất 3-5 giây để tìm mình đang cần làm gì |
-| 2 | Timeline chỉ là danh sách dọc, không scan được nhanh | Khó thấy toàn cảnh khi có 5+ steps |
-| 3 | 2 cách render khác nhau cho cùng dữ liệu | Code không nhất quán, khó bảo trì |
-| 4 | BYPASS/FORWARDED không giải thích | Approver không hiểu tại sao bước đó bị skip |
-| 5 | Không có PR lifecycle tracker | Requester không biết PR đang ở giai đoạn nào của cả quy trình |
-| 6 | Không có link "Xem PR đầy đủ" từ approval detail | Approver phải mở tab mới tự tìm |
+2. `ep-pr-lifecycle`
+   - Dùng trong PR Detail để thể hiện lifecycle tổng thể của Purchase Request.
+   - Tách biệt khỏi approval steps vì approval chỉ là một giai đoạn trong lifecycle.
+   - Dùng `PrStatus` hiện có, không cần API mới.
 
 ---
 
-## 3. Giải pháp — Component `ep-approval-steps`
+## 3. Slice 4a — Shared Component `ep-approval-steps`
 
-### 3.1 Thiết kế component mới
-
-**File cần tạo:** `shared/components/ep-approval-steps/ep-approval-steps.component.ts`
-
-**Mục đích:** Shared component dùng chung ở cả approval-detail và pr-detail, thay thế 2 cách render riêng lẻ hiện tại.
-
-**Input signals:**
-```typescript
-@Component({ selector: 'ep-approval-steps', ... })
-export class EpApprovalStepsComponent {
-  // Required
-  readonly steps = input.required<ApprovalStep[]>();
-  
-  // Optional
-  readonly currentStepIndex = input<number | null>(null);  // highlight step hiện tại
-  readonly viewMode = input<'horizontal' | 'vertical'>('horizontal');
-  readonly showSlaBar = input<boolean>(true);
-  readonly compact = input<boolean>(false);  // dùng trong sidebar (vertical compact)
-}
+**Files cần tạo:**
+```
+frontend/eprocure-web/src/app/shared/components/ep-approval-steps/
+  ep-approval-steps.component.ts
+  ep-approval-steps.component.html
+  ep-approval-steps.component.scss
 ```
 
-**Interface `ApprovalStep` (unified):**
+**Cập nhật export:**
+```
+frontend/eprocure-web/src/app/shared/shared.index.ts
+```
+
+**Interface view model trong component:**
 ```typescript
-export interface ApprovalStep {
+export type ApprovalStepStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'ESCALATED'
+  | 'SKIPPED'
+  | 'FORWARDED';
+
+export interface ApprovalStepView {
   stepIndex: number;
   approverRole: string;
-  approver: {
-    id: string | null;
-    fullName: string | null;
-  };
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED' | 'FORWARDED' | 'BYPASS' | 'SKIPPED' | 'ESCALATED';
-  comment: string | null;
-  actedAt: string | null;
-  assignedAt: string | null;
-  slaDeadline: string | null;
-  slaRemainingHours: number | null;
-  forwardedTo?: { id: string; fullName: string } | null;   // khi FORWARDED
-  bypassReason?: string | null;                            // khi BYPASS
+  approver?: { id?: string | null; fullName?: string | null } | null;
+  status: ApprovalStepStatus;
+  action?: 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'FORWARD' | null;
+  comment?: string | null;
+  actedAt?: string | null;
+  assignedAt?: string | null;
+  slaDeadline?: string | null;
+  slaRemainingHours?: number | null;
+  delegateId?: string | null;
+  isEscalated?: boolean;
 }
 ```
 
----
-
-### 3.2 Horizontal Stepper (dùng ở đầu trang approval detail)
-
-**Layout:**
-```
-[Step 1]──────[Step 2]──────[Step 3 ●CURRENT]──────[Step 4]
-  APPROVED      APPROVED       PENDING               (waiting)
-  Manager L1    Director       CFO                   Board
-  Nguyễn A      Trần B         (chưa assign)
-  ✓ 2h ago      ✓ 1h ago       ⏱ 6h còn lại
-```
-
-**Visual rules:**
-- Step đã xong (APPROVED): circle màu `var(--color-success)`, icon `check`, opacity 100%
-- Step đang pending (PENDING): circle màu `var(--color-warning)`, pulsing ring animation
-- Step hiện tại của user đang xem: outer ring `var(--color-accent)` dày hơn
-- Step chưa tới: circle màu `var(--color-neutral-subtle)`, text mờ
-- Step REJECTED: circle màu `var(--color-danger)`, icon `x`, line connector sau đó đổi màu đỏ
-- Step FORWARDED: circle màu `var(--color-info)`, icon `forward`, tooltip/note tên người được forward tới
-- Step BYPASS: circle màu `var(--color-neutral)`, icon `skip-forward`, tooltip lý do bypass
-- Connector line: gradient từ màu step trước sang màu step tiếp theo
-
-**Behavior:**
-- Click vào step → expand/collapse detail panel phía dưới stepper (accordion)
-- Panel chi tiết step: comment (nếu có), actedAt, forwardedTo (nếu FORWARDED), bypassReason (nếu BYPASS)
-- Responsive: trên mobile (< 768px) tự chuyển sang vertical layout
-
----
-
-### 3.3 Vertical Compact Timeline (dùng trong sidebar)
-
-**Layout dọc trong sidebar (compact mode):**
-```
-● ✓  Manager L1 — Nguyễn A          APPROVED
-│    Comment: "Đồng ý, đúng ngân sách"   2h ago
-│
-● ⏱  Director — Trần B               PENDING ← CURRENT
-│    Hạn: 23/06 17:00 [===----] 6h còn
-│
-○    CFO                              WAITING
-     (chưa giao)
-```
-
-**Khi `compact = true`:** Bỏ accordion, chỉ hiển thị comment nếu có status cuối (REJECTED/CHANGES_REQUESTED), rút gọn tối đa.
-
----
-
-### 3.4 PR Lifecycle Tracker (riêng biệt với approval steps)
-
-**Mục đích:** Hiển thị vị trí của PR trong toàn bộ procurement lifecycle — khác với approval steps (chỉ là một giai đoạn trong lifecycle).
-
-**Component:** `ep-pr-lifecycle` hoặc thêm section trong PR detail template
-
-**Stages:**
-```
-[DRAFT] → [SUBMITTED] → [PENDING_APPROVAL] → [APPROVED] → [CONVERTED_TO_PO / RFQ] → [CLOSED]
-                                                                    ↓
-                                                             [REJECTED]
-                                                             [CANCELLED]
-                                                             [CHANGES_REQUESTED]
-```
-
-**Visual:**
-- Horizontal step bar, tương tự breadcrumb nhưng dạng status pipeline
-- Stage hiện tại highlight bằng `var(--color-accent)`
-- Stage đã qua: màu `var(--color-success)` + icon check nhỏ
-- Stage terminal (REJECTED/CANCELLED): màu `var(--color-danger)`, hiển thị thay cho các stage sau
-
-**Đặt vị trí:** Ngay dưới page header trong PR detail, trên metric strip, rộng full-width
-
----
-
-## 4. Thay đổi trong các màn hình hiện có
-
-### 4.1 Approval Detail — thay đổi cần thiết
-
-**Thêm horizontal stepper ở đầu trang** (sau page header, trước main grid):
-```html
-<!-- Thêm trước <div class="detail-grid"> -->
-<section class="process-overview" aria-labelledby="process-overview-heading">
-  <h2 id="process-overview-heading" class="sr-only">{{ 'approvals.detail.processOverview' | translate }}</h2>
-  <ep-approval-steps
-    [steps]="process()?.steps ?? []"
-    [currentStepIndex]="currentStepIndex()"
-    viewMode="horizontal"
-    [showSlaBar]="true" />
-</section>
-```
-
-**Tính `currentStepIndex`:**
+**Inputs:**
 ```typescript
-readonly currentStepIndex = computed(() => {
-  const steps = this.process()?.steps ?? [];
-  const idx = steps.findIndex(s => s.status === 'PENDING');
-  return idx >= 0 ? idx : null;
-});
+readonly steps = input.required<ReadonlyArray<ApprovalStepView>>();
+readonly currentStepIndex = input<number | null>(null);
+readonly viewMode = input<'horizontal' | 'vertical'>('horizontal');
+readonly showSlaBar = input(true);
+readonly compact = input(false);
 ```
 
-**Sidebar process card** — giữ lại nhưng dùng `ep-approval-steps` compact vertical thay cho HTML thủ công:
+**Computed/helper cần có:**
+- `resolvedCurrentStepIndex`: dùng input nếu có, fallback step đầu tiên `PENDING`.
+- `statusTone(status): EpBadgeTone`.
+- `statusIcon(status): string` dùng icon đã register:
+  - `APPROVED` → `check`
+  - `REJECTED` → `x`
+  - `PENDING` → `clock`
+  - `FORWARDED` → `send`
+  - `SKIPPED` → `circle-off`
+  - `ESCALATED` → `shield-alert`
+- `formatDateTime(iso)` dùng `Intl.DateTimeFormat('vi-VN', ...)` theo pattern hiện có.
+- `approverLabel(step)` fallback `approval.steps.waitingAssign`.
+
+**Render behavior:**
+- Khi `steps.length === 0`, render compact empty state hoặc text note bằng i18n.
+- Horizontal mode:
+  - Render step nodes + connector line.
+  - Bước current có outer ring.
+  - Click/keyboard Enter trên step toggle detail panel.
+  - Detail panel show approver, assignedAt, deadline, actedAt, comment/action note.
+- Vertical compact mode:
+  - Render dense list, không accordion.
+  - Hiển thị comment chỉ khi có comment hoặc status terminal.
+  - Hiển thị `ep-sla-bar` cho step `PENDING` nếu có `assignedAt` và `slaDeadline`.
+
+**SCSS rules:**
+- Dùng CSS custom properties `var(--color-success)`, `var(--color-warning)`, `var(--color-danger)`, `var(--color-accent)`, `var(--color-info)`, `var(--color-surface)`.
+- Không hardcode hex/rgb.
+- `@media (max-width: 768px)` ép horizontal thành vertical.
+- Pulse ring cho pending phải bọc trong `@media (prefers-reduced-motion: no-preference)`.
+- Focus visible phải có `box-shadow: var(--focus-ring)`.
+
+---
+
+## 4. Slice 4b — Wire Approval Detail
+
+**Files sửa:**
+- `features/approvals/pages/approval-detail/approval-detail.component.ts`
+- `features/approvals/pages/approval-detail/approval-detail.component.html`
+- `features/approvals/pages/approval-detail/approval-detail.component.scss`
+
+**TS changes:**
+```typescript
+readonly currentStepIndex = computed(() => this.process()?.currentStepIndex ?? null);
+
+readonly approvalSteps = computed(() => this.process()?.steps ?? []);
+
+canOpenPurchaseRequest(): boolean {
+  return this.task()?.entityType === 'PURCHASE_REQUEST' && Boolean(this.task()?.entityId);
+}
+
+navigateToPurchaseRequest(): void {
+  const entityId = this.task()?.entityId;
+  if (entityId) this.router.navigate(['/procurement', entityId]);
+}
+```
+
+**Template changes:**
+- Thêm overview full-width ngay sau header:
+```html
+@if (process()?.steps?.length) {
+  <section class="process-overview" aria-labelledby="process-overview-heading">
+    <h2 id="process-overview-heading" class="sr-only">
+      {{ 'approvals.detail.processOverview' | translate }}
+    </h2>
+    <ep-approval-steps
+      [steps]="approvalSteps()"
+      [currentStepIndex]="currentStepIndex()"
+      viewMode="horizontal"
+      [showSlaBar]="true" />
+  </section>
+}
+```
+
+- Trong basic info card, thêm link PR đầy đủ chỉ khi `entityType === 'PURCHASE_REQUEST'`:
+```html
+@if (canOpenPurchaseRequest()) {
+  <ep-button variant="ghost" size="sm" icon="external-link" (click)="navigateToPurchaseRequest()">
+    {{ 'approvals.detail.viewFullPr' | translate }}
+  </ep-button>
+}
+```
+
+- Thay toàn bộ `.timeline` trong sidebar bằng:
 ```html
 <ep-approval-steps
-  [steps]="process()?.steps ?? []"
+  [steps]="approvalSteps()"
   [currentStepIndex]="currentStepIndex()"
   viewMode="vertical"
-  [compact]="true" />
+  [compact]="true"
+  [showSlaBar]="true" />
 ```
 
-**Thêm link "Xem PR đầy đủ"** trong basic-info card:
-```html
-<a [routerLink]="['/procurement', task()?.entityId]" class="view-full-link">
-  <ep-icon name="external-link" [size]="14" />
-  {{ 'approvals.detail.viewFullPr' | translate }}
-</a>
-```
+**SCSS cleanup:**
+- Xóa hoặc ngưng dùng `.timeline*` thủ công sau khi replacement xong.
+- Thêm `.process-overview` card style theo existing surface token.
 
 ---
 
-### 4.2 PR Detail — thay đổi cần thiết
+## 5. Slice 4c — Shared Component `ep-pr-lifecycle`
 
-**Thêm PR lifecycle tracker** ngay sau `.page-header` và trước `.metric-strip`:
-```html
-<div class="pr-lifecycle-bar">
-  <ep-pr-lifecycle [status]="pr()?.status" [approvalProcess]="pr()?.approvalProcess" />
-</div>
+**Files cần tạo:**
+```
+frontend/eprocure-web/src/app/shared/components/ep-pr-lifecycle/
+  ep-pr-lifecycle.component.ts
+  ep-pr-lifecycle.component.html
+  ep-pr-lifecycle.component.scss
 ```
 
-**Sidebar approval card** — thay HTML thủ công bằng `ep-approval-steps`:
+**Cập nhật export:**
+```
+frontend/eprocure-web/src/app/shared/shared.index.ts
+```
+
+**Inputs:**
+```typescript
+readonly status = input<PrStatus | null>(null);
+readonly approvalStatus = input<string | null>(null);
+```
+
+**Lifecycle stages:**
+```typescript
+[
+  'DRAFT',
+  'SUBMITTED',
+  'PENDING_APPROVAL',
+  'APPROVED',
+  'CONVERTED_TO_PO',
+  'CLOSED'
+]
+```
+
+**Terminal statuses:**
+- `REJECTED`
+- `CANCELLED`
+- `CHANGES_REQUESTED`
+
+**Behavior:**
+- Stage hiện tại highlight `var(--color-accent)`.
+- Stage đã qua highlight success.
+- Nếu terminal status, render terminal node rõ và không đánh dấu các stage sau là complete.
+- `CHANGES_REQUESTED` quay về requester, nên hiển thị như terminal/action-needed tạm thời, không phải completed.
+- Dùng i18n keys `pr.lifecycle.*` để label ngắn, không hardcode visible text.
+
+---
+
+## 6. Slice 4d — Wire PR Detail
+
+**Files sửa:**
+- `features/procurement/pages/pr-detail/pr-detail.component.ts`
+- `features/procurement/pages/pr-detail/pr-detail.component.html`
+- `features/procurement/pages/pr-detail/pr-detail.component.scss`
+
+**TS changes:**
+```typescript
+readonly approvalSteps = computed(() => this.pr()?.approvalProcess?.steps ?? []);
+readonly currentApprovalStep = computed(() => this.pr()?.approvalProcess?.currentStep ?? null);
+```
+
+**Template changes:**
+- Thêm lifecycle bar ngay sau page header và trước metric strip/main grid:
 ```html
-<!-- Xóa toàn bộ <div class="approval-timeline"> hiện tại -->
+@if (pr(); as data) {
+  <ep-pr-lifecycle
+    [status]="data.status"
+    [approvalStatus]="data.approvalProcess?.status ?? null" />
+}
+```
+
+- Thay sidebar `.approval-timeline` thủ công bằng:
+```html
 <ep-approval-steps
   [steps]="approvalSteps()"
   [currentStepIndex]="currentApprovalStep()"
@@ -286,71 +323,115 @@ readonly currentStepIndex = computed(() => {
   [showSlaBar]="true" />
 ```
 
-**Thêm "Xem trong Approval Inbox"** khi status = PENDING_APPROVAL và user có quyền duyệt:
+- Thêm link về Approval Inbox khi PR đang chờ duyệt và user có permission approve:
 ```html
-@if (pr()?.status === 'PENDING_APPROVAL' && canViewApprovalInbox()) {
-  <a [routerLink]="['/approvals']" class="link-cta">
-    <ep-icon name="inbox" [size]="14" />
+@if (data.status === 'PENDING_APPROVAL') {
+  <ep-button
+    *epHasPermission="['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY']"
+    variant="ghost"
+    size="sm"
+    icon="inbox"
+    routerLink="/approvals">
     {{ 'pr.detail.approval.viewInbox' | translate }}
-  </a>
+  </ep-button>
 }
 ```
 
----
-
-## 5. Models/interfaces cần thêm
-
-**Trong `features/approvals/models/approvals.model.ts`** — thêm `forwardedTo` và `bypassReason`:
-```typescript
-export interface ApprovalProcessStep {
-  stepIndex: number;
-  approverRole: string;
-  approver: { id: string | null; fullName: string | null };
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED' | 'FORWARDED' | 'BYPASS' | 'SKIPPED' | 'ESCALATED';
-  comment: string | null;
-  actedAt: string | null;
-  assignedAt: string | null;
-  slaDeadline: string | null;
-  slaRemainingHours: number | null;
-  forwardedTo: { id: string; fullName: string } | null;
-  bypassReason: string | null;
-}
-```
+**SCSS cleanup:**
+- Xóa hoặc ngưng dùng `.approval-timeline`, `.timeline-item*` sau khi replacement xong.
+- Thêm wrapper `.pr-lifecycle-panel` nếu cần spacing.
 
 ---
 
-## 6. i18n keys cần thêm
+## 7. Slice 4e — Navigation/UX Polish
 
+**Mục tiêu:** Hoàn thiện các chi tiết nhỏ để component dùng được trong cả hai context.
+
+**Checklist:**
+- Approval Detail:
+  - Link "Xem PR đầy đủ" chỉ render cho `PURCHASE_REQUEST`.
+  - Không render link nếu `entityId` thiếu.
+  - Empty process có message rõ.
+- PR Detail:
+  - Link "Xem trong hộp thư duyệt" chỉ render khi status `PENDING_APPROVAL` và user có permission approval.
+  - Lifecycle vẫn render đúng khi PR `DRAFT` chưa có approval process.
+- Shared components:
+  - Keyboard access: step node là button, Enter/Space toggle detail.
+  - Không dùng `title` thay cho nội dung quan trọng duy nhất; tooltip/title chỉ phụ trợ.
+  - Không dùng màu là tín hiệu duy nhất: có icon + label.
+
+---
+
+## 8. Slice 4f — i18n + Build Verify
+
+**i18n keys cần thêm/cập nhật trong `vi.json` và `en.json`:**
 ```json
-"approvals.detail.processOverview": "Tổng quan tiến trình",
-"approvals.detail.viewFullPr": "Xem PR đầy đủ",
-"approvals.detail.step.forwardedTo": "Đã chuyển tiếp cho {name}",
-"approvals.detail.step.bypassReason": "Bỏ qua: {reason}",
-"approvals.detail.step.waitingAssign": "Chờ giao việc",
-"approval.step.status.BYPASS": "Bỏ qua",
-"approval.step.status.SKIPPED": "Bỏ qua",
-"approval.step.status.ESCALATED": "Đã leo thang",
-"approval.step.status.FORWARDED": "Đã chuyển tiếp",
-"pr.detail.approval.viewInbox": "Xem trong hộp thư duyệt",
-"pr.lifecycle.DRAFT": "Nháp",
-"pr.lifecycle.SUBMITTED": "Đã nộp",
-"pr.lifecycle.PENDING_APPROVAL": "Đang duyệt",
-"pr.lifecycle.APPROVED": "Đã duyệt",
-"pr.lifecycle.CONVERTED_TO_PO": "Đã tạo PO",
-"pr.lifecycle.REJECTED": "Bị từ chối",
-"pr.lifecycle.CANCELLED": "Đã hủy",
-"pr.lifecycle.CLOSED": "Đã đóng"
+{
+  "approvals": {
+    "detail": {
+      "processOverview": "Tổng quan tiến trình",
+      "viewFullPr": "Xem PR đầy đủ"
+    }
+  },
+  "approval": {
+    "steps": {
+      "emptyTitle": "Chưa có bước phê duyệt",
+      "emptyMessage": "Quy trình duyệt chưa được khởi tạo hoặc chưa trả dữ liệu.",
+      "waitingAssign": "Chờ giao việc",
+      "assignedAt": "Giao lúc",
+      "deadline": "Hạn xử lý",
+      "actedAt": "Xử lý lúc",
+      "comment": "Ý kiến",
+      "noComment": "Không có ghi chú",
+      "forwarded": "Đã chuyển tiếp",
+      "skipped": "Đã bỏ qua",
+      "escalated": "Đã chuyển cấp",
+      "stepNumber": "Bước {{step}}"
+    }
+  },
+  "pr": {
+    "detail": {
+      "approval": {
+        "viewInbox": "Xem trong hộp thư duyệt"
+      }
+    },
+    "lifecycle": {
+      "title": "Vòng đời yêu cầu mua hàng",
+      "DRAFT": "Nháp",
+      "SUBMITTED": "Đã nộp",
+      "PENDING_APPROVAL": "Đang duyệt",
+      "APPROVED": "Đã duyệt",
+      "CONVERTED_TO_PO": "Đã tạo PO",
+      "CLOSED": "Đã đóng",
+      "REJECTED": "Bị từ chối",
+      "CANCELLED": "Đã hủy",
+      "CHANGES_REQUESTED": "Cần bổ sung"
+    }
+  }
+}
 ```
+
+**Verify:**
+```powershell
+cd frontend/eprocure-web
+npm run build
+```
+
+Không mở browser test nếu người dùng vẫn yêu cầu dừng ở mức build.
 
 ---
 
-## 7. Nguyên tắc triển khai
+## 9. Nguyên tắc triển khai
 
-- `ep-approval-steps` và `ep-pr-lifecycle` là standalone components đặt trong `shared/components/`
-- Không duplicate logic: cả 2 màn hình đều dùng cùng component với input khác nhau
-- CSS của stepper: dùng CSS custom properties `var(--color-success)`, `var(--color-warning)`, `var(--color-danger)`, `var(--color-accent)` — không hardcode hex
-- Animation pulsing cho PENDING step: `@keyframes pulse` trong SCSS của component, tuân thủ `prefers-reduced-motion`
-- Horizontal → vertical responsive tại `768px` breakpoint
-- `viewMode="horizontal"` chỉ có ý nghĩa ở viewport ≥ 768px; dưới 768px luôn render vertical
-- Step tooltip (BYPASS reason, FORWARDED to) dùng `title` attribute cơ bản — không cần custom tooltip component
-- Khi `steps` là mảng rỗng hoặc null: render `ep-empty-state` nhỏ với text "Chưa bắt đầu quy trình duyệt"
+- Component mới: standalone, `ChangeDetectionStrategy.OnPush`.
+- Local state dùng `signal()` / `computed()`.
+- Subscription mới nếu có phải dùng `takeUntilDestroyed(this.destroyRef)`.
+- Không thêm HTTP endpoint hoặc service mới trong plan này.
+- Không sửa backend/OpenAPI vì dữ liệu hiện tại đủ cho visual flow.
+- Không tạo field frontend bắt buộc nếu backend chưa trả (`forwardedTo`, `bypassReason`).
+- Mọi visible text dùng translate pipe/key i18n.
+- CSS dùng `var(--...)`; không hardcode hex/rgb.
+- Dùng Lucide icons đã register hoặc cập nhật `app.config.ts` nếu thêm icon mới.
+- Không duplicate timeline HTML mới trong feature pages; mọi timeline approval dùng `ep-approval-steps`.
+- Không dùng emoji.
+- Build pass mới coi slice hoàn thành.
