@@ -8,6 +8,7 @@ import com.eprocure.inventory.application.port.in.ListStockMovementsQuery;
 import com.eprocure.inventory.application.port.in.ListWarehouseStockQuery;
 import com.eprocure.inventory.common.exception.BusinessException;
 import com.eprocure.inventory.common.exception.ErrorCode;
+import com.eprocure.inventory.domain.model.StockAdjustmentRequest;
 import com.eprocure.inventory.domain.model.StockEntry;
 import com.eprocure.inventory.domain.model.StockIssueOutRequest;
 import com.eprocure.inventory.domain.model.StockMovement;
@@ -246,10 +247,36 @@ class StockQueryUseCaseTest {
         }
 
         @Override
+        public Optional<StockAdjustmentRequest> findAdjustmentRequestByIdempotencyKey(UUID idempotencyKey) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public void insertAdjustmentRequest(StockAdjustmentRequest adjustmentRequest) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public Optional<BigDecimal> findStockQuantity(String itemCode, UUID warehouseId, String unit) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
         public Optional<BigDecimal> issueStock(
                 String itemCode,
                 UUID warehouseId,
                 BigDecimal quantity,
+                String unit,
+                UUID actorId,
+                Instant occurredAt) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public BigDecimal adjustStock(
+                String itemCode,
+                UUID warehouseId,
+                BigDecimal newQuantity,
                 String unit,
                 UUID actorId,
                 Instant occurredAt) {

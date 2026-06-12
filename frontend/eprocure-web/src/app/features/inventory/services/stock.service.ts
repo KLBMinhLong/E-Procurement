@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/http/api.service';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
+  AdjustStockRequest,
   IssueOutStockRequest,
   IssueOutStockResponse,
   ItemStockFilter,
@@ -56,6 +57,17 @@ export class StockService {
   ): Observable<ApiResponse<IssueOutStockResponse>> {
     return this.api.post<IssueOutStockResponse>(
       '/stock/issue-out',
+      request,
+      idempotencyKey
+    );
+  }
+
+  adjust(
+    request: AdjustStockRequest,
+    idempotencyKey = crypto.randomUUID()
+  ): Observable<ApiResponse<StockMovement>> {
+    return this.api.post<StockMovement>(
+      '/stock/adjustment',
       request,
       idempotencyKey
     );

@@ -2284,11 +2284,33 @@
           "adjust": "Điều chỉnh"
         },
         "totalItems": "dòng tồn",
-        "empty": {
-          "title": "Chưa có tồn kho",
-          "message": "Chọn kho khác hoặc hoàn tất phiếu nhận hàng để tạo tồn kho."
-        }
-      },
+          "empty": {
+            "title": "Chưa có tồn kho",
+            "message": "Chọn kho khác hoặc hoàn tất phiếu nhận hàng để tạo tồn kho."
+          },
+          "adjustment": {
+            "title": "Điều chỉnh tồn kho",
+            "item": "Hàng hóa",
+            "itemCode": "Mã hàng",
+            "unit": "ĐVT",
+            "currentQuantity": "Tồn hiện tại",
+            "newQuantity": "Tồn mới",
+            "delta": "Chênh lệch",
+            "reason": "Lý do điều chỉnh",
+            "validation": {
+              "required": "Trường này là bắt buộc.",
+              "numeric": "Chỉ nhập số không âm, tối đa 4 chữ số thập phân.",
+              "reasonLength": "Lý do cần ít nhất 10 ký tự.",
+              "maxLength": "Giá trị vượt quá độ dài cho phép.",
+              "unchanged": "Tồn mới phải khác tồn hiện tại.",
+              "invalid": "Vui lòng kiểm tra lại thông tin."
+            },
+            "toast": {
+              "success": "Đã điều chỉnh tồn kho.",
+              "failed": "Không thể điều chỉnh tồn kho."
+            }
+          }
+        },
       "movements": {
         "eyebrow": "Sổ cái kho",
         "title": "Lịch sử biến động kho",

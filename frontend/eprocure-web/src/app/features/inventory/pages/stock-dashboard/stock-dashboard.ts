@@ -9,16 +9,20 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
 
 import { PageMeta } from '../../../../core/models/api-response.model';
 import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
+import { ToastService } from '../../../../core/services/toast.service';
 import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
+import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { EpPageChangeEvent } from '../../../../shared/shared.index';
 import { StockEntry, Warehouse, WarehouseStockFilter } from '../../models/stock.model';
@@ -30,12 +34,15 @@ import { WarehouseService } from '../../services/warehouse.service';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ReactiveFormsModule,
     TranslatePipe,
     EpBadgeComponent,
     EpBreadcrumbComponent,
     EpButtonComponent,
     EpEmptyStateComponent,
+    EpFormFieldComponent,
     EpIconComponent,
+    EpModalComponent,
     EpSkeletonComponent,
     HasPermissionDirective
   ],
@@ -48,16 +55,31 @@ export class StockDashboardComponent implements OnInit {
   private readonly stockService = inject(StockService);
   private readonly warehouseService = inject(WarehouseService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fb = inject(FormBuilder);
+  private readonly toastService = inject(ToastService);
 
   readonly warehouses = signal<Warehouse[]>([]);
   readonly items = signal<StockEntry[]>([]);
   readonly meta = signal<PageMeta | null>(null);
   readonly isLoading = signal(false);
+  readonly isAdjustModalOpen = signal(false);
+  readonly isSavingAdjustment = signal(false);
+  readonly adjustingItem = signal<StockEntry | null>(null);
 
   readonly warehouseId = signal('');
   readonly belowReorder = signal(false);
   readonly page = signal(1);
   readonly size = signal(20);
+
+  readonly adjustmentForm = this.fb.group({
+    itemCode: ['', [Validators.required, Validators.maxLength(20)]],
+    itemName: [''],
+    warehouseId: ['', [Validators.required]],
+    currentQuantity: ['0'],
+    newQuantity: ['0', [Validators.required, Validators.pattern(/^\d+(\.\d{1,4})?$/)]],
+    unit: ['', [Validators.required, Validators.maxLength(20)]],
+    reason: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(2000)]]
+  });
 
   readonly selectedWarehouse = computed(() =>
     this.warehouses().find((warehouse) => warehouse.id === this.warehouseId()) ?? null
@@ -166,12 +188,122 @@ export class StockDashboardComponent implements OnInit {
     });
   }
 
+  openAdjustment(item: StockEntry): void {
+    this.adjustingItem.set(item);
+    this.adjustmentForm.reset({
+      itemCode: item.itemCode,
+      itemName: item.itemName,
+      warehouseId: item.warehouseId,
+      currentQuantity: item.quantityOnHand,
+      newQuantity: item.quantityOnHand,
+      unit: item.unit,
+      reason: ''
+    });
+    this.isAdjustModalOpen.set(true);
+  }
+
+  closeAdjustment(): void {
+    if (this.isSavingAdjustment()) {
+      return;
+    }
+    this.isAdjustModalOpen.set(false);
+    this.adjustingItem.set(null);
+  }
+
+  saveAdjustment(): void {
+    if (this.adjustmentForm.invalid || this.isSavingAdjustment()) {
+      this.adjustmentForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.adjustmentForm.getRawValue();
+    const current = this.toNumber(raw.currentQuantity);
+    const next = this.toNumber(raw.newQuantity);
+    if (current === next) {
+      this.adjustmentForm.controls.newQuantity.setErrors({ unchanged: true });
+      return;
+    }
+
+    this.isSavingAdjustment.set(true);
+    this.stockService
+      .adjust({
+        warehouseId: raw.warehouseId ?? '',
+        itemCode: raw.itemCode ?? '',
+        newQuantity: raw.newQuantity ?? '0',
+        unit: raw.unit ?? '',
+        reason: raw.reason ?? ''
+      })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isSavingAdjustment.set(false))
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.successKey('features.inventory.stock.adjustment.toast.success');
+          this.closeAdjustment();
+          this.loadData();
+        },
+        error: () => {
+          this.toastService.errorKey('features.inventory.stock.adjustment.toast.failed');
+        }
+      });
+  }
+
+  adjustmentDelta(): string {
+    const current = this.toNumber(this.adjustmentForm.controls.currentQuantity.value);
+    const next = this.toNumber(this.adjustmentForm.controls.newQuantity.value);
+    const delta = next - current;
+    if (!Number.isFinite(delta)) {
+      return '0';
+    }
+    return this.formatDecimal(delta);
+  }
+
+  adjustmentFormError(
+    controlName: 'itemCode' | 'itemName' | 'warehouseId' | 'currentQuantity' | 'newQuantity' | 'unit' | 'reason'
+  ): string | null {
+    const control = this.adjustmentForm.controls[controlName];
+    if (!control || !control.touched || !control.errors) {
+      return null;
+    }
+    if (control.errors['required']) {
+      return 'features.inventory.stock.adjustment.validation.required';
+    }
+    if (control.errors['pattern']) {
+      return 'features.inventory.stock.adjustment.validation.numeric';
+    }
+    if (control.errors['minlength']) {
+      return 'features.inventory.stock.adjustment.validation.reasonLength';
+    }
+    if (control.errors['maxlength']) {
+      return 'features.inventory.stock.adjustment.validation.maxLength';
+    }
+    if (control.errors['unchanged']) {
+      return 'features.inventory.stock.adjustment.validation.unchanged';
+    }
+    return 'features.inventory.stock.adjustment.validation.invalid';
+  }
+
   formatQuantity(value: string | null | undefined): string {
     if (!value) {
       return '0';
     }
 
     return Number(value).toLocaleString('vi-VN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 4
+    });
+  }
+
+  private toNumber(value: string | number | null | undefined): number {
+    if (value === null || value === undefined || value === '') {
+      return 0;
+    }
+    return Number(value);
+  }
+
+  private formatDecimal(value: number): string {
+    return value.toLocaleString('vi-VN', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 4
     });

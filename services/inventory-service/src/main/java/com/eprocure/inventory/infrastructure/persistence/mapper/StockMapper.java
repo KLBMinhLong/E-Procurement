@@ -2,6 +2,7 @@ package com.eprocure.inventory.infrastructure.persistence.mapper;
 
 import com.eprocure.inventory.domain.repository.StockEntryFilter;
 import com.eprocure.inventory.domain.repository.StockMovementFilter;
+import com.eprocure.inventory.infrastructure.persistence.entity.StockAdjustmentRequestDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockIssueOutRequestDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockEntryViewDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockMovementDbEntity;
@@ -63,6 +64,35 @@ public interface StockMapper {
             """)
     void insertIssueOutRequest(@Param("entity") StockIssueOutRequestDbEntity entity);
 
+    Optional<StockAdjustmentRequestDbEntity> findAdjustmentRequestByIdempotencyKey(
+            @Param("idempotencyKey") UUID idempotencyKey);
+
+    @Insert("""
+            INSERT INTO inventory.stock_adjustment_requests (
+                id, idempotency_key, warehouse_id, item_code, previous_quantity,
+                new_quantity, unit, adjusted_by, adjusted_at, reason, created_by, updated_by
+            ) VALUES (
+                #{entity.id}, #{entity.idempotencyKey}, #{entity.warehouseId},
+                #{entity.itemCode}, #{entity.previousQuantity}, #{entity.newQuantity},
+                #{entity.unit}, #{entity.adjustedBy}, #{entity.adjustedAt},
+                #{entity.reason}, #{entity.adjustedBy}, #{entity.adjustedBy}
+            )
+            """)
+    void insertAdjustmentRequest(@Param("entity") StockAdjustmentRequestDbEntity entity);
+
+    @Select("""
+            SELECT quantity_on_hand
+            FROM inventory.stock_entries
+            WHERE item_code = #{itemCode}
+              AND warehouse_id = #{warehouseId}
+              AND unit = #{unit}
+              AND is_deleted = FALSE
+            """)
+    Optional<BigDecimal> findStockQuantity(
+            @Param("itemCode") String itemCode,
+            @Param("warehouseId") UUID warehouseId,
+            @Param("unit") String unit);
+
     @Select("""
             UPDATE inventory.stock_entries
             SET quantity_on_hand = quantity_on_hand - #{quantity},
@@ -80,6 +110,31 @@ public interface StockMapper {
             @Param("itemCode") String itemCode,
             @Param("warehouseId") UUID warehouseId,
             @Param("quantity") BigDecimal quantity,
+            @Param("unit") String unit,
+            @Param("actorId") UUID actorId,
+            @Param("occurredAt") Instant occurredAt);
+
+    @Select("""
+            INSERT INTO inventory.stock_entries (
+                item_code, warehouse_id, quantity_on_hand, unit,
+                last_updated, created_by, updated_by
+            ) VALUES (
+                #{itemCode}, #{warehouseId}, #{newQuantity}, #{unit},
+                #{occurredAt}, #{actorId}, #{actorId}
+            )
+            ON CONFLICT (item_code, warehouse_id) WHERE is_deleted = FALSE
+            DO UPDATE SET
+                quantity_on_hand = EXCLUDED.quantity_on_hand,
+                unit = EXCLUDED.unit,
+                last_updated = EXCLUDED.last_updated,
+                updated_by = EXCLUDED.updated_by,
+                updated_at = NOW()
+            RETURNING quantity_on_hand
+            """)
+    BigDecimal adjustStock(
+            @Param("itemCode") String itemCode,
+            @Param("warehouseId") UUID warehouseId,
+            @Param("newQuantity") BigDecimal newQuantity,
             @Param("unit") String unit,
             @Param("actorId") UUID actorId,
             @Param("occurredAt") Instant occurredAt);

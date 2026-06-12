@@ -1,6 +1,7 @@
 package com.eprocure.inventory.domain.repository;
 
 import com.eprocure.inventory.domain.model.StockEntry;
+import com.eprocure.inventory.domain.model.StockAdjustmentRequest;
 import com.eprocure.inventory.domain.model.StockIssueOutRequest;
 import com.eprocure.inventory.domain.model.StockMovement;
 import com.eprocure.inventory.domain.model.StockMovementHistory;
@@ -27,10 +28,24 @@ public interface StockRepository {
 
     void insertIssueOutRequest(StockIssueOutRequest issueOutRequest);
 
+    Optional<StockAdjustmentRequest> findAdjustmentRequestByIdempotencyKey(UUID idempotencyKey);
+
+    void insertAdjustmentRequest(StockAdjustmentRequest adjustmentRequest);
+
+    Optional<BigDecimal> findStockQuantity(String itemCode, UUID warehouseId, String unit);
+
     Optional<BigDecimal> issueStock(
             String itemCode,
             UUID warehouseId,
             BigDecimal quantity,
+            String unit,
+            UUID actorId,
+            Instant occurredAt);
+
+    BigDecimal adjustStock(
+            String itemCode,
+            UUID warehouseId,
+            BigDecimal newQuantity,
             String unit,
             UUID actorId,
             Instant occurredAt);

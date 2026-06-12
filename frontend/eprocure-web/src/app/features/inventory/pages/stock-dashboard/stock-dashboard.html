@@ -150,6 +150,15 @@
                     (click)="navigateIssueOut(item)">
                     {{ 'features.inventory.stock.action.issueOut' | translate }}
                   </ep-button>
+                  <ep-button
+                    *epHasPermission="'ADMIN_CATALOG_MANAGE'"
+                    [id]="'btn-adjust-' + item.itemCode"
+                    variant="ghost"
+                    size="sm"
+                    icon="sliders-horizontal"
+                    (click)="openAdjustment(item)">
+                    {{ 'features.inventory.stock.action.adjust' | translate }}
+                  </ep-button>
                 </div>
               </td>
             </tr>
@@ -188,4 +197,65 @@
       </div>
     }
   }
+
+  <ep-modal
+    [open]="isAdjustModalOpen()"
+    [size]="'lg'"
+    [title]="'features.inventory.stock.adjustment.title' | translate"
+    (close)="closeAdjustment()">
+    <form class="adjustment-form" [formGroup]="adjustmentForm" (ngSubmit)="saveAdjustment()">
+      <div class="adjustment-summary">
+        <div>
+          <span>{{ 'features.inventory.stock.adjustment.item' | translate }}</span>
+          <strong>{{ adjustmentForm.controls.itemCode.value }} · {{ adjustmentForm.controls.itemName.value }}</strong>
+        </div>
+        <div>
+          <span>{{ 'features.inventory.stock.adjustment.currentQuantity' | translate }}</span>
+          <strong>{{ formatQuantity(adjustmentForm.controls.currentQuantity.value) }} {{ adjustmentForm.controls.unit.value }}</strong>
+        </div>
+        <div>
+          <span>{{ 'features.inventory.stock.adjustment.delta' | translate }}</span>
+          <strong>{{ adjustmentDelta() }} {{ adjustmentForm.controls.unit.value }}</strong>
+        </div>
+      </div>
+
+      <div class="adjustment-form__grid">
+        <ep-form-field [label]="'features.inventory.stock.adjustment.itemCode' | translate">
+          <input class="form-control" formControlName="itemCode" readonly />
+        </ep-form-field>
+
+        <ep-form-field [label]="'features.inventory.stock.adjustment.unit' | translate">
+          <input class="form-control" formControlName="unit" readonly />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'features.inventory.stock.adjustment.newQuantity' | translate"
+          [required]="true"
+          [error]="adjustmentFormError('newQuantity') ? (adjustmentFormError('newQuantity')! | translate) : null">
+          <input class="form-control" formControlName="newQuantity" inputmode="decimal" />
+        </ep-form-field>
+      </div>
+
+      <ep-form-field
+        [label]="'features.inventory.stock.adjustment.reason' | translate"
+        [required]="true"
+        [error]="adjustmentFormError('reason') ? (adjustmentFormError('reason')! | translate) : null">
+        <textarea class="form-control form-control--textarea" formControlName="reason"></textarea>
+      </ep-form-field>
+
+      <div class="modal-actions">
+        <ep-button type="button" variant="ghost" (click)="closeAdjustment()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          type="submit"
+          variant="primary"
+          icon="save"
+          [loading]="isSavingAdjustment()"
+          [disabled]="adjustmentForm.invalid || isSavingAdjustment()">
+          {{ 'action.submit' | translate }}
+        </ep-button>
+      </div>
+    </form>
+  </ep-modal>
 </section>

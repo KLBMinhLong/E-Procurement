@@ -1,5 +1,6 @@
 package com.eprocure.inventory.presentation.controller;
 
+import com.eprocure.inventory.application.usecase.AdjustStockUseCase;
 import com.eprocure.inventory.application.service.PageResult;
 import com.eprocure.inventory.application.usecase.GetItemStockUseCase;
 import com.eprocure.inventory.application.usecase.IssueOutStockUseCase;
@@ -12,6 +13,7 @@ import com.eprocure.inventory.common.security.UserPrincipal;
 import com.eprocure.inventory.common.util.LogMaskingUtil;
 import com.eprocure.inventory.domain.model.StockMovementType;
 import com.eprocure.inventory.presentation.mapper.StockPresentationMapper;
+import com.eprocure.inventory.presentation.request.AdjustStockRequest;
 import com.eprocure.inventory.presentation.request.IssueOutStockRequest;
 import com.eprocure.inventory.presentation.response.IssueOutStockResponse;
 import com.eprocure.inventory.presentation.response.StockEntryResponse;
@@ -47,6 +49,7 @@ public class StockController {
     private final ListWarehouseStockUseCase listWarehouseStockUseCase;
     private final ListStockMovementsUseCase listStockMovementsUseCase;
     private final IssueOutStockUseCase issueOutStockUseCase;
+    private final AdjustStockUseCase adjustStockUseCase;
     private final StockPresentationMapper mapper;
 
     public StockController(
@@ -55,12 +58,14 @@ public class StockController {
             ListWarehouseStockUseCase listWarehouseStockUseCase,
             ListStockMovementsUseCase listStockMovementsUseCase,
             IssueOutStockUseCase issueOutStockUseCase,
+            AdjustStockUseCase adjustStockUseCase,
             StockPresentationMapper mapper) {
         this.getItemStockUseCase = getItemStockUseCase;
         this.listWarehousesUseCase = listWarehousesUseCase;
         this.listWarehouseStockUseCase = listWarehouseStockUseCase;
         this.listStockMovementsUseCase = listStockMovementsUseCase;
         this.issueOutStockUseCase = issueOutStockUseCase;
+        this.adjustStockUseCase = adjustStockUseCase;
         this.mapper = mapper;
     }
 
@@ -174,5 +179,26 @@ public class StockController {
             builder.header("Idempotency-Replayed", "true");
         }
         return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/stock/adjustment")
+    @PreAuthorize("hasAuthority('ADMIN_CATALOG_MANAGE')")
+    public ResponseEntity<ApiResponse<StockMovementResponse>> adjustStock(
+            @Valid @RequestBody AdjustStockRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/stock/adjustment | userId={} | warehouseId={} | itemCode={}",
+                LogMaskingUtil.maskId(principal.getId()),
+                LogMaskingUtil.maskId(body.warehouseId()),
+                body.itemCode());
+        var result = adjustStockUseCase.execute(
+                mapper.toAdjustStockCommand(principal, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result.movement()), RequestIdUtil.resolve(request)));
     }
 }

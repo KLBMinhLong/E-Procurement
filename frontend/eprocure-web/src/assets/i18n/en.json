@@ -2283,11 +2283,33 @@
           "adjust": "Adjust"
         },
         "totalItems": "stock rows",
-        "empty": {
-          "title": "No stock rows",
-          "message": "Select another warehouse or complete a goods receipt to create stock."
-        }
-      },
+          "empty": {
+            "title": "No stock rows",
+            "message": "Select another warehouse or complete a goods receipt to create stock."
+          },
+          "adjustment": {
+            "title": "Adjust stock",
+            "item": "Item",
+            "itemCode": "Item code",
+            "unit": "Unit",
+            "currentQuantity": "Current quantity",
+            "newQuantity": "New quantity",
+            "delta": "Delta",
+            "reason": "Adjustment reason",
+            "validation": {
+              "required": "This field is required.",
+              "numeric": "Enter a non-negative number with up to 4 decimals.",
+              "reasonLength": "Reason must be at least 10 characters.",
+              "maxLength": "Value exceeds the allowed length.",
+              "unchanged": "New quantity must differ from current quantity.",
+              "invalid": "Please check the adjustment information."
+            },
+            "toast": {
+              "success": "Stock adjusted.",
+              "failed": "Could not adjust stock."
+            }
+          }
+        },
       "movements": {
         "eyebrow": "Inventory ledger",
         "title": "Stock Movements",

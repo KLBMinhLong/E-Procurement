@@ -46,6 +46,20 @@
         <result property="notes" column="notes"/>
     </resultMap>
 
+    <resultMap id="stockAdjustmentRequestResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.StockAdjustmentRequestDbEntity">
+        <id property="id" column="id"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="previousQuantity" column="previous_quantity"/>
+        <result property="newQuantity" column="new_quantity"/>
+        <result property="unit" column="unit"/>
+        <result property="adjustedBy" column="adjusted_by"/>
+        <result property="adjustedAt" column="adjusted_at"/>
+        <result property="reason" column="reason"/>
+    </resultMap>
+
     <sql id="stockEntryFrom">
         FROM inventory.stock_entries se
         JOIN inventory.items item
@@ -171,6 +185,23 @@
             issued_at,
             notes
         FROM inventory.stock_issue_out_requests
+        WHERE idempotency_key = #{idempotencyKey}
+          AND is_deleted = FALSE
+    </select>
+
+    <select id="findAdjustmentRequestByIdempotencyKey" resultMap="stockAdjustmentRequestResultMap">
+        SELECT
+            id,
+            idempotency_key,
+            warehouse_id,
+            item_code,
+            previous_quantity,
+            new_quantity,
+            unit,
+            adjusted_by,
+            adjusted_at,
+            reason
+        FROM inventory.stock_adjustment_requests
         WHERE idempotency_key = #{idempotencyKey}
           AND is_deleted = FALSE
     </select>

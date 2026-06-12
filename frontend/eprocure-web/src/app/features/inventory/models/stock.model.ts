@@ -78,6 +78,14 @@ export interface IssueOutStockResponse {
   movements: StockMovement[];
 }
 
+export interface AdjustStockRequest {
+  warehouseId: string;
+  itemCode: string;
+  newQuantity: string;
+  unit: string;
+  reason: string;
+}
+
 export interface CompleteGrResponse {
   grStatus: string;
   movementsCreated: number;
