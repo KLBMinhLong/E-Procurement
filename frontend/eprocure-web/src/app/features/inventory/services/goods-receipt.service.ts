@@ -6,7 +6,8 @@ import { API_BASE_URL } from '../../../core/http/api-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
   GoodsReceiptCreateCommand,
-  GoodsReceiptDetail
+  GoodsReceiptDetail,
+  GoodsReceiptUpdateCommand
 } from '../models/goods-receipt.model';
 import { CompleteGrResponse } from '../models/stock.model';
 
@@ -52,6 +53,17 @@ export class GoodsReceiptService {
   create(command: GoodsReceiptCreateCommand, idempotencyKey: string): Observable<ApiResponse<GoodsReceiptDetail>> {
     return this.http.post<ApiResponse<GoodsReceiptDetail>>(
       `${this.baseUrl}/goods-receipts`,
+      command,
+      {
+        headers: { 'Idempotency-Key': idempotencyKey },
+        withCredentials: true
+      }
+    );
+  }
+
+  update(id: string, command: GoodsReceiptUpdateCommand, idempotencyKey: string): Observable<ApiResponse<GoodsReceiptDetail>> {
+    return this.http.put<ApiResponse<GoodsReceiptDetail>>(
+      `${this.baseUrl}/goods-receipts/${id}`,
       command,
       {
         headers: { 'Idempotency-Key': idempotencyKey },

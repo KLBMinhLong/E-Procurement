@@ -51,3 +51,14 @@ export interface GoodsReceiptCreateCommand {
   notes: string | null;
 }
 
+export interface GoodsReceiptUpdateCommand {
+  receivedAt: string | null;
+  lineItems: {
+    poLineItemId: string;
+    receivedQuantity: string;
+    rejectedQuantity: string;
+    rejectionReason: string | null;
+    lotNumber: string | null;
+  }[];
+  notes: string | null;
+}

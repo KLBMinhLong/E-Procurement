@@ -16,6 +16,8 @@ public interface GoodsReceiptRepository {
 
     Optional<GoodsReceipt> findByIdAndCompleteIdempotencyKey(UUID id, UUID idempotencyKey);
 
+    Optional<GoodsReceipt> findByIdAndUpdateIdempotencyKey(UUID id, UUID idempotencyKey);
+
     List<GoodsReceipt> findByFilter(GoodsReceiptFilter filter);
 
     long countByFilter(GoodsReceiptFilter filter);
@@ -25,6 +27,8 @@ public interface GoodsReceiptRepository {
     String nextGrNumber(int fiscalYear);
 
     void insert(GoodsReceipt goodsReceipt);
+
+    boolean updateDraft(GoodsReceipt goodsReceipt, UUID actorId, Instant updatedAt, UUID idempotencyKey);
 
     Optional<String> findActiveItemCodeForPoLineItem(UUID poLineItemId);
 

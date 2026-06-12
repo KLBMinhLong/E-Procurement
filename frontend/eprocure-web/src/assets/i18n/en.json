@@ -2215,8 +2215,24 @@
         },
         "action": {
           "complete": "Complete receipt",
+          "editDraft": "Edit draft",
           "viewStock": "View stock",
           "viewMovements": "View movements"
+        },
+        "edit": {
+          "title": "Edit draft receipt",
+          "receivedAt": "Received date",
+          "notes": "Notes",
+          "lineItems": "Line items",
+          "receivedQuantity": "Received qty",
+          "rejectedQuantity": "Rejected qty",
+          "lotNumber": "Lot number",
+          "rejectionReason": "Rejection reason",
+          "validation": {
+            "required": "This field is required.",
+            "numeric": "Enter a non-negative number with up to 4 decimals.",
+            "invalid": "Please check the receipt information."
+          }
         },
         "modal": {
           "completeTitle": "Complete goods receipt",
@@ -2225,6 +2241,8 @@
         "toast": {
           "notFound": "Goods receipt not found.",
           "loadFailed": "Could not load goods receipt.",
+          "updateSuccess": "Draft goods receipt updated.",
+          "updateFailed": "Could not update draft goods receipt.",
           "completeSuccess": "Goods receipt completed successfully.",
           "completeFailed": "Could not complete goods receipt."
         }

@@ -7,6 +7,7 @@ import com.eprocure.inventory.application.port.in.CompleteGoodsReceiptCommand;
 import com.eprocure.inventory.application.port.in.CreateGoodsReceiptCommand;
 import com.eprocure.inventory.application.port.in.GetGoodsReceiptQuery;
 import com.eprocure.inventory.application.port.in.ListGoodsReceiptsQuery;
+import com.eprocure.inventory.application.port.in.UpdateGoodsReceiptCommand;
 import com.eprocure.inventory.application.port.out.GrCreatedEventPublisher;
 import com.eprocure.inventory.application.service.IdempotencyService;
 import com.eprocure.inventory.common.exception.BusinessException;
@@ -48,6 +49,7 @@ class GoodsReceiptUseCaseTest {
     private static final UUID PO_LINE_ITEM_ID = UUID.fromString("97000000-0000-4000-8000-000000000001");
     private static final UUID PR_LINE_ITEM_ID = UUID.fromString("95000000-0000-4000-8000-000000000001");
     private static final String IDEMPOTENCY_KEY = "11111111-1111-4111-8111-111111111111";
+    private static final String UPDATE_IDEMPOTENCY_KEY = "44444444-4444-4444-8444-444444444444";
     private static final String COMPLETE_IDEMPOTENCY_KEY = "22222222-2222-4222-8222-222222222222";
     private static final String OTHER_COMPLETE_IDEMPOTENCY_KEY = "33333333-3333-4333-8333-333333333333";
 
@@ -145,6 +147,59 @@ class GoodsReceiptUseCaseTest {
     }
 
     @Test
+    void should_update_draft_goods_receipt_when_valid_command() {
+        createUseCase().execute(command(new BigDecimal("9.0000")), IDEMPOTENCY_KEY);
+        GoodsReceipt goodsReceipt = goodsReceiptRepository.goodsReceipts.get(0);
+        var useCase = updateUseCase();
+
+        var result = useCase.execute(
+                updateCommand(goodsReceipt.id(), new BigDecimal("8.0000"), new BigDecimal("1.0000")),
+                UPDATE_IDEMPOTENCY_KEY);
+
+        assertThat(result.replayed()).isFalse();
+        assertThat(result.view().status()).isEqualTo(GoodsReceiptStatus.DRAFT);
+        assertThat(result.view().lineItems()).singleElement().satisfies(line -> {
+            assertThat(line.receivedQuantity()).isEqualByComparingTo("8.0000");
+            assertThat(line.rejectedQuantity()).isEqualByComparingTo("1.0000");
+            assertThat(line.rejectionReason()).isEqualTo("Damaged package");
+            assertThat(line.lotNumber()).isEqualTo("LOT-EDIT-001");
+        });
+        assertThat(result.view().notes()).isEqualTo("Edited at dock B");
+    }
+
+    @Test
+    void should_replay_update_goods_receipt_when_update_idempotency_key_reused() {
+        createUseCase().execute(command(new BigDecimal("9.0000")), IDEMPOTENCY_KEY);
+        GoodsReceipt goodsReceipt = goodsReceiptRepository.goodsReceipts.get(0);
+        var useCase = updateUseCase();
+        useCase.execute(
+                updateCommand(goodsReceipt.id(), new BigDecimal("8.0000"), new BigDecimal("1.0000")),
+                UPDATE_IDEMPOTENCY_KEY);
+
+        var replayed = useCase.execute(
+                updateCommand(goodsReceipt.id(), new BigDecimal("7.0000"), new BigDecimal("1.0000")),
+                UPDATE_IDEMPOTENCY_KEY);
+
+        assertThat(replayed.replayed()).isTrue();
+        assertThat(replayed.view().lineItems().get(0).receivedQuantity()).isEqualByComparingTo("8.0000");
+    }
+
+    @Test
+    void should_throw_inv005_when_updating_completed_goods_receipt() {
+        createUseCase().execute(command(new BigDecimal("10.0000")), IDEMPOTENCY_KEY);
+        GoodsReceipt goodsReceipt = goodsReceiptRepository.goodsReceipts.get(0);
+        completeUseCase().execute(new CompleteGoodsReceiptCommand(ACTOR_ID, goodsReceipt.id()), COMPLETE_IDEMPOTENCY_KEY);
+        var useCase = updateUseCase();
+
+        assertThatThrownBy(() -> useCase.execute(
+                updateCommand(goodsReceipt.id(), new BigDecimal("8.0000"), BigDecimal.ZERO),
+                UPDATE_IDEMPOTENCY_KEY))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.INV_005);
+    }
+
+    @Test
     void should_complete_goods_receipt_and_create_receipt_in_movement_when_draft() {
         createUseCase().execute(command(new BigDecimal("10.0000")), IDEMPOTENCY_KEY);
         GoodsReceipt goodsReceipt = goodsReceiptRepository.goodsReceipts.get(0);
@@ -239,6 +294,15 @@ class GoodsReceiptUseCaseTest {
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
+    private UpdateGoodsReceiptUseCase updateUseCase() {
+        return new UpdateGoodsReceiptUseCase(
+                goodsReceiptRepository,
+                purchaseOrderSnapshotRepository,
+                new IdempotencyService(),
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new BigDecimal("10"));
+    }
+
     private static CreateGoodsReceiptCommand command(BigDecimal receivedQuantity) {
         return new CreateGoodsReceiptCommand(
                 ACTOR_ID,
@@ -253,6 +317,23 @@ class GoodsReceiptUseCaseTest {
                         null,
                         "LOT-001")),
                 "Received at dock A");
+    }
+
+    private static UpdateGoodsReceiptCommand updateCommand(
+            UUID goodsReceiptId,
+            BigDecimal receivedQuantity,
+            BigDecimal rejectedQuantity) {
+        return new UpdateGoodsReceiptCommand(
+                ACTOR_ID,
+                goodsReceiptId,
+                NOW.plusSeconds(120),
+                List.of(new UpdateGoodsReceiptCommand.LineItem(
+                        PO_LINE_ITEM_ID,
+                        receivedQuantity,
+                        rejectedQuantity,
+                        "Damaged package",
+                        "LOT-EDIT-001")),
+                "Edited at dock B");
     }
 
     private static PurchaseOrderSnapshot poSnapshot() {
@@ -292,6 +373,7 @@ class GoodsReceiptUseCaseTest {
         private final List<GoodsReceipt> goodsReceipts = new ArrayList<>();
         private final List<StockMovement> stockMovements = new ArrayList<>();
         private final Map<UUID, UUID> completeIdempotencyKeys = new HashMap<>();
+        private final Map<UUID, UUID> updateIdempotencyKeys = new HashMap<>();
         private final Map<UUID, String> itemCodesByPoLineItem = new HashMap<>(Map.of(PO_LINE_ITEM_ID, "IT-LAPTOP-001"));
         private final Map<String, BigDecimal> stockBalances = new LinkedHashMap<>();
         private int generatedGrNumbers;
@@ -315,6 +397,14 @@ class GoodsReceiptUseCaseTest {
             return goodsReceipts.stream()
                     .filter(goodsReceipt -> goodsReceipt.id().equals(id))
                     .filter(goodsReceipt -> idempotencyKey.equals(completeIdempotencyKeys.get(goodsReceipt.id())))
+                    .findFirst();
+        }
+
+        @Override
+        public Optional<GoodsReceipt> findByIdAndUpdateIdempotencyKey(UUID id, UUID idempotencyKey) {
+            return goodsReceipts.stream()
+                    .filter(goodsReceipt -> goodsReceipt.id().equals(id))
+                    .filter(goodsReceipt -> idempotencyKey.equals(updateIdempotencyKeys.get(goodsReceipt.id())))
                     .findFirst();
         }
 
@@ -361,6 +451,17 @@ class GoodsReceiptUseCaseTest {
         @Override
         public void insert(GoodsReceipt goodsReceipt) {
             goodsReceipts.add(goodsReceipt);
+        }
+
+        @Override
+        public boolean updateDraft(GoodsReceipt goodsReceipt, UUID actorId, Instant updatedAt, UUID idempotencyKey) {
+            GoodsReceipt existing = findById(goodsReceipt.id()).orElseThrow();
+            if (existing.status() != GoodsReceiptStatus.DRAFT) {
+                return false;
+            }
+            replaceGoodsReceipt(goodsReceipt);
+            updateIdempotencyKeys.put(goodsReceipt.id(), idempotencyKey);
+            return true;
         }
 
         @Override

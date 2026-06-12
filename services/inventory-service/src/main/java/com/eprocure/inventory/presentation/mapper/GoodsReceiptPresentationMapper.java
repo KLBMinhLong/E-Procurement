@@ -4,12 +4,14 @@ import com.eprocure.inventory.application.port.in.CompleteGoodsReceiptCommand;
 import com.eprocure.inventory.application.port.in.CreateGoodsReceiptCommand;
 import com.eprocure.inventory.application.port.in.GetGoodsReceiptQuery;
 import com.eprocure.inventory.application.port.in.ListGoodsReceiptsQuery;
+import com.eprocure.inventory.application.port.in.UpdateGoodsReceiptCommand;
 import com.eprocure.inventory.application.service.CompleteGoodsReceiptResult;
 import com.eprocure.inventory.application.service.GoodsReceiptLineItemView;
 import com.eprocure.inventory.application.service.GoodsReceiptView;
 import com.eprocure.inventory.common.security.UserPrincipal;
 import com.eprocure.inventory.domain.model.GoodsReceiptStatus;
 import com.eprocure.inventory.presentation.request.CreateGoodsReceiptRequest;
+import com.eprocure.inventory.presentation.request.UpdateGoodsReceiptRequest;
 import com.eprocure.inventory.presentation.response.CompleteGoodsReceiptResponse;
 import com.eprocure.inventory.presentation.response.GoodsReceiptLineItemResponse;
 import com.eprocure.inventory.presentation.response.GoodsReceiptResponse;
@@ -65,6 +67,20 @@ public class GoodsReceiptPresentationMapper {
                 request.notes());
     }
 
+    public UpdateGoodsReceiptCommand toUpdateCommand(
+            UserPrincipal principal,
+            UUID goodsReceiptId,
+            UpdateGoodsReceiptRequest request) {
+        return new UpdateGoodsReceiptCommand(
+                principal.getId(),
+                goodsReceiptId,
+                request.receivedAt(),
+                request.lineItems().stream()
+                        .map(this::toCommandLine)
+                        .toList(),
+                request.notes());
+    }
+
     public GoodsReceiptResponse toResponse(GoodsReceiptView view) {
         return new GoodsReceiptResponse(
                 view.id(),
@@ -94,6 +110,15 @@ public class GoodsReceiptPresentationMapper {
 
     private CreateGoodsReceiptCommand.LineItem toCommandLine(CreateGoodsReceiptRequest.LineItem request) {
         return new CreateGoodsReceiptCommand.LineItem(
+                request.poLineItemId(),
+                request.receivedQuantity(),
+                request.rejectedQuantity() == null ? BigDecimal.ZERO : request.rejectedQuantity(),
+                request.rejectionReason(),
+                request.lotNumber());
+    }
+
+    private UpdateGoodsReceiptCommand.LineItem toCommandLine(UpdateGoodsReceiptRequest.LineItem request) {
+        return new UpdateGoodsReceiptCommand.LineItem(
                 request.poLineItemId(),
                 request.receivedQuantity(),
                 request.rejectedQuantity() == null ? BigDecimal.ZERO : request.rejectedQuantity(),

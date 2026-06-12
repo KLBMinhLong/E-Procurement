@@ -2216,8 +2216,24 @@
         },
         "action": {
           "complete": "Hoàn tất phiếu",
+          "editDraft": "Sửa nháp",
           "viewStock": "Xem tồn kho",
           "viewMovements": "Xem biến động"
+        },
+        "edit": {
+          "title": "Sửa phiếu nhận nháp",
+          "receivedAt": "Ngày nhận",
+          "notes": "Ghi chú",
+          "lineItems": "Dòng hàng",
+          "receivedQuantity": "SL nhận",
+          "rejectedQuantity": "SL từ chối",
+          "lotNumber": "Số lô",
+          "rejectionReason": "Lý do từ chối",
+          "validation": {
+            "required": "Trường này là bắt buộc.",
+            "numeric": "Chỉ nhập số không âm, tối đa 4 chữ số thập phân.",
+            "invalid": "Vui lòng kiểm tra lại thông tin."
+          }
         },
         "modal": {
           "completeTitle": "Hoàn tất phiếu nhận",
@@ -2226,6 +2242,8 @@
         "toast": {
           "notFound": "Không tìm thấy phiếu nhận hàng.",
           "loadFailed": "Không thể tải phiếu nhận hàng.",
+          "updateSuccess": "Đã cập nhật phiếu nhận nháp.",
+          "updateFailed": "Không thể cập nhật phiếu nhận nháp.",
           "completeSuccess": "Đã hoàn tất phiếu nhận hàng.",
           "completeFailed": "Không thể hoàn tất phiếu nhận hàng."
         }

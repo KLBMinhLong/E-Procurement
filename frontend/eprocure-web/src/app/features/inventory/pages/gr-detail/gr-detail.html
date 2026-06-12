@@ -33,6 +33,17 @@
           (click)="navigateMovements()">
           {{ 'inventory.gr.detail.action.viewMovements' | translate }}
         </ep-button>
+        @if (canEdit()) {
+          <ep-button
+            *epHasPermission="'GR_CREATE'"
+            id="btn-edit-gr-draft"
+            variant="secondary"
+            icon="pencil"
+            [disabled]="savingEdit() || submitting()"
+            (click)="openEditModal()">
+            {{ 'inventory.gr.detail.action.editDraft' | translate }}
+          </ep-button>
+        }
         @if (canComplete()) {
           <ep-button
             *epHasPermission="'GR_CREATE'"
@@ -257,5 +268,81 @@
         {{ 'inventory.gr.detail.action.complete' | translate }}
       </ep-button>
     </div>
+  </ep-modal>
+
+  <ep-modal
+    [open]="showEditModal()"
+    [size]="'xl'"
+    [title]="'inventory.gr.detail.edit.title' | translate"
+    (close)="closeEditModal()">
+    <form class="edit-form" [formGroup]="editForm" (ngSubmit)="saveDraft()">
+      <div class="edit-form__grid">
+        <ep-form-field [label]="'inventory.gr.detail.edit.receivedAt' | translate">
+          <input class="form-control" type="datetime-local" formControlName="receivedAt" />
+        </ep-form-field>
+        <ep-form-field [label]="'inventory.gr.detail.edit.notes' | translate">
+          <textarea class="form-control form-control--textarea" formControlName="notes"></textarea>
+        </ep-form-field>
+      </div>
+
+      <div class="edit-lines" formArrayName="lineItems">
+        <div class="section-title-row">
+          <h3 class="card-section__title">{{ 'inventory.gr.detail.edit.lineItems' | translate }}</h3>
+          <span class="info-pill">{{ 'inventory.gr.detail.line.count' | translate:{ count: editLineItems.length } }}</span>
+        </div>
+
+        @for (lineGroup of editLineItems.controls; track lineGroup.value.poLineItemId; let i = $index) {
+          <div class="edit-line" [formGroupName]="i">
+            <div class="edit-line__header">
+              <div>
+                <strong>{{ lineGroup.value.itemName }}</strong>
+                <span class="entity-ref mono">{{ lineGroup.value.poLineItemId }}</span>
+              </div>
+              <span class="info-pill">
+                {{ lineGroup.value.orderedQuantity }} {{ lineGroup.value.unit }}
+              </span>
+            </div>
+
+            <div class="edit-line__grid">
+              <ep-form-field
+                [label]="'inventory.gr.detail.edit.receivedQuantity' | translate"
+                [required]="true"
+                [error]="lineControlError(i, 'receivedQuantity') ? (lineControlError(i, 'receivedQuantity')! | translate) : null">
+                <input class="form-control" inputmode="decimal" formControlName="receivedQuantity" />
+              </ep-form-field>
+
+              <ep-form-field
+                [label]="'inventory.gr.detail.edit.rejectedQuantity' | translate"
+                [required]="true"
+                [error]="lineControlError(i, 'rejectedQuantity') ? (lineControlError(i, 'rejectedQuantity')! | translate) : null">
+                <input class="form-control" inputmode="decimal" formControlName="rejectedQuantity" />
+              </ep-form-field>
+
+              <ep-form-field [label]="'inventory.gr.detail.edit.lotNumber' | translate">
+                <input class="form-control" formControlName="lotNumber" />
+              </ep-form-field>
+
+              <ep-form-field [label]="'inventory.gr.detail.edit.rejectionReason' | translate">
+                <input class="form-control" formControlName="rejectionReason" />
+              </ep-form-field>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions">
+        <ep-button type="button" variant="ghost" (click)="closeEditModal()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          type="submit"
+          variant="primary"
+          icon="save"
+          [disabled]="editForm.invalid || savingEdit()"
+          [loading]="savingEdit()">
+          {{ 'action.submit' | translate }}
+        </ep-button>
+      </div>
+    </form>
   </ep-modal>
 </section>

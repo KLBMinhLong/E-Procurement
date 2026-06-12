@@ -123,8 +123,9 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
   - Complete chỉ cho DRAFT.
   - Tạo `RECEIPT_IN` movement, update `stock_entries`, publish `inventory.gr.created` cho finance 3-way match.
   - Nếu không resolve được active catalog item thì fail `INV_001`.
-- Gap backend:
-  - `PUT /api/v1/goods-receipts/{id}` có trong OpenAPI nhưng chưa có controller/use case. Không bật UI edit draft trước khi implement backend.
+- Draft edit:
+  - `PUT /api/v1/goods-receipts/{id}` đã implement cho status `DRAFT`, có `Idempotency-Key`.
+  - UI detail cho phép sửa ngày nhận, notes, received/rejected quantity, lot number, rejection reason trước khi complete.
 
 ## 5. Phân hệ Stock Dashboard
 
@@ -324,10 +325,10 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
 
 ### Slice 6: GR draft edit backend + UI
 
-- Implement backend `PUT /goods-receipts/{id}` chỉ cho DRAFT.
-- Thêm UI edit line item trong detail nếu DRAFT.
-- Idempotency và tests bắt buộc.
-- Verify: `mvn -pl services/inventory-service test`, `npm run build`.
+- [x] Implement backend `PUT /goods-receipts/{id}` chỉ cho DRAFT.
+- [x] Thêm UI edit line item trong detail nếu DRAFT.
+- [x] Idempotency và tests bắt buộc.
+- [x] Verify: `mvn -pl services/inventory-service test`, `npm run build`.
 
 ### Slice 7: Stock Adjustment backend + UI
 

@@ -725,11 +725,18 @@ paths:
           application/json:
             schema:
               type: object
+              required: [lineItems]
               properties:
+                receivedAt:
+                  type: string
+                  format: date-time
+                  nullable: true
                 lineItems:
                   type: array
+                  minItems: 1
                   items:
                     type: object
+                    required: [poLineItemId, receivedQuantity]
                     properties:
                       poLineItemId:     { type: string, format: uuid }
                       receivedQuantity: { type: string }
@@ -749,6 +756,24 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/GoodsReceiptDetail'
+        '404':
+          description: GR hoặc issued PO snapshot không tìm thấy (INV_004/INV_009)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: GR không còn ở trạng thái DRAFT (INV_005)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Line item không thuộc PO hoặc số lượng vượt tolerance (INV_010/INV_006)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /goods-receipts/{id}/complete:
     post:

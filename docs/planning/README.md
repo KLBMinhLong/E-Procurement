@@ -35,7 +35,7 @@
 | Slice 3 | Polish GR: rejected qty, lot number, complete summary | — | ✅ |
 | Slice 4 | Catalog backend (Item domain/use cases/controller) | ✅ | ✅ |
 | **Slice 5** | **Catalog UI: `/inventory/catalog` + `/inventory/catalog/:itemCode`** | ✅ | ✅ |
-| Slice 6 | GR draft edit backend + UI (`PUT /goods-receipts/{id}`) | ⬜ | ⬜ |
+| Slice 6 | GR draft edit backend + UI (`PUT /goods-receipts/{id}`) | ✅ | ✅ |
 | Slice 7 | Stock Adjustment backend + UI (`POST /stock/adjustment`) | ⬜ | ⬜ |
 | Slice 8 | E2E / runtime hardening | ⬜ | ⬜ |
 
