@@ -602,6 +602,12 @@
         "searchPlaceholder": "Search item name or code...",
         "noResults": "No items match your search."
       },
+      "autocomplete": {
+        "label": "Catalog suggestions",
+        "hint": "Type at least 2 characters to search catalog inline.",
+        "loading": "Searching...",
+        "noResults": "No matching suggestions."
+      },
       "toast": {
         "createSuccess": "Purchase request created.",
         "updateSuccess": "Purchase request updated."
@@ -2181,11 +2187,13 @@
         "validation": {
           "required": "This field is required.",
           "min": "Value must be zero or greater.",
+          "overQuantity": "Received plus rejected quantity cannot exceed ordered quantity.",
           "rejectionReasonRequired": "Enter a reason when rejected quantity is provided."
         },
         "toast": {
           "success": "Goods receipt created successfully.",
           "failed": "Could not create goods receipt.",
+          "loadPoFailed": "Could not load purchase order details.",
           "errorNoItems": "Enter received quantity for at least one line item."
         }
       },

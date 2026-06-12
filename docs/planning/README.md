@@ -10,8 +10,8 @@
 | # | File | Module | Trạng thái | Phụ thuộc |
 |---|---|---|---|---|
 | 1 | `UI_MODULE_INVENTORY.md` | Inventory Catalog UI (Slice 5–8) | ✅ Hoàn thành | Slice 8 runtime hardening được chuyển sang E2E hardening chung theo quyết định 2026-06-12 |
-| 2 | `UI_MODULE_SHELL_NAV_UX.md` | Shell Nav + UX Gaps | 🔄 **Sẵn sàng thực hiện** | Inventory catalog route đã có |
-| 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | ⬜ Chờ | Tạo Budget route và nav entry cùng lúc |
+| 2 | `UI_MODULE_SHELL_NAV_UX.md` | Shell Nav + UX Gaps | ✅ Hoàn thành | Build pass 2026-06-13; Budget nav/indicator deferred sang plan #3 |
+| 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | 🔄 **Sẵn sàng thực hiện** | Tạo Budget route và nav entry cùng lúc |
 | 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | ⬜ Chờ | Không phụ thuộc — standalone |
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ⬜ Chờ | Nên làm sau #4 (dùng chung ep-approval-steps) |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ⬜ Chờ | Cần GoodsReceiptService đã ổn định từ #1 |
@@ -48,7 +48,7 @@
 ---
 
 #### 2. `UI_MODULE_SHELL_NAV_UX.md` — Shell Navigation & UX Gaps
-**Plan kế tiếp.** `/inventory/catalog` route đã tồn tại; cần rà soát lại scope để không tạo nav dead-link hoặc làm trùng phần đã có.
+**Trạng thái:** ✅ Hoàn thành 2026-06-13. `/inventory/catalog` route đã tồn tại; Budget nav được defer sang plan #3 để không tạo dead-link.
 
 Gồm 4 nhóm thay đổi nhỏ, độc lập, có thể làm theo thứ tự bất kỳ:
 

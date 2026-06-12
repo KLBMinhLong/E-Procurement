@@ -81,100 +81,104 @@
                 <h2 class="card-section__title">{{ 'inventory.gr.create.section.lineItems' | translate }}</h2>
               </div>
 
-              <div formArrayName="items" class="line-items">
-                @for (item of items.controls; track $index) {
-                  <div [formGroupName]="$index" class="line-item">
-                    <div class="line-item__header">
-                      <span class="line-item__number">{{ 'inventory.gr.create.lineItem.label' | translate }} #{{ $index + 1 }}</span>
-                    </div>
+              @if (isLoadingPoLines()) {
+                <ep-skeleton [rows]="4" />
+              } @else {
+                <div formArrayName="items" class="line-items">
+                  @for (item of items.controls; track $index) {
+                    <div [formGroupName]="$index" class="line-item">
+                      <div class="line-item__header">
+                        <span class="line-item__number">{{ 'inventory.gr.create.lineItem.label' | translate }} #{{ $index + 1 }}</span>
+                      </div>
 
-                    <div class="line-item__body">
-                      <ep-form-field [label]="'inventory.gr.create.lineItem.itemName' | translate">
-                        <input
-                          [id]="'line-item-name-' + $index"
-                          type="text"
-                          formControlName="itemName"
-                          class="ep-input ep-input-disabled">
-                      </ep-form-field>
-
-                      <div class="form-row form-row--line">
-                        <ep-form-field [label]="'inventory.gr.create.lineItem.orderedQty' | translate">
+                      <div class="line-item__body">
+                        <ep-form-field [label]="'inventory.gr.create.lineItem.itemName' | translate">
                           <input
-                            [id]="'line-item-ordered-' + $index"
-                            type="number"
-                            formControlName="orderedQty"
+                            [id]="'line-item-name-' + $index"
+                            type="text"
+                            formControlName="itemName"
                             class="ep-input ep-input-disabled">
                         </ep-form-field>
 
-                        <ep-form-field [label]="'inventory.gr.create.lineItem.unit' | translate">
-                          <input
-                            [id]="'line-item-unit-' + $index"
-                            type="text"
-                            formControlName="orderedUnit"
-                            class="ep-input ep-input-disabled">
-                        </ep-form-field>
+                        <div class="form-row form-row--line">
+                          <ep-form-field [label]="'inventory.gr.create.lineItem.orderedQty' | translate">
+                            <input
+                              [id]="'line-item-ordered-' + $index"
+                              type="number"
+                              formControlName="orderedQty"
+                              class="ep-input ep-input-disabled">
+                          </ep-form-field>
 
-                        <ep-form-field
-                          [label]="'inventory.gr.create.lineItem.receivedQty' | translate"
-                          [error]="getLineItemError($index, 'receivedQuantity') ? (getLineItemError($index, 'receivedQuantity')! | translate) : null">
-                          <input
-                            [id]="'line-item-received-' + $index"
-                            type="number"
-                            formControlName="receivedQuantity"
-                            class="ep-input"
-                            min="0"
-                            step="1">
-                        </ep-form-field>
+                          <ep-form-field [label]="'inventory.gr.create.lineItem.unit' | translate">
+                            <input
+                              [id]="'line-item-unit-' + $index"
+                              type="text"
+                              formControlName="orderedUnit"
+                              class="ep-input ep-input-disabled">
+                          </ep-form-field>
 
-                        <ep-form-field
-                          [label]="'inventory.gr.create.lineItem.rejectedQty' | translate"
-                          [error]="getLineItemError($index, 'rejectedQuantity') ? (getLineItemError($index, 'rejectedQuantity')! | translate) : null">
-                          <input
-                            [id]="'line-item-rejected-' + $index"
-                            type="number"
-                            formControlName="rejectedQuantity"
-                            class="ep-input"
-                            min="0"
-                            step="1">
-                        </ep-form-field>
+                          <ep-form-field
+                            [label]="'inventory.gr.create.lineItem.receivedQty' | translate"
+                            [error]="getLineItemError($index, 'receivedQuantity') ? (getLineItemError($index, 'receivedQuantity')! | translate) : null">
+                            <input
+                              [id]="'line-item-received-' + $index"
+                              type="number"
+                              formControlName="receivedQuantity"
+                              class="ep-input"
+                              min="0"
+                              step="1">
+                          </ep-form-field>
 
-                        <ep-form-field
-                          [label]="'inventory.gr.create.lineItem.rejectionReason' | translate"
-                          [error]="getLineItemError($index, 'rejectionReason') ? (getLineItemError($index, 'rejectionReason')! | translate) : null">
-                          <input
-                            [id]="'line-item-rejection-reason-' + $index"
-                            type="text"
-                            formControlName="rejectionReason"
-                            class="ep-input"
-                            [placeholder]="'inventory.gr.create.lineItem.rejectionReasonPlaceholder' | translate">
-                        </ep-form-field>
+                          <ep-form-field
+                            [label]="'inventory.gr.create.lineItem.rejectedQty' | translate"
+                            [error]="getLineItemError($index, 'rejectedQuantity') ? (getLineItemError($index, 'rejectedQuantity')! | translate) : null">
+                            <input
+                              [id]="'line-item-rejected-' + $index"
+                              type="number"
+                              formControlName="rejectedQuantity"
+                              class="ep-input"
+                              min="0"
+                              step="1">
+                          </ep-form-field>
 
-                        <ep-form-field [label]="'inventory.gr.create.lineItem.lotNumber' | translate">
-                          <input
-                            [id]="'line-item-lot-' + $index"
-                            type="text"
-                            formControlName="lotNumber"
-                            class="ep-input"
-                            [placeholder]="'inventory.gr.create.lineItem.lotNumberPlaceholder' | translate">
-                        </ep-form-field>
-                      </div>
+                          <ep-form-field
+                            [label]="'inventory.gr.create.lineItem.rejectionReason' | translate"
+                            [error]="getLineItemError($index, 'rejectionReason') ? (getLineItemError($index, 'rejectionReason')! | translate) : null">
+                            <input
+                              [id]="'line-item-rejection-reason-' + $index"
+                              type="text"
+                              formControlName="rejectionReason"
+                              class="ep-input"
+                              [placeholder]="'inventory.gr.create.lineItem.rejectionReasonPlaceholder' | translate">
+                          </ep-form-field>
 
-                      <div class="line-item__total">
-                        <span class="line-item__total-label">{{ 'inventory.gr.create.lineItem.total' | translate }}</span>
-                        <ep-amount
-                          [value]="(+item.get('receivedQuantity')!.value * +item.get('unitPrice')!.value).toFixed(4)"
-                          [currency]="item.get('currency')!.value" />
+                          <ep-form-field [label]="'inventory.gr.create.lineItem.lotNumber' | translate">
+                            <input
+                              [id]="'line-item-lot-' + $index"
+                              type="text"
+                              formControlName="lotNumber"
+                              class="ep-input"
+                              [placeholder]="'inventory.gr.create.lineItem.lotNumberPlaceholder' | translate">
+                          </ep-form-field>
+                        </div>
+
+                        <div class="line-item__total">
+                          <span class="line-item__total-label">{{ 'inventory.gr.create.lineItem.total' | translate }}</span>
+                          <ep-amount
+                            [value]="(+item.get('receivedQuantity')!.value * +item.get('unitPrice')!.value).toFixed(4)"
+                            [currency]="item.get('currency')!.value" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                }
-                
-                @if (items.length === 0) {
-                  <div class="empty-state">
-                    <p>{{ 'inventory.gr.create.lineItem.empty' | translate }}</p>
-                  </div>
-                }
-              </div>
+                  }
+
+                  @if (items.length === 0) {
+                    <div class="empty-state">
+                      <p>{{ 'inventory.gr.create.lineItem.empty' | translate }}</p>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           </ep-card>
         }

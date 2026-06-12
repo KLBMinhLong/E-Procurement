@@ -602,6 +602,12 @@
         "searchPlaceholder": "Tìm tên hoặc mã hàng hóa...",
         "noResults": "Không tìm thấy hàng hóa nào phù hợp."
       },
+      "autocomplete": {
+        "label": "Gợi ý catalog",
+        "hint": "Gõ ít nhất 2 ký tự để tìm nhanh trong catalog.",
+        "loading": "Đang tìm...",
+        "noResults": "Không có gợi ý phù hợp."
+      },
       "toast": {
         "createSuccess": "Đã tạo yêu cầu mua sắm.",
         "updateSuccess": "Đã cập nhật yêu cầu mua sắm."
@@ -2181,11 +2187,13 @@
         "validation": {
           "required": "Trường này là bắt buộc.",
           "min": "Giá trị phải lớn hơn hoặc bằng 0.",
+          "overQuantity": "Tổng số lượng nhận và từ chối không được vượt số lượng đặt.",
           "rejectionReasonRequired": "Cần nhập lý do khi có số lượng từ chối."
         },
         "toast": {
           "success": "Đã tạo phiếu nhận hàng thành công.",
           "failed": "Không thể tạo phiếu nhận hàng.",
+          "loadPoFailed": "Không thể tải chi tiết đơn mua hàng.",
           "errorNoItems": "Nhập số lượng nhận cho ít nhất một dòng hàng."
         }
       },

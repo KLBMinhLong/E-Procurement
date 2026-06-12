@@ -8,7 +8,15 @@ import {
   signal
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -16,7 +24,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { GoodsReceiptService } from '../../services/goods-receipt.service';
 import { WarehouseService } from '../../services/warehouse.service';
 import { PurchaseOrderService } from '../../../finance/services/purchase-order.service';
-import { PurchaseOrder } from '../../../finance/models/purchase-order.model';
+import { PoLineItem, PurchaseOrder } from '../../../finance/models/purchase-order.model';
 import { Warehouse } from '../../models/stock.model';
 import { ToastService } from '../../../../core/services/toast.service';
 
@@ -28,6 +36,18 @@ import { EpAmountComponent } from '../../../../shared/components/ep-amount/ep-am
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 
 const RECEIVABLE_PO_STATUSES = new Set(['SENT_TO_VENDOR', 'PARTIALLY_RECEIVED']);
+
+function receivedRejectedWithinOrdered(control: AbstractControl): ValidationErrors | null {
+  const ordered = Number(control.get('orderedQty')?.value || 0);
+  const received = Number(control.get('receivedQuantity')?.value || 0);
+  const rejected = Number(control.get('rejectedQuantity')?.value || 0);
+
+  if (ordered > 0 && received + rejected > ordered) {
+    return { overQuantity: true };
+  }
+
+  return null;
+}
 
 @Component({
   selector: 'app-gr-create',
@@ -61,6 +81,7 @@ export class GrCreateComponent implements OnInit {
   readonly pos = signal<PurchaseOrder[]>([]);
   readonly warehouses = signal<Warehouse[]>([]);
   readonly selectedPo = signal<PurchaseOrder | null>(null);
+  readonly isLoadingPoLines = signal(false);
 
   readonly totalReceivedAmount = computed(() => {
     let total = 0;
@@ -103,31 +124,26 @@ export class GrCreateComponent implements OnInit {
 
   onPoSelected(event: Event): void {
     const poId = (event.target as HTMLSelectElement).value;
+    this.items.clear();
+
     if (!poId) {
       this.selectedPo.set(null);
-      this.items.clear();
       return;
     }
 
     const po = this.pos().find((p) => p.id === poId);
-    if (po) {
-      this.selectedPo.set(po);
-      this.items.clear();
-      po.lineItems.forEach((item) => {
-        this.items.push(this.fb.group({
-          poLineItemId: [item.id, Validators.required],
-          itemName: [{ value: item.itemName, disabled: true }],
-          orderedQty: [{ value: item.quantity.amount, disabled: true }],
-          orderedUnit: [{ value: item.quantity.unit, disabled: true }],
-          unitPrice: [{ value: item.unitPrice, disabled: true }],
-          currency: [{ value: item.currency, disabled: true }],
-          receivedQuantity: [0, [Validators.required, Validators.min(0)]],
-          rejectedQuantity: [0, [Validators.required, Validators.min(0)]],
-          rejectionReason: [''],
-          lotNumber: ['']
-        }));
-      });
+    if (!po) {
+      this.selectedPo.set(null);
+      return;
     }
+
+    this.selectedPo.set(po);
+    if (po.lineItems?.length) {
+      this.prefillItems(po.lineItems);
+      return;
+    }
+
+    this.loadPoDetail(poId);
   }
 
   fieldError(field: string): string | null {
@@ -142,6 +158,13 @@ export class GrCreateComponent implements OnInit {
     if (!ctrl || (!ctrl.touched && !this.submitted())) return null;
     if (ctrl.errors?.['required']) return 'inventory.gr.create.validation.required';
     if (ctrl.errors?.['min']) return 'inventory.gr.create.validation.min';
+    if (
+      (field === 'receivedQuantity' || field === 'rejectedQuantity')
+      && this.items.at(index).errors?.['overQuantity']
+      && (ctrl.touched || this.submitted())
+    ) {
+      return 'inventory.gr.create.validation.overQuantity';
+    }
     if (field === 'rejectionReason' && this.requiresRejectionReason(index)) {
       return 'inventory.gr.create.validation.rejectionReasonRequired';
     }
@@ -217,5 +240,41 @@ export class GrCreateComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/inventory/goods-receipts']);
+  }
+
+  private loadPoDetail(poId: string): void {
+    this.isLoadingPoLines.set(true);
+    this.poService.getById(poId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoadingPoLines.set(false))
+      )
+      .subscribe({
+        next: (res) => {
+          const po = res.data;
+          this.selectedPo.set(po);
+          this.pos.update((current) => current.map((candidate) => candidate.id === po.id ? po : candidate));
+          this.prefillItems(po.lineItems ?? []);
+        },
+        error: () => this.toast.error('inventory.gr.create.toast.loadPoFailed')
+      });
+  }
+
+  private prefillItems(lineItems: PoLineItem[]): void {
+    this.items.clear();
+    lineItems.forEach((item) => {
+      this.items.push(this.fb.group({
+        poLineItemId: [item.id, Validators.required],
+        itemName: [{ value: item.itemName, disabled: true }],
+        orderedQty: [{ value: item.quantity.amount, disabled: true }],
+        orderedUnit: [{ value: item.quantity.unit, disabled: true }],
+        unitPrice: [{ value: item.unitPrice, disabled: true }],
+        currency: [{ value: item.currency, disabled: true }],
+        receivedQuantity: [0, [Validators.required, Validators.min(0)]],
+        rejectedQuantity: [0, [Validators.required, Validators.min(0)]],
+        rejectionReason: [''],
+        lotNumber: ['']
+      }, { validators: receivedRejectedWithinOrdered }));
+    });
   }
 }

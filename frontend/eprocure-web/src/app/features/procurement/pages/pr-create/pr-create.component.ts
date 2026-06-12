@@ -11,7 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { finalize } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, of, Subject, switchMap } from 'rxjs';
 
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
@@ -33,6 +33,11 @@ import {
   PrLineItemResponse,
   PrPriority
 } from '../../models/purchase-request.model';
+
+interface CatalogAutocompleteQuery {
+  index: number;
+  q: string;
+}
 
 @Component({
   selector: 'ep-pr-create',
@@ -73,7 +78,11 @@ export class PrCreateComponent implements OnInit {
   readonly catalogItems = signal<CatalogItem[]>([]);
   readonly catalogCategories = signal<CatalogCategory[]>([]);
   readonly isCatalogLoading = signal(false);
+  readonly autocompleteOpenMap = signal<Map<number, boolean>>(new Map());
+  readonly autocompleteItemsMap = signal<Map<number, CatalogItem[]>>(new Map());
+  readonly autocompleteLoadingMap = signal<Map<number, boolean>>(new Map());
   readonly uploadedAttachments = signal<{ id: string; fileName: string; fileSize: number }[]>([]);
+  private readonly autocompleteQuery$ = new Subject<CatalogAutocompleteQuery>();
 
   readonly priorities: PrPriority[] = ['NORMAL', 'URGENT', 'EMERGENCY'];
 
@@ -111,6 +120,7 @@ export class PrCreateComponent implements OnInit {
   // ── Lifecycle ──────────────────────────────────────────────────────
   ngOnInit(): void {
     this.loadCategories();
+    this.bindAutocompleteSearch();
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
@@ -145,7 +155,49 @@ export class PrCreateComponent implements OnInit {
   removeLineItem(index: number): void {
     if (this.lineItems.length > 1) {
       this.lineItems.removeAt(index);
+      this.clearAutocompleteState();
     }
+  }
+
+  autocompleteOpen(index: number): boolean {
+    return this.autocompleteOpenMap().get(index) ?? false;
+  }
+
+  autocompleteItems(index: number): CatalogItem[] {
+    return this.autocompleteItemsMap().get(index) ?? [];
+  }
+
+  autocompleteLoading(index: number): boolean {
+    return this.autocompleteLoadingMap().get(index) ?? false;
+  }
+
+  onItemNameInput(index: number, value: string): void {
+    const q = value.trim();
+    if (q.length < 2) {
+      this.setAutocompleteOpen(index, false);
+      this.setAutocompleteItems(index, []);
+      this.setAutocompleteLoading(index, false);
+      this.autocompleteQuery$.next({ index, q });
+      return;
+    }
+
+    this.setAutocompleteLoading(index, true);
+    this.autocompleteQuery$.next({ index, q });
+  }
+
+  onItemNameFocus(index: number): void {
+    if (this.autocompleteItems(index).length > 0) {
+      this.setAutocompleteOpen(index, true);
+    }
+  }
+
+  onItemNameBlur(index: number): void {
+    window.setTimeout(() => this.setAutocompleteOpen(index, false), 120);
+  }
+
+  selectAutocompleteItem(index: number, item: CatalogItem): void {
+    this.patchLineItemFromCatalog(index, item);
+    this.setAutocompleteOpen(index, false);
   }
 
   getLineItemError(index: number, field: string): string | null {
@@ -182,15 +234,7 @@ export class PrCreateComponent implements OnInit {
   selectCatalogItem(item: CatalogItem): void {
     const idx = this.catalogPickerTargetIndex();
     if (idx === null) return;
-    const ctrl = this.lineItems.at(idx);
-    ctrl.patchValue({
-      itemCode: item.itemCode,
-      itemName: item.name,
-      categoryCode: item.categoryCode,
-      unitPriceAmount: item.unitPrice.amount,
-      quantityUnit: item.unit,
-      isFromCatalog: true
-    });
+    this.patchLineItemFromCatalog(idx, item);
     this.closeCatalogPicker();
   }
 
@@ -306,6 +350,7 @@ export class PrCreateComponent implements OnInit {
           });
           this.lineItems.clear();
           data.lineItems.forEach((item) => this.lineItems.push(this.createLineItemGroup(item)));
+          this.clearAutocompleteState();
           if (!this.lineItems.length) {
             this.addLineItem();
           }
@@ -321,6 +366,72 @@ export class PrCreateComponent implements OnInit {
 
   private toDateInput(value: string | null | undefined): string | null {
     return value ? value.slice(0, 10) : null;
+  }
+
+  private bindAutocompleteSearch(): void {
+    this.autocompleteQuery$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((prev, curr) => prev.index === curr.index && prev.q === curr.q),
+        switchMap(({ index, q }) => {
+          if (q.length < 2) {
+            return of({ index, items: [] as CatalogItem[], open: false });
+          }
+
+          return this.catalogService.searchItems({ q, size: 8 }).pipe(
+            catchError(() => of({ data: [] as CatalogItem[] })),
+            finalize(() => this.setAutocompleteLoading(index, false)),
+            switchMap((res) => of({ index, items: res.data ?? [], open: true }))
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(({ index, items, open }) => {
+        this.setAutocompleteItems(index, items.slice(0, 8));
+        this.setAutocompleteOpen(index, open);
+      });
+  }
+
+  private patchLineItemFromCatalog(index: number, item: CatalogItem): void {
+    const ctrl = this.lineItems.at(index);
+    ctrl.patchValue({
+      itemCode: item.itemCode,
+      itemName: item.name,
+      categoryCode: item.categoryCode,
+      unitPriceAmount: item.unitPrice.amount,
+      quantityUnit: item.unit,
+      isFromCatalog: true
+    });
+  }
+
+  private setAutocompleteOpen(index: number, open: boolean): void {
+    this.autocompleteOpenMap.update((current) => {
+      const next = new Map(current);
+      next.set(index, open);
+      return next;
+    });
+  }
+
+  private setAutocompleteItems(index: number, items: CatalogItem[]): void {
+    this.autocompleteItemsMap.update((current) => {
+      const next = new Map(current);
+      next.set(index, items);
+      return next;
+    });
+  }
+
+  private setAutocompleteLoading(index: number, loading: boolean): void {
+    this.autocompleteLoadingMap.update((current) => {
+      const next = new Map(current);
+      next.set(index, loading);
+      return next;
+    });
+  }
+
+  private clearAutocompleteState(): void {
+    this.autocompleteOpenMap.set(new Map());
+    this.autocompleteItemsMap.set(new Map());
+    this.autocompleteLoadingMap.set(new Map());
   }
 
   // ── Field error helpers ────────────────────────────────────────────

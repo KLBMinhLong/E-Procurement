@@ -1,6 +1,8 @@
 # Kế hoạch UI — Shell Navigation & UX Gaps
 
 > **Mục tiêu:** Chốt lại navigation sau Inventory, rồi cải thiện UX của Approval Inbox (grouping, SLA visual), PR Create form (catalog autocomplete inline), và GR Create form (quantity validation trên prefill hiện có). Budget nav/indicator chuyển sang plan Budget để đi cùng route/service thật.
+>
+> **Trạng thái 2026-06-13:** Hoàn thành ở mức build. `2a` là no-op sau khi verify nav hiện có; `2b`, `2c`, `2d` đã triển khai trong Angular frontend.
 
 ---
 
@@ -10,10 +12,10 @@ Plan này là plan kế tiếp sau Inventory. Một số giả định ban đầ
 
 | Nhóm | Trạng thái thực tế | Điều chỉnh scope |
 |---|---|---|
-| 2a Shell nav | `/inventory/catalog` đã có trong sidebar bằng `nav.inventoryCatalog`; `/finance/budgets` route chưa tồn tại | Không thêm nav Budget một mình để tránh dead link. Budget nav sẽ đi cùng plan `UI_MODULE_FINANCE_BUDGET.md` khi tạo route. |
-| 2b Approval Inbox | Inbox vẫn là table phẳng; đã có stat total/overdue/emergency và `EpSlaBarComponent` | Giữ scope grouping + SLA countdown, dùng icon đã đăng ký (`shield-alert`, `alarm-clock`, `inbox`) thay vì thêm icon mới nếu không cần. |
-| 2c PR Create | Đã có Catalog Picker Modal và `CatalogService.searchItems()`; chưa có inline autocomplete; budget indicator chưa có service public trong FE | Làm inline autocomplete trước. Budget indicator chỉ làm sau khi có `BudgetService` public từ plan Budget; không gọi `/internal/budgets/check` từ Angular. |
-| 2d GR Create | Đã prefill line items khi chọn PO từ dữ liệu `PurchaseOrderService.list()`; received default hiện là `0` | Không rebuild full flow. Chỉ polish: validate `received + rejected <= ordered`, hiển thị cảnh báo rõ, dùng `getById()` nếu list response thiếu lineItems. |
+| 2a Shell nav | `/inventory/catalog` đã có trong sidebar bằng `nav.inventoryCatalog`; `/finance/budgets` route chưa tồn tại | ✅ No-op. Không thêm nav Budget một mình để tránh dead link. Budget nav sẽ đi cùng plan `UI_MODULE_FINANCE_BUDGET.md` khi tạo route. |
+| 2b Approval Inbox | Inbox đã có stat total/overdue/emergency và `EpSlaBarComponent` | ✅ Đã thêm grouping Emergency/Overdue/Normal, collapse section, count badge và SLA countdown. |
+| 2c PR Create | Đã có Catalog Picker Modal và `CatalogService.searchItems()`; budget indicator chưa có service public trong FE | ✅ Đã thêm inline catalog autocomplete. Budget indicator vẫn deferred đến plan Budget; không gọi `/internal/budgets/check` từ Angular. |
+| 2d GR Create | Đã prefill line items khi chọn PO từ dữ liệu `PurchaseOrderService.list()`; received default hiện là `0` | ✅ Đã thêm validation `received + rejected <= ordered`, loading fallback và `getById()` khi list response thiếu lineItems. |
 
 **Thứ tự đề xuất cho plan này:** 2b → 2c → 2d. Nhóm 2a chỉ còn là checklist/no-op cho catalog nav; Budget nav chuyển sang plan Budget.
 

@@ -135,6 +135,7 @@
 | WebSocket service | ✅ |
 | Permission guard + directive | ✅ |
 | Rewrite User Profile UI Screen (Personal details, avatar selector, password change checklist, 2FA toggle setup) | ✅ |
+| UI planning #2: Shell Nav + Approval/PR/GR UX polish | ✅ | Approval Inbox grouping/SLA countdown, PR catalog autocomplete, GR over-quantity validation; `npm run build` pass 2026-06-13 |
 | Unit tests / compilation validation | ✅ |
 
 ### E04: Purchase Request Service

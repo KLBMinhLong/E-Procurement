@@ -230,6 +230,77 @@
   color: var(--color-text-muted);
 }
 
+/* ── Catalog Autocomplete ────────────────────────────────────────── */
+.autocomplete-wrapper {
+  position: relative;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--spacing-1));
+  left: 0;
+  right: 0;
+  max-height: 17rem;
+  overflow-y: auto;
+  padding: var(--spacing-1);
+  border: var(--border-subtle);
+  border-radius: var(--radius-2);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.autocomplete-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-3);
+  border: 0;
+  border-radius: var(--radius-2);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--motion-fast);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-surface-hover);
+    outline: none;
+  }
+}
+
+.autocomplete-option__info {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.autocomplete-option__name {
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocomplete-option__meta,
+.autocomplete-state {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+
+.autocomplete-state {
+  padding: var(--spacing-4);
+  text-align: center;
+}
+
 /* ── Attachment Upload ───────────────────────────────────────────── */
 .upload-area {
   display: flex;
