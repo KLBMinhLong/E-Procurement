@@ -24,6 +24,8 @@ Plan này là plan kế tiếp sau `UI_MODULE_SHELL_NAV_UX.md`. Backend Finance 
 
 **Trạng thái triển khai 2026-06-13:** ✅ Slice 3a hoàn thành ở mức build: đã có `budget.model.ts`, `budget.service.ts`, lazy routes `/finance/budgets`, `/finance/budgets/:id`, sidebar `nav.budgets`, i18n shell và placeholder component cho list/detail.
 
+**Cập nhật 2026-06-13:** ✅ Slice 3b hoàn thành ở mức build: `BudgetListComponent` đã gọi `GET /budgets`, có KPI theo page/filter hiện tại, filter fiscal year/quarter/department/status/GL, sort whitelist phía UI, table amount/status/health/utilization/forecast và pagination. Chưa mở browser test theo yêu cầu dừng ở mức build.
+
 ---
 
 ## 1. Hiện trạng

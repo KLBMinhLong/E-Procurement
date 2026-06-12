@@ -717,10 +717,30 @@
         "eyebrow": "Finance",
         "title": "Budget Management",
         "subtitle": "Track allocated, committed, spent, and available budget by department, fiscal year, quarter, and GL account.",
-        "phase": "Slice 3a",
+        "summaryLabel": "Budget metrics for the current filter",
+        "totalItems": "budgets",
+        "action": {
+          "refresh": "Refresh"
+        },
+        "filter": {
+          "fiscalYear": "Fiscal year",
+          "quarter": "Quarter",
+          "allQuarters": "All quarters",
+          "department": "Department",
+          "departmentPlaceholder": "Department ID",
+          "glAccount": "GL account",
+          "glAccountPlaceholder": "Ex: 6421",
+          "status": "Status",
+          "allStatus": "All statuses",
+          "clear": "Clear filters"
+        },
+        "period": {
+          "allYear": "Full year",
+          "quarter": "Q{{quarter}}"
+        },
         "empty": {
-          "title": "Budget UI shell is ready",
-          "message": "Routes, service, and model are wired. Data tables and filters will be implemented in slice 3b."
+          "title": "No matching budgets",
+          "message": "Adjust fiscal year, department, status, or GL account to find the budgets you need to monitor."
         }
       },
       "detail": {

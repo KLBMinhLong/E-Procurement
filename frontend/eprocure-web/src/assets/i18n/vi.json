@@ -717,10 +717,30 @@
         "eyebrow": "Finance",
         "title": "Quản lý ngân sách",
         "subtitle": "Theo dõi allocated, committed, spent và available theo phòng ban, năm tài chính, quý và mã GL.",
-        "phase": "Slice 3a",
+        "summaryLabel": "Chỉ số ngân sách theo bộ lọc hiện tại",
+        "totalItems": "ngân sách",
+        "action": {
+          "refresh": "Làm mới"
+        },
+        "filter": {
+          "fiscalYear": "Năm tài chính",
+          "quarter": "Quý",
+          "allQuarters": "Tất cả quý",
+          "department": "Phòng ban",
+          "departmentPlaceholder": "Department ID",
+          "glAccount": "Mã GL",
+          "glAccountPlaceholder": "VD: 6421",
+          "status": "Trạng thái",
+          "allStatus": "Tất cả trạng thái",
+          "clear": "Xóa lọc"
+        },
+        "period": {
+          "allYear": "Cả năm",
+          "quarter": "Q{{quarter}}"
+        },
         "empty": {
-          "title": "Budget UI shell đã sẵn sàng",
-          "message": "Route, service và model đã được nối. Bảng dữ liệu và bộ lọc sẽ được triển khai ở slice 3b."
+          "title": "Không có ngân sách phù hợp",
+          "message": "Thử đổi năm tài chính, phòng ban, trạng thái hoặc mã GL để xem ngân sách cần theo dõi."
         }
       },
       "detail": {

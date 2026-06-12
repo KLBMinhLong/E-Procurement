@@ -71,7 +71,7 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 | Bước | Nội dung |
 |---|---|
 | 3a | ✅ Tạo `budget.model.ts`, `budget.service.ts`, routes `finance/budgets`, nav `nav.budgets`, i18n shell |
-| 3b | Build `BudgetListComponent` — KPI theo page/filter hiện tại + filter + table |
+| 3b | ✅ Build `BudgetListComponent` — KPI theo page/filter hiện tại + filter + table |
 | 3c | Build `BudgetDetailComponent` read-only — utilization panel + info + health tone |
 | 3d | Thêm Override/Transfer modals theo validation backend thật |
 | 3e | i18n hoàn chỉnh + `npm run build` verify |
