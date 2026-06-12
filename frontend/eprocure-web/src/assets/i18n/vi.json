@@ -344,7 +344,11 @@
     "invoices": "Hóa đơn & thanh toán",
     "vendors": "Nhà cung cấp",
     "rfq": "Yêu cầu báo giá (RFQ)",
-    "inventory": "Tồn kho"
+    "inventory": "Tồn kho",
+    "inventoryStock": "Bảng tồn kho",
+    "inventoryMovements": "Lịch sử kho",
+    "inventoryIssueOut": "Xuất kho",
+    "inventoryCatalog": "Catalog kho"
   },
   "notification": {
     "empty": "Chưa có thông báo",
@@ -405,7 +409,11 @@
         "list": "Phiếu nhận hàng",
         "create": "Tạo phiếu nhận",
         "detail": "Chi tiết phiếu nhận"
-      }
+      },
+      "stock": "Bảng tồn kho",
+      "movements": "Lịch sử biến động kho",
+      "issueOut": "Xuất kho nội bộ",
+      "catalog": "Catalog hàng hóa"
     }
   },
   "shared": {
@@ -2204,6 +2212,133 @@
           "completeSuccess": "Đã hoàn tất phiếu nhận hàng.",
           "completeFailed": "Không thể hoàn tất phiếu nhận hàng."
         }
+      },
+      "stock": {
+        "eyebrow": "Kiểm soát tồn kho",
+        "title": "Bảng tồn kho",
+        "subtitle": "Theo dõi tồn kho hiện có theo kho và cảnh báo dưới ngưỡng đặt lại.",
+        "filter": {
+          "warehouse": "Kho hàng",
+          "warehousePlaceholder": "Chọn kho...",
+          "belowReorder": "Chỉ dưới ngưỡng đặt lại",
+          "clear": "Xóa bộ lọc"
+        },
+        "stat": {
+          "sku": "SKU",
+          "belowReorder": "Dưới ngưỡng",
+          "quantityRows": "Dòng tồn",
+          "lastUpdated": "Cập nhật mới nhất"
+        },
+        "col": {
+          "itemCode": "Mã hàng",
+          "itemName": "Tên hàng",
+          "warehouse": "Kho",
+          "quantityOnHand": "Tồn hiện có",
+          "unit": "ĐVT",
+          "reorderPoint": "Ngưỡng đặt lại",
+          "lastUpdated": "Cập nhật",
+          "status": "Trạng thái"
+        },
+        "status": {
+          "belowReorder": "Dưới ngưỡng",
+          "normal": "Bình thường"
+        },
+        "action": {
+          "viewMovements": "Xem biến động",
+          "issueOut": "Xuất kho",
+          "adjust": "Điều chỉnh"
+        },
+        "totalItems": "dòng tồn",
+        "empty": {
+          "title": "Chưa có tồn kho",
+          "message": "Chọn kho khác hoặc hoàn tất phiếu nhận hàng để tạo tồn kho."
+        }
+      },
+      "movements": {
+        "eyebrow": "Sổ cái kho",
+        "title": "Lịch sử biến động kho",
+        "subtitle": "Theo dõi ledger nhập, xuất, điều chỉnh và chuyển kho ở chế độ chỉ xem.",
+        "filter": {
+          "itemCode": "Mã hàng",
+          "itemCodePlaceholder": "VD: E15-OFFICE-KIT",
+          "warehouse": "Kho hàng",
+          "allWarehouses": "Tất cả kho",
+          "movementType": "Loại giao dịch",
+          "allTypes": "Tất cả loại",
+          "fromDate": "Từ ngày",
+          "toDate": "Đến ngày",
+          "clear": "Xóa bộ lọc"
+        },
+        "type": {
+          "RECEIPT_IN": "Nhập kho",
+          "ISSUE_OUT": "Xuất kho",
+          "ADJUSTMENT": "Điều chỉnh",
+          "TRANSFER": "Chuyển kho"
+        },
+        "col": {
+          "item": "Hàng hóa",
+          "warehouse": "Kho",
+          "type": "Loại",
+          "quantity": "Số lượng",
+          "balanceAfter": "Tồn sau",
+          "source": "Chứng từ",
+          "performedBy": "Người thực hiện",
+          "performedAt": "Thời gian",
+          "notes": "Ghi chú"
+        },
+        "totalItems": "giao dịch",
+        "empty": {
+          "title": "Chưa có biến động kho",
+          "message": "Thử thay đổi bộ lọc hoặc hoàn tất nghiệp vụ nhập/xuất kho."
+        }
+      },
+      "issueOut": {
+        "eyebrow": "Cấp phát nội bộ",
+        "title": "Xuất kho",
+        "subtitle": "Cấp phát hàng từ kho cho nhân viên và ghi nhận ISSUE_OUT movement.",
+        "section": {
+          "basic": "Thông tin xuất kho",
+          "lines": "Dòng xuất kho",
+          "line": "Dòng",
+          "summary": "Tóm tắt",
+          "result": "Movement đã tạo"
+        },
+        "field": {
+          "warehouse": "Kho xuất",
+          "recipientId": "Người nhận",
+          "recipientPlaceholder": "UUID người nhận",
+          "prId": "PR liên quan",
+          "notes": "Ghi chú",
+          "itemCode": "Mã hàng",
+          "itemPlaceholder": "Chọn hàng tồn kho",
+          "quantity": "Số lượng",
+          "unit": "ĐVT",
+          "available": "Tồn khả dụng"
+        },
+        "action": {
+          "addLine": "Thêm dòng",
+          "submit": "Xuất kho",
+          "removeLine": "Xóa dòng"
+        },
+        "summary": {
+          "lines": "Số dòng"
+        },
+        "validation": {
+          "required": "Trường này là bắt buộc.",
+          "positive": "Số lượng phải lớn hơn 0.",
+          "insufficient": "Số lượng vượt quá tồn hiện có.",
+          "invalid": "Vui lòng kiểm tra lại thông tin xuất kho."
+        },
+        "toast": {
+          "success": "Đã xuất kho thành công.",
+          "failed": "Không thể xuất kho."
+        }
+      },
+      "catalog": {
+        "eyebrow": "Master data kho",
+        "title": "Catalog hàng hóa",
+        "subtitle": "Quản lý item master của inventory-service sau khi backend catalog được bật.",
+        "planned": "Catalog CRUD cần backend item API trước khi bật UI."
       }
     }
   }

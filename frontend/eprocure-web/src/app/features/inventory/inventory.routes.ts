@@ -30,5 +30,29 @@ export const inventoryRoutes: Routes = [
     canActivate: [permissionGuard],
     data: { requiredPermissions: ['GR_VIEW'] },
     title: 'route.inventory.gr.detail'
+  },
+  {
+    path: 'stock',
+    loadComponent: () =>
+      import('./pages/stock-dashboard/stock-dashboard').then((m) => m.StockDashboardComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['GR_VIEW'] },
+    title: 'route.inventory.stock'
+  },
+  {
+    path: 'stock/movements',
+    loadComponent: () =>
+      import('./pages/stock-movements/stock-movements').then((m) => m.StockMovementsComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['GR_VIEW'] },
+    title: 'route.inventory.movements'
+  },
+  {
+    path: 'issue-out',
+    loadComponent: () =>
+      import('./pages/issue-out/issue-out').then((m) => m.IssueOutComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['GR_ISSUE_OUT'] },
+    title: 'route.inventory.issueOut'
   }
 ];

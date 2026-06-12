@@ -344,7 +344,11 @@
     "invoices": "Invoices & Payments",
     "vendors": "Vendors",
     "rfq": "RFQs",
-    "inventory": "Inventory"
+    "inventory": "Inventory",
+    "inventoryStock": "Stock Dashboard",
+    "inventoryMovements": "Stock Movements",
+    "inventoryIssueOut": "Issue Out",
+    "inventoryCatalog": "Inventory Catalog"
   },
   "notification": {
     "empty": "No notifications",
@@ -405,7 +409,11 @@
         "list": "Goods Receipts",
         "create": "Create Receipt",
         "detail": "Receipt Details"
-      }
+      },
+      "stock": "Stock Dashboard",
+      "movements": "Stock Movements",
+      "issueOut": "Issue Out",
+      "catalog": "Item Catalog"
     }
   },
   "shared": {
@@ -2203,6 +2211,133 @@
           "completeSuccess": "Goods receipt completed successfully.",
           "completeFailed": "Could not complete goods receipt."
         }
+      },
+      "stock": {
+        "eyebrow": "Stock control",
+        "title": "Stock Dashboard",
+        "subtitle": "Track stock on hand by warehouse and highlight below-reorder items.",
+        "filter": {
+          "warehouse": "Warehouse",
+          "warehousePlaceholder": "Select warehouse...",
+          "belowReorder": "Below reorder only",
+          "clear": "Clear filters"
+        },
+        "stat": {
+          "sku": "SKU",
+          "belowReorder": "Below reorder",
+          "quantityRows": "Stock rows",
+          "lastUpdated": "Last updated"
+        },
+        "col": {
+          "itemCode": "Item code",
+          "itemName": "Item name",
+          "warehouse": "Warehouse",
+          "quantityOnHand": "Quantity on hand",
+          "unit": "Unit",
+          "reorderPoint": "Reorder point",
+          "lastUpdated": "Updated",
+          "status": "Status"
+        },
+        "status": {
+          "belowReorder": "Below reorder",
+          "normal": "Normal"
+        },
+        "action": {
+          "viewMovements": "View movements",
+          "issueOut": "Issue out",
+          "adjust": "Adjust"
+        },
+        "totalItems": "stock rows",
+        "empty": {
+          "title": "No stock rows",
+          "message": "Select another warehouse or complete a goods receipt to create stock."
+        }
+      },
+      "movements": {
+        "eyebrow": "Inventory ledger",
+        "title": "Stock Movements",
+        "subtitle": "Review receipt, issue-out, adjustment and transfer ledger entries in read-only mode.",
+        "filter": {
+          "itemCode": "Item code",
+          "itemCodePlaceholder": "E.g. E15-OFFICE-KIT",
+          "warehouse": "Warehouse",
+          "allWarehouses": "All warehouses",
+          "movementType": "Movement type",
+          "allTypes": "All types",
+          "fromDate": "From date",
+          "toDate": "To date",
+          "clear": "Clear filters"
+        },
+        "type": {
+          "RECEIPT_IN": "Receipt in",
+          "ISSUE_OUT": "Issue out",
+          "ADJUSTMENT": "Adjustment",
+          "TRANSFER": "Transfer"
+        },
+        "col": {
+          "item": "Item",
+          "warehouse": "Warehouse",
+          "type": "Type",
+          "quantity": "Quantity",
+          "balanceAfter": "Balance after",
+          "source": "Source",
+          "performedBy": "Performed by",
+          "performedAt": "Performed at",
+          "notes": "Notes"
+        },
+        "totalItems": "movements",
+        "empty": {
+          "title": "No stock movements",
+          "message": "Adjust filters or complete receipt/issue-out operations."
+        }
+      },
+      "issueOut": {
+        "eyebrow": "Internal allocation",
+        "title": "Issue Out",
+        "subtitle": "Issue warehouse stock to an employee and record ISSUE_OUT movements.",
+        "section": {
+          "basic": "Issue information",
+          "lines": "Issue lines",
+          "line": "Line",
+          "summary": "Summary",
+          "result": "Created movements"
+        },
+        "field": {
+          "warehouse": "Source warehouse",
+          "recipientId": "Recipient",
+          "recipientPlaceholder": "Recipient UUID",
+          "prId": "Related PR",
+          "notes": "Notes",
+          "itemCode": "Item code",
+          "itemPlaceholder": "Select stock item",
+          "quantity": "Quantity",
+          "unit": "Unit",
+          "available": "Available"
+        },
+        "action": {
+          "addLine": "Add line",
+          "submit": "Issue stock",
+          "removeLine": "Remove line"
+        },
+        "summary": {
+          "lines": "Lines"
+        },
+        "validation": {
+          "required": "This field is required.",
+          "positive": "Quantity must be greater than zero.",
+          "insufficient": "Quantity exceeds stock on hand.",
+          "invalid": "Please check the issue-out information."
+        },
+        "toast": {
+          "success": "Stock issued successfully.",
+          "failed": "Could not issue stock."
+        }
+      },
+      "catalog": {
+        "eyebrow": "Inventory master data",
+        "title": "Item Catalog",
+        "subtitle": "Manage inventory-service item master data after catalog backend APIs are enabled.",
+        "planned": "Catalog CRUD needs item backend APIs before the UI is enabled."
       }
     }
   }

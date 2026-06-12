@@ -67,7 +67,7 @@ export const routes: Routes = [
       {
         path: 'inventory',
         canActivate: [permissionGuard],
-        data: { requiredPermissions: ['GR_VIEW', 'GR_CREATE', 'STOCK_VIEW'] },
+        data: { requiredPermissions: ['GR_VIEW', 'GR_CREATE', 'GR_ISSUE_OUT', 'ADMIN_CATALOG_MANAGE'] },
         loadChildren: () => import('./features/inventory/inventory.routes').then((m) => m.inventoryRoutes)
       },
       {

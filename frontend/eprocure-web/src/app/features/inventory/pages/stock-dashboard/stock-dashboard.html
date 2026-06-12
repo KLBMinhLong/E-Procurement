@@ -1,0 +1,191 @@
+<section class="stock-page" aria-labelledby="stock-dashboard-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'features.inventory.stock.eyebrow' | translate }}</span>
+      <h1 id="stock-dashboard-heading" class="page-header__title">
+        {{ 'features.inventory.stock.title' | translate }}
+      </h1>
+      <p class="page-header__subtitle">{{ 'features.inventory.stock.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button id="btn-view-stock-movements" variant="secondary" icon="history" (click)="navigateMovements()">
+        {{ 'features.inventory.stock.action.viewMovements' | translate }}
+      </ep-button>
+      <ep-button
+        *epHasPermission="'GR_ISSUE_OUT'"
+        id="btn-stock-issue-out"
+        variant="primary"
+        icon="package-minus"
+        (click)="navigateIssueOut()">
+        {{ 'features.inventory.stock.action.issueOut' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="summary-grid" [attr.aria-label]="'features.inventory.stock.title' | translate">
+    <div class="summary-card">
+      <ep-icon name="boxes" />
+      <span class="summary-card__label">{{ 'features.inventory.stock.stat.sku' | translate }}</span>
+      <span class="summary-card__value">{{ skuCount() }}</span>
+    </div>
+    <div class="summary-card summary-card--warning">
+      <ep-icon name="triangle-alert" />
+      <span class="summary-card__label">{{ 'features.inventory.stock.stat.belowReorder' | translate }}</span>
+      <span class="summary-card__value">{{ belowReorderCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="warehouse" />
+      <span class="summary-card__label">{{ 'features.inventory.stock.stat.quantityRows' | translate }}</span>
+      <span class="summary-card__value">{{ quantityRows() }}</span>
+    </div>
+    <div class="summary-card summary-card--wide">
+      <ep-icon name="clock-3" />
+      <span class="summary-card__label">{{ 'features.inventory.stock.stat.lastUpdated' | translate }}</span>
+      <span class="summary-card__value summary-card__value--time">{{ lastUpdated() }}</span>
+    </div>
+  </div>
+
+  <div class="stock-toolbar">
+    <div class="stock-toolbar__top">
+      <label class="compact-field">
+        <span>{{ 'features.inventory.stock.filter.warehouse' | translate }}</span>
+        <select
+          id="filter-stock-warehouse"
+          class="compact-field__control"
+          [value]="warehouseId()"
+          (change)="onWarehouseChange($any($event.target).value)">
+          <option value="">{{ 'features.inventory.stock.filter.warehousePlaceholder' | translate }}</option>
+          @for (warehouse of warehouses(); track warehouse.id) {
+            <option [value]="warehouse.id">{{ warehouse.code }} - {{ warehouse.name }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="toggle-field">
+        <input
+          id="filter-stock-below-reorder"
+          type="checkbox"
+          [checked]="belowReorder()"
+          (change)="onBelowReorderChange($any($event.target).checked)">
+        <span>{{ 'features.inventory.stock.filter.belowReorder' | translate }}</span>
+      </label>
+
+      @if (hasActiveFilters()) {
+        <ep-button id="btn-clear-stock-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'features.inventory.stock.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="package-search"
+      [title]="'features.inventory.stock.empty.title' | translate"
+      [message]="'features.inventory.stock.empty.message' | translate" />
+  } @else {
+    <div class="stock-table-wrapper">
+      <table class="stock-table" role="grid" aria-labelledby="stock-dashboard-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'features.inventory.stock.col.itemCode' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.stock.col.itemName' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.stock.col.warehouse' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'features.inventory.stock.col.quantityOnHand' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.stock.col.unit' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'features.inventory.stock.col.reorderPoint' | translate }}</th>
+            <th scope="col">{{ 'features.inventory.stock.col.status' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'features.inventory.stock.col.lastUpdated' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'shared.table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.warehouseId + '-' + item.itemCode) {
+            <tr class="stock-table__row">
+              <td class="stock-table__number">
+                <span class="mono">{{ item.itemCode }}</span>
+              </td>
+              <td>
+                <span class="stock-table__primary">{{ item.itemName }}</span>
+              </td>
+              <td>
+                <span class="stock-table__primary">{{ item.warehouseName }}</span>
+                <span class="stock-table__subtitle">{{ selectedWarehouse()?.code ?? item.warehouseId }}</span>
+              </td>
+              <td class="align-right stock-table__quantity">
+                {{ formatQuantity(item.quantityOnHand) }}
+              </td>
+              <td><span class="mono">{{ item.unit }}</span></td>
+              <td class="align-right stock-table__quantity">
+                {{ item.reorderPoint ? formatQuantity(item.reorderPoint) : '--' }}
+              </td>
+              <td>
+                <ep-badge
+                  [tone]="item.isBelowReorder ? 'warning' : 'success'"
+                  [labelKey]="item.isBelowReorder
+                    ? 'features.inventory.stock.status.belowReorder'
+                    : 'features.inventory.stock.status.normal'" />
+              </td>
+              <td class="align-right stock-table__date">{{ formatDateTime(item.lastUpdated) }}</td>
+              <td class="align-right">
+                <div class="stock-table__actions">
+                  <ep-button
+                    [id]="'btn-movements-' + item.itemCode"
+                    variant="ghost"
+                    size="sm"
+                    icon="history"
+                    (click)="navigateMovements(item)">
+                    {{ 'features.inventory.stock.action.viewMovements' | translate }}
+                  </ep-button>
+                  <ep-button
+                    *epHasPermission="'GR_ISSUE_OUT'"
+                    [id]="'btn-issue-out-' + item.itemCode"
+                    variant="ghost"
+                    size="sm"
+                    icon="package-minus"
+                    (click)="navigateIssueOut(item)">
+                    {{ 'features.inventory.stock.action.issueOut' | translate }}
+                  </ep-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as metaData) {
+      <div class="stock-pagination">
+        <span class="stock-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="stock-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'features.inventory.stock.totalItems' | translate }}
+        </span>
+        <div class="stock-pagination__controls">
+          <ep-button
+            id="btn-prev-stock-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange({ page: metaData.page - 1, size: metaData.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-stock-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="metaData.isLast"
+            (click)="onPageChange({ page: metaData.page + 1, size: metaData.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+</section>

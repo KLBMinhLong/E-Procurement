@@ -67,7 +67,7 @@ export class ShellComponent implements OnInit {
     { icon: 'inbox', labelKey: 'nav.approvals', route: '/approvals', permissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY'] },
     { icon: 'building-2', labelKey: 'nav.vendors', route: '/vendors', permissions: ['VENDOR_VIEW'] },
     { icon: 'file-search', labelKey: 'nav.rfq', route: '/vendors/rfq', permissions: ['RFQ_VIEW', 'RFQ_CREATE'] },
-    { icon: 'package', labelKey: 'nav.inventory', route: '/inventory', permissions: ['GR_VIEW', 'GR_CREATE', 'STOCK_VIEW'] },
+    { icon: 'package', labelKey: 'nav.inventory', route: '/inventory', permissions: ['GR_VIEW', 'GR_CREATE', 'GR_ISSUE_OUT', 'ADMIN_CATALOG_MANAGE'] },
     { icon: 'receipt-text', labelKey: 'nav.purchaseOrders', route: '/finance/purchase-orders', permissions: ['PO_VIEW_OWN', 'PO_VIEW_ALL', 'PO_CREATE'] },
     { icon: 'file-check-2', labelKey: 'nav.invoices', route: '/finance/invoices', permissions: ['INVOICE_VIEW', 'INVOICE_CREATE', 'PAYMENT_CONFIRM'] },
     { icon: 'users', labelKey: 'nav.adminUsers', route: '/admin/users', permissions: ['ADMIN_USER_VIEW', 'ADMIN_USER_MANAGE'] },

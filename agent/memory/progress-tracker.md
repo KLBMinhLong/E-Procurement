@@ -276,8 +276,8 @@
 | Issue-out API | ✅ | `POST /api/v1/stock/issue-out`; validates active item/warehouse, decrements stock atomically, stores idempotent request header, creates `ISSUE_OUT` movements |
 | Frontend: GR List & Create | 🔄 | UI to list and create Draft GR from PO |
 | Frontend: GR Detail & Complete | 🔄 | UI to view GR details, line items, 3-way match preview, and action to complete GR |
-| Frontend: Stock Dashboard & Movements | 🔄 | UI for warehouse stock overview, reorder alerts, and movement history |
-| Frontend: Issue Out Stock | 🔄 | Form to issue stock out with dynamic line items |
+| Frontend: Stock Dashboard & Movements | ✅ | 2026-06-12: Slice 0-1 done — `StockEntry` model aligned to backend, `StockService` added, Inventory permissions normalized away from non-seeded `STOCK_VIEW`, routes `/inventory/stock` and `/inventory/stock/movements` added, warehouse stock dashboard and immutable movement ledger implemented; `npm run build` passes |
+| Frontend: Issue Out Stock | ✅ | 2026-06-12: Slice 2 done — route `/inventory/issue-out` added with `GR_ISSUE_OUT`, form uses warehouse stock as item selector, validates available quantity before submit, posts `StockService.issueOut()` with generated `Idempotency-Key`, displays created movements and reloads stock; `npm run build` passes |
 
 ### E09: Invoice & Payment
 | Task | Status | Ghi chú |
