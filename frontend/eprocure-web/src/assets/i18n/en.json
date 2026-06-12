@@ -1555,23 +1555,23 @@
         "emergency": "Critical",
         "hint": "Need Action"
       },
-        "filter": {
-          "placeholder": "Search request code, title...",
-          "allStatus": "All Statuses",
-          "allPriority": "All Priorities",
-          "allTypes": "All Request Types",
-          "overdueOnly": "Overdue Only"
-        },
-        "section": {
-          "emergency": "Emergency",
-          "overdue": "Overdue",
-          "normal": "Normal"
-        },
-        "sla": {
-          "remaining": "{{hours}}h remaining",
-          "overdue": "{{hours}}h late"
-        },
-        "empty": {
+      "filter": {
+        "placeholder": "Search request code, title...",
+        "allStatus": "All Statuses",
+        "allPriority": "All Priorities",
+        "allTypes": "All Request Types",
+        "overdueOnly": "Overdue Only"
+      },
+      "section": {
+        "emergency": "Emergency",
+        "overdue": "Overdue",
+        "normal": "Normal"
+      },
+      "sla": {
+        "remaining": "{{hours}}h remaining",
+        "overdue": "{{hours}}h late"
+      },
+      "empty": {
         "title": "Inbox is empty",
         "message": "Excellent! No tasks are awaiting your approval right now."
       },
@@ -2255,258 +2255,258 @@
           "completeSuccess": "Goods receipt completed successfully.",
           "completeFailed": "Could not complete goods receipt."
         }
+      }
+    },
+    "stock": {
+      "eyebrow": "Stock control",
+      "title": "Stock Dashboard",
+      "subtitle": "Track stock on hand by warehouse and highlight below-reorder items.",
+      "filter": {
+        "warehouse": "Warehouse",
+        "warehousePlaceholder": "Select warehouse...",
+        "belowReorder": "Below reorder only",
+        "clear": "Clear filters"
       },
-      "stock": {
-        "eyebrow": "Stock control",
-        "title": "Stock Dashboard",
-        "subtitle": "Track stock on hand by warehouse and highlight below-reorder items.",
-        "filter": {
-          "warehouse": "Warehouse",
-          "warehousePlaceholder": "Select warehouse...",
-          "belowReorder": "Below reorder only",
-          "clear": "Clear filters"
-        },
-        "stat": {
-          "sku": "SKU",
-          "belowReorder": "Below reorder",
-          "quantityRows": "Stock rows",
-          "lastUpdated": "Last updated"
-        },
-        "col": {
-          "itemCode": "Item code",
-          "itemName": "Item name",
-          "warehouse": "Warehouse",
-          "quantityOnHand": "Quantity on hand",
-          "unit": "Unit",
-          "reorderPoint": "Reorder point",
-          "lastUpdated": "Updated",
-          "status": "Status"
-        },
-        "status": {
-          "belowReorder": "Below reorder",
-          "normal": "Normal"
-        },
-        "action": {
-          "viewMovements": "View movements",
-          "issueOut": "Issue out",
-          "adjust": "Adjust"
-        },
-        "totalItems": "stock rows",
-          "empty": {
-            "title": "No stock rows",
-            "message": "Select another warehouse or complete a goods receipt to create stock."
-          },
-          "adjustment": {
-            "title": "Adjust stock",
-            "item": "Item",
-            "itemCode": "Item code",
-            "unit": "Unit",
-            "currentQuantity": "Current quantity",
-            "newQuantity": "New quantity",
-            "delta": "Delta",
-            "reason": "Adjustment reason",
-            "validation": {
-              "required": "This field is required.",
-              "numeric": "Enter a non-negative number with up to 4 decimals.",
-              "reasonLength": "Reason must be at least 10 characters.",
-              "maxLength": "Value exceeds the allowed length.",
-              "unchanged": "New quantity must differ from current quantity.",
-              "invalid": "Please check the adjustment information."
-            },
-            "toast": {
-              "success": "Stock adjusted.",
-              "failed": "Could not adjust stock."
-            }
-          }
-        },
-      "movements": {
-        "eyebrow": "Inventory ledger",
-        "title": "Stock Movements",
-        "subtitle": "Review receipt, issue-out, adjustment and transfer ledger entries in read-only mode.",
-        "filter": {
-          "itemCode": "Item code",
-          "itemCodePlaceholder": "E.g. E15-OFFICE-KIT",
-          "warehouse": "Warehouse",
-          "allWarehouses": "All warehouses",
-          "movementType": "Movement type",
-          "allTypes": "All types",
-          "fromDate": "From date",
-          "toDate": "To date",
-          "clear": "Clear filters"
-        },
-        "type": {
-          "RECEIPT_IN": "Receipt in",
-          "ISSUE_OUT": "Issue out",
-          "ADJUSTMENT": "Adjustment",
-          "TRANSFER": "Transfer"
-        },
-        "col": {
-          "item": "Item",
-          "warehouse": "Warehouse",
-          "type": "Type",
-          "quantity": "Quantity",
-          "balanceAfter": "Balance after",
-          "source": "Source",
-          "performedBy": "Performed by",
-          "performedAt": "Performed at",
-          "notes": "Notes"
-        },
-        "totalItems": "movements",
-        "empty": {
-          "title": "No stock movements",
-          "message": "Adjust filters or complete receipt/issue-out operations."
-        }
+      "stat": {
+        "sku": "SKU",
+        "belowReorder": "Below reorder",
+        "quantityRows": "Stock rows",
+        "lastUpdated": "Last updated"
       },
-      "issueOut": {
-        "eyebrow": "Internal allocation",
-        "title": "Issue Out",
-        "subtitle": "Issue warehouse stock to an employee and record ISSUE_OUT movements.",
-        "section": {
-          "basic": "Issue information",
-          "lines": "Issue lines",
-          "line": "Line",
-          "summary": "Summary",
-          "result": "Created movements"
-        },
-        "field": {
-          "warehouse": "Source warehouse",
-          "recipientId": "Recipient",
-          "recipientPlaceholder": "Recipient UUID",
-          "prId": "Related PR",
-          "notes": "Notes",
-          "itemCode": "Item code",
-          "itemPlaceholder": "Select stock item",
-          "quantity": "Quantity",
-          "unit": "Unit",
-          "available": "Available"
-        },
-        "action": {
-          "addLine": "Add line",
-          "submit": "Issue stock",
-          "removeLine": "Remove line"
-        },
-        "summary": {
-          "lines": "Lines"
-        },
+      "col": {
+        "itemCode": "Item code",
+        "itemName": "Item name",
+        "warehouse": "Warehouse",
+        "quantityOnHand": "Quantity on hand",
+        "unit": "Unit",
+        "reorderPoint": "Reorder point",
+        "lastUpdated": "Updated",
+        "status": "Status"
+      },
+      "status": {
+        "belowReorder": "Below reorder",
+        "normal": "Normal"
+      },
+      "action": {
+        "viewMovements": "View movements",
+        "issueOut": "Issue out",
+        "adjust": "Adjust"
+      },
+      "totalItems": "stock rows",
+      "empty": {
+        "title": "No stock rows",
+        "message": "Select another warehouse or complete a goods receipt to create stock."
+      },
+      "adjustment": {
+        "title": "Adjust stock",
+        "item": "Item",
+        "itemCode": "Item code",
+        "unit": "Unit",
+        "currentQuantity": "Current quantity",
+        "newQuantity": "New quantity",
+        "delta": "Delta",
+        "reason": "Adjustment reason",
         "validation": {
           "required": "This field is required.",
-          "positive": "Quantity must be greater than zero.",
-          "insufficient": "Quantity exceeds stock on hand.",
-          "invalid": "Please check the issue-out information."
-        },
-        "toast": {
-          "success": "Stock issued successfully.",
-          "failed": "Could not issue stock."
-        }
-      },
-      "catalog": {
-        "eyebrow": "Inventory master data",
-        "title": "Item Catalog",
-        "subtitle": "Manage item master data, standard price, reorder point, and stock summary by warehouse.",
-        "summary": {
-          "label": "Catalog summary",
-          "active": "Active",
-          "inactive": "Inactive",
-          "belowReorder": "Below reorder",
-          "categories": "Categories"
-        },
-        "filter": {
-          "search": "Search",
-          "searchPlaceholder": "Item code or item name",
-          "category": "Category",
-          "categoryPlaceholder": "E.g. IT, OFFICE",
-          "status": "Status",
-          "allStatus": "All",
-          "belowReorder": "Below reorder point",
-          "clear": "Clear filters"
-        },
-        "col": {
-          "itemCode": "Item code",
-          "name": "Item name",
-          "category": "Category",
-          "unitPrice": "Unit price",
-          "stock": "Stock",
-          "reorderPoint": "Reorder",
-          "status": "Status"
-        },
-        "status": {
-          "active": "Active",
-          "inactive": "Inactive",
-          "belowReorder": "Below reorder"
-        },
-        "action": {
-          "create": "Create item",
-          "edit": "Edit",
-          "view": "View",
-          "movements": "Movements"
-        },
-        "form": {
-          "itemCode": "Item code",
-          "name": "Item name",
-          "description": "Description",
-          "categoryCode": "Category code",
-          "unit": "Unit",
-          "unitPrice": "Unit price",
-          "currency": "Currency",
-          "preferredVendorId": "Preferred vendor",
-          "reorderPoint": "Reorder point",
-          "active": "Item is active"
-        },
-        "modal": {
-          "createTitle": "Create catalog item",
-          "editTitle": "Edit catalog item"
-        },
-        "validation": {
-          "required": "This field is required.",
-          "maxLength": "Value exceeds the allowed length.",
           "numeric": "Enter a non-negative number with up to 4 decimals.",
-          "invalid": "Please check the item information."
-        },
-        "empty": {
-          "title": "No items",
-          "message": "No catalog items match the current filters."
+          "reasonLength": "Reason must be at least 10 characters.",
+          "maxLength": "Value exceeds the allowed length.",
+          "unchanged": "New quantity must differ from current quantity.",
+          "invalid": "Please check the adjustment information."
         },
         "toast": {
-          "loadFailed": "Could not load catalog.",
-          "createSuccess": "Catalog item created.",
-          "createFailed": "Could not create catalog item.",
-          "updateSuccess": "Catalog item updated.",
-          "updateFailed": "Could not update catalog item."
-        },
-        "totalItems": "items",
-        "detail": {
-          "eyebrow": "Item detail",
-          "action": {
-            "back": "Back to catalog"
-          },
-          "summary": {
-            "itemCode": "Item code",
-            "totalStock": "Total stock",
-            "warehouses": "Warehouses"
-          },
-          "section": {
-            "info": "Item information",
-            "stockSummary": "Stock by warehouse",
-            "workflow": "Permissions and data source"
-          },
-          "stock": {
-            "count": "{{count}} stock rows",
-            "emptyTitle": "No stock",
-            "emptyMessage": "This item has not been received or issued in any warehouse.",
-            "warehouse": "Warehouse",
-            "quantity": "Quantity on hand",
-            "unit": "Unit"
-          },
-          "workflow": {
-            "readPermission": "Read permission",
-            "mutationPermission": "Mutation permission",
-            "stockSource": "Stock source",
-            "stockProjection": "Stock projection"
-          },
-          "emptyDescription": "No description.",
-          "notFoundTitle": "Item not found",
-          "notFoundMessage": "The catalog item does not exist or you do not have access."
+          "success": "Stock adjusted.",
+          "failed": "Could not adjust stock."
         }
+      }
+    },
+    "movements": {
+      "eyebrow": "Inventory ledger",
+      "title": "Stock Movements",
+      "subtitle": "Review receipt, issue-out, adjustment and transfer ledger entries in read-only mode.",
+      "filter": {
+        "itemCode": "Item code",
+        "itemCodePlaceholder": "E.g. E15-OFFICE-KIT",
+        "warehouse": "Warehouse",
+        "allWarehouses": "All warehouses",
+        "movementType": "Movement type",
+        "allTypes": "All types",
+        "fromDate": "From date",
+        "toDate": "To date",
+        "clear": "Clear filters"
+      },
+      "type": {
+        "RECEIPT_IN": "Receipt in",
+        "ISSUE_OUT": "Issue out",
+        "ADJUSTMENT": "Adjustment",
+        "TRANSFER": "Transfer"
+      },
+      "col": {
+        "item": "Item",
+        "warehouse": "Warehouse",
+        "type": "Type",
+        "quantity": "Quantity",
+        "balanceAfter": "Balance after",
+        "source": "Source",
+        "performedBy": "Performed by",
+        "performedAt": "Performed at",
+        "notes": "Notes"
+      },
+      "totalItems": "movements",
+      "empty": {
+        "title": "No stock movements",
+        "message": "Adjust filters or complete receipt/issue-out operations."
+      }
+    },
+    "issueOut": {
+      "eyebrow": "Internal allocation",
+      "title": "Issue Out",
+      "subtitle": "Issue warehouse stock to an employee and record ISSUE_OUT movements.",
+      "section": {
+        "basic": "Issue information",
+        "lines": "Issue lines",
+        "line": "Line",
+        "summary": "Summary",
+        "result": "Created movements"
+      },
+      "field": {
+        "warehouse": "Source warehouse",
+        "recipientId": "Recipient",
+        "recipientPlaceholder": "Recipient UUID",
+        "prId": "Related PR",
+        "notes": "Notes",
+        "itemCode": "Item code",
+        "itemPlaceholder": "Select stock item",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "available": "Available"
+      },
+      "action": {
+        "addLine": "Add line",
+        "submit": "Issue stock",
+        "removeLine": "Remove line"
+      },
+      "summary": {
+        "lines": "Lines"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "positive": "Quantity must be greater than zero.",
+        "insufficient": "Quantity exceeds stock on hand.",
+        "invalid": "Please check the issue-out information."
+      },
+      "toast": {
+        "success": "Stock issued successfully.",
+        "failed": "Could not issue stock."
+      }
+    },
+    "catalog": {
+      "eyebrow": "Inventory master data",
+      "title": "Item Catalog",
+      "subtitle": "Manage item master data, standard price, reorder point, and stock summary by warehouse.",
+      "summary": {
+        "label": "Catalog summary",
+        "active": "Active",
+        "inactive": "Inactive",
+        "belowReorder": "Below reorder",
+        "categories": "Categories"
+      },
+      "filter": {
+        "search": "Search",
+        "searchPlaceholder": "Item code or item name",
+        "category": "Category",
+        "categoryPlaceholder": "E.g. IT, OFFICE",
+        "status": "Status",
+        "allStatus": "All",
+        "belowReorder": "Below reorder point",
+        "clear": "Clear filters"
+      },
+      "col": {
+        "itemCode": "Item code",
+        "name": "Item name",
+        "category": "Category",
+        "unitPrice": "Unit price",
+        "stock": "Stock",
+        "reorderPoint": "Reorder",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "belowReorder": "Below reorder"
+      },
+      "action": {
+        "create": "Create item",
+        "edit": "Edit",
+        "view": "View",
+        "movements": "Movements"
+      },
+      "form": {
+        "itemCode": "Item code",
+        "name": "Item name",
+        "description": "Description",
+        "categoryCode": "Category code",
+        "unit": "Unit",
+        "unitPrice": "Unit price",
+        "currency": "Currency",
+        "preferredVendorId": "Preferred vendor",
+        "reorderPoint": "Reorder point",
+        "active": "Item is active"
+      },
+      "modal": {
+        "createTitle": "Create catalog item",
+        "editTitle": "Edit catalog item"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "maxLength": "Value exceeds the allowed length.",
+        "numeric": "Enter a non-negative number with up to 4 decimals.",
+        "invalid": "Please check the item information."
+      },
+      "empty": {
+        "title": "No items",
+        "message": "No catalog items match the current filters."
+      },
+      "toast": {
+        "loadFailed": "Could not load catalog.",
+        "createSuccess": "Catalog item created.",
+        "createFailed": "Could not create catalog item.",
+        "updateSuccess": "Catalog item updated.",
+        "updateFailed": "Could not update catalog item."
+      },
+      "totalItems": "items",
+      "detail": {
+        "eyebrow": "Item detail",
+        "action": {
+          "back": "Back to catalog"
+        },
+        "summary": {
+          "itemCode": "Item code",
+          "totalStock": "Total stock",
+          "warehouses": "Warehouses"
+        },
+        "section": {
+          "info": "Item information",
+          "stockSummary": "Stock by warehouse",
+          "workflow": "Permissions and data source"
+        },
+        "stock": {
+          "count": "{{count}} stock rows",
+          "emptyTitle": "No stock",
+          "emptyMessage": "This item has not been received or issued in any warehouse.",
+          "warehouse": "Warehouse",
+          "quantity": "Quantity on hand",
+          "unit": "Unit"
+        },
+        "workflow": {
+          "readPermission": "Read permission",
+          "mutationPermission": "Mutation permission",
+          "stockSource": "Stock source",
+          "stockProjection": "Stock projection"
+        },
+        "emptyDescription": "No description.",
+        "notFoundTitle": "Item not found",
+        "notFoundMessage": "The catalog item does not exist or you do not have access."
       }
     }
   }
