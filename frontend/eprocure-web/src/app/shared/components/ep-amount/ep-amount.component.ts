@@ -21,7 +21,7 @@ export class EpAmountComponent {
   readonly value = input<EpAmountValue>(null);
   readonly currency = input('VND');
 
-  readonly formattedValue = computed(() => {
+  readonly formattedNumber = computed(() => {
     const rawValue = this.value();
     const value = this.amountValue(rawValue);
 
@@ -33,7 +33,11 @@ export class EpAmountComponent {
     const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const decimals = decimalPart ? `.${decimalPart.slice(0, 4)}` : '';
 
-    return `${grouped}${decimals} ${this.currencyValue(rawValue)}`;
+    return `${grouped}${decimals}`;
+  });
+
+  readonly resolvedCurrency = computed(() => {
+    return this.currencyValue(this.value());
   });
 
   private amountValue(value: EpAmountValue): string | number | null | undefined {

@@ -441,10 +441,18 @@
     "table": {
       "next": "Next",
       "pageSummary": "Page {{page}} / {{total}}",
-      "previous": "Previous"
+      "previous": "Previous",
+      "actions": "Actions"
     },
     "toast": {
       "dismiss": "Dismiss notification"
+    },
+    "action": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "approve": "Approve",
+      "reject": "Reject"
     }
   },
   "showcase": {

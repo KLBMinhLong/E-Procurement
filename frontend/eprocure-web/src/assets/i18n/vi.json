@@ -441,10 +441,18 @@
     "table": {
       "next": "Sau",
       "pageSummary": "Trang {{page}} / {{total}}",
-      "previous": "Trước"
+      "previous": "Trước",
+      "actions": "Thao tác"
     },
     "toast": {
       "dismiss": "Đóng thông báo"
+    },
+    "action": {
+      "view": "Xem chi tiết",
+      "edit": "Chỉnh sửa",
+      "delete": "Xóa",
+      "approve": "Phê duyệt",
+      "reject": "Từ chối"
     }
   },
   "showcase": {
