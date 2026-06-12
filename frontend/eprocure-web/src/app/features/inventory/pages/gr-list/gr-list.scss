@@ -108,7 +108,7 @@
 
 .gr-toolbar__top {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) auto;
+  grid-template-columns: minmax(16rem, 1fr) minmax(16rem, 1fr) auto;
   gap: var(--spacing-3);
   align-items: center;
 }

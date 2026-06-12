@@ -62,6 +62,7 @@ export class GrList implements OnInit {
   readonly isLoading = signal(false);
 
   readonly activeStatus = signal<GoodsReceiptStatus | ''>('');
+  readonly poId = signal('');
   readonly warehouseId = signal('');
   readonly fromDate = signal('');
   readonly toDate = signal('');
@@ -75,13 +76,14 @@ export class GrList implements OnInit {
     page: this.page(),
     size: this.size(),
     status: (this.activeStatus() as GoodsReceiptStatus) || undefined,
+    po_id: this.poId().trim() || undefined,
     warehouse_id: this.warehouseId() || undefined,
     from_date: this.fromDate() || undefined,
     to_date: this.toDate() || undefined
   }));
 
   readonly hasActiveFilters = computed(() =>
-    Boolean(this.activeStatus() || this.warehouseId() || this.fromDate() || this.toDate())
+    Boolean(this.activeStatus() || this.poId().trim() || this.warehouseId() || this.fromDate() || this.toDate())
   );
 
   readonly draftCount = computed(() => this.items().filter((item) => item.status === 'DRAFT').length);
@@ -130,6 +132,11 @@ export class GrList implements OnInit {
     this.resetPageAndLoad();
   }
 
+  onPoIdChange(poId: string): void {
+    this.poId.set(poId);
+    this.resetPageAndLoad();
+  }
+
   onDateFilterChange(field: 'from' | 'to', value: string): void {
     if (field === 'from') {
       this.fromDate.set(value);
@@ -141,6 +148,7 @@ export class GrList implements OnInit {
 
   clearFilters(): void {
     this.activeStatus.set('');
+    this.poId.set('');
     this.warehouseId.set('');
     this.fromDate.set('');
     this.toDate.set('');

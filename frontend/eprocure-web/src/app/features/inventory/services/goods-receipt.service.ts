@@ -14,6 +14,7 @@ export interface GoodsReceiptListFilter {
   page: number;
   size: number;
   status?: string;
+  po_id?: string;
   warehouse_id?: string;
   from_date?: string;
   to_date?: string;
@@ -30,6 +31,7 @@ export class GoodsReceiptService {
       .set('size', filter.size);
 
     if (filter.status) params = params.set('status', filter.status);
+    if (filter.po_id) params = params.set('po_id', filter.po_id);
     if (filter.warehouse_id) params = params.set('warehouse_id', filter.warehouse_id);
     if (filter.from_date) params = params.set('from_date', filter.from_date);
     if (filter.to_date) params = params.set('to_date', filter.to_date);

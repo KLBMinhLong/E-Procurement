@@ -50,6 +50,17 @@
   <div class="gr-toolbar">
     <div class="gr-toolbar__top">
       <label class="compact-field">
+        <span>{{ 'inventory.gr.list.filter.poId' | translate }}</span>
+        <input
+          id="filter-gr-po-id"
+          type="search"
+          class="compact-field__control"
+          [placeholder]="'inventory.gr.list.filter.poIdPlaceholder' | translate"
+          [value]="poId()"
+          (change)="onPoIdChange($any($event.target).value)">
+      </label>
+
+      <label class="compact-field">
         <span>{{ 'inventory.gr.list.filter.warehouse' | translate }}</span>
         <select
           id="filter-gr-warehouse"

@@ -302,11 +302,11 @@ Ghi chú permission: route cha trong `app.routes.ts` nên bỏ `STOCK_VIEW` ho�
 
 ### Slice 3: Polish GR hiện có
 
-- Create GR: thêm rejected quantity, rejection reason, lot number.
-- GR detail: hiển thị complete response summary và link stock/movement.
-- GR list: thêm `po_id` quick filter nếu cần.
-- Không thêm draft edit UI cho đến khi backend `PUT /goods-receipts/{id}` tồn tại.
-- Verify: `npm run build`.
+- [x] Create GR: thêm rejected quantity, rejection reason, lot number.
+- [x] GR detail: hiển thị complete response summary và link stock/movement.
+- [x] GR list: thêm `po_id` quick filter nếu cần.
+- [x] Không thêm draft edit UI cho đến khi backend `PUT /goods-receipts/{id}` tồn tại.
+- [x] Verify: `npm run build`.
 
 ### Slice 4: Catalog backend
 

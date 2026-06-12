@@ -19,6 +19,20 @@
       </div>
 
       <div class="page-header__actions">
+        <ep-button
+          id="btn-gr-stock"
+          variant="secondary"
+          icon="boxes"
+          (click)="navigateStock()">
+          {{ 'inventory.gr.detail.action.viewStock' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-gr-movements"
+          variant="secondary"
+          icon="history"
+          (click)="navigateMovements()">
+          {{ 'inventory.gr.detail.action.viewMovements' | translate }}
+        </ep-button>
         @if (canComplete()) {
           <ep-button
             *epHasPermission="'GR_CREATE'"
@@ -35,6 +49,38 @@
 
     <div class="gr-detail-layout">
       <div class="gr-detail-layout__main">
+        @if (completeSummary(); as summary) {
+          <ep-card>
+            <div class="card-section">
+              <div class="section-title-row">
+                <h2 class="card-section__title">{{ 'inventory.gr.detail.section.completeSummary' | translate }}</h2>
+                <ep-badge tone="success" [labelKey]="'inventory.gr.detail.toast.completeSuccess'" />
+              </div>
+              <div class="summary-grid">
+                <div class="info-item">
+                  <span class="info-label">{{ 'inventory.gr.detail.complete.grStatus' | translate }}</span>
+                  <strong>{{ ('inventory.gr.status.' + summary.grStatus) | translate }}</strong>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">{{ 'inventory.gr.detail.complete.movementsCreated' | translate }}</span>
+                  <strong class="mono">{{ summary.movementsCreated }}</strong>
+                </div>
+              </div>
+
+              @if (summary.updatedStocks.length > 0) {
+                <div class="stock-update-list">
+                  @for (stock of summary.updatedStocks; track stock.itemCode) {
+                    <button type="button" class="stock-update" (click)="navigateMovements(stock.itemCode)">
+                      <span class="mono">{{ stock.itemCode }}</span>
+                      <strong>{{ formatQuantity(stock.newQuantityOnHand) }}</strong>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </ep-card>
+        }
+
         <ep-card>
           <div class="card-section">
             <h2 class="card-section__title">{{ 'inventory.gr.detail.section.info' | translate }}</h2>
@@ -83,7 +129,9 @@
                   <th>{{ 'inventory.gr.detail.line.ordered' | translate }}</th>
                   <th>{{ 'inventory.gr.detail.line.received' | translate }}</th>
                   <th>{{ 'inventory.gr.detail.line.rejected' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.lotNumber' | translate }}</th>
                   <th>{{ 'inventory.gr.detail.line.condition' | translate }}</th>
+                  <th class="align-right">{{ 'shared.table.actions' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,12 +152,25 @@
                     <td [class.danger-text]="line.rejectedQuantity !== '0'">
                       {{ line.rejectedQuantity }} {{ line.unit }}
                     </td>
+                    <td><span class="mono">{{ line.lotNumber || '-' }}</span></td>
                     <td>{{ line.rejectionReason || '-' }}</td>
+                    <td class="align-right">
+                      @if (line.itemCode) {
+                        <ep-button
+                          [id]="'btn-gr-line-movements-' + line.id"
+                          variant="ghost"
+                          size="sm"
+                          icon="history"
+                          (click)="navigateMovements(line.itemCode)">
+                          {{ 'inventory.gr.detail.action.viewMovements' | translate }}
+                        </ep-button>
+                      }
+                    </td>
                   </tr>
                 }
                 @if (detail.lineItems.length === 0) {
                   <tr>
-                    <td colspan="5" class="empty-state">{{ 'inventory.gr.detail.line.empty' | translate }}</td>
+                    <td colspan="7" class="empty-state">{{ 'inventory.gr.detail.line.empty' | translate }}</td>
                   </tr>
                 }
               </tbody>

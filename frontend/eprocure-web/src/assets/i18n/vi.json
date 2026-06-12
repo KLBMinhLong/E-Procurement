@@ -2090,6 +2090,8 @@
         "filter": {
           "allStatus": "Tất cả trạng thái",
           "allWarehouses": "Tất cả kho",
+          "poId": "PO ID",
+          "poIdPlaceholder": "UUID đơn mua hàng",
           "warehouse": "Kho hàng",
           "fromDate": "Từ ngày",
           "toDate": "Đến ngày",
@@ -2142,6 +2144,11 @@
           "orderedQty": "SL đặt",
           "unit": "ĐVT",
           "receivedQty": "SL nhận",
+          "rejectedQty": "SL từ chối",
+          "rejectionReason": "Lý do từ chối",
+          "rejectionReasonPlaceholder": "Bắt buộc khi có SL từ chối",
+          "lotNumber": "Số lô",
+          "lotNumberPlaceholder": "Tùy chọn",
           "notes": "Ghi chú dòng",
           "notesPlaceholder": "Tùy chọn",
           "total": "Thành tiền dòng",
@@ -2156,7 +2163,8 @@
         },
         "validation": {
           "required": "Trường này là bắt buộc.",
-          "min": "Giá trị phải lớn hơn hoặc bằng 0."
+          "min": "Giá trị phải lớn hơn hoặc bằng 0.",
+          "rejectionReasonRequired": "Cần nhập lý do khi có số lượng từ chối."
         },
         "toast": {
           "success": "Đã tạo phiếu nhận hàng thành công.",
@@ -2170,7 +2178,8 @@
           "info": "Thông tin phiếu",
           "lineItems": "Chi tiết hàng",
           "system": "Hệ thống",
-          "match": "Đối soát 3 chiều"
+          "match": "Đối soát 3 chiều",
+          "completeSummary": "Kết quả cập nhật tồn"
         },
         "info": {
           "poNumber": "Số PO",
@@ -2185,8 +2194,13 @@
           "ordered": "Đặt",
           "received": "Nhận",
           "rejected": "Từ chối",
+          "lotNumber": "Số lô",
           "condition": "Lý do từ chối",
           "empty": "Không có dòng hàng."
+        },
+        "complete": {
+          "grStatus": "Trạng thái GR",
+          "movementsCreated": "Movement đã tạo"
         },
         "system": {
           "createdAt": "Ngày tạo",
@@ -2200,7 +2214,9 @@
           "pendingInvoice": "Chờ hóa đơn"
         },
         "action": {
-          "complete": "Hoàn tất phiếu"
+          "complete": "Hoàn tất phiếu",
+          "viewStock": "Xem tồn kho",
+          "viewMovements": "Xem biến động"
         },
         "modal": {
           "completeTitle": "Hoàn tất phiếu nhận",

@@ -2089,6 +2089,8 @@
         "filter": {
           "allStatus": "All statuses",
           "allWarehouses": "All warehouses",
+          "poId": "PO ID",
+          "poIdPlaceholder": "Purchase order UUID",
           "warehouse": "Warehouse",
           "fromDate": "From date",
           "toDate": "To date",
@@ -2141,6 +2143,11 @@
           "orderedQty": "Ordered qty",
           "unit": "Unit",
           "receivedQty": "Received qty",
+          "rejectedQty": "Rejected qty",
+          "rejectionReason": "Rejection reason",
+          "rejectionReasonPlaceholder": "Required when rejected qty is entered",
+          "lotNumber": "Lot number",
+          "lotNumberPlaceholder": "Optional",
           "notes": "Line notes",
           "notesPlaceholder": "Optional",
           "total": "Line total",
@@ -2155,7 +2162,8 @@
         },
         "validation": {
           "required": "This field is required.",
-          "min": "Value must be zero or greater."
+          "min": "Value must be zero or greater.",
+          "rejectionReasonRequired": "Enter a reason when rejected quantity is provided."
         },
         "toast": {
           "success": "Goods receipt created successfully.",
@@ -2169,7 +2177,8 @@
           "info": "Receipt information",
           "lineItems": "Line items",
           "system": "System",
-          "match": "3-way match"
+          "match": "3-way match",
+          "completeSummary": "Stock update result"
         },
         "info": {
           "poNumber": "PO number",
@@ -2184,8 +2193,13 @@
           "ordered": "Ordered",
           "received": "Received",
           "rejected": "Rejected",
+          "lotNumber": "Lot number",
           "condition": "Rejection reason",
           "empty": "No line items."
+        },
+        "complete": {
+          "grStatus": "GR status",
+          "movementsCreated": "Movements created"
         },
         "system": {
           "createdAt": "Created at",
@@ -2199,7 +2213,9 @@
           "pendingInvoice": "Awaiting invoice"
         },
         "action": {
-          "complete": "Complete receipt"
+          "complete": "Complete receipt",
+          "viewStock": "View stock",
+          "viewMovements": "View movements"
         },
         "modal": {
           "completeTitle": "Complete goods receipt",

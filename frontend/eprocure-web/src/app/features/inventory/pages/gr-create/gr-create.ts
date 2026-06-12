@@ -122,7 +122,9 @@ export class GrCreateComponent implements OnInit {
           unitPrice: [{ value: item.unitPrice, disabled: true }],
           currency: [{ value: item.currency, disabled: true }],
           receivedQuantity: [0, [Validators.required, Validators.min(0)]],
-          notes: ['']
+          rejectedQuantity: [0, [Validators.required, Validators.min(0)]],
+          rejectionReason: [''],
+          lotNumber: ['']
         }));
       });
     }
@@ -140,7 +142,17 @@ export class GrCreateComponent implements OnInit {
     if (!ctrl || (!ctrl.touched && !this.submitted())) return null;
     if (ctrl.errors?.['required']) return 'inventory.gr.create.validation.required';
     if (ctrl.errors?.['min']) return 'inventory.gr.create.validation.min';
+    if (field === 'rejectionReason' && this.requiresRejectionReason(index)) {
+      return 'inventory.gr.create.validation.rejectionReasonRequired';
+    }
     return null;
+  }
+
+  requiresRejectionReason(index: number): boolean {
+    const line = this.items.at(index);
+    const rejectedQuantity = Number(line.get('rejectedQuantity')?.value || 0);
+    const reason = String(line.get('rejectionReason')?.value || '').trim();
+    return rejectedQuantity > 0 && reason.length === 0 && (line.touched || this.submitted());
   }
 
   onSubmit(): void {
@@ -151,18 +163,33 @@ export class GrCreateComponent implements OnInit {
 
     const rawItems = this.form.getRawValue().items;
     const itemsToReceive = rawItems
-      .filter((i: { receivedQuantity: number }) => i.receivedQuantity > 0)
-      .map((i: { poLineItemId: string; receivedQuantity: number }) => ({
+      .filter((i: { receivedQuantity: number; rejectedQuantity: number }) =>
+        Number(i.receivedQuantity || 0) > 0 || Number(i.rejectedQuantity || 0) > 0
+      )
+      .map((i: {
+        poLineItemId: string;
+        receivedQuantity: number;
+        rejectedQuantity: number;
+        rejectionReason: string;
+        lotNumber: string;
+      }) => ({
         poLineItemId: i.poLineItemId,
-        receivedQuantity: i.receivedQuantity.toString(),
-        rejectedQuantity: '0',
-        rejectionReason: null,
-        lotNumber: null
+        receivedQuantity: String(i.receivedQuantity || 0),
+        rejectedQuantity: String(i.rejectedQuantity || 0),
+        rejectionReason: i.rejectionReason?.trim() || null,
+        lotNumber: i.lotNumber?.trim() || null
       }));
 
     if (itemsToReceive.length === 0) {
       this.toast.error('inventory.gr.create.toast.errorNoItems');
       this.submitting.set(false);
+      return;
+    }
+
+    if (rawItems.some((item: { rejectedQuantity: number; rejectionReason: string }) =>
+      Number(item.rejectedQuantity || 0) > 0 && !String(item.rejectionReason || '').trim()
+    )) {
+      this.toast.error('inventory.gr.create.validation.rejectionReasonRequired');
       return;
     }
 

@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 
 import { GoodsReceiptService } from '../../services/goods-receipt.service';
 import { GoodsReceiptDetail } from '../../models/goods-receipt.model';
+import { CompleteGrResponse } from '../../models/stock.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EpCardComponent } from '../../../../shared/components/ep-card/ep-card.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
@@ -45,6 +46,7 @@ export class GrDetail implements OnInit {
   readonly submitting = signal(false);
   readonly showCompleteModal = signal(false);
   readonly gr = signal<GoodsReceiptDetail | null>(null);
+  readonly completeSummary = signal<CompleteGrResponse | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -91,7 +93,8 @@ export class GrDetail implements OnInit {
         finalize(() => this.submitting.set(false))
       )
       .subscribe({
-        next: () => {
+        next: (res) => {
+          this.completeSummary.set(res.data ?? null);
           this.toast.success('inventory.gr.detail.toast.completeSuccess');
           this.showCompleteModal.set(false);
           this.loadGoodsReceipt(currentGr.id);
@@ -101,6 +104,23 @@ export class GrDetail implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/inventory/goods-receipts']);
+  }
+
+  navigateStock(): void {
+    const currentGr = this.gr();
+    this.router.navigate(['/inventory/stock'], {
+      queryParams: { warehouse_id: currentGr?.warehouse.id || undefined }
+    });
+  }
+
+  navigateMovements(itemCode?: string | null): void {
+    const currentGr = this.gr();
+    this.router.navigate(['/inventory/stock/movements'], {
+      queryParams: {
+        warehouse_id: currentGr?.warehouse.id || undefined,
+        item_code: itemCode || undefined
+      }
+    });
   }
 
   canComplete(): boolean {
@@ -131,5 +151,13 @@ export class GrDetail implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     }).format(new Date(isoString));
+  }
+
+  formatQuantity(value?: string | null): string {
+    if (!value) return '0';
+    return Number(value).toLocaleString('vi-VN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 4
+    });
   }
 }

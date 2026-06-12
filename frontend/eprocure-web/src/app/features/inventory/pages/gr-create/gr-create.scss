@@ -129,6 +129,10 @@
   grid-template-columns: 1fr 1fr 1.5fr 2fr;
 }
 
+.form-row--line {
+  grid-template-columns: 0.9fr 0.8fr 1fr 1fr minmax(12rem, 1.5fr) minmax(10rem, 1fr);
+}
+
 /* ── Line Items ──────────────────────────────────────────────────── */
 .line-items {
   display: flex;
@@ -247,7 +251,8 @@
   }
 
   .form-row,
-  .form-row--4 {
+  .form-row--4,
+  .form-row--line {
     grid-template-columns: 1fr;
   }
 }

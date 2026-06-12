@@ -112,6 +112,12 @@
   gap: var(--spacing-4);
 }
 
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-4);
+}
+
 .info-item {
   min-width: 0;
   padding: var(--spacing-4);
@@ -255,6 +261,39 @@
   font-weight: 700;
 }
 
+.align-right {
+  text-align: right;
+}
+
+.stock-update-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+
+.stock-update {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: var(--color-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
 .workflow-steps {
   position: relative;
   display: flex;
@@ -368,7 +407,9 @@
     padding: var(--spacing-4);
   }
 
-  .info-grid {
+  .info-grid,
+  .summary-grid,
+  .stock-update-list {
     grid-template-columns: 1fr;
   }
 

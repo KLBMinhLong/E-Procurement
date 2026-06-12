@@ -274,8 +274,8 @@
 | Complete GR + stock receipt movement | ✅ | `POST /api/v1/goods-receipts/{id}/complete`; resolves catalog `itemCode`, updates `stock_entries`, creates `RECEIPT_IN` movements, publishes `inventory.gr.created` |
 | Stock list/movement API | ✅ | `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, `GET /api/v1/stock/movements`; read-only stock projections with `GR_VIEW` |
 | Issue-out API | ✅ | `POST /api/v1/stock/issue-out`; validates active item/warehouse, decrements stock atomically, stores idempotent request header, creates `ISSUE_OUT` movements |
-| Frontend: GR List & Create | 🔄 | UI to list and create Draft GR from PO |
-| Frontend: GR Detail & Complete | 🔄 | UI to view GR details, line items, 3-way match preview, and action to complete GR |
+| Frontend: GR List & Create | ✅ | 2026-06-12: Slice 3 done — GR list has `po_id` quick filter, create form supports rejected quantity, rejection reason, and lot number, and sends backend-compatible line payload; `npm run build` passes |
+| Frontend: GR Detail & Complete | ✅ | 2026-06-12: Slice 3 done — detail displays lot/rejection fields, links stock/movements by warehouse/item, stores complete response summary with movements created and updated stock balances; `npm run build` passes |
 | Frontend: Stock Dashboard & Movements | ✅ | 2026-06-12: Slice 0-1 done — `StockEntry` model aligned to backend, `StockService` added, Inventory permissions normalized away from non-seeded `STOCK_VIEW`, routes `/inventory/stock` and `/inventory/stock/movements` added, warehouse stock dashboard and immutable movement ledger implemented; `npm run build` passes |
 | Frontend: Issue Out Stock | ✅ | 2026-06-12: Slice 2 done — route `/inventory/issue-out` added with `GR_ISSUE_OUT`, form uses warehouse stock as item selector, validates available quantity before submit, posts `StockService.issueOut()` with generated `Idempotency-Key`, displays created movements and reloads stock; `npm run build` passes |
 

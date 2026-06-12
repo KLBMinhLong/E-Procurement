@@ -97,7 +97,7 @@
                           class="ep-input ep-input-disabled">
                       </ep-form-field>
 
-                      <div class="form-row form-row--4">
+                      <div class="form-row form-row--line">
                         <ep-form-field [label]="'inventory.gr.create.lineItem.orderedQty' | translate">
                           <input
                             [id]="'line-item-ordered-' + $index"
@@ -125,14 +125,37 @@
                             min="0"
                             step="1">
                         </ep-form-field>
-                        
-                        <ep-form-field [label]="'inventory.gr.create.lineItem.notes' | translate">
+
+                        <ep-form-field
+                          [label]="'inventory.gr.create.lineItem.rejectedQty' | translate"
+                          [error]="getLineItemError($index, 'rejectedQuantity') ? (getLineItemError($index, 'rejectedQuantity')! | translate) : null">
                           <input
-                            [id]="'line-item-notes-' + $index"
-                            type="text"
-                            formControlName="notes"
+                            [id]="'line-item-rejected-' + $index"
+                            type="number"
+                            formControlName="rejectedQuantity"
                             class="ep-input"
-                            [placeholder]="'inventory.gr.create.lineItem.notesPlaceholder' | translate">
+                            min="0"
+                            step="1">
+                        </ep-form-field>
+
+                        <ep-form-field
+                          [label]="'inventory.gr.create.lineItem.rejectionReason' | translate"
+                          [error]="getLineItemError($index, 'rejectionReason') ? (getLineItemError($index, 'rejectionReason')! | translate) : null">
+                          <input
+                            [id]="'line-item-rejection-reason-' + $index"
+                            type="text"
+                            formControlName="rejectionReason"
+                            class="ep-input"
+                            [placeholder]="'inventory.gr.create.lineItem.rejectionReasonPlaceholder' | translate">
+                        </ep-form-field>
+
+                        <ep-form-field [label]="'inventory.gr.create.lineItem.lotNumber' | translate">
+                          <input
+                            [id]="'line-item-lot-' + $index"
+                            type="text"
+                            formControlName="lotNumber"
+                            class="ep-input"
+                            [placeholder]="'inventory.gr.create.lineItem.lotNumberPlaceholder' | translate">
                         </ep-form-field>
                       </div>
 
