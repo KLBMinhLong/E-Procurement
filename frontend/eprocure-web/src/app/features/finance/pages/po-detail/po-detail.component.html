@@ -55,6 +55,17 @@
           </ep-button>
         }
 
+        @if (canCreateInvoice()) {
+          <ep-button
+            *epHasPermission="'INVOICE_CREATE'"
+            id="btn-create-invoice-from-po"
+            variant="secondary"
+            icon="receipt-text"
+            (click)="navigateCreateInvoice()">
+            {{ 'finance.po.detail.action.createInvoice' | translate }}
+          </ep-button>
+        }
+
         <div class="send-action">
           @if (canSend()) {
             <ep-button

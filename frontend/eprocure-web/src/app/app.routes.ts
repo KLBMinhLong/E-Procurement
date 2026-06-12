@@ -73,7 +73,7 @@ export const routes: Routes = [
       {
         path: 'finance',
         canActivate: [permissionGuard],
-        data: { requiredPermissions: ['PO_VIEW_OWN', 'PO_VIEW_ALL', 'PO_CREATE'] },
+        data: { requiredPermissions: ['PO_VIEW_OWN', 'PO_VIEW_ALL', 'PO_CREATE', 'INVOICE_VIEW', 'INVOICE_CREATE', 'PAYMENT_CONFIRM'] },
         loadChildren: () => import('./features/finance/finance.routes').then((m) => m.financeRoutes)
       },
       {

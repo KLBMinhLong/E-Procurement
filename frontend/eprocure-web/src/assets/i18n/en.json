@@ -172,6 +172,7 @@
     "procurement": "Procurement",
     "purchaseRequest": "Purchase Requests",
     "purchaseOrders": "Purchase Orders",
+    "invoices": "Invoices & Payments",
     "vendors": "Vendors",
     "rfq": "RFQs",
     "inventory": "Inventory"
@@ -208,7 +209,10 @@
     "finance": {
       "purchaseOrders": "Purchase Orders",
       "createPo": "Create Purchase Order",
-      "poDetail": "Purchase Order Detail"
+      "poDetail": "Purchase Order Detail",
+      "invoices": "Invoices & Payments",
+      "createInvoice": "Create Invoice",
+      "invoiceDetail": "Invoice Detail"
     },
     "pr": {
       "create": "Create Request",
@@ -629,7 +633,8 @@
           "send": "Send vendor",
           "confirmSend": "Confirm send",
           "cancelPo": "Cancel PO",
-          "confirmCancel": "Confirm cancel"
+        "confirmCancel": "Confirm cancel",
+        "createInvoice": "Create invoice"
         },
         "actionHint": {
           "noData": "PO data is not loaded.",
@@ -694,6 +699,233 @@
         "empty": {
           "title": "PO not found",
           "message": "The PO may have been removed or you may not have access."
+        }
+      }
+    },
+    "invoice": {
+      "status": {
+        "PENDING_MATCH": "Pending match",
+        "MATCHED": "Matched",
+        "MISMATCHED": "Mismatched",
+        "APPROVED": "Approved",
+        "DISPUTED": "Disputed",
+        "PAID": "Paid",
+        "CANCELLED": "Cancelled"
+      },
+      "paymentStatus": {
+        "CONFIRMED": "Confirmed",
+        "VOIDED": "Voided"
+      },
+      "match": {
+        "none": "Not matched",
+        "requiresReview": "The match result needs manual review before approval.",
+        "noReview": "The invoice is matched and can move to approval.",
+        "empty": "PO/GR matching has not run for this invoice.",
+        "status": {
+          "MATCHED": "Matched",
+          "MISMATCHED": "Mismatched",
+          "PARTIAL": "Partial"
+        },
+        "po": {
+          "MATCHED": "PO matched",
+          "MISMATCHED": "PO mismatched",
+          "PARTIAL": "PO partial"
+        },
+        "gr": {
+          "MATCHED": "GR matched",
+          "MISMATCHED": "GR mismatched",
+          "PARTIAL": "GR partial"
+        }
+      },
+      "list": {
+        "eyebrow": "Accounts payable",
+        "title": "Invoices & Payments",
+        "subtitle": "Track invoices from creation, 3-way matching, accounting approval, and payment confirmation.",
+        "summaryLabel": "Invoice list summary",
+        "stat": {
+          "total": "Total invoices",
+          "pending": "Pending match",
+          "mismatch": "Mismatched",
+          "approved": "Awaiting payment",
+          "visibleAmount": "Visible amount"
+        },
+        "action": {
+          "create": "Create invoice"
+        },
+        "filter": {
+          "vendorPlaceholder": "Enter Vendor UUID to filter",
+          "poId": "PO UUID",
+          "poPlaceholder": "Filter by PO UUID",
+          "overdueOnly": "Overdue only",
+          "clear": "Clear filters",
+          "status": "Status",
+          "allStatus": "All statuses"
+        },
+        "col": {
+          "number": "Invoice no.",
+          "vendor": "Vendor",
+          "po": "Source PO",
+          "status": "Status",
+          "match": "Match",
+          "amount": "Amount",
+          "dueDate": "Due date"
+        },
+        "empty": {
+          "title": "No matching invoices",
+          "message": "Create an invoice from an issued PO or adjust the filters."
+        },
+        "totalItems": "invoices"
+      },
+      "create": {
+        "eyebrow": "Invoice capture",
+        "title": "Create invoice from purchase order",
+        "subtitle": "Select the source PO; the vendor is locked from the PO and PO lines become the matching baseline.",
+        "section": {
+          "source": "Source PO",
+          "sourceHint": "Only sent or receiving-stage POs should be used for invoice capture.",
+          "dates": "Invoice dates",
+          "datesHint": "The due date cannot be earlier than the invoice date.",
+          "lines": "Invoice lines",
+          "linesHint": "Lines are populated from the PO and can be adjusted to match the supplier invoice before backend matching."
+        },
+        "field": {
+          "po": "Source PO",
+          "invoiceNumber": "Invoice number",
+          "invoiceDate": "Invoice date",
+          "dueDate": "Due date"
+        },
+        "placeholder": {
+          "po": "Select PO",
+          "invoiceNumber": "Enter supplier invoice number"
+        },
+        "source": {
+          "poNumber": "PO number",
+          "vendor": "Vendor",
+          "status": "PO status",
+          "poAmount": "PO amount"
+        },
+        "line": {
+          "description": "Description",
+          "quantity": "Quantity",
+          "unitPrice": "Unit price",
+          "taxRate": "Tax rate",
+          "total": "Estimate"
+        },
+        "summary": {
+          "title": "Estimated total",
+          "subtitle": "The backend remains the final source for invoice totals.",
+          "po": "PO",
+          "vendor": "Vendor",
+          "vendorId": "Vendor UUID",
+          "lines": "Lines",
+          "subtotal": "Subtotal",
+          "tax": "Tax",
+          "total": "Total"
+        },
+        "emptyPo": {
+          "title": "No invoiceable POs",
+          "message": "A PO must be sent to the vendor or already in receiving flow."
+        },
+        "validation": {
+          "required": "This field is required",
+          "maxLength": "Content is too long",
+          "positive": "Value must be greater than 0",
+          "dueDateRange": "Due date cannot be before invoice date",
+          "invalid": "Invalid value"
+        },
+        "action": {
+          "back": "Back to invoice list",
+          "restoreLines": "Restore PO lines",
+          "removeLine": "Remove invoice line",
+          "cancel": "Cancel",
+          "submit": "Create invoice"
+        },
+        "toast": {
+          "success": "Invoice created successfully."
+        }
+      },
+      "detail": {
+        "eyebrow": "Invoice detail",
+        "subtitle": "PO {{poNumber}} · Vendor {{vendor}}",
+        "action": {
+          "back": "Back to invoice list",
+          "refresh": "Refresh",
+          "match": "Run match",
+          "approve": "Approve invoice",
+          "confirmApprove": "Confirm approval",
+          "dispute": "Open dispute",
+          "confirmDispute": "Confirm dispute",
+          "confirmPayment": "Confirm payment",
+          "confirmPaymentSubmit": "Record payment"
+        },
+        "stat": {
+          "totalAmount": "Total amount",
+          "lines": "Invoice lines",
+          "invoiceDate": "Invoice date",
+          "dueDate": "Due date"
+        },
+        "section": {
+          "source": "Invoice source",
+          "match": "PO/GR matching",
+          "lines": "Invoice lines"
+        },
+        "field": {
+          "vendorName": "Vendor",
+          "vendorId": "Vendor UUID",
+          "poNumber": "Source PO",
+          "poMatch": "PO match",
+          "grMatch": "GR match",
+          "qtyVariance": "Quantity variance",
+          "priceVariance": "Price variance",
+          "matchedAt": "Matched at",
+          "comment": "Approval comment",
+          "disputeReason": "Dispute reason",
+          "paymentDate": "Payment date",
+          "paymentReference": "Payment reference",
+          "paidAmount": "Paid amount",
+          "paymentNotes": "Payment notes"
+        },
+        "placeholder": {
+          "comment": "Optional comment for approval",
+          "disputeReason": "Describe the invoice/PO/GR mismatch, minimum 20 characters",
+          "paymentReference": "Example: BANK-TRANSFER-20260612-001",
+          "paymentNotes": "Bank transfer or payment reconciliation notes"
+        },
+        "modal": {
+          "approveTitle": "Approve invoice",
+          "approveMessage": "Only matched invoices can be approved for payment.",
+          "disputeTitle": "Open invoice dispute",
+          "disputeMessage": "Use disputes for mismatched invoices that require supplier or warehouse follow-up.",
+          "paymentTitle": "Confirm payment",
+          "paymentMessage": "The amount must match the invoice total {{amount}} {{currency}}. The backend records the payment ledger and releases the budget hold."
+        },
+        "validation": {
+          "required": "This field is required",
+          "maxLength": "Content is too long",
+          "positive": "Amount must be greater than 0",
+          "disputeMinLength": "Dispute reason must be at least 20 characters"
+        },
+        "toast": {
+          "matched": "Invoice matching completed.",
+          "approved": "Invoice approved.",
+          "disputed": "Invoice dispute opened.",
+          "paid": "Payment confirmed."
+        },
+        "line": {
+          "lineNumber": "Line",
+          "description": "Description",
+          "quantity": "Quantity",
+          "unitPrice": "Unit price",
+          "totalPrice": "Line total"
+        },
+        "total": {
+          "subtotal": "Subtotal",
+          "tax": "Tax",
+          "total": "Grand total"
+        },
+        "empty": {
+          "title": "Invoice not found",
+          "message": "The invoice may have been removed or you do not have permission to view it."
         }
       }
     }

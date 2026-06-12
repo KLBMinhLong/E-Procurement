@@ -1,0 +1,342 @@
+<section class="invoice-detail-page" aria-labelledby="invoice-detail-heading">
+  <ep-breadcrumb />
+
+  <div class="invoice-detail-page__nav">
+    <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="navigateBack()">
+      {{ 'finance.invoice.detail.action.back' | translate }}
+    </ep-button>
+    <ep-button variant="ghost" size="sm" icon="refresh-cw" [loading]="isLoading()" (click)="reload()">
+      {{ 'finance.invoice.detail.action.refresh' | translate }}
+    </ep-button>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (!invoice()) {
+    <ep-empty-state
+      icon="receipt-text"
+      [title]="'finance.invoice.detail.empty.title' | translate"
+      [message]="'finance.invoice.detail.empty.message' | translate" />
+  } @else if (invoice(); as data) {
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'finance.invoice.detail.eyebrow' | translate }}</span>
+        <h1 id="invoice-detail-heading" class="page-header__title">{{ data.invoiceNumber }}</h1>
+        <p class="page-header__subtitle">
+          {{ 'finance.invoice.detail.subtitle' | translate: { poNumber: data.po.poNumber, vendor: data.vendor.name } }}
+        </p>
+      </div>
+      <div class="page-header__badges">
+        <ep-badge [tone]="statusTone()" [labelKey]="'finance.invoice.status.' + data.status" />
+      </div>
+      <div class="page-header__actions">
+        @if (canMatch()) {
+          <ep-button
+            *epHasPermission="'INVOICE_MATCH'"
+            id="btn-match-invoice"
+            variant="secondary"
+            icon="scan-search"
+            [loading]="isMatching()"
+            [disabled]="isMatching()"
+            (click)="runMatch()">
+            {{ 'finance.invoice.detail.action.match' | translate }}
+          </ep-button>
+        }
+        @if (canApprove()) {
+          <ep-button
+            *epHasPermission="'INVOICE_APPROVE'"
+            id="btn-approve-invoice"
+            variant="primary"
+            icon="badge-check"
+            (click)="openApproveModal()">
+            {{ 'finance.invoice.detail.action.approve' | translate }}
+          </ep-button>
+        }
+        @if (canDispute()) {
+          <ep-button
+            *epHasPermission="'INVOICE_DISPUTE'"
+            id="btn-dispute-invoice"
+            variant="danger"
+            icon="triangle-alert"
+            (click)="openDisputeModal()">
+            {{ 'finance.invoice.detail.action.dispute' | translate }}
+          </ep-button>
+        }
+        @if (canPay()) {
+          <ep-button
+            *epHasPermission="'PAYMENT_CONFIRM'"
+            id="btn-confirm-payment"
+            variant="primary"
+            icon="banknote"
+            (click)="openPaymentModal()">
+            {{ 'finance.invoice.detail.action.confirmPayment' | translate }}
+          </ep-button>
+        }
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <ep-icon name="receipt-text" />
+        <span class="summary-card__label">{{ 'finance.invoice.detail.stat.totalAmount' | translate }}</span>
+        <ep-amount class="summary-card__amount" [value]="invoiceTotal(data)" />
+      </div>
+      <div class="summary-card">
+        <ep-icon name="rows-3" />
+        <span class="summary-card__label">{{ 'finance.invoice.detail.stat.lines' | translate }}</span>
+        <span class="summary-card__value">{{ totalLines() }}</span>
+      </div>
+      <div class="summary-card">
+        <ep-icon name="calendar-days" />
+        <span class="summary-card__label">{{ 'finance.invoice.detail.stat.invoiceDate' | translate }}</span>
+        <span class="summary-card__value summary-card__value--date">{{ formatDate(data.invoiceDate) }}</span>
+      </div>
+      <div class="summary-card">
+        <ep-icon name="calendar-clock" />
+        <span class="summary-card__label">{{ 'finance.invoice.detail.stat.dueDate' | translate }}</span>
+        <span class="summary-card__value summary-card__value--date">{{ formatDate(data.dueDate) }}</span>
+      </div>
+    </div>
+
+    @if (lastMatchRequiresReview() !== null) {
+      <div class="match-alert" [class.match-alert--warning]="lastMatchRequiresReview()">
+        <ep-icon [name]="lastMatchRequiresReview() ? 'triangle-alert' : 'badge-check'" />
+        <span>
+          {{ (lastMatchRequiresReview() ? 'finance.invoice.detail.match.requiresReview' : 'finance.invoice.detail.match.noReview') | translate }}
+        </span>
+      </div>
+    }
+
+    <div class="detail-grid">
+      <section class="detail-panel" aria-labelledby="invoice-source-heading">
+        <div class="panel-heading">
+          <ep-icon name="git-branch" />
+          <h2 id="invoice-source-heading">{{ 'finance.invoice.detail.section.source' | translate }}</h2>
+        </div>
+        <dl class="info-list">
+          <div>
+            <dt>{{ 'finance.invoice.detail.field.vendorName' | translate }}</dt>
+            <dd>{{ data.vendor.name }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.invoice.detail.field.vendorId' | translate }}</dt>
+            <dd class="mono">{{ shortId(data.vendor.id) }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'finance.invoice.detail.field.poNumber' | translate }}</dt>
+            <dd>
+              <button type="button" class="link-button" (click)="navigatePo()">{{ data.po.poNumber }}</button>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="detail-panel" aria-labelledby="invoice-match-heading">
+        <div class="panel-heading">
+          <ep-icon name="scale" />
+          <h2 id="invoice-match-heading">{{ 'finance.invoice.detail.section.match' | translate }}</h2>
+        </div>
+        @if (data.matchResult; as match) {
+          <dl class="info-list">
+            <div>
+              <dt>{{ 'finance.invoice.detail.field.poMatch' | translate }}</dt>
+              <dd><ep-badge [tone]="poMatchTone()" [labelKey]="'finance.invoice.match.status.' + match.poMatchStatus" /></dd>
+            </div>
+            <div>
+              <dt>{{ 'finance.invoice.detail.field.grMatch' | translate }}</dt>
+              <dd><ep-badge [tone]="grMatchTone()" [labelKey]="'finance.invoice.match.status.' + match.grMatchStatus" /></dd>
+            </div>
+            <div>
+              <dt>{{ 'finance.invoice.detail.field.qtyVariance' | translate }}</dt>
+              <dd class="mono">{{ match.qtyVariance }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'finance.invoice.detail.field.priceVariance' | translate }}</dt>
+              <dd class="mono">{{ match.priceVariance }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'finance.invoice.detail.field.matchedAt' | translate }}</dt>
+              <dd class="mono">{{ formatDateTime(match.matchedAt) }}</dd>
+            </div>
+          </dl>
+        } @else {
+          <p class="panel-empty">{{ 'finance.invoice.detail.match.empty' | translate }}</p>
+        }
+      </section>
+    </div>
+
+    <section class="line-panel" aria-labelledby="invoice-lines-heading">
+      <div class="panel-heading">
+        <ep-icon name="rows-3" />
+        <h2 id="invoice-lines-heading">{{ 'finance.invoice.detail.section.lines' | translate }}</h2>
+      </div>
+
+      <div class="line-table-wrapper">
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'finance.invoice.detail.line.lineNumber' | translate }}</th>
+              <th scope="col">{{ 'finance.invoice.detail.line.description' | translate }}</th>
+              <th scope="col" class="align-right">{{ 'finance.invoice.detail.line.quantity' | translate }}</th>
+              <th scope="col" class="align-right">{{ 'finance.invoice.detail.line.unitPrice' | translate }}</th>
+              <th scope="col" class="align-right">{{ 'finance.invoice.detail.line.totalPrice' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of data.lineItems; track line.poLineItemId) {
+              <tr>
+                <td class="mono">{{ line.lineNumber }}</td>
+                <td>
+                  <span class="line-table__primary">{{ line.description }}</span>
+                  <span class="line-table__subtitle">{{ shortId(line.poLineItemId) }}</span>
+                </td>
+                <td class="align-right mono">{{ line.quantity }}</td>
+                <td class="align-right"><ep-amount [value]="lineUnitAmount(data, line)" /></td>
+                <td class="align-right"><ep-amount [value]="lineTotalAmount(data, line)" /></td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="4" scope="row" class="align-right">{{ 'finance.invoice.detail.total.subtotal' | translate }}</th>
+              <td class="align-right"><ep-amount [value]="invoiceSubtotal(data)" /></td>
+            </tr>
+            <tr>
+              <th colspan="4" scope="row" class="align-right">{{ 'finance.invoice.detail.total.tax' | translate }}</th>
+              <td class="align-right"><ep-amount [value]="invoiceTax(data)" /></td>
+            </tr>
+            <tr>
+              <th colspan="4" scope="row" class="align-right">{{ 'finance.invoice.detail.total.total' | translate }}</th>
+              <td class="align-right line-table__grand-total"><ep-amount [value]="invoiceTotal(data)" /></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <ep-modal
+      [open]="showApproveModal()"
+      [title]="'finance.invoice.detail.modal.approveTitle' | translate"
+      (close)="closeApproveModal()">
+      <div class="invoice-action-form">
+        <p class="invoice-action-form__hint">{{ 'finance.invoice.detail.modal.approveMessage' | translate }}</p>
+
+        <ep-form-field
+          [label]="'finance.invoice.detail.field.comment' | translate"
+          [error]="approveCommentError() ? (approveCommentError()! | translate) : null">
+          <textarea
+            id="invoice-approve-comment"
+            class="form-control form-control--textarea"
+            rows="4"
+            [formControl]="approveComment"
+            [placeholder]="'finance.invoice.detail.placeholder.comment' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="invoice-action-form__actions">
+          <ep-button variant="ghost" (click)="closeApproveModal()" [disabled]="isApproving()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button variant="primary" icon="badge-check" (click)="confirmApprove()" [loading]="isApproving()">
+            {{ 'finance.invoice.detail.action.confirmApprove' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    </ep-modal>
+
+    <ep-modal
+      [open]="showDisputeModal()"
+      [title]="'finance.invoice.detail.modal.disputeTitle' | translate"
+      (close)="closeDisputeModal()">
+      <div class="invoice-action-form">
+        <p class="invoice-action-form__hint">{{ 'finance.invoice.detail.modal.disputeMessage' | translate }}</p>
+
+        <ep-form-field
+          [label]="'finance.invoice.detail.field.disputeReason' | translate"
+          [error]="disputeReasonError() ? (disputeReasonError()! | translate) : null">
+          <textarea
+            id="invoice-dispute-reason"
+            class="form-control form-control--textarea"
+            rows="5"
+            [formControl]="disputeReason"
+            [placeholder]="'finance.invoice.detail.placeholder.disputeReason' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="invoice-action-form__actions">
+          <ep-button variant="ghost" (click)="closeDisputeModal()" [disabled]="isDisputing()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button variant="danger" icon="triangle-alert" (click)="confirmDispute()" [loading]="isDisputing()">
+            {{ 'finance.invoice.detail.action.confirmDispute' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    </ep-modal>
+
+    <ep-modal
+      [open]="showPaymentModal()"
+      [title]="'finance.invoice.detail.modal.paymentTitle' | translate"
+      size="lg"
+      (close)="closePaymentModal()">
+      <form class="invoice-action-form" [formGroup]="paymentForm" (ngSubmit)="confirmPayment()">
+        <p class="invoice-action-form__hint">
+          {{ 'finance.invoice.detail.modal.paymentMessage' | translate: { amount: data.totalAmount, currency: data.currency } }}
+        </p>
+
+        <div class="invoice-action-form__grid">
+          <ep-form-field
+            [label]="'finance.invoice.detail.field.paymentDate' | translate"
+            [error]="paymentFieldError('paymentDate') ? (paymentFieldError('paymentDate')! | translate) : null">
+            <input id="invoice-payment-date" type="date" class="form-control" formControlName="paymentDate">
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'finance.invoice.detail.field.paymentReference' | translate"
+            [error]="paymentFieldError('paymentReference') ? (paymentFieldError('paymentReference')! | translate) : null">
+            <input
+              id="invoice-payment-reference"
+              type="text"
+              class="form-control"
+              formControlName="paymentReference"
+              autocomplete="off"
+              [placeholder]="'finance.invoice.detail.placeholder.paymentReference' | translate">
+          </ep-form-field>
+        </div>
+
+        <ep-form-field
+          [label]="'finance.invoice.detail.field.paidAmount' | translate"
+          [error]="paymentFieldError('paidAmount') ? (paymentFieldError('paidAmount')! | translate) : null">
+          <input
+            id="invoice-payment-paid-amount"
+            type="number"
+            min="0"
+            step="0.0001"
+            class="form-control"
+            formControlName="paidAmount">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'finance.invoice.detail.field.paymentNotes' | translate"
+          [error]="paymentFieldError('notes') ? (paymentFieldError('notes')! | translate) : null">
+          <textarea
+            id="invoice-payment-notes"
+            class="form-control form-control--textarea"
+            rows="4"
+            formControlName="notes"
+            [placeholder]="'finance.invoice.detail.placeholder.paymentNotes' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="invoice-action-form__actions">
+          <ep-button type="button" variant="ghost" (click)="closePaymentModal()" [disabled]="isPaying()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button type="submit" variant="primary" icon="banknote" [loading]="isPaying()">
+            {{ 'finance.invoice.detail.action.confirmPaymentSubmit' | translate }}
+          </ep-button>
+        </div>
+      </form>
+    </ep-modal>
+  }
+</section>

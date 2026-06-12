@@ -172,6 +172,7 @@
     "procurement": "Mua sắm",
     "purchaseRequest": "Yêu cầu mua sắm",
     "purchaseOrders": "Đơn mua hàng",
+    "invoices": "Hóa đơn & thanh toán",
     "vendors": "Nhà cung cấp",
     "rfq": "Yêu cầu báo giá (RFQ)",
     "inventory": "Tồn kho"
@@ -208,7 +209,10 @@
     "finance": {
       "purchaseOrders": "Đơn mua hàng",
       "createPo": "Tạo đơn mua hàng",
-      "poDetail": "Chi tiết đơn mua hàng"
+      "poDetail": "Chi tiết đơn mua hàng",
+      "invoices": "Hóa đơn & thanh toán",
+      "createInvoice": "Tạo hóa đơn",
+      "invoiceDetail": "Chi tiết hóa đơn"
     },
     "pr": {
       "create": "Tạo yêu cầu",
@@ -629,7 +633,8 @@
           "send": "Gửi NCC",
           "confirmSend": "Xác nhận gửi",
           "cancelPo": "Hủy PO",
-          "confirmCancel": "Xác nhận hủy"
+        "confirmCancel": "Xác nhận hủy",
+        "createInvoice": "Tạo hóa đơn"
         },
         "actionHint": {
           "noData": "Chưa có dữ liệu PO.",
@@ -694,6 +699,233 @@
         "empty": {
           "title": "Không tìm thấy PO",
           "message": "PO có thể đã bị xóa hoặc bạn không có quyền xem."
+        }
+      }
+    },
+    "invoice": {
+      "status": {
+        "PENDING_MATCH": "Chờ đối soát",
+        "MATCHED": "Đã khớp",
+        "MISMATCHED": "Lệch đối soát",
+        "APPROVED": "Đã duyệt",
+        "DISPUTED": "Đang tranh chấp",
+        "PAID": "Đã thanh toán",
+        "CANCELLED": "Đã hủy"
+      },
+      "paymentStatus": {
+        "CONFIRMED": "Đã xác nhận",
+        "VOIDED": "Đã hủy"
+      },
+      "match": {
+        "none": "Chưa đối soát",
+        "requiresReview": "Kết quả đối soát cần kiểm tra thủ công trước khi duyệt.",
+        "noReview": "Invoice đã khớp và có thể chuyển sang bước duyệt.",
+        "empty": "Chưa chạy đối soát PO/GR cho invoice này.",
+        "status": {
+          "MATCHED": "Khớp",
+          "MISMATCHED": "Lệch",
+          "PARTIAL": "Một phần"
+        },
+        "po": {
+          "MATCHED": "PO khớp",
+          "MISMATCHED": "PO lệch",
+          "PARTIAL": "PO một phần"
+        },
+        "gr": {
+          "MATCHED": "GR khớp",
+          "MISMATCHED": "GR lệch",
+          "PARTIAL": "GR một phần"
+        }
+      },
+      "list": {
+        "eyebrow": "Tài chính công nợ",
+        "title": "Hóa đơn & thanh toán",
+        "subtitle": "Theo dõi invoice từ tạo mới, đối soát 3-way, duyệt kế toán đến xác nhận thanh toán.",
+        "summaryLabel": "Tổng quan danh sách hóa đơn",
+        "stat": {
+          "total": "Tổng hóa đơn",
+          "pending": "Chờ đối soát",
+          "mismatch": "Đang lệch",
+          "approved": "Chờ thanh toán",
+          "visibleAmount": "Giá trị đang hiển thị"
+        },
+        "action": {
+          "create": "Tạo hóa đơn"
+        },
+        "filter": {
+          "vendorPlaceholder": "Nhập Vendor UUID để lọc",
+          "poId": "PO UUID",
+          "poPlaceholder": "Lọc theo PO UUID",
+          "overdueOnly": "Chỉ quá hạn",
+          "clear": "Xóa lọc",
+          "status": "Trạng thái",
+          "allStatus": "Tất cả trạng thái"
+        },
+        "col": {
+          "number": "Số hóa đơn",
+          "vendor": "Nhà cung cấp",
+          "po": "PO nguồn",
+          "status": "Trạng thái",
+          "match": "Đối soát",
+          "amount": "Giá trị",
+          "dueDate": "Hạn thanh toán"
+        },
+        "empty": {
+          "title": "Chưa có hóa đơn phù hợp",
+          "message": "Tạo hóa đơn từ PO đã phát hành hoặc thay đổi bộ lọc."
+        },
+        "totalItems": "hóa đơn"
+      },
+      "create": {
+        "eyebrow": "Ghi nhận hóa đơn",
+        "title": "Tạo hóa đơn từ đơn mua hàng",
+        "subtitle": "Người dùng chọn PO nguồn, hệ thống khóa vendor theo PO và dùng line item PO làm baseline đối soát.",
+        "section": {
+          "source": "Nguồn PO",
+          "sourceHint": "Chỉ chọn PO đã gửi nhà cung cấp hoặc đã nhận hàng để tạo invoice.",
+          "dates": "Ngày hóa đơn",
+          "datesHint": "Ngày đến hạn không được trước ngày hóa đơn.",
+          "lines": "Dòng hóa đơn",
+          "linesHint": "Line được điền từ PO, có thể chỉnh theo hóa đơn thực nhận trước khi backend đối soát."
+        },
+        "field": {
+          "po": "PO nguồn",
+          "invoiceNumber": "Số hóa đơn",
+          "invoiceDate": "Ngày hóa đơn",
+          "dueDate": "Ngày đến hạn"
+        },
+        "placeholder": {
+          "po": "Chọn PO",
+          "invoiceNumber": "Nhập số hóa đơn từ nhà cung cấp"
+        },
+        "source": {
+          "poNumber": "Mã PO",
+          "vendor": "Nhà cung cấp",
+          "status": "Trạng thái PO",
+          "poAmount": "Giá trị PO"
+        },
+        "line": {
+          "description": "Mô tả",
+          "quantity": "Số lượng",
+          "unitPrice": "Đơn giá",
+          "taxRate": "Thuế suất",
+          "total": "Tạm tính"
+        },
+        "summary": {
+          "title": "Tổng tạm tính",
+          "subtitle": "Backend vẫn là nguồn tính tổng cuối cùng khi tạo invoice.",
+          "po": "PO",
+          "vendor": "Nhà cung cấp",
+          "vendorId": "Vendor UUID",
+          "lines": "Số dòng",
+          "subtotal": "Tạm tính",
+          "tax": "Thuế",
+          "total": "Tổng"
+        },
+        "emptyPo": {
+          "title": "Chưa có PO có thể tạo hóa đơn",
+          "message": "PO cần được gửi nhà cung cấp hoặc đã vào quy trình nhận hàng."
+        },
+        "validation": {
+          "required": "Thông tin này là bắt buộc",
+          "maxLength": "Nội dung quá dài",
+          "positive": "Giá trị phải lớn hơn 0",
+          "dueDateRange": "Ngày đến hạn không được trước ngày hóa đơn",
+          "invalid": "Giá trị không hợp lệ"
+        },
+        "action": {
+          "back": "Quay lại danh sách hóa đơn",
+          "restoreLines": "Khôi phục line PO",
+          "removeLine": "Xóa dòng hóa đơn",
+          "cancel": "Hủy",
+          "submit": "Tạo hóa đơn"
+        },
+        "toast": {
+          "success": "Đã tạo hóa đơn thành công."
+        }
+      },
+      "detail": {
+        "eyebrow": "Chi tiết hóa đơn",
+        "subtitle": "PO {{poNumber}} · Nhà cung cấp {{vendor}}",
+        "action": {
+          "back": "Quay lại danh sách hóa đơn",
+          "refresh": "Tải lại",
+          "match": "Chạy đối soát",
+          "approve": "Duyệt hóa đơn",
+          "confirmApprove": "Xác nhận duyệt",
+          "dispute": "Mở tranh chấp",
+          "confirmDispute": "Xác nhận tranh chấp",
+          "confirmPayment": "Xác nhận thanh toán",
+          "confirmPaymentSubmit": "Ghi nhận thanh toán"
+        },
+        "stat": {
+          "totalAmount": "Tổng giá trị",
+          "lines": "Dòng hóa đơn",
+          "invoiceDate": "Ngày hóa đơn",
+          "dueDate": "Hạn thanh toán"
+        },
+        "section": {
+          "source": "Nguồn hóa đơn",
+          "match": "Đối soát PO/GR",
+          "lines": "Dòng hóa đơn"
+        },
+        "field": {
+          "vendorName": "Nhà cung cấp",
+          "vendorId": "Vendor UUID",
+          "poNumber": "PO nguồn",
+          "poMatch": "Đối soát PO",
+          "grMatch": "Đối soát GR",
+          "qtyVariance": "Lệch số lượng",
+          "priceVariance": "Lệch giá",
+          "matchedAt": "Đối soát lúc",
+          "comment": "Ghi chú duyệt",
+          "disputeReason": "Lý do tranh chấp",
+          "paymentDate": "Ngày thanh toán",
+          "paymentReference": "Mã tham chiếu thanh toán",
+          "paidAmount": "Số tiền thanh toán",
+          "paymentNotes": "Ghi chú thanh toán"
+        },
+        "placeholder": {
+          "comment": "Ghi chú cho bước duyệt nếu cần",
+          "disputeReason": "Mô tả sai lệch invoice/PO/GR, tối thiểu 20 ký tự",
+          "paymentReference": "VD: BANK-TRANSFER-20260612-001",
+          "paymentNotes": "Thông tin ngân hàng hoặc ghi chú đối soát thanh toán"
+        },
+        "modal": {
+          "approveTitle": "Duyệt hóa đơn",
+          "approveMessage": "Chỉ invoice đã khớp đối soát mới được duyệt để chuyển sang thanh toán.",
+          "disputeTitle": "Mở tranh chấp hóa đơn",
+          "disputeMessage": "Tranh chấp dùng cho invoice lệch đối soát và cần nhà cung cấp hoặc bộ phận kho xử lý.",
+          "paymentTitle": "Xác nhận thanh toán",
+          "paymentMessage": "Số tiền phải khớp tổng hóa đơn {{amount}} {{currency}}. Backend sẽ ghi ledger thanh toán và giải phóng budget hold."
+        },
+        "validation": {
+          "required": "Thông tin này là bắt buộc",
+          "maxLength": "Nội dung quá dài",
+          "positive": "Số tiền phải lớn hơn 0",
+          "disputeMinLength": "Lý do tranh chấp cần tối thiểu 20 ký tự"
+        },
+        "toast": {
+          "matched": "Đã chạy đối soát hóa đơn.",
+          "approved": "Đã duyệt hóa đơn.",
+          "disputed": "Đã mở tranh chấp hóa đơn.",
+          "paid": "Đã xác nhận thanh toán."
+        },
+        "line": {
+          "lineNumber": "Dòng",
+          "description": "Mô tả",
+          "quantity": "Số lượng",
+          "unitPrice": "Đơn giá",
+          "totalPrice": "Thành tiền"
+        },
+        "total": {
+          "subtotal": "Tạm tính",
+          "tax": "Thuế",
+          "total": "Tổng cộng"
+        },
+        "empty": {
+          "title": "Không tìm thấy hóa đơn",
+          "message": "Hóa đơn có thể đã bị xóa hoặc bạn không có quyền xem."
         }
       }
     }

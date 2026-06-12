@@ -30,5 +30,29 @@ export const financeRoutes: Routes = [
     canActivate: [permissionGuard],
     data: { requiredPermissions: ['PO_VIEW_OWN', 'PO_VIEW_ALL'] },
     title: 'route.finance.poDetail'
+  },
+  {
+    path: 'invoices',
+    loadComponent: () =>
+      import('./pages/invoice-list/invoice-list.component').then((m) => m.InvoiceListComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['INVOICE_VIEW'] },
+    title: 'route.finance.invoices'
+  },
+  {
+    path: 'invoices/create',
+    loadComponent: () =>
+      import('./pages/invoice-create/invoice-create.component').then((m) => m.InvoiceCreateComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['INVOICE_CREATE'] },
+    title: 'route.finance.createInvoice'
+  },
+  {
+    path: 'invoices/:id',
+    loadComponent: () =>
+      import('./pages/invoice-detail/invoice-detail.component').then((m) => m.InvoiceDetailComponent),
+    canActivate: [permissionGuard],
+    data: { requiredPermissions: ['INVOICE_VIEW'] },
+    title: 'route.finance.invoiceDetail'
   }
 ];

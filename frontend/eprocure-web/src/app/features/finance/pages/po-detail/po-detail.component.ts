@@ -47,6 +47,7 @@ const CALLBACK_TONE: Record<string, EpBadgeTone> = {
 
 const CANCELLABLE_STATUSES = new Set(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SENT_TO_VENDOR']);
 const SENDABLE_STATUSES = new Set(['DRAFT', 'APPROVED']);
+const INVOICEABLE_STATUSES = new Set(['SENT_TO_VENDOR', 'PARTIALLY_RECEIVED', 'FULLY_RECEIVED', 'INVOICED']);
 
 @Component({
   selector: 'ep-po-detail',
@@ -90,6 +91,7 @@ export class PoDetailComponent implements OnInit {
   readonly totalLines = computed(() => this.po()?.lineItems.length ?? 0);
   readonly canEditDraft = computed(() => this.po()?.status === 'DRAFT');
   readonly canCancel = computed(() => CANCELLABLE_STATUSES.has(this.po()?.status ?? ''));
+  readonly canCreateInvoice = computed(() => INVOICEABLE_STATUSES.has(this.po()?.status ?? ''));
   readonly canSend = computed(() => !this.sendBlockKey());
   readonly sendBlockKey = computed(() => {
     const data = this.po();
@@ -131,6 +133,13 @@ export class PoDetailComponent implements OnInit {
     const id = this.po()?.id ?? this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadPo(id);
+    }
+  }
+
+  navigateCreateInvoice(): void {
+    const id = this.po()?.id;
+    if (id) {
+      this.router.navigate(['/finance', 'invoices', 'create'], { queryParams: { poId: id } });
     }
   }
 
