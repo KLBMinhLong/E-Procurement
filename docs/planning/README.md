@@ -16,7 +16,7 @@
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ✅ Hoàn thành | Build pass 2026-06-13; align RFQ status frontend với backend + comparison table |
-| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Charts & Visual Upgrade | ⬜ Chờ | Nên làm sau #3 (Budget nav cần có trước quick links) |
+| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | ⬜ Chờ | Đã rà soát 2026-06-13; backend analytics đủ cho phase UI, cần nâng dashboard thành workflow hub |
 
 ---
 
@@ -145,25 +145,21 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 
 ---
 
-#### 8. `UI_MODULE_DASHBOARD_CHARTS.md` — Dashboard Charts & Visual Upgrade
-**Làm cuối cùng vì cần thêm dependency (`chart.js` + `ng2-charts`) và phức tạp nhất.**
+#### 8. `UI_MODULE_DASHBOARD_CHARTS.md` — Dashboard Operations & Charts Upgrade
+**Đã rà soát 2026-06-13.** Frontend dashboard đã có tabs executive/manager/purchasing/requester/reports và gọi analytics API thật; backend analytics hiện đủ cho phase UI đầu. Plan #8 đã được chỉnh từ “thêm chart” thành nâng `/dashboard` thành operational command center: chart thật, filter dùng được, URL tab state, quick actions, stale/refresh indicator, KPI deep-dive và reports UX.
 
 | Bước | Nội dung |
 |---|---|
-| 8a | `npm install chart.js ng2-charts --save-exact` |
-| 8b | Resolve CSS variables thành chart theme object |
-| 8c | Thay Monthly Trend div giả lập → Chart.js grouped bar |
-| 8d | Thay Category Spend compact bars → doughnut chart |
-| 8e | Thêm SLA gauge (half-doughnut) |
-| 8f | Cải thiện Department Spend bar (2 segments: committed + spent) |
-| 8g | Cập nhật KPI card icons theo loại metric |
-| 8h | Thêm Quick Action Links section |
-| 8i | Thêm auto-refresh timer (5 phút) + last updated indicator |
-| 8j | Thay department text input → select dropdown (load từ IAM) |
-| 8k | i18n + SCSS |
-| 8l | Build verify |
+| 8a | Chart dependency + foundation (`chart.js`/`ng2-charts`, theme resolver, computed chart data/options) |
+| 8b | Dashboard shell UX: URL-driven tab, auto-refresh, last updated/cache indicator, department dropdown từ IAM |
+| 8c | Executive visuals: KPI icon map, monthly grouped bar, category doughnut, SLA gauge, department spend, top vendors |
+| 8d | KPI deep-dive: cycle-time trend/priority, SLA role compliance/worst approvers |
+| 8e | Role dashboards thành workflow hub: manager/purchasing/requester links + CTAs |
+| 8f | Quick actions + reports UX: permission cards, report presets, job polling, session persistence |
+| 8g | i18n + SCSS + accessibility + responsive |
+| 8h | Build verify |
 
-**Lý do để cuối:** Không block bất kỳ workflow nghiệp vụ nào — đây là polish. Thêm `chart.js` là thay đổi bundle, cần test kỹ. Tất cả data đã có từ backend.
+**Lý do ưu tiên hiện tại:** Các module nghiệp vụ chính đã có UI; dashboard là nơi gom tín hiệu vận hành và dẫn người dùng vào workflow xử lý. Đây không còn là polish thuần túy, mà là bước hoàn thiện trải nghiệm vận hành end-to-end.
 
 ---
 
