@@ -25,7 +25,7 @@
         @for (kpi of visibleKpis(); track kpi.label) {
           <article class="kpi-card">
             <div class="kpi-card__icon">
-              <ep-icon name="chart-no-axes-combined" />
+              <ep-icon [name]="kpiIcon(kpi)" />
             </div>
             <div class="kpi-card__content">
               <span>{{ kpi.label | translate }}</span>
@@ -77,15 +77,30 @@
               <p>{{ 'dashboard.executive.categorySpendHint' | translate }}</p>
             </div>
           </div>
-          <div class="compact-bars">
-            @for (point of dashboard.spendByCategory; track point.label) {
-              <div class="compact-bar">
-                <span>{{ point.label }}</span>
-                <div><i [style.width]="barWidth(point.value, maxCategorySpend())"></i></div>
-                <strong>{{ point.value }}</strong>
+          @if (!hasCategorySpend(dashboard)) {
+            <ep-empty-state icon="bar-chart-3" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+          } @else {
+            <div class="chart-layout chart-layout--category">
+              <div class="chart-frame chart-frame--doughnut">
+                <canvas
+                  baseChart
+                  [type]="'doughnut'"
+                  [data]="categorySpendChartData()"
+                  [options]="categorySpendChartOptions()"
+                  [attr.aria-label]="'dashboard.chart.categoryAria' | translate">
+                </canvas>
               </div>
-            }
-          </div>
+              <div class="compact-bars compact-bars--legend">
+                @for (point of dashboard.spendByCategory; track point.label) {
+                  <div class="compact-bar">
+                    <span>{{ point.label }}</span>
+                    <div><i [style.width]="barWidth(point.value, maxCategorySpend())"></i></div>
+                    <strong>{{ point.value }}</strong>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </section>
 
         <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="monthly-trend-heading">
@@ -96,18 +111,29 @@
               <p>{{ 'dashboard.executive.monthlyTrendHint' | translate }}</p>
             </div>
           </div>
-          <div class="trend-grid">
-            @for (month of dashboard.monthlyTrend; track month.month) {
-              <div class="trend-bar">
-                <div class="trend-bar__columns">
-                  <span class="trend-bar__spent" [style.height]="barWidth(month.spent, maxMonthlySpend())"></span>
-                  <span class="trend-bar__budget" [style.height]="barWidth(month.budget, maxMonthlySpend())"></span>
-                </div>
-                <strong>{{ month.month }}</strong>
-                <small>{{ month.prCount }} {{ 'dashboard.executive.prCount' | translate }}</small>
+          @if (!hasMonthlyTrend(dashboard)) {
+            <ep-empty-state icon="line-chart" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+          } @else {
+            <div class="chart-layout chart-layout--monthly">
+              <div class="chart-frame chart-frame--bar">
+                <canvas
+                  baseChart
+                  [type]="'bar'"
+                  [data]="monthlyTrendChartData()"
+                  [options]="monthlyTrendChartOptions()"
+                  [attr.aria-label]="'dashboard.chart.monthlyAria' | translate">
+                </canvas>
               </div>
-            }
-          </div>
+              <div class="trend-summary" [attr.aria-label]="'dashboard.chart.prCountAria' | translate">
+                @for (month of dashboard.monthlyTrend; track month.month) {
+                  <div class="trend-summary__item">
+                    <strong>{{ month.month }}</strong>
+                    <span>{{ month.prCount }} {{ 'dashboard.executive.prCount' | translate }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </section>
 
         <section class="dashboard-panel" aria-labelledby="approval-sla-heading">
@@ -118,19 +144,32 @@
               <p>{{ 'dashboard.executive.approvalSlaHint' | translate }}</p>
             </div>
           </div>
-          <div class="sla-summary">
-            <strong>{{ percent(dashboard.approvalSla.onTimePercent) }}</strong>
-            <span>{{ 'dashboard.executive.onTime' | translate }}</span>
-            <dl>
-              <div>
-                <dt>{{ 'dashboard.executive.avgCycle' | translate }}</dt>
-                <dd>{{ hours(dashboard.approvalSla.avgCycleHours) }}</dd>
+          <div class="sla-chart-card">
+            <div class="chart-frame chart-frame--gauge">
+              <canvas
+                baseChart
+                [type]="'doughnut'"
+                [data]="approvalSlaGaugeChartData()"
+                [options]="approvalSlaGaugeChartOptions()"
+                [attr.aria-label]="'dashboard.chart.slaAria' | translate">
+              </canvas>
+              <div class="gauge-value">
+                <strong>{{ percent(dashboard.approvalSla.onTimePercent) }}</strong>
+                <span>{{ 'dashboard.executive.onTime' | translate }}</span>
               </div>
-              <div>
-                <dt>{{ 'dashboard.executive.overdue' | translate }}</dt>
-                <dd>{{ dashboard.approvalSla.overdueCount }}</dd>
-              </div>
-            </dl>
+            </div>
+            <div class="sla-summary sla-summary--inline">
+              <dl>
+                <div>
+                  <dt>{{ 'dashboard.executive.avgCycle' | translate }}</dt>
+                  <dd>{{ hours(dashboard.approvalSla.avgCycleHours) }}</dd>
+                </div>
+                <div>
+                  <dt>{{ 'dashboard.executive.overdue' | translate }}</dt>
+                  <dd>{{ dashboard.approvalSla.overdueCount }}</dd>
+                </div>
+              </dl>
+            </div>
           </div>
         </section>
 

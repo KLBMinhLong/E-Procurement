@@ -154,7 +154,11 @@
       "spent": "Spent",
       "budget": "Budget",
       "late": "Late",
-      "avgHours": "Average hours"
+      "avgHours": "Average hours",
+      "categoryAria": "Doughnut chart for category spend",
+      "monthlyAria": "Grouped bar chart comparing monthly spend and budget",
+      "slaAria": "Gauge chart for on-time approval rate",
+      "prCountAria": "Monthly PR count"
     },
     "empty": {
       "title": "No data",

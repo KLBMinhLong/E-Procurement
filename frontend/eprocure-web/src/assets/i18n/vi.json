@@ -154,7 +154,11 @@
       "spent": "Đã chi",
       "budget": "Ngân sách",
       "late": "Trễ hạn",
-      "avgHours": "Giờ trung bình"
+      "avgHours": "Giờ trung bình",
+      "categoryAria": "Biểu đồ doughnut chi tiêu theo danh mục",
+      "monthlyAria": "Biểu đồ cột so sánh chi tiêu và ngân sách theo tháng",
+      "slaAria": "Biểu đồ gauge tỷ lệ phê duyệt đúng hạn",
+      "prCountAria": "Số lượng PR theo tháng"
     },
     "empty": {
       "title": "Chưa có dữ liệu",

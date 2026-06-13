@@ -4,7 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
-import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { finalize, forkJoin, interval } from 'rxjs';
 
 import { AdminDepartment } from '../admin/models/admin.model';
@@ -101,7 +101,8 @@ const DATA_STALE_MS = 5 * 60 * 1000;
     EpFormFieldComponent,
     EpIconComponent,
     EpSkeletonComponent,
-    DashboardControlBarComponent
+    DashboardControlBarComponent,
+    BaseChartDirective
   ],
   providers: [provideCharts(withDefaultRegisterables())],
   templateUrl: './dashboard.component.html',
@@ -440,6 +441,29 @@ export class DashboardComponent implements OnInit {
     return card.unit ? `${card.value} ${card.unit}` : card.value;
   }
 
+  kpiIcon(card: KpiCard): string {
+    const label = card.label.toLowerCase();
+    if (label.includes('spend') || label.includes('budget') || label.includes('amount')) {
+      return 'wallet-cards';
+    }
+    if (label.includes('pr') || label.includes('request')) {
+      return 'shopping-cart';
+    }
+    if (label.includes('po') || label.includes('purchase order')) {
+      return 'receipt-text';
+    }
+    if (label.includes('invoice') || label.includes('match')) {
+      return 'file-check-2';
+    }
+    if (label.includes('sla') || label.includes('cycle') || label.includes('approval')) {
+      return 'timer';
+    }
+    if (label.includes('vendor') || label.includes('supplier')) {
+      return 'factory';
+    }
+    return 'chart-no-axes-combined';
+  }
+
   statusTone(status: KpiStatus | null | undefined): EpBadgeTone {
     return status ? KPI_TONE[status] : 'neutral';
   }
@@ -471,6 +495,20 @@ export class DashboardComponent implements OnInit {
 
   hours(value: string | number | null | undefined): string {
     return `${this.numeric(value).toFixed(1)}h`;
+  }
+
+  hasChartValues(values: Array<string | number | null | undefined>): boolean {
+    return values.some((value) => this.numeric(value) > 0);
+  }
+
+  hasMonthlyTrend(dashboard: ExecutiveDashboard): boolean {
+    return dashboard.monthlyTrend.length > 0
+      && this.hasChartValues(dashboard.monthlyTrend.flatMap((month) => [month.spent, month.budget]));
+  }
+
+  hasCategorySpend(dashboard: ExecutiveDashboard): boolean {
+    return dashboard.spendByCategory.length > 0
+      && this.hasChartValues(dashboard.spendByCategory.map((point) => point.value));
   }
 
   formatDate(iso: string | null | undefined): string {

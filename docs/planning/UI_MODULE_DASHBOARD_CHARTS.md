@@ -172,6 +172,8 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 
 ### Slice 8c — Executive dashboard visual upgrade
 
+**Trạng thái 2026-06-13:** ✅ Hoàn thành. Executive tab đã dùng `ng2-charts` cho monthly grouped bar, category doughnut và approval SLA half-gauge; KPI cards có semantic icon mapping; các chart có `aria-label`, empty fallback và summary/list phụ để vẫn đọc được số liệu khi cần.
+
 | Widget | Nâng cấp |
 |---|---|
 | KPI cards | Icon map theo label key/semantic: spend, PR, RFQ, SLA, invoice, vendor |
