@@ -137,41 +137,175 @@
           <h2 id="invoice-match-heading">{{ 'finance.invoice.detail.section.match' | translate }}</h2>
         </div>
         @if (data.matchResult; as match) {
-          <dl class="info-list">
-            <div>
-              <dt>{{ 'finance.invoice.detail.field.poMatch' | translate }}</dt>
-              <dd><ep-badge [tone]="poMatchTone()" [labelKey]="'finance.invoice.match.status.' + match.poMatchStatus" /></dd>
+          <div class="match-status-strip">
+            <div
+              class="match-status-card"
+              [class.match-status-card--matched]="poMatchClass() === 'matched'"
+              [class.match-status-card--mismatched]="poMatchClass() === 'mismatched'"
+              [class.match-status-card--partial]="poMatchClass() === 'partial'">
+              <ep-icon [name]="poMatchIcon()" />
+              <div class="match-status-card__content">
+                <strong>{{ 'finance.invoice.match.poTitle' | translate }}</strong>
+                <ep-badge [tone]="poMatchTone()" [labelKey]="'finance.invoice.match.status.' + match.poMatchStatus" />
+              </div>
             </div>
-            <div>
-              <dt>{{ 'finance.invoice.detail.field.grMatch' | translate }}</dt>
-              <dd><ep-badge [tone]="grMatchTone()" [labelKey]="'finance.invoice.match.status.' + match.grMatchStatus" /></dd>
+
+            <div
+              class="match-status-card"
+              [class.match-status-card--matched]="grMatchClass() === 'matched'"
+              [class.match-status-card--mismatched]="grMatchClass() === 'mismatched'"
+              [class.match-status-card--partial]="grMatchClass() === 'partial'">
+              <ep-icon [name]="grMatchIcon()" />
+              <div class="match-status-card__content">
+                <strong>{{ 'finance.invoice.match.grTitle' | translate }}</strong>
+                <ep-badge [tone]="grMatchTone()" [labelKey]="'finance.invoice.match.status.' + match.grMatchStatus" />
+              </div>
             </div>
-            <div>
-              <dt>{{ 'finance.invoice.detail.field.qtyVariance' | translate }}</dt>
-              <dd class="mono">{{ match.qtyVariance }}</dd>
+
+            <div class="match-variance-summary">
+              <div class="variance-item" [class.variance-item--negative]="qtyVarianceNum() !== 0">
+                <ep-icon name="package" />
+                <span>{{ 'finance.invoice.match.qtyVariance' | translate }}</span>
+                <strong class="mono">
+                  {{ formatQtyVariance() }} {{ 'finance.invoice.match.unit' | translate }}
+                </strong>
+              </div>
+              <div class="variance-item" [class.variance-item--negative]="priceVarianceNum() !== 0">
+                <ep-icon name="circle-dollar-sign" />
+                <span>{{ 'finance.invoice.match.priceVariance' | translate }}</span>
+                <ep-amount [value]="absPriceVariance()" />
+                <ep-badge [tone]="priceVarianceTone()" [labelKey]="priceVarianceLabelKey()" />
+              </div>
+              <div class="variance-item">
+                <ep-icon name="clock" />
+                <span>{{ 'finance.invoice.detail.field.matchedAt' | translate }}</span>
+                <strong class="mono">{{ formatDateTime(match.matchedAt) }}</strong>
+              </div>
             </div>
-            <div>
-              <dt>{{ 'finance.invoice.detail.field.priceVariance' | translate }}</dt>
-              <dd class="mono">{{ match.priceVariance }}</dd>
-            </div>
-            <div>
-              <dt>{{ 'finance.invoice.detail.field.matchedAt' | translate }}</dt>
-              <dd class="mono">{{ formatDateTime(match.matchedAt) }}</dd>
-            </div>
-          </dl>
+          </div>
         } @else {
           <p class="panel-empty">{{ 'finance.invoice.detail.match.empty' | translate }}</p>
         }
       </section>
     </div>
 
-    <section class="line-panel" aria-labelledby="invoice-lines-heading">
+    <section class="line-panel three-way-panel" aria-labelledby="invoice-lines-heading">
       <div class="panel-heading">
-        <ep-icon name="rows-3" />
-        <h2 id="invoice-lines-heading">{{ 'finance.invoice.detail.section.lines' | translate }}</h2>
+        <ep-icon name="scale" />
+        <h2 id="invoice-lines-heading">{{ 'finance.invoice.match.threeWayTitle' | translate }}</h2>
       </div>
 
-      <div class="line-table-wrapper">
+      @if (isLoadingMatchData()) {
+        <ep-skeleton [rows]="5" />
+      } @else if (data.status !== 'PENDING_MATCH' && poDetail()) {
+        @if (completedGrs().length === 0) {
+          <p class="panel-empty">{{ 'finance.invoice.match.noCompletedGr' | translate }}</p>
+        }
+        <div class="three-way-table-wrapper">
+          <table class="three-way-table">
+            <thead>
+              <tr>
+                <th scope="col" rowspan="2">{{ 'finance.invoice.match.col.lineItem' | translate }}</th>
+                <th scope="colgroup" colspan="2" class="col-group col-group--po">
+                  <ep-icon name="file-text" />
+                  <span>{{ 'finance.invoice.match.col.poGroup' | translate }}</span>
+                  <span class="mono">{{ data.po.poNumber }}</span>
+                </th>
+                <th scope="colgroup" colspan="2" class="col-group col-group--gr">
+                  <ep-icon name="package-check" />
+                  <span>{{ 'finance.invoice.match.col.grGroup' | translate }}</span>
+                </th>
+                <th scope="colgroup" colspan="3" class="col-group col-group--invoice">
+                  <ep-icon name="receipt-text" />
+                  <span>{{ 'finance.invoice.match.col.invoiceGroup' | translate }}</span>
+                  <span class="mono">{{ data.invoiceNumber }}</span>
+                </th>
+                <th scope="col" rowspan="2">{{ 'finance.invoice.match.col.matchResult' | translate }}</th>
+              </tr>
+              <tr class="sub-header">
+                <th scope="col" class="align-right">{{ 'finance.invoice.match.col.qty' | translate }}</th>
+                <th scope="col" class="align-right">{{ 'finance.invoice.match.col.unitPrice' | translate }}</th>
+                <th scope="col" class="align-right">{{ 'finance.invoice.match.col.receivedQty' | translate }}</th>
+                <th scope="col" class="align-right">{{ 'finance.invoice.match.col.rejectedQty' | translate }}</th>
+                <th scope="col" class="align-right">{{ 'finance.invoice.match.col.qty' | translate }}</th>
+                <th scope="col" class="align-right">{{ 'finance.invoice.match.col.unitPrice' | translate }}</th>
+                <th scope="col" class="align-right">{{ 'finance.invoice.match.col.lineTotal' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of matchRows(); track row.poLineItemId) {
+                <tr [class.three-way-table__row--mismatch]="row.hasVariance">
+                  <td class="item-cell">
+                    <strong>{{ row.itemName }}</strong>
+                    <span class="line-table__subtitle">
+                      {{ row.categoryCode || shortId(row.poLineItemId) }}
+                    </span>
+                  </td>
+                  <td class="align-right mono">{{ formatQuantity(row.poQty, row.unit) }}</td>
+                  <td class="align-right">
+                    @if (row.poUnitPrice) {
+                      <ep-amount [value]="amountValue(row.poUnitPrice, data.currency)" />
+                    } @else {
+                      <span class="text-muted">--</span>
+                    }
+                  </td>
+                  <td
+                    class="align-right mono"
+                    [class.text-success]="row.grReceivedQty !== null && row.grReceivedQty >= row.invoiceQty">
+                    {{ formatQuantity(row.grReceivedQty, row.unit) }}
+                  </td>
+                  <td class="align-right mono" [class.text-danger]="row.grRejectedQty > 0">
+                    {{ row.grRejectedQty > 0 ? formatQuantity(row.grRejectedQty, row.unit) : '--' }}
+                  </td>
+                  <td
+                    class="align-right mono"
+                    [class.text-warning]="row.quantityVariance !== null && row.quantityVariance !== 0">
+                    {{ formatQuantity(row.invoiceQty, row.unit) }}
+                    @if (row.quantityVariance !== null && row.quantityVariance !== 0) {
+                      <span class="variance-tag">{{ formatVariance(row.invoiceQty, row.poQty) }}</span>
+                    }
+                  </td>
+                  <td class="align-right" [class.text-warning]="row.priceVariancePct > 0.01">
+                    <ep-amount [value]="amountValue(row.invoiceUnitPrice, data.currency)" />
+                    @if (row.priceVariancePct > 0.01) {
+                      <span class="variance-tag">{{ formatPct(row.priceVariancePct) }}</span>
+                    }
+                  </td>
+                  <td class="align-right">
+                    <ep-amount [value]="amountValue(row.invoiceTotalPrice, data.currency)" />
+                  </td>
+                  <td>
+                    <ep-badge [tone]="rowMatchTone(row)" [labelKey]="rowMatchLabelKey(row)" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="7" scope="row" class="align-right">{{ 'finance.invoice.detail.total.subtotal' | translate }}</th>
+                <td class="align-right"><ep-amount [value]="invoiceSubtotal(data)" /></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th colspan="7" scope="row" class="align-right">{{ 'finance.invoice.detail.total.tax' | translate }}</th>
+                <td class="align-right"><ep-amount [value]="invoiceTax(data)" /></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th colspan="7" scope="row" class="align-right">{{ 'finance.invoice.detail.total.total' | translate }}</th>
+                <td class="align-right line-table__grand-total"><ep-amount [value]="invoiceTotal(data)" /></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      } @else {
+        @if (matchDataUnavailable()) {
+          <p class="panel-empty">{{ 'finance.invoice.match.matchDataUnavailable' | translate }}</p>
+        } @else {
+          <p class="panel-empty">{{ 'finance.invoice.match.invoiceLinesFallback' | translate }}</p>
+        }
+        <div class="line-table-wrapper">
         <table class="line-table">
           <thead>
             <tr>
@@ -211,7 +345,8 @@
             </tr>
           </tfoot>
         </table>
-      </div>
+        </div>
+      }
     </section>
 
     <ep-modal

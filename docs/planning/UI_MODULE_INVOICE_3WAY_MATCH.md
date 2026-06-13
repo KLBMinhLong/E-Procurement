@@ -2,6 +2,8 @@
 
 > **Mục tiêu:** Nâng cấp màn hình Invoice Detail thành công cụ đối soát thực sự cho Accountant — thay thế hiển thị text thô của match result bằng bảng so sánh PO/GR/Invoice 3 chiều với highlight sai lệch trực quan, giúp phán quyết approve/dispute nhanh và chính xác.
 
+**Trạng thái:** ✅ Hoàn thành 2026-06-13. Đã triển khai status strip, load PO/GR phụ trợ, aggregate GR theo `poLineItemId`, bảng 3-way comparison và fallback invoice lines khi PO/GR phụ trợ không tải được. Contract GR dùng đúng enum hiện tại `COMPLETE`.
+
 ---
 
 ## 1. Hiện trạng
@@ -111,7 +113,7 @@ Nhưng **không có per-line breakdown** trong matchResult. Backend trả về a
 
 ### 3.2 GR liên quan đến PO (chưa có trong FE)
 ```typescript
-// GoodsReceiptService.list({ po_id: data.po.id, status: 'COMPLETED' })
+// GoodsReceiptService.list({ po_id: data.po.id, status: 'COMPLETE' })
 // Lấy: goodsReceipts[] → mỗi GR có lineItems[] với { receivedQuantity, rejectedQuantity, itemName }
 // Aggregate GR quantities by poLineItemId
 ```
@@ -386,7 +388,7 @@ private loadMatchData(): void {
   
   forkJoin({
     po: this.poService.getById(invoice.po.id),
-    grs: this.grService.list({ po_id: invoice.po.id, status: 'COMPLETED', page: 1, size: 50 })
+    grs: this.grService.list({ po_id: invoice.po.id, status: 'COMPLETE', page: 1, size: 50 })
   })
     .pipe(
       takeUntilDestroyed(this.destroyRef),
@@ -476,10 +478,23 @@ private readonly grService = inject(GoodsReceiptService);
 
 - 3-way table chỉ load khi `invoice.status !== 'PENDING_MATCH'` — khi chưa match thì không có matchResult, chỉ hiển thị invoice lines đơn giản
 - Load PO + GR data song song bằng `forkJoin`
-- GR query: `status=COMPLETED` và `po_id={poId}` — lấy tất cả GR đã hoàn tất của PO
+- GR query: `status=COMPLETE` và `po_id={poId}` — lấy tất cả GR đã hoàn tất của PO
 - Khi không có PO detail (lỗi 403/404): hiển thị invoice lines cũ như hiện tại
 - Khi không có GR data: cột GR hiển thị `--` với tooltip "Chưa có GR hoàn tất"
 - `priceVariancePct > 1%` mới highlight để tránh false positive từ làm tròn số
 - Tất cả amount: dùng `ep-amount` component
 - Không hardcode màu — dùng CSS variables
 - Table responsive: horizontal scroll trên màn hình nhỏ
+
+---
+
+## 9. Kết quả triển khai
+
+| Bước | Nội dung | Status |
+|---|---|---|
+| 6a | Inject `PurchaseOrderService` và `GoodsReceiptService`, thêm helper load phụ trợ không redirect | ✅ |
+| 6b | Thêm state `poDetail`, `completedGrs`, `grSummary`, `matchRows` | ✅ |
+| 6c | Cải thiện match status summary strip thay `<dl>` cũ | ✅ |
+| 6d | Build 3-way comparison table thay line panel cũ, có fallback invoice lines | ✅ |
+| 6e | i18n VI/EN + SCSS token-based | ✅ |
+| 6f | Verify `npm run build` | ✅ |

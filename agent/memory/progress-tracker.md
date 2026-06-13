@@ -297,7 +297,7 @@
 | Unit tests | ✅ | Invoice create/list/detail + idempotency/missing PO/vendor mismatch tests pass |
 | 3-way match API | ✅ | `POST /api/v1/invoices/{id}/match`; consumes `inventory.gr.created` into finance GR snapshots, compares PO + GR + Invoice, publishes `finance.invoice.matched` when matched |
 | Approve/dispute/payment actions | ✅ | `POST /approve`, `/dispute`, `/confirm-payment`; stores `finance.payments` and marks invoice `PAID` |
-| Frontend: Invoice & Payment UI | ✅ | 2026-06-12: `/finance/invoices` list/filter/summary, `/finance/invoices/create` from invoiceable PO with PO line baseline, `/finance/invoices/:id` match/approve/dispute/confirm-payment actions; PO detail links to create invoice |
+| Frontend: Invoice & Payment UI | ✅ | 2026-06-13: `/finance/invoices/:id` now has PO/GR/Invoice 3-way match visualization with PO detail + completed GR load, aggregate GR quantities by `poLineItemId`, variance highlighting, and fallback invoice-line view; earlier list/create/actions and PO detail invoice link remain complete |
 | Budget spent ledger link | ✅ | Released commitment hold and recorded invoice spend on payment confirmation |
 
 

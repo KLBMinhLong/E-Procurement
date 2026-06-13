@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL } from '../../../core/http/api-tokens';
+import { BYPASS_ERROR_INTERCEPTOR_TOKEN } from '../../../core/http/http-context-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
   GoodsReceiptCreateCommand,
@@ -26,7 +27,7 @@ export class GoodsReceiptService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  list(filter: GoodsReceiptListFilter): Observable<ApiResponse<GoodsReceiptDetail[]> & { meta: PageMeta }> {
+  list(filter: GoodsReceiptListFilter, context?: HttpContext): Observable<ApiResponse<GoodsReceiptDetail[]> & { meta: PageMeta }> {
     let params = new HttpParams()
       .set('page', filter.page)
       .set('size', filter.size);
@@ -39,8 +40,18 @@ export class GoodsReceiptService {
 
     return this.http.get<ApiResponse<GoodsReceiptDetail[]> & { meta: PageMeta }>(
       `${this.baseUrl}/goods-receipts`,
-      { params, withCredentials: true }
+      { params, context, withCredentials: true }
     );
+  }
+
+  listCompletedByPoId(poId: string): Observable<ApiResponse<GoodsReceiptDetail[]> & { meta: PageMeta }> {
+    const context = new HttpContext().set(BYPASS_ERROR_INTERCEPTOR_TOKEN, true);
+    return this.list({
+      page: 1,
+      size: 50,
+      status: 'COMPLETE',
+      po_id: poId
+    }, context);
   }
 
   getById(id: string): Observable<ApiResponse<GoodsReceiptDetail>> {

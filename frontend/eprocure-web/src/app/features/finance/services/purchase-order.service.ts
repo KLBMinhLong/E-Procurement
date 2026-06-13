@@ -37,10 +37,10 @@ export class PurchaseOrderService {
     );
   }
 
-  getById(id: string): Observable<ApiResponse<PurchaseOrder>> {
+  getById(id: string, context?: HttpContext): Observable<ApiResponse<PurchaseOrder>> {
     return this.http.get<ApiResponse<PurchaseOrder>>(
       `${this.baseUrl}/purchase-orders/${id}`,
-      { withCredentials: true }
+      { context, withCredentials: true }
     );
   }
 
@@ -60,6 +60,11 @@ export class PurchaseOrderService {
       sort: 'createdAt,desc',
       pr_id: prId
     }, context);
+  }
+
+  getByIdForMatch(id: string): Observable<ApiResponse<PurchaseOrder>> {
+    const context = new HttpContext().set(BYPASS_ERROR_INTERCEPTOR_TOKEN, true);
+    return this.getById(id, context);
   }
 
   updateDraft(id: string, request: UpdatePurchaseOrderDraftRequest): Observable<ApiResponse<PurchaseOrder>> {

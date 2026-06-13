@@ -14,7 +14,7 @@
 | 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | ✅ Hoàn thành | Build pass 2026-06-13; browser test chưa mở theo yêu cầu |
 | 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | ✅ Hoàn thành | Build pass 2026-06-13; không mở browser test |
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
-| 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ⬜ Chờ | Cần GoodsReceiptService đã ổn định từ #1 |
+| 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ⬜ Chờ | Không phụ thuộc — standalone |
 | 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Charts & Visual Upgrade | ⬜ Chờ | Nên làm sau #3 (Budget nav cần có trước quick links) |
 
@@ -112,16 +112,16 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 ---
 
 #### 6. `UI_MODULE_INVOICE_3WAY_MATCH.md` — Invoice 3-Way Match Visualization
-**Làm sau khi Inventory GR đã ổn định (Slice 3 của #1 đã xong — đã hoàn thành).**
+**Trạng thái:** ✅ Hoàn thành 2026-06-13. Invoice Detail đã có status strip, load PO/GR phụ trợ, aggregate GR theo `poLineItemId`, bảng so sánh PO/GR/Invoice và fallback invoice lines khi dữ liệu phụ trợ không khả dụng.
 
 | Bước | Nội dung |
 |---|---|
-| 6a | Thêm `PurchaseOrderService.getById()` và `GoodsReceiptService.list()` inject vào invoice detail |
-| 6b | Thêm state `poDetail`, `completedGrs`, `grSummary`, `matchRows` |
-| 6c | Cải thiện match status summary strip (thay `<dl>` cũ) |
-| 6d | Build 3-way comparison table (thay `<section class="line-panel">` cũ) |
-| 6e | i18n + SCSS |
-| 6f | Build verify |
+| 6a | ✅ Thêm helper load PO/GR phụ trợ vào invoice detail |
+| 6b | ✅ Thêm state `poDetail`, `completedGrs`, `grSummary`, `matchRows` |
+| 6c | ✅ Cải thiện match status summary strip (thay `<dl>` cũ) |
+| 6d | ✅ Build 3-way comparison table (thay `<section class="line-panel">` cũ) |
+| 6e | ✅ i18n + SCSS |
+| 6f | ✅ Build verify |
 
 **Lý do ưu tiên:** Accountant cần bảng so sánh để quyết định approve/dispute — hiện tại chỉ có số variance thô, không đủ để phán quyết.
 
