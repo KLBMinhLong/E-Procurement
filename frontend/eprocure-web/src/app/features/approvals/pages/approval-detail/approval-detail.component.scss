@@ -230,6 +230,10 @@
     white-space: nowrap;
   }
 
+  .line-number-col {
+    width: 3.75rem;
+  }
+
   td {
     padding: var(--spacing-3) var(--spacing-4);
     color: var(--color-text-secondary);

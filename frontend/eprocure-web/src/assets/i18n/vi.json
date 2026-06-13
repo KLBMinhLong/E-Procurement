@@ -665,6 +665,7 @@
         "approval": "Quy trình phê duyệt"
       },
       "col": {
+        "lineNumber": "STT",
         "item": "Hàng hóa",
         "category": "Danh mục",
         "quantity": "Số lượng",

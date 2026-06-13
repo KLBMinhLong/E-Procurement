@@ -130,7 +130,7 @@
             <table class="items-table">
               <thead>
                 <tr>
-                  <th style="width: 60px;">STT</th>
+                  <th class="line-number-col">{{ 'pr.detail.col.lineNumber' | translate }}</th>
                   <th>{{ 'pr.create.lineItem.itemName' | translate }}</th>
                   <th>{{ 'pr.create.lineItem.category' | translate }}</th>
                   <th class="align-right">{{ 'pr.create.lineItem.quantity' | translate }}</th>
@@ -146,7 +146,7 @@
                     <td class="item-name">
                       {{ item.itemName }}
                       @if (item.fromCatalog) {
-                        <span class="catalog-badge">Catalog</span>
+                        <span class="catalog-badge">{{ 'pr.detail.label.fromCatalog' | translate }}</span>
                       }
                     </td>
                     <td>{{ item.category?.name }}</td>

@@ -186,6 +186,7 @@
 | Admin: CRUD approval rules | ✅ |
 | Frontend: Approval inbox | ✅ |
 | Frontend: Task detail + actions | ✅ |
+| Frontend: Approval/PR workflow visualization | ✅ | 2026-06-13: `ep-approval-steps` + `ep-pr-lifecycle`, Approval Detail/PR Detail wiring, navigation polish, VI/EN i18n; `npm run build` pass |
 | Frontend: Approval rule admin page | ✅ |
 | Unit tests (rule selection foundation + BPMN diagram metadata + chain/SLA resolution + process start + Kafka consumer + approval actions + inbox/detail retrieval + SLA escalation + delegation awareness + admin rule CRUD) | ✅ | 36 tests pass |
 

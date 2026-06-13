@@ -665,6 +665,7 @@
         "approval": "Approval Workflow"
       },
       "col": {
+        "lineNumber": "#",
         "item": "Item",
         "category": "Category",
         "quantity": "Qty",

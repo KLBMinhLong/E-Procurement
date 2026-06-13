@@ -33,6 +33,8 @@ Plan này là plan kế tiếp sau `UI_MODULE_FINANCE_BUDGET.md`. Rà soát code
 
 **Trạng thái triển khai 2026-06-13:** ✅ Slice 4e hoàn thành ở mức build: đã polish navigation/UX cho Approval Detail và PR Detail, đảm bảo empty workflow hiển thị rõ, link PR/Approval Inbox chỉ render đúng điều kiện, và `ep-approval-steps` có keyboard toggle/aria-label cho step detail kể cả compact mode.
 
+**Trạng thái triển khai 2026-06-13:** ✅ Slice 4f hoàn thành: i18n VI/EN cho workflow keys đã được rà đủ theo code thật, hardcoded `STT/Catalog` trong Approval Detail đã chuyển sang translate key, `npm run build` pass và plan #4 được chốt hoàn thành.
+
 ---
 
 ## 1. Hiện trạng
