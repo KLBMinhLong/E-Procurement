@@ -16,7 +16,8 @@
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ✅ Hoàn thành | Build pass 2026-06-13; align RFQ status frontend với backend + comparison table |
-| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | 🔄 Đang làm | Slice 8a-8f hoàn thành 2026-06-14; chart foundation + shell UX + executive visuals + KPI deep-dive + role workflow hubs + quick actions/reports UX pass build, tiếp theo 8g polish |
+| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | ✅ Hoàn thành | Build pass 2026-06-14; không mở browser test; dashboard operational command center hoàn tất |
+| 9 | `UI_MODULE_ADMIN_CONFIG_PORTAL.md` | Admin Config Portal | 🔄 Sẵn sàng triển khai | E13 còn thiếu contract/runtime truth: admin-service OpenAPI có config/audit/health/sessions nhưng backend service chưa tồn tại |
 
 ---
 
@@ -146,20 +147,39 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 ---
 
 #### 8. `UI_MODULE_DASHBOARD_CHARTS.md` — Dashboard Operations & Charts Upgrade
-**Đã rà soát 2026-06-13.** Frontend dashboard đã có tabs executive/manager/purchasing/requester/reports và gọi analytics API thật; backend analytics hiện đủ cho phase UI đầu. Plan #8 đã được chỉnh từ “thêm chart” thành nâng `/dashboard` thành operational command center: chart thật, filter dùng được, URL tab state, quick actions, stale/refresh indicator, KPI deep-dive và reports UX.
+**Trạng thái:** ✅ Hoàn thành 2026-06-14. Frontend dashboard đã được nâng thành operational command center: chart thật, filter dùng được, URL tab state, quick actions, stale/refresh indicator, KPI deep-dive, role workflow hubs và reports UX.
 
 | Bước | Nội dung |
 |---|---|
 | 8a | ✅ Chart dependency + foundation (`chart.js`/`ng2-charts`, theme resolver, computed chart data/options) |
 | 8b | ✅ Dashboard shell UX: URL-driven tab, auto-refresh, last updated/cache indicator, department dropdown từ IAM |
 | 8c | ✅ Executive visuals: KPI icon map, monthly grouped bar, category doughnut, SLA gauge, department spend, top vendors |
-| 8d | KPI deep-dive: cycle-time trend/priority, SLA role compliance/worst approvers |
-| 8e | Role dashboards thành workflow hub: manager/purchasing/requester links + CTAs |
-| 8f | Quick actions + reports UX: permission cards, report presets, job polling, session persistence |
-| 8g | i18n + SCSS + accessibility + responsive |
-| 8h | Build verify |
+| 8d | ✅ KPI deep-dive: cycle-time trend/priority, SLA role compliance/worst approvers |
+| 8e | ✅ Role dashboards thành workflow hub: manager/purchasing/requester links + CTAs |
+| 8f | ✅ Quick actions + reports UX: permission cards, report presets, job polling, session persistence |
+| 8g | ✅ i18n + SCSS + accessibility + responsive |
+| 8h | ✅ Build verify |
 
 **Lý do ưu tiên hiện tại:** Các module nghiệp vụ chính đã có UI; dashboard là nơi gom tín hiệu vận hành và dẫn người dùng vào workflow xử lý. Đây không còn là polish thuần túy, mà là bước hoàn thiện trải nghiệm vận hành end-to-end.
+
+---
+
+#### 9. `UI_MODULE_ADMIN_CONFIG_PORTAL.md` — Admin Config Portal
+**Trạng thái:** 🔄 Sẵn sàng triển khai từ 2026-06-14. Plan đã rà soát frontend/backend hiện tại: frontend mới có admin user/RBAC/org/template/rule screens; `docs/api/admin-service.openapi.yaml` mô tả System Config, Audit Log, Catalog Admin, Department Admin, Health, Sessions nhưng chưa có `services/admin-service` hoặc controller runtime tương ứng.
+
+| Bước | Nội dung |
+|---|---|
+| 9a | Contract truth + implementation strategy: chốt endpoint nào dùng IAM/notification/inventory/approval hiện có, endpoint nào cần backend foundation |
+| 9b | Admin Config shell + route/nav foundation |
+| 9c | System Health page |
+| 9d | Service Config read-only + risky mutation workflow |
+| 9e | Audit Log query + export |
+| 9f | Active Sessions |
+| 9g | Catalog Category Admin |
+| 9h | Department Admin mutation alignment |
+| 9i | Verification |
+
+**Lý do ưu tiên tiếp theo:** Đây là gap E13 còn lại sau dashboard: người vận hành chưa có console tập trung cho health/config/audit/session, và OpenAPI hiện đang vượt runtime backend nên phải xử lý contract truth trước khi làm UI sâu.
 
 ---
 
@@ -184,7 +204,9 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
     │
     ├──► #7 RFQ Comparison (hoàn toàn độc lập)
     │
-    └──► #8 Dashboard Charts (làm sau cùng)
+    ├──► #8 Dashboard Charts (hoàn tất operational dashboard)
+    │
+    └──► #9 Admin Config Portal (E13 rest UI/backend alignment)
 ```
 
 ---

@@ -112,6 +112,7 @@
     "eyebrow": "Trung tâm phân tích",
     "title": "Dashboard & xuất báo cáo",
     "subtitle": "Theo dõi KPI mua sắm, ngân sách, PO/GR/Invoice và tạo báo cáo PDF/Excel từ dữ liệu projection.",
+    "loading": "Đang tải dashboard",
     "action": {
       "apply": "Áp dụng",
       "refresh": "Tải lại",
@@ -189,6 +190,7 @@
     "empty": {
       "title": "Chưa có dữ liệu",
       "message": "Dữ liệu projection có thể chưa được seed hoặc bộ lọc hiện tại chưa có kết quả.",
+      "notAvailable": "Chưa có",
       "noPermissionTitle": "Không có dashboard phù hợp",
       "noPermissionMessage": "Tài khoản hiện tại chưa có permission để xem dashboard phân tích."
     },
@@ -267,6 +269,7 @@
       "openPrList": "Mở danh sách PR",
       "slaWarnings": "Cảnh báo SLA",
       "slaWarningsHint": "Task gần hoặc đã quá hạn.",
+      "slaEmpty": "Không có task nào gần hoặc quá hạn trong phạm vi hiện tại.",
       "slaOverdue": "Quá hạn",
       "slaNear": "Gần quá hạn",
       "reviewSlaTasks": "Xử lý task SLA",

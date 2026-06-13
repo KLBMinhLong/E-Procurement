@@ -558,7 +558,7 @@ export class DashboardComponent implements OnInit {
   }
 
   reportExpiryLabel(job: ReportJob): string {
-    return job.expiresAt ? this.formatDateTime(job.expiresAt) : '--';
+    return job.expiresAt ? this.formatDateTime(job.expiresAt) : this.notAvailableLabel();
   }
 
   kpiValue(card: KpiCard): string {
@@ -703,14 +703,14 @@ export class DashboardComponent implements OnInit {
 
   formatDate(iso: string | null | undefined): string {
     if (!iso) {
-      return '--';
+      return this.notAvailableLabel();
     }
     return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso));
   }
 
   formatDateTime(iso: string | null | undefined): string {
     if (!iso) {
-      return '--';
+      return this.notAvailableLabel();
     }
     return new Intl.DateTimeFormat('vi-VN', {
       hour: '2-digit',
@@ -719,6 +719,10 @@ export class DashboardComponent implements OnInit {
       month: '2-digit',
       year: 'numeric'
     }).format(new Date(iso));
+  }
+
+  notAvailableLabel(): string {
+    return this.translate('dashboard.empty.notAvailable');
   }
 
   private initializeTabFromUrl(): void {

@@ -46,7 +46,9 @@
   }
 
   @if (isLoadingDashboard()) {
-    <ep-skeleton [rows]="8" />
+    <div class="loading-region" role="status" [attr.aria-label]="'dashboard.loading' | translate">
+      <ep-skeleton [rows]="8" />
+    </div>
   }
 
   @if (activeTab() === 'executive') {
@@ -300,28 +302,32 @@
             </a>
           }
         </div>
-        <table class="dense-table">
-          <thead>
-            <tr>
-              <th>{{ 'dashboard.manager.col.pr' | translate }}</th>
-              <th>{{ 'dashboard.manager.col.title' | translate }}</th>
-              <th>{{ 'dashboard.manager.col.requester' | translate }}</th>
-              <th>{{ 'dashboard.manager.col.status' | translate }}</th>
-              <th class="align-right">{{ 'dashboard.manager.col.amount' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (pr of manager.recentPrs; track pr.prNumber) {
+        @if (manager.recentPrs.length === 0) {
+          <ep-empty-state icon="list-checks" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+        } @else {
+          <table class="dense-table" [attr.aria-label]="'dashboard.manager.recentPrs' | translate">
+            <thead>
               <tr>
-                <td class="mono">{{ pr.prNumber }}</td>
-                <td>{{ pr.title }}</td>
-                <td>{{ pr.requester }}</td>
-                <td><ep-badge tone="info" [labelKey]="'pr.status.' + pr.status" /></td>
-                <td class="align-right"><ep-amount [value]="money(pr.totalAmount)" /></td>
+                <th>{{ 'dashboard.manager.col.pr' | translate }}</th>
+                <th>{{ 'dashboard.manager.col.title' | translate }}</th>
+                <th>{{ 'dashboard.manager.col.requester' | translate }}</th>
+                <th>{{ 'dashboard.manager.col.status' | translate }}</th>
+                <th class="align-right">{{ 'dashboard.manager.col.amount' | translate }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (pr of manager.recentPrs; track pr.prNumber) {
+                <tr>
+                  <td class="mono">{{ pr.prNumber }}</td>
+                  <td>{{ pr.title }}</td>
+                  <td>{{ pr.requester }}</td>
+                  <td><ep-badge tone="info" [labelKey]="'pr.status.' + pr.status" /></td>
+                  <td class="align-right"><ep-amount [value]="money(pr.totalAmount)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </section>
 
       <section class="dashboard-panel" aria-labelledby="manager-sla-heading">
@@ -332,15 +338,19 @@
             <p>{{ 'dashboard.manager.slaWarningsHint' | translate }}</p>
           </div>
         </div>
-        <div class="warning-list">
-          @for (warning of manager.slaWarnings; track warning.taskId) {
-            <div>
-              <ep-badge [tone]="warning.isOverdue ? 'danger' : 'warning'" [labelKey]="warning.isOverdue ? 'dashboard.manager.slaOverdue' : 'dashboard.manager.slaNear'" />
-              <strong>{{ warning.prNumber }}</strong>
-              <span>{{ formatDateTime(warning.slaDeadline) }}</span>
-            </div>
-          }
-        </div>
+        @if (manager.slaWarnings.length === 0) {
+          <ep-empty-state icon="alarm-clock-check" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.manager.slaEmpty' | translate" />
+        } @else {
+          <div class="warning-list" [attr.aria-label]="'dashboard.manager.slaWarnings' | translate">
+            @for (warning of manager.slaWarnings; track warning.taskId) {
+              <div>
+                <ep-badge [tone]="warning.isOverdue ? 'danger' : 'warning'" [labelKey]="warning.isOverdue ? 'dashboard.manager.slaOverdue' : 'dashboard.manager.slaNear'" />
+                <strong>{{ warning.prNumber }}</strong>
+                <span>{{ formatDateTime(warning.slaDeadline) }}</span>
+              </div>
+            }
+          </div>
+        }
         <div class="workflow-actions">
           <a class="workflow-action" routerLink="/approvals">
             <ep-icon name="alarm-clock-check" />
@@ -427,36 +437,40 @@
             <p>{{ 'dashboard.purchasing.vendorPerformanceHint' | translate }}</p>
           </div>
         </div>
-        <table class="dense-table">
-          <thead>
-            <tr>
-              <th>{{ 'dashboard.purchasing.col.vendor' | translate }}</th>
-              <th>{{ 'dashboard.purchasing.col.onTime' | translate }}</th>
-              <th>{{ 'dashboard.purchasing.col.quality' | translate }}</th>
-              <th class="align-right">{{ 'dashboard.purchasing.col.pendingOrders' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (vendor of purchasing.vendorPerformance; track vendor.vendorName) {
+        @if (purchasing.vendorPerformance.length === 0) {
+          <ep-empty-state icon="factory" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+        } @else {
+          <table class="dense-table" [attr.aria-label]="'dashboard.purchasing.vendorPerformance' | translate">
+            <thead>
               <tr>
-                <td>{{ vendor.vendorName }}</td>
-                <td>
-                  <div class="table-meter">
-                    <span [style.width]="utilizationWidth(vendor.onTimeDelivery)"></span>
-                  </div>
-                  <strong class="table-meter__value">{{ percent(vendor.onTimeDelivery) }}</strong>
-                </td>
-                <td>
-                  <div class="table-meter">
-                    <span [style.width]="utilizationWidth(vendor.qualityScore)"></span>
-                  </div>
-                  <strong class="table-meter__value">{{ vendor.qualityScore }}</strong>
-                </td>
-                <td class="align-right">{{ vendor.pendingOrders }}</td>
+                <th>{{ 'dashboard.purchasing.col.vendor' | translate }}</th>
+                <th>{{ 'dashboard.purchasing.col.onTime' | translate }}</th>
+                <th>{{ 'dashboard.purchasing.col.quality' | translate }}</th>
+                <th class="align-right">{{ 'dashboard.purchasing.col.pendingOrders' | translate }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (vendor of purchasing.vendorPerformance; track vendor.vendorName) {
+                <tr>
+                  <td>{{ vendor.vendorName }}</td>
+                  <td>
+                    <div class="table-meter">
+                      <span [style.width]="utilizationWidth(vendor.onTimeDelivery)"></span>
+                    </div>
+                    <strong class="table-meter__value">{{ percent(vendor.onTimeDelivery) }}</strong>
+                  </td>
+                  <td>
+                    <div class="table-meter">
+                      <span [style.width]="utilizationWidth(vendor.qualityScore)"></span>
+                    </div>
+                    <strong class="table-meter__value">{{ vendor.qualityScore }}</strong>
+                  </td>
+                  <td class="align-right">{{ vendor.pendingOrders }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </section>
     </div>
   }
@@ -553,28 +567,32 @@
             </a>
           }
         </div>
-        <table class="dense-table">
-          <thead>
-            <tr>
-              <th>{{ 'dashboard.requester.col.pr' | translate }}</th>
-              <th>{{ 'dashboard.requester.col.title' | translate }}</th>
-              <th>{{ 'dashboard.requester.col.approver' | translate }}</th>
-              <th>{{ 'dashboard.requester.col.status' | translate }}</th>
-              <th class="align-right">{{ 'dashboard.requester.col.amount' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (pr of requester.recentPrs; track pr.prNumber) {
+        @if (requester.recentPrs.length === 0) {
+          <ep-empty-state icon="history" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+        } @else {
+          <table class="dense-table" [attr.aria-label]="'dashboard.requester.recentPrs' | translate">
+            <thead>
               <tr>
-                <td class="mono">{{ pr.prNumber }}</td>
-                <td>{{ pr.title }}</td>
-                <td>{{ pr.currentApprover || '--' }}</td>
-                <td><ep-badge tone="info" [labelKey]="'pr.status.' + pr.status" /></td>
-                <td class="align-right"><ep-amount [value]="money(pr.totalAmount)" /></td>
+                <th>{{ 'dashboard.requester.col.pr' | translate }}</th>
+                <th>{{ 'dashboard.requester.col.title' | translate }}</th>
+                <th>{{ 'dashboard.requester.col.approver' | translate }}</th>
+                <th>{{ 'dashboard.requester.col.status' | translate }}</th>
+                <th class="align-right">{{ 'dashboard.requester.col.amount' | translate }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (pr of requester.recentPrs; track pr.prNumber) {
+                <tr>
+                  <td class="mono">{{ pr.prNumber }}</td>
+                  <td>{{ pr.title }}</td>
+                  <td>{{ pr.currentApprover || notAvailableLabel() }}</td>
+                  <td><ep-badge tone="info" [labelKey]="'pr.status.' + pr.status" /></td>
+                  <td class="align-right"><ep-amount [value]="money(pr.totalAmount)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </section>
     </div>
   }
@@ -861,7 +879,7 @@
             <span class="workflow-note">{{ 'dashboard.reports.noActiveJobs' | translate }}</span>
           }
         </div>
-        <table class="dense-table">
+        <table class="dense-table" [attr.aria-label]="'dashboard.reports.title' | translate">
           <thead>
             <tr>
               <th>{{ 'dashboard.reports.col.type' | translate }}</th>

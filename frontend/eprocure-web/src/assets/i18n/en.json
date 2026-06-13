@@ -112,6 +112,7 @@
     "eyebrow": "Analytics center",
     "title": "Dashboard & report exports",
     "subtitle": "Monitor procurement KPIs, budgets, PO/GR/Invoice flow, and generate PDF/Excel reports from projection data.",
+    "loading": "Loading dashboard",
     "action": {
       "apply": "Apply",
       "refresh": "Refresh",
@@ -189,6 +190,7 @@
     "empty": {
       "title": "No data",
       "message": "Projection data may not be seeded yet or the current filters returned no results.",
+      "notAvailable": "Not available",
       "noPermissionTitle": "No dashboard available",
       "noPermissionMessage": "The current account does not have permission to view analytics dashboards."
     },
@@ -267,6 +269,7 @@
       "openPrList": "Open PR list",
       "slaWarnings": "SLA warnings",
       "slaWarningsHint": "Tasks near or past due.",
+      "slaEmpty": "No tasks are near or past due in the current scope.",
       "slaOverdue": "Overdue",
       "slaNear": "Near due",
       "reviewSlaTasks": "Review SLA tasks",

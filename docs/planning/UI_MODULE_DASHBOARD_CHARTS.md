@@ -221,6 +221,8 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 
 ### Slice 8g — i18n, SCSS, accessibility, responsive
 
+**Trạng thái 2026-06-14:** ✅ Hoàn thành frontend polish. Bổ sung localized placeholder/loading text, empty-state cho role lists/tables, aria-label cho tables/report loading region, giữ SCSS theo design tokens và xác nhận build không phát sinh warning mới.
+
 | Việc | Tiêu chuẩn |
 |---|---|
 | i18n | Tất cả text mới trong `vi.json` và `en.json` |
@@ -230,6 +232,8 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 | Loading/empty/error | Skeleton cho dashboard, empty-state cho từng chart, fallback khi departments load fail |
 
 ### Slice 8h — Verification
+
+**Trạng thái 2026-06-14:** ✅ Hoàn thành. `npm run build` pass, `git diff --check` pass; không mở browser test theo hướng dừng ở build-level verification.
 
 | Lệnh | Kỳ vọng |
 |---|---|
