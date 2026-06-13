@@ -163,6 +163,7 @@
       "cycleTrendAria": "Biểu đồ đường cycle time trung bình theo tuần",
       "priorityCycleAria": "Biểu đồ thanh cycle time trung bình theo mức độ ưu tiên",
       "slaRoleAria": "Biểu đồ thanh tỷ lệ tuân thủ SLA theo vai trò duyệt",
+      "requesterStatusAria": "Biểu đồ doughnut phân bổ trạng thái PR cá nhân",
       "prCountAria": "Số lượng PR theo tháng"
     },
     "empty": {
@@ -203,6 +204,11 @@
         "UNKNOWN": "Chưa phân loại"
       }
     },
+    "budgetHealth": {
+      "good": "Ngân sách khỏe",
+      "watch": "Cần theo dõi",
+      "risk": "Rủi ro ngân sách"
+    },
     "executive": {
       "departmentSpend": "Chi tiêu theo phòng ban",
       "departmentSpendHint": "So sánh chi tiêu thực tế với ngân sách và trạng thái sử dụng.",
@@ -227,17 +233,23 @@
       "committed": "Committed",
       "spent": "Spent",
       "available": "Available",
+      "forecastRunOutDate": "Dự báo hết ngân sách: {{date}}",
+      "openBudgets": "Mở ngân sách",
       "pendingApprovals": "Phê duyệt đang chờ",
       "pendingApprovalsHint": "Khối lượng cần xử lý và rủi ro SLA.",
+      "openApprovals": "Mở hộp thư phê duyệt",
       "pending": "Đang chờ",
       "overdue": "Quá hạn",
       "urgent": "Khẩn cấp",
       "recentPrs": "PR gần đây",
       "recentPrsHint": "Các yêu cầu mới nhất trong phạm vi phòng ban.",
+      "recentPrsRouteNote": "Dashboard hiện chỉ có mã PR; mở danh sách PR để vào detail bằng UUID.",
+      "openPrList": "Mở danh sách PR",
       "slaWarnings": "Cảnh báo SLA",
       "slaWarningsHint": "Task gần hoặc đã quá hạn.",
       "slaOverdue": "Quá hạn",
       "slaNear": "Gần quá hạn",
+      "reviewSlaTasks": "Xử lý task SLA",
       "col": {
         "pr": "PR",
         "title": "Tiêu đề",
@@ -253,6 +265,7 @@
       "pendingApproval": "Chờ duyệt",
       "sentToVendor": "Đã gửi NCC",
       "partiallyReceived": "Nhận một phần",
+      "openPurchaseOrders": "Mở danh sách PO",
       "workload": "Khối lượng thu mua",
       "workloadHint": "RFQ, GR và invoice cần xử lý.",
       "openRfqs": "RFQ mở",
@@ -274,6 +287,10 @@
       "departmentBudgetHint": "Số dư ngân sách còn khả dụng cho phòng ban.",
       "recentPrs": "Yêu cầu gần đây",
       "recentPrsHint": "Các PR mới nhất của tài khoản hiện tại.",
+      "totalPrs": "{{count}} PR trong bộ lọc hiện tại",
+      "createPr": "Tạo PR",
+      "openPrList": "Mở danh sách PR",
+      "recentPrsRouteNote": "Dashboard hiện chỉ có mã PR; mở danh sách PR để vào detail bằng UUID.",
       "col": {
         "pr": "PR",
         "title": "Tiêu đề",

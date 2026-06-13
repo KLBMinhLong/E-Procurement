@@ -273,6 +273,10 @@ select {
   padding: var(--spacing-3);
 }
 
+.chart-frame--requester {
+  min-height: 14rem;
+}
+
 .chart-frame--line,
 .chart-frame--compact-bar {
   height: 13rem;
@@ -477,6 +481,72 @@ select {
   height: 0.875rem;
 }
 
+.workflow-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.workflow-toolbar__links,
+.workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.panel-link,
+.workflow-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  border-radius: var(--radius-2);
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  cursor: pointer;
+}
+
+.panel-link {
+  padding: var(--spacing-1) var(--spacing-2);
+}
+
+.workflow-action {
+  width: 100%;
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  background: var(--color-surface-raised);
+}
+
+.panel-link:hover,
+.panel-link:focus-visible,
+.workflow-action:hover,
+.workflow-action:focus-visible,
+.three-counts--links a:hover,
+.three-counts--links a:focus-visible {
+  color: var(--color-accent-hover);
+  background: var(--color-accent-subtle);
+  outline: none;
+}
+
+.workflow-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+}
+
+.requester-workflow-grid {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.8fr) minmax(0, 1.2fr);
+  gap: var(--spacing-3);
+  align-items: center;
+}
+
 .three-counts,
 .requester-stats {
   display: grid;
@@ -489,6 +559,7 @@ select {
 }
 
 .three-counts div,
+.three-counts a,
 .requester-stats div {
   display: flex;
   flex-direction: column;
@@ -510,6 +581,13 @@ select {
     font-size: var(--font-size-xs);
     font-weight: 700;
   }
+}
+
+.three-counts a {
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  cursor: pointer;
 }
 
 .pipeline-stack {
@@ -567,6 +645,28 @@ select {
 
 .mono {
   font-family: var(--font-mono);
+}
+
+.table-meter {
+  overflow: hidden;
+  width: min(8rem, 100%);
+  height: 0.5rem;
+  margin-bottom: var(--spacing-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-subtle);
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-accent);
+  }
+}
+
+.table-meter__value {
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
 }
 
 .large-amount {
@@ -706,6 +806,7 @@ select {
   .kpi-table-stack,
   .three-counts,
   .requester-stats,
+  .requester-workflow-grid,
   .sla-summary dl,
   .dense-dl {
     grid-template-columns: 1fr;

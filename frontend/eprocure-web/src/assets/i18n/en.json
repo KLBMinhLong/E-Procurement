@@ -163,6 +163,7 @@
       "cycleTrendAria": "Line chart for weekly average cycle time",
       "priorityCycleAria": "Bar chart for average cycle time by priority",
       "slaRoleAria": "Bar chart for SLA compliance by approval role",
+      "requesterStatusAria": "Doughnut chart for personal PR status distribution",
       "prCountAria": "Monthly PR count"
     },
     "empty": {
@@ -203,6 +204,11 @@
         "UNKNOWN": "Unclassified"
       }
     },
+    "budgetHealth": {
+      "good": "Healthy budget",
+      "watch": "Needs monitoring",
+      "risk": "Budget risk"
+    },
     "executive": {
       "departmentSpend": "Department spend",
       "departmentSpendHint": "Compare actual spend with budget and utilization status.",
@@ -227,17 +233,23 @@
       "committed": "Committed",
       "spent": "Spent",
       "available": "Available",
+      "forecastRunOutDate": "Forecast run-out date: {{date}}",
+      "openBudgets": "Open budgets",
       "pendingApprovals": "Pending approvals",
       "pendingApprovalsHint": "Workload requiring action and SLA risk.",
+      "openApprovals": "Open approval inbox",
       "pending": "Pending",
       "overdue": "Overdue",
       "urgent": "Urgent",
       "recentPrs": "Recent PRs",
       "recentPrsHint": "Latest requests in the department scope.",
+      "recentPrsRouteNote": "Dashboard rows currently expose PR number only; open the PR list to enter detail by UUID.",
+      "openPrList": "Open PR list",
       "slaWarnings": "SLA warnings",
       "slaWarningsHint": "Tasks near or past due.",
       "slaOverdue": "Overdue",
       "slaNear": "Near due",
+      "reviewSlaTasks": "Review SLA tasks",
       "col": {
         "pr": "PR",
         "title": "Title",
@@ -253,6 +265,7 @@
       "pendingApproval": "Pending approval",
       "sentToVendor": "Sent to vendor",
       "partiallyReceived": "Partially received",
+      "openPurchaseOrders": "Open purchase orders",
       "workload": "Purchasing workload",
       "workloadHint": "RFQ, GR, and invoices requiring action.",
       "openRfqs": "Open RFQs",
@@ -274,6 +287,10 @@
       "departmentBudgetHint": "Available department budget balance.",
       "recentPrs": "Recent requests",
       "recentPrsHint": "Latest PRs for the current account.",
+      "totalPrs": "{{count}} PRs in the current filter",
+      "createPr": "Create PR",
+      "openPrList": "Open PR list",
+      "recentPrsRouteNote": "Dashboard rows currently expose PR number only; open the PR list to enter detail by UUID.",
       "col": {
         "pr": "PR",
         "title": "Title",

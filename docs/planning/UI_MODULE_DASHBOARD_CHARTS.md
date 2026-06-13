@@ -196,6 +196,8 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 
 ### Slice 8e — Role dashboards thành workflow hub
 
+**Trạng thái 2026-06-14:** ✅ Hoàn thành frontend. Manager có budget health/forecast + link budgets/approvals, Purchasing có workflow links PO/RFQ/GR/Invoice và vendor meters, Requester có status doughnut chart + CTA tạo PR theo permission. Recent PR rows chưa link detail vì projection hiện chỉ có `prNumber`, chưa có UUID route id.
+
 | Tab | Nâng cấp |
 |---|---|
 | Manager | Budget meter rõ allocated/committed/spent/available, forecast run-out date, pending approval link sang `/approvals`, recent PR rows có link sang PR detail |

@@ -207,6 +207,15 @@
             <p>{{ 'dashboard.manager.budgetHint' | translate }}</p>
           </div>
         </div>
+        <div class="workflow-toolbar">
+          <ep-badge [tone]="budgetHealthTone(manager.budgetStatus.availablePct)" [labelKey]="budgetHealthLabelKey(manager.budgetStatus.availablePct)" />
+          @if (canAny(['BUDGET_VIEW_OWN_DEPT', 'BUDGET_VIEW_ALL'])) {
+            <a class="panel-link" routerLink="/finance/budgets">
+              <ep-icon name="external-link" [size]="14" />
+              <span>{{ 'dashboard.manager.openBudgets' | translate }}</span>
+            </a>
+          }
+        </div>
         <div class="budget-meter">
           <span [style.width]="utilizationWidth(manager.budgetStatus.availablePct)"></span>
         </div>
@@ -216,6 +225,11 @@
           <div><dt>{{ 'dashboard.manager.spent' | translate }}</dt><dd><ep-amount [value]="money(manager.budgetStatus.spent)" /></dd></div>
           <div><dt>{{ 'dashboard.manager.available' | translate }}</dt><dd><ep-amount [value]="money(manager.budgetStatus.available)" /></dd></div>
         </dl>
+        @if (manager.budgetStatus.forecastRunOutDate) {
+          <p class="workflow-note">
+            {{ 'dashboard.manager.forecastRunOutDate' | translate: { date: formatDate(manager.budgetStatus.forecastRunOutDate) } }}
+          </p>
+        }
       </section>
 
       <section class="dashboard-panel" aria-labelledby="manager-approval-heading">
@@ -231,6 +245,12 @@
           <div><strong>{{ manager.pendingApprovals.overdueCount }}</strong><span>{{ 'dashboard.manager.overdue' | translate }}</span></div>
           <div><strong>{{ manager.pendingApprovals.urgentCount }}</strong><span>{{ 'dashboard.manager.urgent' | translate }}</span></div>
         </div>
+        <div class="workflow-actions">
+          <a class="workflow-action" routerLink="/approvals">
+            <ep-icon name="inbox" />
+            <span>{{ 'dashboard.manager.openApprovals' | translate }}</span>
+          </a>
+        </div>
       </section>
 
       <section class="dashboard-panel dashboard-panel--wide" aria-labelledby="manager-recent-heading">
@@ -240,6 +260,15 @@
             <h2 id="manager-recent-heading">{{ 'dashboard.manager.recentPrs' | translate }}</h2>
             <p>{{ 'dashboard.manager.recentPrsHint' | translate }}</p>
           </div>
+        </div>
+        <div class="workflow-toolbar">
+          <span class="workflow-note">{{ 'dashboard.manager.recentPrsRouteNote' | translate }}</span>
+          @if (canAny(['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'])) {
+            <a class="panel-link" routerLink="/procurement">
+              <ep-icon name="external-link" [size]="14" />
+              <span>{{ 'dashboard.manager.openPrList' | translate }}</span>
+            </a>
+          }
         </div>
         <table class="dense-table">
           <thead>
@@ -282,6 +311,12 @@
             </div>
           }
         </div>
+        <div class="workflow-actions">
+          <a class="workflow-action" routerLink="/approvals">
+            <ep-icon name="alarm-clock-check" />
+            <span>{{ 'dashboard.manager.reviewSlaTasks' | translate }}</span>
+          </a>
+        </div>
       </section>
     </div>
   }
@@ -308,6 +343,14 @@
           <div><dt>{{ 'dashboard.purchasing.sentToVendor' | translate }}</dt><dd>{{ purchasing.poPipeline.sentToVendor }}</dd></div>
           <div><dt>{{ 'dashboard.purchasing.partiallyReceived' | translate }}</dt><dd>{{ purchasing.poPipeline.partiallyReceived }}</dd></div>
         </dl>
+        @if (canAny(['PO_VIEW_OWN', 'PO_VIEW_ALL'])) {
+          <div class="workflow-actions">
+            <a class="workflow-action" routerLink="/finance/purchase-orders">
+              <ep-icon name="receipt-text" />
+              <span>{{ 'dashboard.purchasing.openPurchaseOrders' | translate }}</span>
+            </a>
+          </div>
+        }
       </section>
 
       <section class="dashboard-panel" aria-labelledby="purchasing-workload-heading">
@@ -318,10 +361,31 @@
             <p>{{ 'dashboard.purchasing.workloadHint' | translate }}</p>
           </div>
         </div>
-        <div class="three-counts">
-          <div><strong>{{ purchasing.openRfqs }}</strong><span>{{ 'dashboard.purchasing.openRfqs' | translate }}</span></div>
-          <div><strong>{{ purchasing.grPending }}</strong><span>{{ 'dashboard.purchasing.grPending' | translate }}</span></div>
-          <div><strong>{{ purchasing.invoicesPendingMatch }}</strong><span>{{ 'dashboard.purchasing.invoicesPendingMatch' | translate }}</span></div>
+        <div class="three-counts three-counts--links">
+          @if (can('RFQ_VIEW')) {
+            <a routerLink="/vendors/rfq">
+              <strong>{{ purchasing.openRfqs }}</strong>
+              <span>{{ 'dashboard.purchasing.openRfqs' | translate }}</span>
+            </a>
+          } @else {
+            <div><strong>{{ purchasing.openRfqs }}</strong><span>{{ 'dashboard.purchasing.openRfqs' | translate }}</span></div>
+          }
+          @if (can('GR_VIEW')) {
+            <a routerLink="/inventory/goods-receipts">
+              <strong>{{ purchasing.grPending }}</strong>
+              <span>{{ 'dashboard.purchasing.grPending' | translate }}</span>
+            </a>
+          } @else {
+            <div><strong>{{ purchasing.grPending }}</strong><span>{{ 'dashboard.purchasing.grPending' | translate }}</span></div>
+          }
+          @if (can('INVOICE_VIEW')) {
+            <a routerLink="/finance/invoices">
+              <strong>{{ purchasing.invoicesPendingMatch }}</strong>
+              <span>{{ 'dashboard.purchasing.invoicesPendingMatch' | translate }}</span>
+            </a>
+          } @else {
+            <div><strong>{{ purchasing.invoicesPendingMatch }}</strong><span>{{ 'dashboard.purchasing.invoicesPendingMatch' | translate }}</span></div>
+          }
         </div>
       </section>
 
@@ -346,8 +410,18 @@
             @for (vendor of purchasing.vendorPerformance; track vendor.vendorName) {
               <tr>
                 <td>{{ vendor.vendorName }}</td>
-                <td>{{ percent(vendor.onTimeDelivery) }}</td>
-                <td>{{ vendor.qualityScore }}</td>
+                <td>
+                  <div class="table-meter">
+                    <span [style.width]="utilizationWidth(vendor.onTimeDelivery)"></span>
+                  </div>
+                  <strong class="table-meter__value">{{ percent(vendor.onTimeDelivery) }}</strong>
+                </td>
+                <td>
+                  <div class="table-meter">
+                    <span [style.width]="utilizationWidth(vendor.qualityScore)"></span>
+                  </div>
+                  <strong class="table-meter__value">{{ vendor.qualityScore }}</strong>
+                </td>
                 <td class="align-right">{{ vendor.pendingOrders }}</td>
               </tr>
             }
@@ -367,12 +441,44 @@
             <p>{{ 'dashboard.requester.myPrStatsHint' | translate }}</p>
           </div>
         </div>
-        <div class="requester-stats">
-          <div><strong>{{ requester.myPrStats.draft }}</strong><span>{{ 'pr.status.DRAFT' | translate }}</span></div>
-          <div><strong>{{ requester.myPrStats.pendingApproval }}</strong><span>{{ 'pr.status.PENDING_APPROVAL' | translate }}</span></div>
-          <div><strong>{{ requester.myPrStats.changesRequested }}</strong><span>{{ 'pr.status.CHANGES_REQUESTED' | translate }}</span></div>
-          <div><strong>{{ requester.myPrStats.approved }}</strong><span>{{ 'pr.status.APPROVED' | translate }}</span></div>
-          <div><strong>{{ requester.myPrStats.rejected }}</strong><span>{{ 'pr.status.REJECTED' | translate }}</span></div>
+        <div class="workflow-toolbar">
+          <span class="workflow-note">{{ 'dashboard.requester.totalPrs' | translate: { count: totalRequesterRequests(requester) } }}</span>
+          <div class="workflow-toolbar__links">
+            @if (can('PR_CREATE')) {
+              <a class="panel-link" routerLink="/procurement/create">
+                <ep-icon name="plus" [size]="14" />
+                <span>{{ 'dashboard.requester.createPr' | translate }}</span>
+              </a>
+            }
+            @if (canAny(['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'])) {
+              <a class="panel-link" routerLink="/procurement">
+                <ep-icon name="external-link" [size]="14" />
+                <span>{{ 'dashboard.requester.openPrList' | translate }}</span>
+              </a>
+            }
+          </div>
+        </div>
+        <div class="requester-workflow-grid">
+          @if (hasRequesterStatusData(requester)) {
+            <div class="chart-frame chart-frame--doughnut chart-frame--requester">
+              <canvas
+                baseChart
+                [type]="'doughnut'"
+                [data]="requesterStatusChartData()"
+                [options]="requesterStatusChartOptions()"
+                [attr.aria-label]="'dashboard.chart.requesterStatusAria' | translate">
+              </canvas>
+            </div>
+          } @else {
+            <ep-empty-state icon="clipboard-list" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+          }
+          <div class="requester-stats">
+            <div><strong>{{ requester.myPrStats.draft }}</strong><span>{{ 'pr.status.DRAFT' | translate }}</span></div>
+            <div><strong>{{ requester.myPrStats.pendingApproval }}</strong><span>{{ 'pr.status.PENDING_APPROVAL' | translate }}</span></div>
+            <div><strong>{{ requester.myPrStats.changesRequested }}</strong><span>{{ 'pr.status.CHANGES_REQUESTED' | translate }}</span></div>
+            <div><strong>{{ requester.myPrStats.approved }}</strong><span>{{ 'pr.status.APPROVED' | translate }}</span></div>
+            <div><strong>{{ requester.myPrStats.rejected }}</strong><span>{{ 'pr.status.REJECTED' | translate }}</span></div>
+          </div>
         </div>
       </section>
 
@@ -383,6 +489,15 @@
             <h2 id="requester-budget-heading">{{ 'dashboard.requester.departmentBudget' | translate }}</h2>
             <p>{{ 'dashboard.requester.departmentBudgetHint' | translate }}</p>
           </div>
+        </div>
+        <div class="workflow-toolbar">
+          <ep-badge [tone]="budgetHealthTone(requester.departmentBudget.availablePct)" [labelKey]="budgetHealthLabelKey(requester.departmentBudget.availablePct)" />
+          @if (canAny(['BUDGET_VIEW_OWN_DEPT', 'BUDGET_VIEW_ALL'])) {
+            <a class="panel-link" routerLink="/finance/budgets">
+              <ep-icon name="external-link" [size]="14" />
+              <span>{{ 'dashboard.manager.openBudgets' | translate }}</span>
+            </a>
+          }
         </div>
         <strong class="large-amount"><ep-amount [value]="money(requester.departmentBudget.available)" /></strong>
         <div class="budget-meter">
@@ -398,6 +513,15 @@
             <h2 id="requester-recent-heading">{{ 'dashboard.requester.recentPrs' | translate }}</h2>
             <p>{{ 'dashboard.requester.recentPrsHint' | translate }}</p>
           </div>
+        </div>
+        <div class="workflow-toolbar">
+          <span class="workflow-note">{{ 'dashboard.requester.recentPrsRouteNote' | translate }}</span>
+          @if (canAny(['PR_VIEW_OWN', 'PR_VIEW_DEPARTMENT', 'PR_VIEW_ALL'])) {
+            <a class="panel-link" routerLink="/procurement">
+              <ep-icon name="external-link" [size]="14" />
+              <span>{{ 'dashboard.requester.openPrList' | translate }}</span>
+            </a>
+          }
         </div>
         <table class="dense-table">
           <thead>

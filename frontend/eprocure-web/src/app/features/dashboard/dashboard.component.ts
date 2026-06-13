@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
 import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
@@ -102,6 +102,7 @@ const DATA_STALE_MS = 5 * 60 * 1000;
     EpIconComponent,
     EpSkeletonComponent,
     DashboardControlBarComponent,
+    RouterLink,
     BaseChartDirective
   ],
   providers: [provideCharts(withDefaultRegisterables())],
@@ -296,12 +297,42 @@ export class DashboardComponent implements OnInit {
       ]
     };
   });
+  readonly requesterStatusChartData = computed<ChartData<'doughnut', number[], string>>(() => {
+    const theme = this.chartTheme();
+    const stats = this.requesterDashboard()?.myPrStats;
+    return {
+      labels: [
+        this.translate('pr.status.DRAFT'),
+        this.translate('pr.status.PENDING_APPROVAL'),
+        this.translate('pr.status.CHANGES_REQUESTED'),
+        this.translate('pr.status.APPROVED'),
+        this.translate('pr.status.REJECTED')
+      ],
+      datasets: [
+        {
+          data: stats
+            ? [stats.draft, stats.pendingApproval, stats.changesRequested, stats.approved, stats.rejected]
+            : [],
+          backgroundColor: [
+            theme.textMuted,
+            theme.warning,
+            theme.info,
+            theme.success,
+            theme.danger
+          ],
+          borderColor: theme.surface,
+          borderWidth: 2
+        }
+      ]
+    };
+  });
   readonly monthlyTrendChartOptions = computed<ChartOptions<'bar'>>(() => this.currencyBarOptions(this.chartTheme()));
   readonly categorySpendChartOptions = computed<ChartOptions<'doughnut'>>(() => this.doughnutOptions(this.chartTheme()));
   readonly approvalSlaGaugeChartOptions = computed<ChartOptions<'doughnut'>>(() => this.gaugeOptions(this.chartTheme()));
   readonly cycleTimeTrendChartOptions = computed<ChartOptions<'line'>>(() => this.hoursLineOptions(this.chartTheme()));
   readonly priorityCycleTimeChartOptions = computed<ChartOptions<'bar'>>(() => this.hoursBarOptions(this.chartTheme()));
   readonly slaRoleComplianceChartOptions = computed<ChartOptions<'bar'>>(() => this.percentBarOptions(this.chartTheme()));
+  readonly requesterStatusChartOptions = computed<ChartOptions<'doughnut'>>(() => this.doughnutOptions(this.chartTheme()));
 
   readonly filterForm = new FormGroup({
     fiscalYear: new FormControl(this.currentYear, { nonNullable: true, validators: [Validators.required] }),
@@ -533,6 +564,49 @@ export class DashboardComponent implements OnInit {
 
   hasWorstApprovers(kpi: SlaComplianceKpi): boolean {
     return kpi.worstApprovers.length > 0;
+  }
+
+  hasRequesterStatusData(dashboard: RequesterDashboard): boolean {
+    return this.totalRequesterRequests(dashboard) > 0;
+  }
+
+  totalRequesterRequests(dashboard: RequesterDashboard): number {
+    const stats = dashboard.myPrStats;
+    return stats.draft
+      + stats.pendingApproval
+      + stats.changesRequested
+      + stats.approved
+      + stats.rejected;
+  }
+
+  can(permission: string): boolean {
+    return this.permissionService.hasPermission(permission);
+  }
+
+  canAny(permissions: string[]): boolean {
+    return this.permissionService.hasAnyPermission(permissions);
+  }
+
+  budgetHealthTone(value: string | number | null | undefined): EpBadgeTone {
+    const availablePct = this.numeric(value);
+    if (availablePct >= 30) {
+      return 'success';
+    }
+    if (availablePct >= 15) {
+      return 'warning';
+    }
+    return 'danger';
+  }
+
+  budgetHealthLabelKey(value: string | number | null | undefined): string {
+    const availablePct = this.numeric(value);
+    if (availablePct >= 30) {
+      return 'dashboard.budgetHealth.good';
+    }
+    if (availablePct >= 15) {
+      return 'dashboard.budgetHealth.watch';
+    }
+    return 'dashboard.budgetHealth.risk';
   }
 
   formatDate(iso: string | null | undefined): string {
