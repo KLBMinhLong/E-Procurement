@@ -159,6 +159,8 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 
 ### Slice 8b — Dashboard shell UX: filters, URL state, refresh
 
+**Trạng thái 2026-06-13:** ✅ Hoàn thành. Đã tách `ep-dashboard-control-bar` để giữ `DashboardComponent` tập trung orchestration, sync tab vào `?tab=...`, thêm data freshness strip, auto-refresh 5 phút khi document visible, guard chống request chồng, và department dropdown từ IAM với fallback nhập UUID.
+
 | Việc | Chi tiết |
 |---|---|
 | URL-driven tab | Sync `activeTab` với query param `?tab=executive|manager|purchasing|requester|reports` để share/bookmark |

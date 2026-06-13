@@ -123,8 +123,19 @@
       "quarterValue": "Quý {{quarter}}",
       "fromDate": "Từ ngày",
       "toDate": "Đến ngày",
+      "department": "Phòng ban",
       "departmentId": "Department UUID",
-      "departmentPlaceholder": "Lọc KPI theo phòng ban nếu cần"
+      "departmentPlaceholder": "Nhập UUID phòng ban",
+      "allDepartments": "Tất cả phòng ban",
+      "departmentLoading": "Đang tải danh sách phòng ban...",
+      "departmentLoadFailed": "Không tải được danh sách phòng ban, có thể nhập UUID thủ công."
+    },
+    "data": {
+      "label": "Trạng thái dữ liệu dashboard",
+      "lastUpdated": "Cập nhật lúc {{time}}",
+      "cachedAt": "Cache lúc {{time}}",
+      "notLoaded": "Chưa tải dữ liệu",
+      "stale": "Dữ liệu có thể đã cũ"
     },
     "tabs": {
       "label": "Nhóm dashboard",

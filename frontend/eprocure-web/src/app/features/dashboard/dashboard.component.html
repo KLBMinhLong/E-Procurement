@@ -1,62 +1,19 @@
 <section class="dashboard-page" aria-labelledby="dashboard-heading">
-  <ep-breadcrumb />
-
-  <div class="page-header">
-    <div class="page-header__meta">
-      <span class="page-header__eyebrow">{{ 'dashboard.eyebrow' | translate }}</span>
-      <h1 id="dashboard-heading" class="page-header__title">{{ 'dashboard.title' | translate }}</h1>
-      <p class="page-header__subtitle">{{ 'dashboard.subtitle' | translate }}</p>
-    </div>
-    <div class="page-header__actions">
-      <ep-button id="btn-dashboard-refresh" variant="secondary" icon="refresh-cw" [loading]="isLoadingDashboard() || isLoadingKpi()" (click)="reload()">
-        {{ 'dashboard.action.refresh' | translate }}
-      </ep-button>
-    </div>
-  </div>
-
-  <form class="filter-panel" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
-    <ep-form-field [label]="'dashboard.filter.fiscalYear' | translate">
-      <input id="dashboard-fiscal-year" type="number" formControlName="fiscalYear">
-    </ep-form-field>
-    <ep-form-field [label]="'dashboard.filter.quarter' | translate">
-      <select id="dashboard-quarter" formControlName="quarter">
-        <option [ngValue]="null">{{ 'dashboard.filter.allQuarters' | translate }}</option>
-        @for (quarter of quarters; track quarter) {
-          <option [ngValue]="quarter">{{ 'dashboard.filter.quarterValue' | translate: { quarter } }}</option>
-        }
-      </select>
-    </ep-form-field>
-    <ep-form-field [label]="'dashboard.filter.fromDate' | translate">
-      <input id="dashboard-from-date" type="date" formControlName="fromDate">
-    </ep-form-field>
-    <ep-form-field [label]="'dashboard.filter.toDate' | translate">
-      <input id="dashboard-to-date" type="date" formControlName="toDate">
-    </ep-form-field>
-    <ep-form-field [label]="'dashboard.filter.departmentId' | translate">
-      <input
-        id="dashboard-department-id"
-        type="text"
-        autocomplete="off"
-        formControlName="departmentId"
-        [placeholder]="'dashboard.filter.departmentPlaceholder' | translate">
-    </ep-form-field>
-    <ep-button id="btn-apply-dashboard-filter" type="submit" variant="primary" icon="filter">
-      {{ 'dashboard.action.apply' | translate }}
-    </ep-button>
-  </form>
-
-  <nav class="dashboard-tabs" [attr.aria-label]="'dashboard.tabs.label' | translate">
-    @for (tab of tabs(); track tab.id) {
-      <button
-        type="button"
-        class="dashboard-tab"
-        [class.dashboard-tab--active]="activeTab() === tab.id"
-        [attr.aria-current]="activeTab() === tab.id ? 'page' : null"
-        (click)="setTab(tab.id)">
-        {{ tab.labelKey | translate }}
-      </button>
-    }
-  </nav>
+  <ep-dashboard-control-bar
+    [filterForm]="filterForm"
+    [tabs]="tabs()"
+    [quarters]="quarters"
+    [activeTab]="activeTab()"
+    [departmentOptions]="departmentOptions()"
+    [departmentsLoading]="isLoadingDepartments()"
+    [departmentsLoadFailed]="departmentsLoadFailed()"
+    [refreshing]="isRefreshing()"
+    [lastUpdatedLabel]="lastUpdatedLabel()"
+    [cachedAtLabel]="cachedAtLabel()"
+    [dataStale]="dataStale()"
+    (applyFilters)="applyFilters()"
+    (refreshDashboard)="reload()"
+    (tabChange)="setTab($event)" />
 
   @if (isLoadingDashboard()) {
     <ep-skeleton [rows]="8" />

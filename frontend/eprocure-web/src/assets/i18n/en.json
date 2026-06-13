@@ -123,8 +123,19 @@
       "quarterValue": "Q{{quarter}}",
       "fromDate": "From date",
       "toDate": "To date",
+      "department": "Department",
       "departmentId": "Department UUID",
-      "departmentPlaceholder": "Filter KPI by department if needed"
+      "departmentPlaceholder": "Enter department UUID",
+      "allDepartments": "All departments",
+      "departmentLoading": "Loading departments...",
+      "departmentLoadFailed": "Could not load departments. You can enter a department UUID manually."
+    },
+    "data": {
+      "label": "Dashboard data status",
+      "lastUpdated": "Updated at {{time}}",
+      "cachedAt": "Cached at {{time}}",
+      "notLoaded": "Data not loaded yet",
+      "stale": "Data may be stale"
     },
     "tabs": {
       "label": "Dashboard group",

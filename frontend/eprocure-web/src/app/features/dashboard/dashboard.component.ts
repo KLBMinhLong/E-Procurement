@@ -1,16 +1,18 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, interval } from 'rxjs';
 
+import { AdminDepartment } from '../admin/models/admin.model';
+import { AdminOrgService } from '../admin/services/admin-org.service';
 import { PermissionService } from '../../core/permissions/permission.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EpAmountComponent } from '../../shared/components/ep-amount/ep-amount.component';
 import { EpBadgeComponent, EpBadgeTone } from '../../shared/components/ep-badge/ep-badge.component';
-import { EpBreadcrumbComponent } from '../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../shared/components/ep-button/ep-button.component';
 import { EpEmptyStateComponent } from '../../shared/components/ep-empty-state/ep-empty-state.component';
 import { EpFormFieldComponent } from '../../shared/components/ep-form-field/ep-form-field.component';
@@ -36,8 +38,8 @@ import {
   analyticsMoney
 } from './analytics.model';
 import { AnalyticsService } from './analytics.service';
-
-type DashboardTab = 'executive' | 'manager' | 'purchasing' | 'requester' | 'reports';
+import { DashboardControlBarComponent } from './dashboard-control-bar.component';
+import { DashboardDepartmentOption, DashboardTab, DashboardTabItem } from './dashboard-ui.model';
 
 interface DashboardChartTheme {
   accent: string;
@@ -82,6 +84,10 @@ const DEFAULT_CHART_THEME: DashboardChartTheme = {
   textPrimary: '#f8fafc'
 };
 
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const FRESHNESS_TICK_MS = 60 * 1000;
+const DATA_STALE_MS = 5 * 60 * 1000;
+
 @Component({
   selector: 'ep-dashboard',
   standalone: true,
@@ -90,12 +96,12 @@ const DEFAULT_CHART_THEME: DashboardChartTheme = {
     TranslatePipe,
     EpAmountComponent,
     EpBadgeComponent,
-    EpBreadcrumbComponent,
     EpButtonComponent,
     EpEmptyStateComponent,
     EpFormFieldComponent,
     EpIconComponent,
-    EpSkeletonComponent
+    EpSkeletonComponent,
+    DashboardControlBarComponent
   ],
   providers: [provideCharts(withDefaultRegisterables())],
   templateUrl: './dashboard.component.html',
@@ -103,7 +109,10 @@ const DEFAULT_CHART_THEME: DashboardChartTheme = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly analyticsService = inject(AnalyticsService);
+  private readonly adminOrgService = inject(AdminOrgService);
   private readonly permissionService = inject(PermissionService);
   private readonly toastService = inject(ToastService);
   private readonly translateService = inject(TranslateService);
@@ -123,20 +132,42 @@ export class DashboardComponent implements OnInit {
   readonly refreshingJobId = signal<string | null>(null);
   readonly downloadingJobId = signal<string | null>(null);
   readonly chartTheme = signal<DashboardChartTheme>(DEFAULT_CHART_THEME);
+  readonly departmentOptions = signal<DashboardDepartmentOption[]>([]);
+  readonly isLoadingDepartments = signal(false);
+  readonly departmentsLoadFailed = signal(false);
+  readonly lastDashboardUpdatedAt = signal<string | null>(null);
+  readonly freshnessClock = signal(Date.now());
   private readonly chartTextVersion = signal(0);
 
   readonly kpiTone = KPI_TONE;
   readonly jobTone = JOB_TONE;
   readonly currentYear = new Date().getFullYear();
-  readonly tabs = computed(() => [
+  readonly tabs = computed<DashboardTabItem[]>(() => [
     { id: 'executive' as const, labelKey: 'dashboard.tabs.executive', permissions: ['REPORT_VIEW'] },
     { id: 'manager' as const, labelKey: 'dashboard.tabs.manager', permissions: ['BUDGET_VIEW_OWN_DEPT', 'BUDGET_VIEW_ALL'] },
     { id: 'purchasing' as const, labelKey: 'dashboard.tabs.purchasing', permissions: ['PO_VIEW_ALL'] },
     { id: 'requester' as const, labelKey: 'dashboard.tabs.requester', permissions: ['PR_VIEW_OWN'] },
     { id: 'reports' as const, labelKey: 'dashboard.tabs.reports', permissions: ['REPORT_EXPORT'] }
   ].filter((tab) => this.permissionService.hasAnyPermission(tab.permissions)));
+  readonly isRefreshing = computed(() => this.isLoadingDashboard() || this.isLoadingKpi());
   readonly canViewReports = computed(() => this.permissionService.hasPermission('REPORT_EXPORT'));
   readonly canViewExecutive = computed(() => this.permissionService.hasPermission('REPORT_VIEW'));
+  readonly lastUpdatedLabel = computed(() => {
+    const value = this.lastDashboardUpdatedAt();
+    return value ? this.formatDateTime(value) : null;
+  });
+  readonly cachedAtLabel = computed(() => {
+    const cachedAt = this.executiveDashboard()?.cachedAt;
+    return cachedAt ? this.formatDateTime(cachedAt) : null;
+  });
+  readonly dataStale = computed(() => {
+    this.freshnessClock();
+    const source = this.executiveDashboard()?.cachedAt ?? this.lastDashboardUpdatedAt();
+    if (!source) {
+      return false;
+    }
+    return Date.now() - new Date(source).getTime() > DATA_STALE_MS;
+  });
   readonly visibleKpis = computed(() => this.executiveDashboard()?.kpis ?? []);
   readonly maxDepartmentSpend = computed(() => this.maxOf(this.executiveDashboard()?.spendByDepartment ?? [], 'spent'));
   readonly maxCategorySpend = computed(() => this.maxPoint(this.executiveDashboard()?.spendByCategory ?? []));
@@ -313,24 +344,33 @@ export class DashboardComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.chartTextVersion.update((version) => version + 1));
 
-    const firstTab = this.tabs()[0]?.id ?? 'requester';
-    this.activeTab.set(firstTab);
-    this.loadDashboards();
-    this.loadKpis();
+    this.initializeTabFromUrl();
+    this.bindTabQueryParam();
+    this.loadDepartments();
+    this.startFreshnessClock();
+    this.startAutoRefresh();
+    this.reload();
   }
 
   setTab(tab: DashboardTab): void {
+    if (this.activeTab() === tab) {
+      return;
+    }
     this.activeTab.set(tab);
+    this.syncTabQueryParam(tab);
   }
 
   reload(): void {
+    if (this.isRefreshing()) {
+      return;
+    }
     this.loadDashboards();
     this.loadKpis();
   }
 
   applyFilters(): void {
     this.filterForm.markAllAsTouched();
-    if (this.filterForm.invalid) {
+    if (this.filterForm.invalid || this.isRefreshing()) {
       return;
     }
     this.loadDashboards();
@@ -451,6 +491,125 @@ export class DashboardComponent implements OnInit {
       month: '2-digit',
       year: 'numeric'
     }).format(new Date(iso));
+  }
+
+  private initializeTabFromUrl(): void {
+    const rawTab = this.route.snapshot.queryParamMap.get('tab');
+    const tab = this.resolveVisibleTab(rawTab);
+    this.activeTab.set(tab);
+    if (rawTab !== tab) {
+      this.syncTabQueryParam(tab, true);
+    }
+  }
+
+  private bindTabQueryParam(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const rawTab = params.get('tab');
+        const tab = this.resolveVisibleTab(rawTab);
+        if (this.activeTab() !== tab) {
+          this.activeTab.set(tab);
+        }
+        if (rawTab !== tab) {
+          this.syncTabQueryParam(tab, true);
+        }
+      });
+  }
+
+  private syncTabQueryParam(tab: DashboardTab, replaceUrl = false): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+      replaceUrl
+    });
+  }
+
+  private resolveVisibleTab(value: string | null): DashboardTab {
+    const visibleTabs = this.tabs();
+    if (this.isDashboardTab(value) && visibleTabs.some((tab) => tab.id === value)) {
+      return value;
+    }
+    return visibleTabs[0]?.id ?? 'requester';
+  }
+
+  private isDashboardTab(value: string | null): value is DashboardTab {
+    return value === 'executive'
+      || value === 'manager'
+      || value === 'purchasing'
+      || value === 'requester'
+      || value === 'reports';
+  }
+
+  private loadDepartments(): void {
+    this.isLoadingDepartments.set(true);
+    this.departmentsLoadFailed.set(false);
+    this.adminOrgService.getDepartments()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoadingDepartments.set(false))
+      )
+      .subscribe({
+        next: (res) => {
+          const options = this.flattenDepartmentOptions(res.data ?? []);
+          const selectedDepartmentId = this.filterForm.controls.departmentId.value.trim();
+          if (selectedDepartmentId && !options.some((option) => option.id === selectedDepartmentId)) {
+            options.unshift({ id: selectedDepartmentId, label: selectedDepartmentId });
+          }
+          this.departmentOptions.set(options);
+        },
+        error: () => {
+          this.departmentOptions.set([]);
+          this.departmentsLoadFailed.set(true);
+        }
+      });
+  }
+
+  private flattenDepartmentOptions(departments: AdminDepartment[]): DashboardDepartmentOption[] {
+    const seen = new Set<string>();
+    const options: DashboardDepartmentOption[] = [];
+    const visit = (items: AdminDepartment[], depth: number) => {
+      items.forEach((department) => {
+        if (seen.has(department.id)) {
+          return;
+        }
+        seen.add(department.id);
+        const prefix = depth > 0 ? `${'--'.repeat(depth)} ` : '';
+        options.push({
+          id: department.id,
+          label: `${prefix}${department.name} (${department.code})`
+        });
+        if (department.children?.length) {
+          visit(department.children, depth + 1);
+        }
+      });
+    };
+    visit(departments, 0);
+    return options;
+  }
+
+  private startFreshnessClock(): void {
+    interval(FRESHNESS_TICK_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.freshnessClock.set(Date.now()));
+  }
+
+  private startAutoRefresh(): void {
+    interval(AUTO_REFRESH_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (typeof document !== 'undefined' && document.hidden) {
+          return;
+        }
+        this.reload();
+      });
+  }
+
+  private markDashboardLoaded(): void {
+    const now = new Date().toISOString();
+    this.lastDashboardUpdatedAt.set(now);
+    this.freshnessClock.set(Date.now());
   }
 
   private resolveChartTheme(): void {
@@ -695,6 +854,7 @@ export class DashboardComponent implements OnInit {
       pending -= 1;
       if (pending <= 0) {
         this.isLoadingDashboard.set(false);
+        this.markDashboardLoaded();
       }
     };
 
@@ -759,12 +919,16 @@ export class DashboardComponent implements OnInit {
 
     if (pending === 0) {
       this.isLoadingDashboard.set(false);
+      this.lastDashboardUpdatedAt.set(null);
       return;
     }
   }
 
   private loadKpis(): void {
     if (!this.canViewExecutive()) {
+      this.cycleTimeKpi.set(null);
+      this.slaComplianceKpi.set(null);
+      this.isLoadingKpi.set(false);
       return;
     }
     const raw = this.filterForm.getRawValue();
