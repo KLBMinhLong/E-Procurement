@@ -637,7 +637,8 @@
       "action": {
         "submit": "Gửi phê duyệt",
         "confirmCancel": "Xác nhận hủy",
-        "createPo": "Tạo PO"
+        "createPo": "Tạo PO",
+        "createRfq": "Tạo RFQ"
       },
       "label": {
         "justification": "Lý do mua sắm",
@@ -662,7 +663,21 @@
         "attachments": "Tài liệu đính kèm",
         "budget": "Kiểm tra ngân sách",
         "inventory": "Tồn kho liên quan",
-        "approval": "Quy trình phê duyệt"
+        "approval": "Quy trình phê duyệt",
+        "traceability": "Liên kết tài liệu"
+      },
+      "trace": {
+        "kicker": "Traceability",
+        "rfq": "RFQ liên quan",
+        "po": "Đơn mua hàng liên quan",
+        "none": "Chưa có RFQ hoặc PO được tạo từ PR này.",
+        "noRfq": "Chưa có RFQ liên quan.",
+        "noPo": "Chưa có PO liên quan.",
+        "rfqCount": "{{count}} RFQ",
+        "poCount": "{{count}} PO",
+        "conversion": "Đồng bộ PR",
+        "openRfq": "Mở RFQ {{number}}",
+        "openPo": "Mở PO {{number}}"
       },
       "col": {
         "lineNumber": "STT",
@@ -2179,6 +2194,8 @@
   },
   "rfq": {
     "status": {
+      "DRAFT": "Nháp",
+      "PUBLISHED": "Đã phát hành",
       "OPEN": "Đang mở",
       "EVALUATING": "Đang đánh giá",
       "AWARDED": "Đã chọn thầu",

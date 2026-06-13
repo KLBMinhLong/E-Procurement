@@ -13,7 +13,7 @@
 | 2 | `UI_MODULE_SHELL_NAV_UX.md` | Shell Nav + UX Gaps | ✅ Hoàn thành | Build pass 2026-06-13; Budget nav/indicator deferred sang plan #3 |
 | 3 | `UI_MODULE_FINANCE_BUDGET.md` | Finance Budget Management | ✅ Hoàn thành | Build pass 2026-06-13; browser test chưa mở theo yêu cầu |
 | 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | ✅ Hoàn thành | Build pass 2026-06-13; không mở browser test |
-| 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | 🔄 **Đã rà soát, sẵn sàng thực hiện** | #4 đã xong; scope còn traceability RFQ/PO + PO `pr_id` filter |
+| 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ⬜ Chờ | Cần GoodsReceiptService đã ổn định từ #1 |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ⬜ Chờ | Không phụ thuộc — standalone |
 | 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Charts & Visual Upgrade | ⬜ Chờ | Nên làm sau #3 (Budget nav cần có trước quick links) |
@@ -97,15 +97,15 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 ---
 
 #### 5. `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` — PR Lifecycle & Traceability
-**Đã rà soát 2026-06-13.** #4 đã hoàn thành `ep-pr-lifecycle` và `ep-approval-steps`, nên plan #5 chỉ còn traceability RFQ/PO và duplicate-action guard. RFQ đã có `pr_id` filter; PO cần expose `GET /purchase-orders?pr_id=...` trước khi frontend PO traceability hoạt động đầy đủ.
+**Trạng thái:** ✅ Hoàn thành 2026-06-13. #4 đã hoàn thành `ep-pr-lifecycle` và `ep-approval-steps`; plan #5 đã bổ sung traceability RFQ/PO, duplicate-action guard và backend PO `pr_id` filter.
 
 | Bước | Nội dung |
 |---|---|
-| 5a | Backend/API: thêm PO list filter `pr_id` trong finance-service + OpenAPI |
-| 5b | Frontend service helpers: `RfqService.listByPrId()` + `PurchaseOrderService.listByPrId()` |
-| 5c | PR Detail traceability card: RFQ/PO links + skeleton/empty/reload |
-| 5d | Duplicate-action guard: ẩn tạo RFQ/PO khi đã có document active |
-| 5e | i18n + `mvn -pl services/finance-service test` + `npm run build` verify |
+| 5a | ✅ Backend/API: thêm PO list filter `pr_id` trong finance-service + OpenAPI |
+| 5b | ✅ Frontend service helpers: `RfqService.listByPrId()` + `PurchaseOrderService.listByPrId()` |
+| 5c | ✅ PR Detail traceability card: RFQ/PO links + skeleton/empty/reload |
+| 5d | ✅ Duplicate-action guard: ẩn tạo RFQ/PO khi đã có document active |
+| 5e | ✅ i18n + `mvn -pl services/finance-service test` + `npm run build` verify |
 
 **Lý do ưu tiên:** Giải quyết vấn đề Requester không biết PR của mình đang ở đâu trong cycle, và ngăn Purchasing tạo RFQ/PO trùng.
 

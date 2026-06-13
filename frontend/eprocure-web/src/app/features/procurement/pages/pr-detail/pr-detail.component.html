@@ -324,6 +324,97 @@
           </ep-card>
         }
 
+        @if (shouldLoadTraceability()) {
+          <ep-card tone="raised">
+            <div class="card-section traceability-card">
+              <div class="section-title-row">
+                <div>
+                  <span class="section-kicker">{{ 'pr.detail.trace.kicker' | translate }}</span>
+                  <h2 class="card-section__title">{{ 'pr.detail.section.traceability' | translate }}</h2>
+                </div>
+                <ep-button
+                  variant="ghost"
+                  size="sm"
+                  icon="refresh-cw"
+                  [loading]="traceabilityLoading()"
+                  (click)="reloadTraceability()">
+                  {{ 'action.refresh' | translate }}
+                </ep-button>
+              </div>
+
+              @if (traceabilityLoading()) {
+                <ep-skeleton [rows]="4" />
+              } @else if (hasTraceability()) {
+                <div class="traceability-group">
+                  <div class="traceability-group__header">
+                    <span>{{ 'pr.detail.trace.rfq' | translate }}</span>
+                    <span class="info-pill">{{ 'pr.detail.trace.rfqCount' | translate:{ count: relatedRfqs().length } }}</span>
+                  </div>
+                  @if (relatedRfqs().length) {
+                    <div class="traceability-list">
+                      @for (rfq of relatedRfqs(); track rfq.id) {
+                        <button
+                          type="button"
+                          class="traceability-item"
+                          [attr.aria-label]="'pr.detail.trace.openRfq' | translate:{ number: rfq.rfqNumber }"
+                          (click)="navigateRfqDetail(rfq.id)">
+                          <span class="traceability-item__icon">
+                            <ep-icon name="file-search" [size]="16" />
+                          </span>
+                          <span class="traceability-item__body">
+                            <strong class="mono">{{ rfq.rfqNumber }}</strong>
+                            <small>{{ rfq.title }}</small>
+                          </span>
+                          <ep-badge [tone]="rfqStatusTone(rfq.status)" [labelKey]="'rfq.status.' + rfq.status" />
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <p class="side-note">{{ 'pr.detail.trace.noRfq' | translate }}</p>
+                  }
+                </div>
+
+                <div class="traceability-group">
+                  <div class="traceability-group__header">
+                    <span>{{ 'pr.detail.trace.po' | translate }}</span>
+                    <span class="info-pill">{{ 'pr.detail.trace.poCount' | translate:{ count: relatedPos().length } }}</span>
+                  </div>
+                  @if (relatedPos().length) {
+                    <div class="traceability-list">
+                      @for (po of relatedPos(); track po.id) {
+                        <button
+                          type="button"
+                          class="traceability-item traceability-item--po"
+                          [attr.aria-label]="'pr.detail.trace.openPo' | translate:{ number: po.poNumber }"
+                          (click)="navigatePoDetail(po.id)">
+                          <span class="traceability-item__icon">
+                            <ep-icon name="file-text" [size]="16" />
+                          </span>
+                          <span class="traceability-item__body">
+                            <strong class="mono">{{ po.poNumber }}</strong>
+                            <small>
+                              {{ 'pr.detail.trace.conversion' | translate }}:
+                              {{ ('finance.po.callback.' + (po.prConversionStatus || 'none')) | translate }}
+                            </small>
+                          </span>
+                          <span class="traceability-item__amount">
+                            <ep-amount [value]="po.totalAmount" [currency]="po.currency" />
+                            <ep-badge [tone]="poStatusTone(po.status)" [labelKey]="'finance.po.status.' + po.status" />
+                          </span>
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <p class="side-note">{{ 'pr.detail.trace.noPo' | translate }}</p>
+                  }
+                </div>
+              } @else {
+                <p class="side-note">{{ 'pr.detail.trace.none' | translate }}</p>
+              }
+            </div>
+          </ep-card>
+        }
+
         <ep-card tone="raised">
           <div class="card-section">
             <div class="section-title-row">

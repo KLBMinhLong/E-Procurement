@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL } from '../../../core/http/api-tokens';
+import { BYPASS_ERROR_INTERCEPTOR_TOKEN } from '../../../core/http/http-context-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
   AwardRfqRequest,
@@ -20,7 +21,7 @@ export class RfqService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  list(filter: RfqListFilter): Observable<ApiResponse<RfqDetail[]> & { meta: PageMeta }> {
+  list(filter: RfqListFilter, context?: HttpContext): Observable<ApiResponse<RfqDetail[]> & { meta: PageMeta }> {
     let params = new HttpParams()
       .set('page', filter.page)
       .set('size', filter.size)
@@ -31,8 +32,18 @@ export class RfqService {
 
     return this.http.get<ApiResponse<RfqDetail[]> & { meta: PageMeta }>(
       `${this.baseUrl}/rfq`,
-      { params, withCredentials: true }
+      { params, context, withCredentials: true }
     );
+  }
+
+  listByPrId(prId: string): Observable<ApiResponse<RfqDetail[]> & { meta: PageMeta }> {
+    const context = new HttpContext().set(BYPASS_ERROR_INTERCEPTOR_TOKEN, true);
+    return this.list({
+      page: 1,
+      size: 10,
+      sort: 'createdAt,desc',
+      prId
+    }, context);
   }
 
   getById(id: string): Observable<ApiResponse<RfqDetail>> {

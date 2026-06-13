@@ -637,7 +637,8 @@
       "action": {
         "submit": "Submit for Approval",
         "confirmCancel": "Confirm Cancel",
-        "createPo": "Create PO"
+        "createPo": "Create PO",
+        "createRfq": "Create RFQ"
       },
       "label": {
         "justification": "Justification",
@@ -662,7 +663,21 @@
         "attachments": "Attachments",
         "budget": "Budget Check",
         "inventory": "Related Inventory",
-        "approval": "Approval Workflow"
+        "approval": "Approval Workflow",
+        "traceability": "Linked documents"
+      },
+      "trace": {
+        "kicker": "Traceability",
+        "rfq": "Related RFQs",
+        "po": "Related purchase orders",
+        "none": "No RFQ or PO has been created from this PR yet.",
+        "noRfq": "No related RFQ yet.",
+        "noPo": "No related PO yet.",
+        "rfqCount": "{{count}} RFQ",
+        "poCount": "{{count}} PO",
+        "conversion": "PR sync",
+        "openRfq": "Open RFQ {{number}}",
+        "openPo": "Open PO {{number}}"
       },
       "col": {
         "lineNumber": "#",
@@ -2179,6 +2194,8 @@
   },
   "rfq": {
     "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
       "OPEN": "Open",
       "EVALUATING": "Evaluating",
       "AWARDED": "Awarded",

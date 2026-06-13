@@ -93,6 +93,9 @@
         <if test="filter.vendorId != null">
             AND po.vendor_id = #{filter.vendorId}
         </if>
+        <if test="filter.prId != null">
+            AND po.pr_id = #{filter.prId}
+        </if>
         <if test="filter.fromCreatedAt != null">
             AND po.created_at &gt;= #{filter.fromCreatedAt}
         </if>

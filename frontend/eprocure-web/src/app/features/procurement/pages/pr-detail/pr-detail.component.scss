@@ -423,6 +423,103 @@
   line-height: 1.5;
 }
 
+.traceability-card {
+  gap: var(--spacing-4);
+}
+
+.traceability-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.traceability-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.traceability-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.traceability-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--spacing-3);
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast);
+}
+
+.traceability-item:hover,
+.traceability-item:focus-visible {
+  border-color: var(--color-accent);
+  background: var(--color-surface-hover);
+  outline: none;
+}
+
+.traceability-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-2);
+  background: var(--color-info-subtle);
+  color: var(--color-info);
+}
+
+.traceability-item--po .traceability-item__icon {
+  background: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.traceability-item__body {
+  min-width: 0;
+}
+
+.traceability-item__body strong,
+.traceability-item__body small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traceability-item__body small {
+  margin-top: var(--spacing-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.traceability-item__amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-1);
+  min-width: 7rem;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+}
+
 .inventory-list li {
   padding: var(--spacing-3);
   border: var(--border-subtle);
@@ -487,5 +584,15 @@
 
   .page-header__actions {
     width: 100%;
+  }
+
+  .traceability-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .traceability-item__amount {
+    grid-column: 2;
+    align-items: flex-start;
+    min-width: 0;
   }
 }

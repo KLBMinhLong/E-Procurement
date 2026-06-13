@@ -2,6 +2,8 @@
 
 > **Mục tiêu:** Bổ sung truy vết RFQ/PO sinh ra từ PR để Requester/Purchasing biết PR đang ở đâu trong procurement cycle, mở nhanh tài liệu liên quan, và tránh tạo RFQ/PO trùng sau khi PR đã approved.
 
+> **Trạng thái triển khai:** ✅ Hoàn thành 2026-06-13 — finance-service đã expose `GET /purchase-orders?pr_id=...`, PR Detail đã có traceability card RFQ/PO + duplicate-action guard, `mvn -pl services/finance-service test` và `npm run build` pass.
+
 ---
 
 ## 0. Rà soát lại theo code hiện tại — 2026-06-13

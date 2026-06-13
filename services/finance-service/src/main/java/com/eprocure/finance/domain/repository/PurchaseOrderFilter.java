@@ -8,6 +8,7 @@ public record PurchaseOrderFilter(
         UUID purchasingOfficerId,
         PurchaseOrderStatus status,
         UUID vendorId,
+        UUID prId,
         Instant fromCreatedAt,
         Instant toCreatedAtExclusive,
         int page,

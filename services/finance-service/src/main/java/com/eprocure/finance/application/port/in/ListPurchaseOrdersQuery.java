@@ -11,6 +11,7 @@ public record ListPurchaseOrdersQuery(
         Set<String> permissions,
         PurchaseOrderStatus status,
         UUID vendorId,
+        UUID prId,
         LocalDate fromDate,
         LocalDate toDate,
         int page,

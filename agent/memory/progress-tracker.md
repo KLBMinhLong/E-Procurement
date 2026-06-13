@@ -155,7 +155,7 @@
 | Unit tests (domain + CreatePR + SubmitPR + UpdatePR + CancelPR + pending approval callback) | ✅ | 35 tests pass |
 | Frontend: PR list page | ✅ |
 | Frontend: PR create form | ✅ |
-| Frontend: PR detail page | ✅ |
+| Frontend: PR detail page | ✅ | 2026-06-13: PR Detail có traceability card RFQ/PO, reload/empty/loading state, link sang RFQ/PO detail, và ẩn tạo RFQ/PO khi đã có document active; `npm run build` pass |
 
 ### E13-A: Admin Portal (User, RBAC, Org Chart UI) [PRIORITIZED 🚀]
 | Task | Status |
@@ -255,7 +255,7 @@
 |---|---|---|
 | User story/use case chi tiết | ✅ | `docs/user-stories/E07-purchase-order.md`; chốt manual PO contract: PR `po-source`, PR `converted-to-po`, Vendor `po-source`, Finance callback outbox |
 | RFQ award consumer + PO persistence | ✅ | finance-service consumes `procurement.rfq.awarded`, dedups via `finance.event_processing_log`, creates `finance.purchase_orders` + `finance.po_line_items` |
-| PO list/detail API | ✅ | `GET /api/v1/purchase-orders`, `GET /api/v1/purchase-orders/{id}` guarded by `PO_VIEW_OWN`/`PO_VIEW_ALL` |
+| PO list/detail API | ✅ | `GET /api/v1/purchase-orders`, `GET /api/v1/purchase-orders/{id}` guarded by `PO_VIEW_OWN`/`PO_VIEW_ALL`; 2026-06-13 thêm list filter `pr_id` để PR Detail truy vết PO liên quan |
 | PO draft edit before send | ✅ | `PATCH /api/v1/purchase-orders/{id}` updates delivery details/payment terms for DRAFT PO with `PO_EDIT` + Idempotency-Key |
 | PO send/cancel actions | ✅ | `POST /api/v1/purchase-orders/{id}/send` and `PATCH /api/v1/purchase-orders/{id}/cancel`; idempotent Redis replay + status fallback |
 | PO issue event | ✅ | Finance publishes `procurement.po.issued`; Notification subscribes and creates `PO_ISSUED` in-app notification |
@@ -265,6 +265,7 @@
 | Manual PO create API | ✅ | `POST /api/v1/purchase-orders` creates DRAFT PO from approved PR + AVL vendor, stores callback outbox, exposes `prConversionStatus`, and blocks send until callback delivered |
 | Frontend: Manual PO create UI | ✅ | Angular `/finance/purchase-orders` list/detail/create screens, PR detail handoff, PO navigation/i18n; `npm run build` passes |
 | Frontend: PO detail actions | ✅ | 2026-06-12: PO detail hỗ trợ edit DRAFT delivery/payment terms, send to vendor khi PR callback DELIVERED + vendor email sẵn sàng, cancel trước fulfillment; permission-gated modals, i18n VI/EN; `npm run build` pass |
+| Frontend: PR → PO traceability | ✅ | 2026-06-13: `PurchaseOrderService.listByPrId()` dùng `GET /purchase-orders?pr_id=...`; PR Detail hiển thị PO liên quan và trạng thái callback PR; `mvn -pl services/finance-service test` + `npm run build` pass |
 
 ### E08: Goods Receipt & Inventory
 | Task | Status | Ghi chú |

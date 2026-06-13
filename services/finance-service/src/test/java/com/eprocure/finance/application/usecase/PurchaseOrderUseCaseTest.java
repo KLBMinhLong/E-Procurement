@@ -136,12 +136,40 @@ class PurchaseOrderUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 1,
                 20,
                 null));
 
         assertThat(result.items()).hasSize(1);
         assertThat(result.items().get(0).purchasingOfficer().id()).isEqualTo(ACTOR_ID);
+    }
+
+    @Test
+    void should_filter_purchase_orders_by_pr_id_when_pr_id_is_provided() {
+        PurchaseOrder matching = purchaseOrder(ACTOR_ID, VENDOR_ID);
+        PurchaseOrder other = purchaseOrder(
+                ACTOR_ID,
+                UUID.fromString("92000000-0000-4000-8000-000000000003"),
+                UUID.fromString("88000000-0000-4000-8000-000000000099"));
+        purchaseOrderRepository.purchaseOrders.add(matching);
+        purchaseOrderRepository.purchaseOrders.add(other);
+        var useCase = new ListPurchaseOrdersUseCase(purchaseOrderRepository, viewAssembler);
+
+        var result = useCase.execute(new ListPurchaseOrdersQuery(
+                ACTOR_ID,
+                Set.of("PO_VIEW_ALL"),
+                null,
+                null,
+                PR_ID,
+                null,
+                null,
+                1,
+                20,
+                null));
+
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.items().get(0).prId()).isEqualTo(PR_ID);
     }
 
     @Test
@@ -411,11 +439,15 @@ class PurchaseOrderUseCaseTest {
     }
 
     private static PurchaseOrder purchaseOrder(UUID purchasingOfficerId, UUID vendorId) {
+        return purchaseOrder(purchasingOfficerId, vendorId, PR_ID);
+    }
+
+    private static PurchaseOrder purchaseOrder(UUID purchasingOfficerId, UUID vendorId, UUID prId) {
         UUID id = UUID.randomUUID();
         return new PurchaseOrder(
                 id,
                 "PO-2026-" + id.toString().substring(0, 6).toUpperCase(),
-                PR_ID,
+                prId,
                 "PR-2026-000001",
                 RFQ_ID,
                 "RFQ-2026-000001",
@@ -614,6 +646,7 @@ class PurchaseOrderUseCaseTest {
                             || filter.purchasingOfficerId().equals(purchaseOrder.purchasingOfficerId()))
                     .filter(purchaseOrder -> filter.status() == null || filter.status() == purchaseOrder.status())
                     .filter(purchaseOrder -> filter.vendorId() == null || filter.vendorId().equals(purchaseOrder.vendorId()))
+                    .filter(purchaseOrder -> filter.prId() == null || filter.prId().equals(purchaseOrder.prId()))
                     .sorted(Comparator.comparing(PurchaseOrder::createdAt).reversed())
                     .skip(filter.offset())
                     .limit(filter.size())
@@ -626,6 +659,7 @@ class PurchaseOrderUseCaseTest {
                     filter.purchasingOfficerId(),
                     filter.status(),
                     filter.vendorId(),
+                    filter.prId(),
                     filter.fromCreatedAt(),
                     filter.toCreatedAtExclusive(),
                     1,

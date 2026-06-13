@@ -11,7 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { finalize } from 'rxjs';
+import { catchError, finalize, map, of } from 'rxjs';
 
 import { EpBadgeComponent, EpBadgeTone } from '../../../../shared/components/ep-badge/ep-badge.component';
 import { EpAmountComponent } from '../../../../shared/components/ep-amount/ep-amount.component';
@@ -29,6 +29,10 @@ import { ToastService } from '../../../../core/services/toast.service';
 
 import { PurchaseRequestService } from '../../services/purchase-request.service';
 import { BudgetCheckResult, Money, PrLineItemResponse, PrStatus, PurchaseRequestDetail } from '../../models/purchase-request.model';
+import { PurchaseOrder, PurchaseOrderStatus } from '../../../finance/models/purchase-order.model';
+import { PurchaseOrderService } from '../../../finance/services/purchase-order.service';
+import { RfqDetail } from '../../../vendor/models/vendor.model';
+import { RfqService } from '../../../vendor/services/rfq.service';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
   DRAFT: 'neutral',
@@ -88,6 +92,8 @@ const BUDGET_TONE: Record<string, EpBadgeTone> = {
 })
 export class PrDetailComponent implements OnInit {
   private readonly prService = inject(PurchaseRequestService);
+  private readonly rfqService = inject(RfqService);
+  private readonly poService = inject(PurchaseOrderService);
   private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -98,6 +104,10 @@ export class PrDetailComponent implements OnInit {
   readonly isSubmitting = signal(false);
   readonly isCancelling = signal(false);
   readonly showCancelModal = signal(false);
+  readonly relatedRfqs = signal<RfqDetail[]>([]);
+  readonly relatedPos = signal<PurchaseOrder[]>([]);
+  readonly relatedRfqLoading = signal(false);
+  readonly relatedPoLoading = signal(false);
 
   readonly cancelReason = new FormControl('', [Validators.required, Validators.minLength(10)]);
 
@@ -107,6 +117,12 @@ export class PrDetailComponent implements OnInit {
   readonly budgetUsagePercent = computed(() => this.calculateBudgetUsage(this.pr()?.budgetCheck ?? null));
   readonly approvalSteps = computed(() => this.pr()?.approvalProcess?.steps ?? []);
   readonly currentApprovalStep = computed(() => this.pr()?.approvalProcess?.currentStep ?? null);
+  readonly shouldLoadTraceability = computed(() => {
+    const status = this.pr()?.status;
+    return status === 'APPROVED' || status === 'CONVERTED_TO_PO' || status === 'CLOSED';
+  });
+  readonly traceabilityLoading = computed(() => this.relatedRfqLoading() || this.relatedPoLoading());
+  readonly hasTraceability = computed(() => this.relatedRfqs().length > 0 || this.relatedPos().length > 0);
 
   readonly canEdit = computed(() => {
     const status = this.pr()?.status as PrStatus;
@@ -123,9 +139,19 @@ export class PrDetailComponent implements OnInit {
     return status === 'DRAFT' || status === 'SUBMITTED' || status === 'CHANGES_REQUESTED';
   });
 
-  readonly canCreatePo = computed(() => this.pr()?.status === 'APPROVED');
+  readonly canCreatePo = computed(() => {
+    if (this.pr()?.status !== 'APPROVED' || this.relatedPoLoading()) {
+      return false;
+    }
+    return !this.relatedPos().some((po) => po.status !== 'CANCELLED');
+  });
 
-  readonly canCreateRfq = computed(() => this.pr()?.status === 'APPROVED');
+  readonly canCreateRfq = computed(() => {
+    if (this.pr()?.status !== 'APPROVED' || this.relatedRfqLoading()) {
+      return false;
+    }
+    return !this.relatedRfqs().some((rfq) => this.isActiveRfqStatus(rfq.status));
+  });
 
   readonly approvalStepTone = APPROVAL_STEP_TONE;
   readonly budgetTone = BUDGET_TONE;
@@ -172,6 +198,22 @@ export class PrDetailComponent implements OnInit {
 
   navigateApprovalInbox(): void {
     this.router.navigate(['/approvals']);
+  }
+
+  reloadTraceability(): void {
+    const data = this.pr();
+    if (!data) {
+      return;
+    }
+    this.loadTraceability(data);
+  }
+
+  navigateRfqDetail(rfqId: string): void {
+    this.router.navigate(['/vendors', 'rfq', rfqId]);
+  }
+
+  navigatePoDetail(poId: string): void {
+    this.router.navigate(['/finance', 'purchase-orders', poId]);
   }
 
   onSubmit(): void {
@@ -287,6 +329,32 @@ export class PrDetailComponent implements OnInit {
     return BUDGET_TONE[status ?? ''] ?? 'neutral';
   }
 
+  poStatusTone(status: PurchaseOrderStatus | null | undefined): EpBadgeTone {
+    if (status === 'CANCELLED') {
+      return 'danger';
+    }
+    if (status === 'CLOSED' || status === 'PAID' || status === 'FULLY_RECEIVED') {
+      return 'success';
+    }
+    if (status === 'DRAFT' || status === 'PENDING_APPROVAL') {
+      return 'warning';
+    }
+    return 'info';
+  }
+
+  rfqStatusTone(status: string | null | undefined): EpBadgeTone {
+    if (status === 'CANCELLED') {
+      return 'danger';
+    }
+    if (status === 'AWARDED') {
+      return 'success';
+    }
+    if (status === 'CLOSED') {
+      return 'neutral';
+    }
+    return 'info';
+  }
+
   approvalStatusTone(status: string | null | undefined): EpBadgeTone {
     return APPROVAL_STEP_TONE[status ?? ''] ?? 'neutral';
   }
@@ -296,9 +364,46 @@ export class PrDetailComponent implements OnInit {
     this.prService.getById(id)
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: (res) => this.pr.set(res.data),
+        next: (res) => {
+          this.pr.set(res.data);
+          this.loadTraceability(res.data);
+        },
         error: () => this.router.navigate(['/procurement'])
       });
+  }
+
+  private loadTraceability(data: PurchaseRequestDetail): void {
+    if (!this.shouldLoadTraceability()) {
+      this.relatedRfqs.set([]);
+      this.relatedPos.set([]);
+      return;
+    }
+    this.loadRelatedRfqs(data.id);
+    this.loadRelatedPos(data.id);
+  }
+
+  private loadRelatedRfqs(prId: string): void {
+    this.relatedRfqLoading.set(true);
+    this.rfqService.listByPrId(prId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map((res) => res.data ?? []),
+        catchError(() => of([])),
+        finalize(() => this.relatedRfqLoading.set(false))
+      )
+      .subscribe((items) => this.relatedRfqs.set(items));
+  }
+
+  private loadRelatedPos(prId: string): void {
+    this.relatedPoLoading.set(true);
+    this.poService.listByPrId(prId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map((res) => res.data ?? []),
+        catchError(() => of([])),
+        finalize(() => this.relatedPoLoading.set(false))
+      )
+      .subscribe((items) => this.relatedPos.set(items));
   }
 
   private calculateBudgetUsage(budget: BudgetCheckResult | null): string {
@@ -322,5 +427,9 @@ export class PrDetailComponent implements OnInit {
 
   private preferredVendorId(data: PurchaseRequestDetail): string | null {
     return data.lineItems.find((item) => Boolean(item.preferredVendorId))?.preferredVendorId ?? null;
+  }
+
+  private isActiveRfqStatus(status: string): boolean {
+    return status === 'DRAFT' || status === 'PUBLISHED' || status === 'CLOSED' || status === 'AWARDED';
   }
 }
