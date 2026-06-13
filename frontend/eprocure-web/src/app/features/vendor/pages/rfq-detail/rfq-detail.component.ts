@@ -220,7 +220,7 @@ export class RfqDetailComponent implements OnInit {
 
     this.isActioning.set(true);
     this.rfqService.evaluateQuote(rfqId, quoteId, {
-      evaluationScore: this.evalScore,
+      evaluationScore: this.normalizeEvaluationScore(this.evalScore),
       evaluationNote: this.evalNote.trim() || null
     })
       .pipe(
@@ -433,6 +433,14 @@ export class RfqDetailComponent implements OnInit {
   private parseDecimal(value: string | number | null | undefined): number {
     const parsed = Number.parseFloat(String(value ?? '0'));
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private normalizeEvaluationScore(value: number): number {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return 0;
+    }
+    return Math.min(100, Math.max(0, Math.round(parsed)));
   }
 
   invitationTone(inv: RfqInvitation): EpBadgeTone {
