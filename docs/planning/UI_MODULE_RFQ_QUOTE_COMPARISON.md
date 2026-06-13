@@ -4,6 +4,8 @@
 
 **Rà soát 2026-06-13:** Plan này cần thực hiện thêm bước align contract trước UI. Backend/OpenAPI hiện dùng RFQ status `DRAFT`, `PUBLISHED`, `CLOSED`, `AWARDED`, `CANCELLED`, trong khi frontend đang dùng `OPEN`, `EVALUATING`. Khi triển khai phải sửa model/list/detail conditions theo backend trước, nếu không action nộp báo giá/đóng/đánh giá/chọn thầu sẽ không hiện đúng.
 
+**Hoàn thành 2026-06-13:** Frontend đã align RFQ status theo backend, RFQ Detail có comparison table cạnh nhau theo vendor, highlight giá thấp nhất/điểm tốt nhất/giao nhanh nhất, coverage theo line item, progress đánh giá, evaluate modal và i18n VI/EN. `npm run build` pass; còn warning hiện hữu không thuộc plan (`profile.component.scss` budget và CommonJS `@stomp/stompjs`).
+
 ---
 
 ## 1. Hiện trạng
@@ -599,11 +601,11 @@ Thêm phía trên quotes section khi RFQ đã có quote và đang ở trạng th
 
 | Bước | Nội dung | Ghi chú |
 |---|---|---|
-| 7a | Align RFQ frontend status với backend contract | `RfqStatus`, `STATUS_TONE`, list filters/counters, detail action conditions; dùng `PUBLISHED` cho open-submit/close, `CLOSED` cho evaluate/award |
-| 7b | Thêm `quoteViewMode` + view toggle UI | Default `compare` khi có từ 2 quotes, giữ card grid hiện có |
-| 7c | Build comparison table vendor columns x RFQ line rows | Sticky first column, horizontal scroll, amount object cho `ep-amount` |
-| 7d | Computed helpers | `lowestTotalQuoteId`, `bestScoreQuoteId`, `fastestDeliveryQuoteId`, `quoteCoverage`, `lineLowestQuoteIds`, amount helpers |
-| 7e | Tách evaluate inline form thành `ep-modal` | Thay `selectedQuoteId` bằng `evaluatingQuote`; giữ permission `RFQ_EVALUATE` |
-| 7f | Quote evaluation progress + award affordance | Progress theo số quote đã chấm; award chỉ khi status `CLOSED` và quote có score |
-| 7g | i18n + SCSS polish | Không hardcode text/màu; dùng token hiện có |
-| 7h | Verify | `npm run build`; `git diff --check`; không mở browser nếu user không yêu cầu |
+| 7a | ✅ Align RFQ frontend status với backend contract | `RfqStatus`, `STATUS_TONE`, list filters/counters, detail action conditions; dùng `PUBLISHED` cho submit/close, `CLOSED` cho evaluate/award |
+| 7b | ✅ Thêm `quoteViewMode` + view toggle UI | Default `compare`, toggle về card khi cần; giữ card grid hiện có |
+| 7c | ✅ Build comparison table vendor columns x RFQ line rows | Sticky first column, horizontal scroll, amount object cho `ep-amount` |
+| 7d | ✅ Computed helpers | `lowestTotalQuoteId`, `bestScoreQuoteId`, `fastestDeliveryQuoteId`, `quoteCoverage`, `lineLowestQuoteIds`, amount helpers |
+| 7e | ✅ Tách evaluate inline form thành `ep-modal` | Dùng `evaluatingQuote`; giữ permission `RFQ_EVALUATE` |
+| 7f | ✅ Quote evaluation progress + award affordance | Progress theo số quote đã chấm; award chỉ khi status `CLOSED` và quote có score |
+| 7g | ✅ i18n + SCSS polish | Không hardcode text/màu; dùng token hiện có |
+| 7h | ✅ Verify | `npm run build` pass 2026-06-13; `git diff --check` pass |

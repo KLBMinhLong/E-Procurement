@@ -2241,8 +2241,8 @@
       },
       "stat": {
         "total": "Total RFQs",
-        "open": "Open (page)",
-        "evaluating": "Evaluating (page)",
+        "published": "Published (page)",
+        "closed": "Closed (page)",
         "awarded": "Awarded (page)"
       },
       "filter": {
@@ -2270,7 +2270,8 @@
         "deadline": "Submission deadline",
         "awardedVendor": "Awarded vendor",
         "awardReason": "Award reason",
-        "createdAt": "Created at"
+        "createdAt": "Created at",
+        "prNumberPrefix": "PR"
       },
       "invitations": {
         "title": "Invited vendors",
@@ -2286,6 +2287,11 @@
       "quotes": {
         "title": "Vendor quotes",
         "awardedRibbon": "Awarded",
+        "awarded": "Awarded",
+        "bestScore": "Best score",
+        "viewMode": "Quote view mode",
+        "viewCards": "Cards",
+        "viewCompare": "Compare",
         "submittedAt": "Submitted",
         "validUntil": "Valid until",
         "paymentTerms": "Payment terms",
@@ -2295,11 +2301,30 @@
       },
       "eval": {
         "score": "Score",
-        "note": "Evaluation note"
+        "note": "Evaluation note",
+        "notePlaceholder": "Record scoring rationale, delivery risks, or commercial conditions...",
+        "progress": "Evaluated {{evaluated}}/{{total}} quotes",
+        "allDone": "All evaluated",
+        "scoreSuffix": "/100"
+      },
+      "compare": {
+        "totalAmount": "Total amount",
+        "score": "Score",
+        "validUntil": "Valid until",
+        "paymentTerms": "Payment terms",
+        "avgDeliveryDays": "Avg. delivery",
+        "coverage": "Line coverage",
+        "lineItemPrices": "Line-item prices",
+        "notQuoted": "Not quoted for this line",
+        "lowestPrice": "Lowest price",
+        "days": "days",
+        "lineTotal": "Line total",
+        "lineTotalLabel": "Line total:"
       },
       "action": {
         "evaluate": "Evaluate",
         "reEvaluate": "Re-evaluate",
+        "saveEvaluation": "Save evaluation",
         "award": "Award RFQ",
         "close": "Close RFQ",
         "submitQuote": "Submit quote"
@@ -2312,6 +2337,7 @@
         "awardReasonMin": "Award reason must be at least 20 characters.",
         "closeTitle": "Close RFQ",
         "closeMessage": "Close this RFQ for evaluation? Vendors will no longer be able to submit quotes.",
+        "evaluateTitle": "Evaluate {{vendor}}",
         "submitQuoteTitle": "Submit vendor quote"
       },
       "submit": {

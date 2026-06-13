@@ -15,7 +15,7 @@
 | 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | ✅ Hoàn thành | Build pass 2026-06-13; không mở browser test |
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
-| 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ⬜ Chờ | Đã rà soát 2026-06-13; cần align RFQ status frontend với backend trước UI |
+| 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ✅ Hoàn thành | Build pass 2026-06-13; align RFQ status frontend với backend + comparison table |
 | 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Charts & Visual Upgrade | ⬜ Chờ | Nên làm sau #3 (Budget nav cần có trước quick links) |
 
 ---
@@ -128,18 +128,18 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 ---
 
 #### 7. `UI_MODULE_RFQ_QUOTE_COMPARISON.md` — RFQ Quote Comparison Table
-**Đã rà soát 2026-06-13, làm sau plan #6.** Scope đã chỉnh theo backend hiện tại: frontend đang lệch RFQ status (`OPEN/EVALUATING`) so với backend/OpenAPI (`PUBLISHED/CLOSED`), nên phải align contract trước khi thêm comparison table.
+**Trạng thái:** ✅ Hoàn thành 2026-06-13. RFQ frontend đã align status theo backend (`PUBLISHED/CLOSED`), RFQ Detail có comparison table theo vendor, helper highlight giá thấp/điểm tốt/giao nhanh, coverage, progress đánh giá và modal evaluate.
 
 | Bước | Nội dung |
 |---|---|
-| 7a | Align RFQ frontend status với backend contract (`PUBLISHED/CLOSED`, bỏ logic mới dùng `OPEN/EVALUATING`) |
-| 7b | Thêm toggle `quoteViewMode` signal và view toggle UI |
-| 7c | Build comparison table (vendor columns × RFQ line rows) |
-| 7d | Computed helpers: lowestTotal, bestScore, fastestDelivery, coverage, lineLowestQuoteIds |
-| 7e | Tách evaluate form ra `ep-modal` (xóa inline form) |
-| 7f | Thêm quote evaluation progress + award affordance |
-| 7g | i18n + SCSS |
-| 7h | Build verify |
+| 7a | ✅ Align RFQ frontend status với backend contract (`PUBLISHED/CLOSED`, bỏ logic mới dùng `OPEN/EVALUATING`) |
+| 7b | ✅ Thêm toggle `quoteViewMode` signal và view toggle UI |
+| 7c | ✅ Build comparison table (vendor columns × RFQ line rows) |
+| 7d | ✅ Computed helpers: lowestTotal, bestScore, fastestDelivery, coverage, lineLowestQuoteIds |
+| 7e | ✅ Tách evaluate form ra `ep-modal` |
+| 7f | ✅ Thêm quote evaluation progress + award affordance |
+| 7g | ✅ i18n + SCSS |
+| 7h | ✅ Build verify |
 
 **Lý do ưu tiên:** Purchasing cần so sánh ngang để award vendor — hiện tại phải nhìn từng card riêng. Quan trọng cho business nhưng không block workflow hiện tại.
 

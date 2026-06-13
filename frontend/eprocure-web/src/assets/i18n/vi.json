@@ -2241,8 +2241,8 @@
       },
       "stat": {
         "total": "Tổng RFQ",
-        "open": "Đang mở (trang)",
-        "evaluating": "Đang đánh giá (trang)",
+        "published": "Đã phát hành (trang)",
+        "closed": "Đã đóng (trang)",
         "awarded": "Đã chọn thầu (trang)"
       },
       "filter": {
@@ -2270,7 +2270,8 @@
         "deadline": "Hạn nộp báo giá",
         "awardedVendor": "NCC được chọn",
         "awardReason": "Lý do chọn thầu",
-        "createdAt": "Ngày tạo"
+        "createdAt": "Ngày tạo",
+        "prNumberPrefix": "PR"
       },
       "invitations": {
         "title": "NCC được mời",
@@ -2286,6 +2287,11 @@
       "quotes": {
         "title": "Báo giá NCC",
         "awardedRibbon": "Được chọn",
+        "awarded": "Đã chọn",
+        "bestScore": "Điểm tốt nhất",
+        "viewMode": "Chế độ xem báo giá",
+        "viewCards": "Thẻ",
+        "viewCompare": "So sánh",
         "submittedAt": "Nộp lúc",
         "validUntil": "Hiệu lực đến",
         "paymentTerms": "Điều khoản thanh toán",
@@ -2295,11 +2301,30 @@
       },
       "eval": {
         "score": "Điểm",
-        "note": "Ghi chú đánh giá"
+        "note": "Ghi chú đánh giá",
+        "notePlaceholder": "Ghi nhận lý do chấm điểm, rủi ro giao hàng hoặc điều kiện thương mại...",
+        "progress": "Đã đánh giá {{evaluated}}/{{total}} báo giá",
+        "allDone": "Đã đánh giá đủ",
+        "scoreSuffix": "/100"
+      },
+      "compare": {
+        "totalAmount": "Tổng tiền",
+        "score": "Điểm",
+        "validUntil": "Hiệu lực đến",
+        "paymentTerms": "Điều khoản thanh toán",
+        "avgDeliveryDays": "Giao TB",
+        "coverage": "Độ phủ hạng mục",
+        "lineItemPrices": "Đơn giá theo hạng mục",
+        "notQuoted": "Không báo giá hạng mục này",
+        "lowestPrice": "Giá thấp nhất",
+        "days": "ngày",
+        "lineTotal": "Tổng dòng",
+        "lineTotalLabel": "Tổng dòng:"
       },
       "action": {
         "evaluate": "Đánh giá",
         "reEvaluate": "Đánh giá lại",
+        "saveEvaluation": "Lưu đánh giá",
         "award": "Chọn thầu",
         "close": "Đóng RFQ",
         "submitQuote": "Nộp báo giá"
@@ -2312,6 +2337,7 @@
         "awardReasonMin": "Lý do chọn thầu cần ít nhất 20 ký tự.",
         "closeTitle": "Đóng RFQ",
         "closeMessage": "Đóng RFQ để chuyển sang đánh giá? NCC sẽ không thể nộp thêm báo giá.",
+        "evaluateTitle": "Đánh giá {{vendor}}",
         "submitQuoteTitle": "Nộp báo giá NCC"
       },
       "submit": {

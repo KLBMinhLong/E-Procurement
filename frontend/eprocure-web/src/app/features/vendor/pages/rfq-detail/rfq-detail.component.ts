@@ -23,23 +23,27 @@ import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.c
 import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { ToastService } from '../../../../core/services/toast.service';
+import { EpAmountComponent } from '../../../../shared/components/ep-amount/ep-amount.component';
 import {
-  formatQuoteTotal,
   formatRfqLineQuantity,
   resolveAwardedVendorName,
   RfqDetail,
   RfqInvitation,
-  VendorQuote
+  VendorQuote,
+  VendorQuoteLineItem
 } from '../../models/vendor.model';
+import { Money } from '../../../procurement/models/purchase-request.model';
 import { RfqService } from '../../services/rfq.service';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
-  OPEN: 'info',
-  EVALUATING: 'warning',
+  DRAFT: 'neutral',
+  PUBLISHED: 'info',
   AWARDED: 'success',
-  CLOSED: 'neutral',
+  CLOSED: 'warning',
   CANCELLED: 'danger'
 };
+
+type QuoteViewMode = 'cards' | 'compare';
 
 interface SubmitLineDraft {
   rfqLineItemId: string;
@@ -56,6 +60,7 @@ interface SubmitLineDraft {
     FormsModule,
     ReactiveFormsModule,
     TranslatePipe,
+    EpAmountComponent,
     EpBadgeComponent,
     EpBreadcrumbComponent,
     EpButtonComponent,
@@ -79,12 +84,14 @@ export class RfqDetailComponent implements OnInit {
   readonly isLoading = signal(false);
   readonly isActioning = signal(false);
   readonly statusTone = STATUS_TONE;
+  readonly quoteViewMode = signal<QuoteViewMode>('compare');
 
-  readonly selectedQuoteId = signal<string | null>(null);
+  readonly evaluatingQuote = signal<VendorQuote | null>(null);
   readonly showAwardModal = signal(false);
   readonly showCloseModal = signal(false);
   readonly showSubmitQuoteModal = signal(false);
   readonly awardTargetQuoteId = signal<string | null>(null);
+  readonly showEvaluateModal = computed(() => this.evaluatingQuote() !== null);
 
   evalScore = 0;
   evalNote = '';
@@ -99,6 +106,68 @@ export class RfqDetailComponent implements OnInit {
   submitLineDrafts: SubmitLineDraft[] = [];
 
   readonly quotes = computed(() => this.rfq()?.quotes ?? []);
+  readonly canSubmitQuote = computed(() => this.rfq()?.status === 'PUBLISHED' && this.pendingInvitations().length > 0);
+  readonly canCloseRfq = computed(() => this.rfq()?.status === 'PUBLISHED');
+  readonly canEvaluateQuotes = computed(() => this.rfq()?.status === 'CLOSED');
+  readonly evaluatedCount = computed(() => this.quotes().filter((quote) => quote.evaluationScore !== null).length);
+  readonly evalProgressPct = computed(() => {
+    const total = this.quotes().length;
+    return total ? `${Math.round((this.evaluatedCount() / total) * 100)}%` : '0%';
+  });
+  readonly lowestTotalQuoteId = computed(() => {
+    const quotes = this.quotes();
+    if (!quotes.length) {
+      return null;
+    }
+    return quotes.reduce((min, quote) =>
+      this.parseDecimal(quote.totalAmount) < this.parseDecimal(min.totalAmount) ? quote : min
+    ).id;
+  });
+  readonly bestScoreQuoteId = computed(() => {
+    const quotes = this.quotes().filter((quote) => quote.evaluationScore !== null);
+    if (!quotes.length) {
+      return null;
+    }
+    return quotes.reduce((max, quote) =>
+      (quote.evaluationScore ?? 0) > (max.evaluationScore ?? 0) ? quote : max
+    ).id;
+  });
+  readonly fastestDeliveryQuoteId = computed(() => {
+    const quotes = this.quotes().filter((quote) => this.avgDeliveryDays(quote) !== null);
+    if (!quotes.length) {
+      return null;
+    }
+    return quotes.reduce((min, quote) =>
+      (this.avgDeliveryDays(quote) ?? Number.POSITIVE_INFINITY) < (this.avgDeliveryDays(min) ?? Number.POSITIVE_INFINITY)
+        ? quote
+        : min
+    ).id;
+  });
+  readonly lineLowestQuoteIds = computed(() => {
+    const data = this.rfq();
+    const result = new Map<string, Set<string>>();
+    if (!data) {
+      return result;
+    }
+
+    for (const item of data.lineItems) {
+      const prices = this.quotes()
+        .map((quote) => ({
+          quoteId: quote.id,
+          price: this.parseDecimal(this.getLinePrice(quote, item.id)?.unitPrice)
+        }))
+        .filter((entry) => Number.isFinite(entry.price) && entry.price > 0);
+      if (!prices.length) {
+        continue;
+      }
+      const lowest = Math.min(...prices.map((entry) => entry.price));
+      result.set(
+        item.id,
+        new Set(prices.filter((entry) => entry.price === lowest).map((entry) => entry.quoteId))
+      );
+    }
+    return result;
+  });
   readonly awardedVendorName = computed(() => {
     const data = this.rfq();
     return data ? resolveAwardedVendorName(data) : null;
@@ -109,6 +178,10 @@ export class RfqDetailComponent implements OnInit {
     if (!data) return [] as RfqInvitation[];
     return data.invitations.filter((inv) => !inv.hasSubmitted);
   });
+
+  setQuoteViewMode(mode: QuoteViewMode): void {
+    this.quoteViewMode.set(mode);
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -129,18 +202,21 @@ export class RfqDetailComponent implements OnInit {
   }
 
   startEvaluation(quote: VendorQuote): void {
-    this.selectedQuoteId.set(quote.id);
+    this.evaluatingQuote.set(quote);
     this.evalScore = quote.evaluationScore ?? 0;
     this.evalNote = quote.evaluationNote ?? '';
   }
 
-  cancelEvaluation(): void {
-    this.selectedQuoteId.set(null);
+  closeEvaluateModal(): void {
+    if (!this.isActioning()) {
+      this.evaluatingQuote.set(null);
+    }
   }
 
-  saveEvaluation(quoteId: string): void {
+  saveEvaluationFromModal(): void {
     const rfqId = this.rfq()?.id;
-    if (!rfqId) return;
+    const quoteId = this.evaluatingQuote()?.id;
+    if (!rfqId || !quoteId) return;
 
     this.isActioning.set(true);
     this.rfqService.evaluateQuote(rfqId, quoteId, {
@@ -154,7 +230,7 @@ export class RfqDetailComponent implements OnInit {
       .subscribe({
         next: () => {
           this.toastService.success('rfq.detail.toast.evaluated');
-          this.selectedQuoteId.set(null);
+          this.evaluatingQuote.set(null);
           this.loadRfq(rfqId);
         }
       });
@@ -304,8 +380,60 @@ export class RfqDetailComponent implements OnInit {
     }).format(new Date(iso));
   }
 
-  formatQuoteTotal = formatQuoteTotal;
   formatLineQuantity = formatRfqLineQuantity;
+
+  quoteAmount(quote: VendorQuote): Money {
+    return { amount: quote.totalAmount, currency: quote.currency };
+  }
+
+  quoteLineUnitAmount(line: VendorQuoteLineItem): Money {
+    return { amount: line.unitPrice, currency: line.currency };
+  }
+
+  quoteLineTotalAmount(line: VendorQuoteLineItem): Money {
+    return { amount: line.totalPrice, currency: line.currency };
+  }
+
+  quoteCoverage(quote: VendorQuote): number {
+    const totalLines = this.rfq()?.lineItems.length ?? 0;
+    if (!totalLines) {
+      return 100;
+    }
+    const quoted = new Set(quote.lineItems.map((line) => line.rfqLineItemId)).size;
+    return Math.round((quoted / totalLines) * 100);
+  }
+
+  quoteCoverageLabel(quote: VendorQuote): string {
+    return `${this.quoteCoverage(quote)}%`;
+  }
+
+  avgDeliveryDays(quote: VendorQuote): number | null {
+    const days = quote.lineItems
+      .map((line) => line.deliveryDays)
+      .filter((value): value is number => value !== null && Number.isFinite(value));
+    if (!days.length) {
+      return null;
+    }
+    return Math.round(days.reduce((sum, value) => sum + value, 0) / days.length);
+  }
+
+  formatAverageDeliveryDays(quote: VendorQuote): string {
+    const value = this.avgDeliveryDays(quote);
+    return value === null ? '--' : String(value);
+  }
+
+  getLinePrice(quote: VendorQuote, rfqLineItemId: string): VendorQuoteLineItem | null {
+    return quote.lineItems.find((line) => line.rfqLineItemId === rfqLineItemId) ?? null;
+  }
+
+  isLowestForLine(quoteId: string, rfqLineItemId: string): boolean {
+    return this.lineLowestQuoteIds().get(rfqLineItemId)?.has(quoteId) ?? false;
+  }
+
+  private parseDecimal(value: string | number | null | undefined): number {
+    const parsed = Number.parseFloat(String(value ?? '0'));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
 
   invitationTone(inv: RfqInvitation): EpBadgeTone {
     return inv.hasSubmitted ? 'success' : 'warning';

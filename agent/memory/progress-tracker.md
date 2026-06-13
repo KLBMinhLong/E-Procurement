@@ -247,6 +247,7 @@
 | Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |
 | Frontend: Vendor Management | ✅ | 2026-06-08: `/vendors/list`, `/vendors/create`, `/vendors/:id` — i18n VI/EN, models khớp backend (`VendorSummary`/`VendorDetail`, address object, scorecard, AVL filter), approve modal + reload; bỏ deactivate (API chưa có) |
 | Frontend: RFQ Management | ✅ | 2026-06-08: `/vendors/rfq`, `/vendors/rfq/create`, `/vendors/rfq/:id` — list/detail/create, quotes từ `GET /rfq/{id}`, submit/evaluate/award/close, award reason ≥20 chars; i18n đầy đủ; `npm run build` pass |
+| Frontend: RFQ quote comparison | ✅ | 2026-06-13: RFQ frontend status align backend (`PUBLISHED/CLOSED`), `/vendors/rfq/:id` có quote comparison table, line price highlight, quote coverage, evaluation progress, evaluate modal; `npm run build` pass |
 | Frontend: PR → RFQ handoff | ✅ | 2026-06-12: PR detail có nút tạo RFQ cho PR APPROVED; `/vendors/rfq/create?prId=...` tự chọn PR nguồn, gợi ý tiêu đề, hiển thị source note; `npm run build` pass |
 | Frontend: Inventory/GR UI | ✅ | 2026-06-08: `/inventory/goods-receipts` list/create/detail — warehouse dropdown (`GET /warehouses` mới), PO page=1, complete modal DRAFT-only, i18n đầy đủ; Stock/catalog UI ⬜ |
 

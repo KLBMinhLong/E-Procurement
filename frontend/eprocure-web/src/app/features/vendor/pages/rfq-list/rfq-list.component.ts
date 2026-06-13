@@ -25,10 +25,10 @@ import { resolveAwardedVendorName, RfqDetail, RfqListFilter, RfqStatus } from '.
 import { RfqService } from '../../services/rfq.service';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
-  OPEN: 'info',
-  EVALUATING: 'warning',
+  DRAFT: 'neutral',
+  PUBLISHED: 'info',
   AWARDED: 'success',
-  CLOSED: 'neutral',
+  CLOSED: 'warning',
   CANCELLED: 'danger'
 };
 
@@ -67,7 +67,7 @@ export class RfqListComponent implements OnInit {
   readonly sortDirection = signal<SortDirection>('desc');
 
   readonly statusTone = STATUS_TONE;
-  readonly statuses: RfqStatus[] = ['OPEN', 'EVALUATING', 'AWARDED', 'CLOSED', 'CANCELLED'];
+  readonly statuses: RfqStatus[] = ['PUBLISHED', 'CLOSED', 'AWARDED', 'CANCELLED'];
 
   readonly filter = computed<RfqListFilter>(() => ({
     page: this.page(),
@@ -76,8 +76,8 @@ export class RfqListComponent implements OnInit {
     status: (this.activeStatus() as RfqStatus) || undefined
   }));
 
-  readonly openCount = computed(() => this.items().filter((r) => r.status === 'OPEN').length);
-  readonly evaluatingCount = computed(() => this.items().filter((r) => r.status === 'EVALUATING').length);
+  readonly publishedCount = computed(() => this.items().filter((r) => r.status === 'PUBLISHED').length);
+  readonly closedCount = computed(() => this.items().filter((r) => r.status === 'CLOSED').length);
   readonly awardedCount = computed(() => this.items().filter((r) => r.status === 'AWARDED').length);
 
   ngOnInit(): void {

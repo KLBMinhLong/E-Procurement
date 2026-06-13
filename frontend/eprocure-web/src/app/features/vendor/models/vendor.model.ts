@@ -89,7 +89,7 @@ export function formatVendorAddress(address: VendorAddress | null | undefined): 
 }
 
 // ── RFQ ─────────────────────────────────────────────────────────────
-export type RfqStatus = 'OPEN' | 'EVALUATING' | 'AWARDED' | 'CLOSED' | 'CANCELLED';
+export type RfqStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'AWARDED' | 'CANCELLED';
 
 export interface RfqLineItem {
   id: string;
