@@ -701,6 +701,54 @@
         }
       }
     },
+    "lifecycle": {
+      "title": "Purchase request lifecycle",
+      "approvalStatus": "Approval status",
+      "emptyTitle": "No PR status available",
+      "emptyMessage": "The request lifecycle appears after the PR data is loaded.",
+      "state": {
+        "complete": "Complete",
+        "current": "Current",
+        "upcoming": "Upcoming",
+        "blocked": "Paused"
+      },
+      "DRAFT": {
+        "label": "Draft",
+        "description": "The requester is preparing request details and line items."
+      },
+      "SUBMITTED": {
+        "label": "Submitted",
+        "description": "The request has been submitted for business processing."
+      },
+      "PENDING_APPROVAL": {
+        "label": "Pending approval",
+        "description": "The approval workflow is waiting for approver action."
+      },
+      "APPROVED": {
+        "label": "Approved",
+        "description": "The request has completed the required approval steps."
+      },
+      "CONVERTED_TO_PO": {
+        "label": "Converted to PO",
+        "description": "The request has been converted into a purchase order."
+      },
+      "CLOSED": {
+        "label": "Closed",
+        "description": "The PR lifecycle is complete after downstream processing."
+      },
+      "CHANGES_REQUESTED": {
+        "label": "Changes requested",
+        "description": "The request returned to the requester for revision before continuing."
+      },
+      "REJECTED": {
+        "label": "Rejected",
+        "description": "The request was rejected and will not continue in the current workflow."
+      },
+      "CANCELLED": {
+        "label": "Cancelled",
+        "description": "The request was cancelled and no longer continues processing."
+      }
+    },
     "status": {
       "DRAFT": "Draft",
       "SUBMITTED": "Submitted",

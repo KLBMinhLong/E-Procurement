@@ -701,6 +701,54 @@
         }
       }
     },
+    "lifecycle": {
+      "title": "Vòng đời yêu cầu mua sắm",
+      "approvalStatus": "Trạng thái duyệt",
+      "emptyTitle": "Chưa có trạng thái PR",
+      "emptyMessage": "Vòng đời yêu cầu sẽ hiển thị khi dữ liệu PR được tải.",
+      "state": {
+        "complete": "Hoàn tất",
+        "current": "Hiện tại",
+        "upcoming": "Sắp tới",
+        "blocked": "Tạm dừng"
+      },
+      "DRAFT": {
+        "label": "Nháp",
+        "description": "Người yêu cầu đang chuẩn bị thông tin và dòng hàng."
+      },
+      "SUBMITTED": {
+        "label": "Đã gửi",
+        "description": "Yêu cầu đã được gửi để khởi tạo xử lý nghiệp vụ."
+      },
+      "PENDING_APPROVAL": {
+        "label": "Chờ duyệt",
+        "description": "Quy trình duyệt đang chờ approver xử lý."
+      },
+      "APPROVED": {
+        "label": "Đã duyệt",
+        "description": "Yêu cầu đã hoàn tất các bước phê duyệt cần thiết."
+      },
+      "CONVERTED_TO_PO": {
+        "label": "Đã tạo PO",
+        "description": "Yêu cầu đã được chuyển thành đơn mua hàng."
+      },
+      "CLOSED": {
+        "label": "Đóng",
+        "description": "Vòng đời PR đã kết thúc sau khi xử lý đầy đủ."
+      },
+      "CHANGES_REQUESTED": {
+        "label": "Cần bổ sung",
+        "description": "Yêu cầu được trả về người tạo để chỉnh sửa trước khi tiếp tục."
+      },
+      "REJECTED": {
+        "label": "Từ chối",
+        "description": "Yêu cầu đã bị từ chối và không tiếp tục workflow hiện tại."
+      },
+      "CANCELLED": {
+        "label": "Đã hủy",
+        "description": "Yêu cầu đã được hủy và không còn tiếp tục xử lý."
+      }
+    },
     "status": {
       "DRAFT": "Bản nháp",
       "SUBMITTED": "Đã gửi",

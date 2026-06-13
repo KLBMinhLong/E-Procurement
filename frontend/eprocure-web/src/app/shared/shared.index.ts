@@ -1,6 +1,7 @@
 export * from './components/ep-amount/ep-amount.component';
 export * from './components/ep-approval-action/ep-approval-action.component';
 export * from './components/ep-approval-steps/ep-approval-steps.component';
+export * from './components/ep-pr-lifecycle/ep-pr-lifecycle.component';
 export * from './components/ep-avatar/ep-avatar.component';
 export * from './components/ep-badge/ep-badge.component';
 export * from './components/ep-breadcrumb/ep-breadcrumb.component';

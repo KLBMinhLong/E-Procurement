@@ -27,6 +27,8 @@ Plan này là plan kế tiếp sau `UI_MODULE_FINANCE_BUDGET.md`. Rà soát code
 
 **Trạng thái triển khai 2026-06-13:** ✅ Slice 4b hoàn thành ở mức build: Approval Detail đã có workflow overview full-width, sidebar process card dùng lại `ep-approval-steps` vertical compact thay timeline riêng, nút mở PR đầy đủ khi task là `PURCHASE_REQUEST`, và i18n `approvals.detail.processOverview/viewFullPr`.
 
+**Trạng thái triển khai 2026-06-13:** ✅ Slice 4c hoàn thành ở mức build: đã tạo shared component `ep-pr-lifecycle` với lifecycle stages, terminal node cho `REJECTED/CANCELLED/CHANGES_REQUESTED`, state complete/current/upcoming/blocked, responsive layout, export shared và i18n `pr.lifecycle.*`.
+
 ---
 
 ## 1. Hiện trạng

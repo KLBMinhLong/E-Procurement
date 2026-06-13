@@ -1,0 +1,210 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.pr-lifecycle {
+  display: grid;
+  gap: var(--spacing-4);
+  width: 100%;
+  padding: var(--spacing-5);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.pr-lifecycle__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
+.pr-lifecycle__title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.pr-lifecycle__subtitle {
+  margin: var(--spacing-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+
+  span {
+    color: var(--color-text-secondary);
+    font-weight: 700;
+  }
+}
+
+.pr-lifecycle__stages {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--spacing-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pr-lifecycle__stage {
+  position: relative;
+  display: grid;
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+
+.pr-lifecycle__marker {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-subtle);
+  color: var(--color-text-secondary);
+  transition: background var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast), box-shadow var(--motion-fast);
+}
+
+.pr-lifecycle__stage--complete .pr-lifecycle__marker {
+  border-color: var(--color-success-border);
+  background: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.pr-lifecycle__stage--current .pr-lifecycle__marker {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  box-shadow: 0 0 0 0.1875rem var(--color-accent-subtle);
+}
+
+.pr-lifecycle__stage--blocked .pr-lifecycle__marker {
+  color: var(--color-text-muted);
+  opacity: 0.65;
+}
+
+.pr-lifecycle__connector {
+  position: absolute;
+  top: 1.125rem;
+  left: 2.5rem;
+  right: calc(-1 * var(--spacing-3));
+  height: 0.125rem;
+  background: var(--color-border-subtle);
+}
+
+.pr-lifecycle__connector--complete {
+  background: var(--color-success);
+}
+
+.pr-lifecycle__body {
+  display: grid;
+  gap: var(--spacing-2);
+  min-width: 0;
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface-raised);
+}
+
+.pr-lifecycle__stage--current .pr-lifecycle__body {
+  border-color: var(--color-accent-border);
+}
+
+.pr-lifecycle__stage--blocked .pr-lifecycle__body {
+  opacity: 0.68;
+}
+
+.pr-lifecycle__body-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.pr-lifecycle__body p,
+.pr-lifecycle__terminal p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+}
+
+.pr-lifecycle__terminal {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+
+  strong {
+    display: block;
+    margin-bottom: var(--spacing-1);
+    color: currentColor;
+    font-size: var(--font-size-sm);
+  }
+}
+
+.pr-lifecycle__terminal--danger {
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.pr-lifecycle__terminal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+@media (max-width: 64rem) {
+  .pr-lifecycle__stages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pr-lifecycle__connector {
+    display: none;
+  }
+}
+
+@media (max-width: 48rem) {
+  .pr-lifecycle {
+    padding: var(--spacing-4);
+  }
+
+  .pr-lifecycle__header {
+    flex-direction: column;
+  }
+
+  .pr-lifecycle__stages {
+    grid-template-columns: 1fr;
+  }
+
+  .pr-lifecycle__stage {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pr-lifecycle__body {
+    grid-column: 2;
+  }
+}
