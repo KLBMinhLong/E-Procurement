@@ -19,6 +19,129 @@
   background: var(--color-surface);
 }
 
+.quick-actions {
+  display: grid;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface);
+}
+
+.quick-actions__heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2) var(--spacing-4);
+  align-items: baseline;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-md);
+    font-weight: 800;
+  }
+
+  p {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.quick-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+
+.quick-action-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-3);
+  align-items: center;
+  min-width: 0;
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+
+  ep-icon {
+    color: var(--color-accent);
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    min-width: 0;
+  }
+
+  strong {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 800;
+  }
+
+  small {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+}
+
+.quick-action-card:hover,
+.quick-action-card:focus-visible {
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  outline: none;
+}
+
+.report-presets,
+.report-jobs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.preset-chip,
+.polling-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.preset-chip {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+.preset-chip:hover,
+.preset-chip:focus-visible {
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  outline: none;
+}
+
+.polling-pill {
+  color: var(--color-info);
+}
+
 input,
 select {
   width: 100%;
@@ -771,6 +894,7 @@ select {
 
 @media (max-width: 1180px) {
   .report-form,
+  .quick-actions__grid,
   .kpi-grid,
   .dashboard-grid,
   .dashboard-grid--executive,
@@ -797,6 +921,7 @@ select {
   }
 
   .report-form,
+  .quick-actions__grid,
   .kpi-grid,
   .dashboard-grid,
   .dashboard-grid--executive,

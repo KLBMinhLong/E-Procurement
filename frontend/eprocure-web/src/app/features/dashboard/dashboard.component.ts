@@ -56,6 +56,74 @@ interface DashboardChartTheme {
   textPrimary: string;
 }
 
+interface DashboardQuickAction {
+  icon: string;
+  labelKey: string;
+  descriptionKey: string;
+  permissions: string[];
+  route?: string;
+  reportType?: ReportType;
+}
+
+const DASHBOARD_QUICK_ACTIONS: DashboardQuickAction[] = [
+  {
+    icon: 'shopping-cart',
+    labelKey: 'dashboard.quick.createPr',
+    descriptionKey: 'dashboard.quick.createPrHint',
+    permissions: ['PR_CREATE'],
+    route: '/procurement/create'
+  },
+  {
+    icon: 'inbox',
+    labelKey: 'dashboard.quick.approvalInbox',
+    descriptionKey: 'dashboard.quick.approvalInboxHint',
+    permissions: ['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY'],
+    route: '/approvals'
+  },
+  {
+    icon: 'receipt-text',
+    labelKey: 'dashboard.quick.createPo',
+    descriptionKey: 'dashboard.quick.createPoHint',
+    permissions: ['PO_CREATE'],
+    route: '/finance/purchase-orders/create'
+  },
+  {
+    icon: 'wallet-cards',
+    labelKey: 'dashboard.quick.viewBudgets',
+    descriptionKey: 'dashboard.quick.viewBudgetsHint',
+    permissions: ['BUDGET_VIEW_OWN_DEPT', 'BUDGET_VIEW_ALL'],
+    route: '/finance/budgets'
+  },
+  {
+    icon: 'send',
+    labelKey: 'dashboard.quick.viewRfqs',
+    descriptionKey: 'dashboard.quick.viewRfqsHint',
+    permissions: ['RFQ_VIEW'],
+    route: '/vendors/rfq'
+  },
+  {
+    icon: 'package-check',
+    labelKey: 'dashboard.quick.createGr',
+    descriptionKey: 'dashboard.quick.createGrHint',
+    permissions: ['GR_CREATE'],
+    route: '/inventory/goods-receipts/create'
+  },
+  {
+    icon: 'file-check-2',
+    labelKey: 'dashboard.quick.createInvoice',
+    descriptionKey: 'dashboard.quick.createInvoiceHint',
+    permissions: ['INVOICE_CREATE'],
+    route: '/finance/invoices/create'
+  },
+  {
+    icon: 'file-down',
+    labelKey: 'dashboard.quick.reports',
+    descriptionKey: 'dashboard.quick.reportsHint',
+    permissions: ['REPORT_EXPORT'],
+    reportType: 'SPENDING_BY_DEPARTMENT'
+  }
+];
+
 const KPI_TONE: Record<KpiStatus, EpBadgeTone> = {
   GOOD: 'success',
   WARNING: 'warning',
@@ -87,6 +155,8 @@ const DEFAULT_CHART_THEME: DashboardChartTheme = {
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 const FRESHNESS_TICK_MS = 60 * 1000;
 const DATA_STALE_MS = 5 * 60 * 1000;
+const REPORT_JOB_POLL_MS = 5000;
+const REPORT_JOBS_STORAGE_KEY = 'eprocure.dashboard.reportJobs';
 
 @Component({
   selector: 'ep-dashboard',
@@ -131,6 +201,7 @@ export class DashboardComponent implements OnInit {
   readonly isLoadingDashboard = signal(false);
   readonly isLoadingKpi = signal(false);
   readonly isExporting = signal(false);
+  readonly isPollingReportJobs = signal(false);
   readonly refreshingJobId = signal<string | null>(null);
   readonly downloadingJobId = signal<string | null>(null);
   readonly chartTheme = signal<DashboardChartTheme>(DEFAULT_CHART_THEME);
@@ -151,7 +222,9 @@ export class DashboardComponent implements OnInit {
     { id: 'requester' as const, labelKey: 'dashboard.tabs.requester', permissions: ['PR_VIEW_OWN'] },
     { id: 'reports' as const, labelKey: 'dashboard.tabs.reports', permissions: ['REPORT_EXPORT'] }
   ].filter((tab) => this.permissionService.hasAnyPermission(tab.permissions)));
+  readonly quickActions = computed(() => DASHBOARD_QUICK_ACTIONS.filter((action) => this.permissionService.hasAnyPermission(action.permissions)));
   readonly isRefreshing = computed(() => this.isLoadingDashboard() || this.isLoadingKpi());
+  readonly activeReportJobCount = computed(() => this.reportJobs().filter((job) => this.isReportJobInProgress(job.status)).length);
   readonly canViewReports = computed(() => this.permissionService.hasPermission('REPORT_EXPORT'));
   readonly canViewExecutive = computed(() => this.permissionService.hasPermission('REPORT_VIEW'));
   readonly lastUpdatedLabel = computed(() => {
@@ -378,9 +451,11 @@ export class DashboardComponent implements OnInit {
 
     this.initializeTabFromUrl();
     this.bindTabQueryParam();
+    this.restoreReportJobs();
     this.loadDepartments();
     this.startFreshnessClock();
     this.startAutoRefresh();
+    this.startReportJobPolling();
     this.reload();
   }
 
@@ -393,8 +468,13 @@ export class DashboardComponent implements OnInit {
   }
 
   openReportPreset(reportType: ReportType): void {
+    this.syncReportFormWithFilters();
     this.exportForm.controls.reportType.setValue(reportType);
     this.setTab('reports');
+  }
+
+  openReportsForCurrentTab(): void {
+    this.openReportPreset(this.reportPresetForTab(this.activeTab()));
   }
 
   reload(): void {
@@ -458,7 +538,7 @@ export class DashboardComponent implements OnInit {
   }
 
   downloadJob(job: ReportJob): void {
-    if (job.status !== 'COMPLETED') {
+    if (this.isReportDownloadDisabled(job)) {
       return;
     }
     this.downloadingJobId.set(job.jobId);
@@ -471,6 +551,14 @@ export class DashboardComponent implements OnInit {
         next: (blob) => this.saveBlob(blob, this.reportFileName(job)),
         error: () => this.toastService.errorKey('dashboard.reports.toast.downloadFailed')
       });
+  }
+
+  isReportDownloadDisabled(job: ReportJob): boolean {
+    return job.status !== 'COMPLETED';
+  }
+
+  reportExpiryLabel(job: ReportJob): string {
+    return job.expiresAt ? this.formatDateTime(job.expiresAt) : '--';
   }
 
   kpiValue(card: KpiCard): string {
@@ -609,6 +697,10 @@ export class DashboardComponent implements OnInit {
     return 'dashboard.budgetHealth.risk';
   }
 
+  isReportJobInProgress(status: ReportJobStatus): boolean {
+    return status === 'QUEUED' || status === 'PROCESSING';
+  }
+
   formatDate(iso: string | null | undefined): string {
     if (!iso) {
       return '--';
@@ -739,6 +831,31 @@ export class DashboardComponent implements OnInit {
           return;
         }
         this.reload();
+      });
+  }
+
+  private startReportJobPolling(): void {
+    interval(REPORT_JOB_POLL_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.pollReportJobs());
+  }
+
+  private pollReportJobs(): void {
+    if (this.isPollingReportJobs()) {
+      return;
+    }
+    const activeJobs = this.reportJobs().filter((job) => this.isReportJobInProgress(job.status));
+    if (activeJobs.length === 0) {
+      return;
+    }
+    this.isPollingReportJobs.set(true);
+    forkJoin(activeJobs.map((job) => this.analyticsService.getReportJob(job.jobId)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isPollingReportJobs.set(false))
+      )
+      .subscribe({
+        next: (responses) => responses.forEach((res) => this.upsertJob(res.data))
       });
   }
 
@@ -1097,6 +1214,55 @@ export class DashboardComponent implements OnInit {
       job,
       ...jobs.filter((item) => item.jobId !== job.jobId)
     ].slice(0, 8));
+    this.persistReportJobs();
+  }
+
+  private restoreReportJobs(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+    try {
+      const raw = sessionStorage.getItem(REPORT_JOBS_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+      const jobs = JSON.parse(raw) as ReportJob[];
+      if (Array.isArray(jobs)) {
+        this.reportJobs.set(jobs.slice(0, 8));
+      }
+    } catch {
+      sessionStorage.removeItem(REPORT_JOBS_STORAGE_KEY);
+    }
+  }
+
+  private persistReportJobs(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+    sessionStorage.setItem(REPORT_JOBS_STORAGE_KEY, JSON.stringify(this.reportJobs()));
+  }
+
+  private syncReportFormWithFilters(): void {
+    const raw = this.filterForm.getRawValue();
+    this.exportForm.patchValue({
+      fromDate: raw.fromDate,
+      toDate: raw.toDate,
+      fiscalYear: raw.fiscalYear,
+      quarter: raw.quarter
+    });
+  }
+
+  private reportPresetForTab(tab: DashboardTab): ReportType {
+    if (tab === 'manager') {
+      return 'BUDGET_VS_PLAN';
+    }
+    if (tab === 'purchasing') {
+      return 'PO_SUMMARY';
+    }
+    if (tab === 'requester') {
+      return 'PR_SUMMARY';
+    }
+    return 'SPENDING_BY_DEPARTMENT';
   }
 
   private saveBlob(blob: Blob, fileName: string): void {

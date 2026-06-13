@@ -15,6 +15,36 @@
     (refreshDashboard)="reload()"
     (tabChange)="setTab($event)" />
 
+  @if (quickActions().length > 0) {
+    <section class="quick-actions" aria-labelledby="dashboard-quick-actions-heading">
+      <div class="quick-actions__heading">
+        <h2 id="dashboard-quick-actions-heading">{{ 'dashboard.quick.label' | translate }}</h2>
+        <p>{{ 'dashboard.quick.subtitle' | translate }}</p>
+      </div>
+      <div class="quick-actions__grid">
+        @for (action of quickActions(); track action.labelKey) {
+          @if (action.route) {
+            <a class="quick-action-card" [routerLink]="action.route">
+              <ep-icon [name]="action.icon" />
+              <span>
+                <strong>{{ action.labelKey | translate }}</strong>
+                <small>{{ action.descriptionKey | translate }}</small>
+              </span>
+            </a>
+          } @else {
+            <button class="quick-action-card" type="button" (click)="openReportsForCurrentTab()">
+              <ep-icon [name]="action.icon" />
+              <span>
+                <strong>{{ action.labelKey | translate }}</strong>
+                <small>{{ action.descriptionKey | translate }}</small>
+              </span>
+            </button>
+          }
+        }
+      </div>
+    </section>
+  }
+
   @if (isLoadingDashboard()) {
     <ep-skeleton [rows]="8" />
   }
@@ -760,6 +790,21 @@
         </div>
       </div>
 
+      <div class="report-presets" [attr.aria-label]="'dashboard.reports.presetsLabel' | translate">
+        <button type="button" class="preset-chip" (click)="openReportPreset('SPENDING_BY_DEPARTMENT')">
+          {{ 'dashboard.reports.preset.executive' | translate }}
+        </button>
+        <button type="button" class="preset-chip" (click)="openReportPreset('BUDGET_VS_PLAN')">
+          {{ 'dashboard.reports.preset.manager' | translate }}
+        </button>
+        <button type="button" class="preset-chip" (click)="openReportPreset('PO_SUMMARY')">
+          {{ 'dashboard.reports.preset.purchasing' | translate }}
+        </button>
+        <button type="button" class="preset-chip" (click)="openReportPreset('PR_SUMMARY')">
+          {{ 'dashboard.reports.preset.requester' | translate }}
+        </button>
+      </div>
+
       <form class="report-form" [formGroup]="exportForm" (ngSubmit)="exportReport()">
         <ep-form-field [label]="'dashboard.reports.field.reportType' | translate">
           <select id="report-type" formControlName="reportType">
@@ -806,6 +851,16 @@
       @if (reportJobs().length === 0) {
         <ep-empty-state icon="file-down" [title]="'dashboard.reports.empty.title' | translate" [message]="'dashboard.reports.empty.message' | translate" />
       } @else {
+        <div class="report-jobs-toolbar">
+          @if (activeReportJobCount() > 0) {
+            <span class="polling-pill">
+              <ep-icon name="loader-circle" [size]="14" />
+              {{ 'dashboard.reports.polling' | translate: { count: activeReportJobCount() } }}
+            </span>
+          } @else {
+            <span class="workflow-note">{{ 'dashboard.reports.noActiveJobs' | translate }}</span>
+          }
+        </div>
         <table class="dense-table">
           <thead>
             <tr>
@@ -813,6 +868,7 @@
               <th>{{ 'dashboard.reports.col.format' | translate }}</th>
               <th>{{ 'dashboard.reports.col.status' | translate }}</th>
               <th>{{ 'dashboard.reports.col.createdAt' | translate }}</th>
+              <th>{{ 'dashboard.reports.col.expiresAt' | translate }}</th>
               <th class="align-right">{{ 'dashboard.reports.col.actions' | translate }}</th>
             </tr>
           </thead>
@@ -823,11 +879,12 @@
                 <td>{{ ('dashboard.reports.format.' + job.format) | translate }}</td>
                 <td><ep-badge [tone]="jobStatusTone(job.status)" [labelKey]="'dashboard.reports.status.' + job.status" /></td>
                 <td>{{ formatDateTime(job.createdAt) }}</td>
+                <td>{{ reportExpiryLabel(job) }}</td>
                 <td class="align-right job-actions">
-                  <ep-button size="sm" variant="ghost" icon="refresh-cw" [loading]="refreshingJobId() === job.jobId" (click)="refreshJob(job)">
+                  <ep-button size="sm" variant="ghost" icon="refresh-cw" [disabled]="!isReportJobInProgress(job.status)" [loading]="refreshingJobId() === job.jobId" (click)="refreshJob(job)">
                     {{ 'dashboard.reports.action.refreshJob' | translate }}
                   </ep-button>
-                  <ep-button size="sm" variant="secondary" icon="download" [disabled]="job.status !== 'COMPLETED'" [loading]="downloadingJobId() === job.jobId" (click)="downloadJob(job)">
+                  <ep-button size="sm" variant="secondary" icon="download" [disabled]="isReportDownloadDisabled(job)" [loading]="downloadingJobId() === job.jobId" (click)="downloadJob(job)">
                     {{ 'dashboard.reports.action.download' | translate }}
                   </ep-button>
                 </td>

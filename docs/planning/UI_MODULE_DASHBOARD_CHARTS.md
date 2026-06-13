@@ -208,6 +208,8 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 
 ### Slice 8f — Quick actions + reports UX
 
+**Trạng thái 2026-06-14:** ✅ Hoàn thành frontend. Dashboard có quick action strip theo permission, report quick action mở preset theo tab hiện tại, Reports có preset chips, job polling `QUEUED/PROCESSING`, session persistence qua `sessionStorage`, expiresAt column và download/refresh disabled rõ theo trạng thái job.
+
 | Việc | Chi tiết |
 |---|---|
 | Quick action strip | Permission-aware cards: create PR, approvals, create PO, budgets, RFQ, GR, invoice, reports |

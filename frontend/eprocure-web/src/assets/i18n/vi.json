@@ -147,6 +147,26 @@
       "requester": "Cá nhân",
       "reports": "Xuất báo cáo"
     },
+    "quick": {
+      "label": "Thao tác nhanh",
+      "subtitle": "Mở nhanh các luồng nghiệp vụ thường dùng theo quyền hiện tại.",
+      "createPr": "Tạo yêu cầu mua",
+      "createPrHint": "Tạo PR mới từ catalog",
+      "approvalInbox": "Hộp thư duyệt",
+      "approvalInboxHint": "Xử lý approval task",
+      "createPo": "Tạo đơn mua",
+      "createPoHint": "Lập PO từ yêu cầu đã duyệt",
+      "viewBudgets": "Xem ngân sách",
+      "viewBudgetsHint": "Kiểm tra utilization",
+      "viewRfqs": "Xem RFQ",
+      "viewRfqsHint": "Theo dõi báo giá",
+      "createGr": "Tạo phiếu nhận hàng",
+      "createGrHint": "Ghi nhận hàng về kho",
+      "createInvoice": "Tạo hóa đơn",
+      "createInvoiceHint": "Chuẩn bị đối soát 3-way",
+      "reports": "Xuất báo cáo",
+      "reportsHint": "Mở preset theo tab"
+    },
     "trend": {
       "UP": "tăng",
       "DOWN": "giảm",
@@ -317,6 +337,15 @@
         "refreshJob": "Kiểm tra",
         "download": "Tải file"
       },
+      "presetsLabel": "Preset báo cáo",
+      "polling": "Đang tự cập nhật {{count}} job",
+      "noActiveJobs": "Không có job đang xử lý.",
+      "preset": {
+        "executive": "Điều hành",
+        "manager": "Trưởng phòng",
+        "purchasing": "Thu mua",
+        "requester": "Cá nhân"
+      },
       "empty": {
         "title": "Chưa có job báo cáo",
         "message": "Tạo báo cáo mới để theo dõi trạng thái xử lý tại đây."
@@ -330,6 +359,7 @@
         "format": "Định dạng",
         "status": "Trạng thái",
         "createdAt": "Ngày tạo",
+        "expiresAt": "Hết hạn",
         "actions": "Thao tác"
       },
       "format": {

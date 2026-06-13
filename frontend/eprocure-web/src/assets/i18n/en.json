@@ -147,6 +147,26 @@
       "requester": "Personal",
       "reports": "Reports"
     },
+    "quick": {
+      "label": "Quick actions",
+      "subtitle": "Open frequent workflows based on the current account permissions.",
+      "createPr": "Create request",
+      "createPrHint": "Start a PR from catalog",
+      "approvalInbox": "Approval inbox",
+      "approvalInboxHint": "Process approval tasks",
+      "createPo": "Create PO",
+      "createPoHint": "Issue a PO from approved demand",
+      "viewBudgets": "View budgets",
+      "viewBudgetsHint": "Check utilization",
+      "viewRfqs": "View RFQs",
+      "viewRfqsHint": "Track quotations",
+      "createGr": "Create receipt",
+      "createGrHint": "Record received goods",
+      "createInvoice": "Create invoice",
+      "createInvoiceHint": "Prepare 3-way matching",
+      "reports": "Export reports",
+      "reportsHint": "Open preset for this tab"
+    },
     "trend": {
       "UP": "up",
       "DOWN": "down",
@@ -317,6 +337,15 @@
         "refreshJob": "Check",
         "download": "Download"
       },
+      "presetsLabel": "Report presets",
+      "polling": "Auto-updating {{count}} jobs",
+      "noActiveJobs": "No jobs are processing.",
+      "preset": {
+        "executive": "Executive",
+        "manager": "Manager",
+        "purchasing": "Purchasing",
+        "requester": "Personal"
+      },
       "empty": {
         "title": "No report jobs",
         "message": "Create a new report to track processing status here."
@@ -330,6 +359,7 @@
         "format": "Format",
         "status": "Status",
         "createdAt": "Created at",
+        "expiresAt": "Expires at",
         "actions": "Actions"
       },
       "format": {

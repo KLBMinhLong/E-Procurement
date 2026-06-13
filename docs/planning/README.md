@@ -16,7 +16,7 @@
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ✅ Hoàn thành | Build pass 2026-06-13; align RFQ status frontend với backend + comparison table |
-| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | 🔄 Đang làm | Slice 8a-8e hoàn thành 2026-06-14; chart foundation + shell UX + executive visuals + KPI deep-dive + role workflow hubs pass build, tiếp theo 8f quick actions/reports UX |
+| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | 🔄 Đang làm | Slice 8a-8f hoàn thành 2026-06-14; chart foundation + shell UX + executive visuals + KPI deep-dive + role workflow hubs + quick actions/reports UX pass build, tiếp theo 8g polish |
 
 ---
 
