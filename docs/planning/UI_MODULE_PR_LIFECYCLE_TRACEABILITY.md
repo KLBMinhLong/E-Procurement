@@ -1,373 +1,275 @@
-# Kế hoạch UI — PR Lifecycle & Traceability (Post-Approval Links)
+# Kế hoạch UI — PR Lifecycle & Traceability
 
-> **Mục tiêu:** Bổ sung khả năng truy vết vòng đời đầy đủ của PR sau khi được duyệt — hiển thị RFQ đã tạo từ PR, PO đã được tạo, trạng thái chuyển đổi — giúp Requester và Purchasing biết chính xác PR đang ở giai đoạn nào của procurement cycle.
+> **Mục tiêu:** Bổ sung truy vết RFQ/PO sinh ra từ PR để Requester/Purchasing biết PR đang ở đâu trong procurement cycle, mở nhanh tài liệu liên quan, và tránh tạo RFQ/PO trùng sau khi PR đã approved.
+
+---
+
+## 0. Rà soát lại theo code hiện tại — 2026-06-13
+
+Plan này là plan kế tiếp sau `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md`. Sau plan #4, phần lifecycle visualization nền đã hoàn thành, nên scope plan #5 được chỉnh lại để tập trung vào **traceability links RFQ/PO** và **duplicate-action guard**.
+
+| Nhóm | Trạng thái thực tế | Điều chỉnh scope |
+|---|---|---|
+| `ep-pr-lifecycle` | Đã tạo trong plan #4 và đã wire vào `pr-detail.component` ngay dưới page header | Không tạo lại lifecycle bar, không thêm stage UI mới trong plan này. |
+| Approval timeline | PR Detail đã dùng `ep-approval-steps` vertical compact | Không động lại approval timeline trừ khi traceability cần spacing nhỏ. |
+| RFQ filter theo PR | Backend/vendor OpenAPI có `GET /rfq?pr_id=...`; frontend `RfqService.list()` đã nhận `filter.prId` và map sang `pr_id` | Chỉ thêm helper `listByPrId()` nếu giúp PR Detail gọn hơn; không cần backend cho RFQ. |
+| PO filter theo PR | Finance DB/repository có `pr_id`, nhưng public `GET /purchase-orders` controller/OpenAPI/frontend filter chưa expose `pr_id` | Cần slice backend/API nhỏ trước khi PR Detail có thể load PO liên quan ổn định. |
+| PO response | `PurchaseOrderResponse`/FE model có `prId`, `prNumber`, `prConversionStatus`; chưa expose `rfqId/rfqNumber` ra response | Traceability ở PR Detail chỉ cần PO link/status/number/conversion; không yêu cầu `rfqId` trong plan này. |
+| PR List trace indicator | Không có `hasRfq/hasPo` trong PR list response | Không làm PR List để tránh N+1 và backend projection mới. |
+
+**Thứ tự thực hiện đề xuất:** 5a PO `pr_id` filter backend/API → 5b FE service helpers → 5c PR Detail traceability card → 5d duplicate-action guard + reload → 5e i18n + build verify.
 
 ---
 
 ## 1. Hiện trạng
 
-### 1.1 PR Detail có gì
+### 1.1 PR Detail hiện có
 
-**File:** `features/procurement/pages/pr-detail/pr-detail.component.html` + `.ts`
+**Files chính:**
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.ts`
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.html`
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.scss`
 
-**Phần header actions:**
+**Đã có sau plan #4:**
+- Header actions `Tạo RFQ`, `Tạo PO`.
+- `ep-pr-lifecycle` full-width dưới page header.
+- Sidebar approval card dùng `ep-approval-steps`.
+
+**Action logic hiện tại:**
 ```typescript
-// component.ts
 readonly canCreatePo = computed(() => this.pr()?.status === 'APPROVED');
 readonly canCreateRfq = computed(() => this.pr()?.status === 'APPROVED');
 ```
-```html
-<!-- Nút tạo PO khi APPROVED -->
-@if (canCreatePo()) {
-  <ep-button *epHasPermission="'PO_CREATE'" (click)="navigateCreatePo()">
-    {{ 'pr.detail.action.createPo' | translate }}
-  </ep-button>
-}
-@if (canCreateRfq()) {
-  <ep-button *epHasPermission="'RFQ_CREATE'" (click)="navigateCreateRfq()">
-    {{ 'pr.detail.action.createRfq' | translate }}
-  </ep-button>
-}
-```
 
-**Sidebar approval section:** Có timeline steps duyệt (xem planning `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md`)
+**Vấn đề:** khi đã có RFQ/PO liên quan, user vẫn thấy nút tạo mới.
 
-**Model `PurchaseRequestDetail`:**
+### 1.2 Traceability data hiện có
+
+**RFQ:**
+- `docs/api/vendor-service.openapi.yaml` có `GET /rfq?pr_id={prId}`.
+- `RfqService.list({ prId })` đã map `prId` → `pr_id`.
+- `RfqDetail` có `id`, `rfqNumber`, `prId`, `prNumber`, `title`, `status`, `awardedQuoteId`, `createdAt`.
+
+**PO:**
+- `finance.purchase_orders` có `pr_id`.
+- `PurchaseOrderResponse` có `id`, `poNumber`, `prId`, `prNumber`, `status`, `prConversionStatus`, `createdAt`.
+- `GET /purchase-orders` hiện chỉ nhận `status`, `vendor_id`, `from_date`, `to_date`, `page`, `size`, `sort`.
+
+---
+
+## 2. Scope Sau Rà Soát
+
+### In scope
+
+1. Backend finance-service expose `GET /purchase-orders?pr_id={uuid}`.
+2. Cập nhật OpenAPI `docs/api/finance-service.openapi.yaml`.
+3. Frontend `PurchaseOrderListFilter` + `PurchaseOrderService.listByPrId()`.
+4. Frontend `RfqService.listByPrId()` helper dựa trên `list({ prId })` hiện có.
+5. PR Detail sidebar traceability card:
+   - RFQ liên quan.
+   - PO liên quan.
+   - skeleton riêng, empty state rõ, reload button.
+   - link router sang RFQ/PO detail.
+6. `canCreateRfq` / `canCreatePo` ẩn action khi đã có document active.
+
+### Out of scope
+
+- Không tạo lại `ep-pr-lifecycle`.
+- Không thêm PR List trace icons vì thiếu `hasRfq/hasPo` trong list API.
+- Không tạo projection/cross-service aggregation mới ở PR service.
+- Không yêu cầu PO response expose `rfqId/rfqNumber`.
+- Không mở browser test nếu user vẫn muốn dừng ở mức build.
+
+---
+
+## 3. Slice 5a — Finance PO Filter `pr_id`
+
+**Mục tiêu:** Cho frontend query PO liên quan đến PR bằng API chính thức, không dùng workaround.
+
+**Files backend cần sửa:**
+- `services/finance-service/src/main/java/com/eprocure/finance/application/port/in/ListPurchaseOrdersQuery.java`
+- `services/finance-service/src/main/java/com/eprocure/finance/domain/repository/PurchaseOrderFilter.java`
+- `services/finance-service/src/main/java/com/eprocure/finance/application/usecase/ListPurchaseOrdersUseCase.java`
+- `services/finance-service/src/main/java/com/eprocure/finance/presentation/controller/PurchaseOrderController.java`
+- `services/finance-service/src/main/java/com/eprocure/finance/presentation/mapper/PurchaseOrderPresentationMapper.java`
+- `services/finance-service/src/main/resources/mapper/PurchaseOrderMapper.xml`
+- `docs/api/finance-service.openapi.yaml`
+
+**Backend behavior:**
+- Add optional query param `pr_id`.
+- Filter `finance.purchase_orders.po.pr_id = #{filter.prId}` khi có.
+- Vẫn giữ ownership rule hiện tại: nếu user chỉ có `PO_VIEW_OWN`, filter thêm `purchasing_officer_id = actorId`.
+- Không thêm endpoint mới.
+- Không sửa migration.
+
+**Test tối thiểu:**
+- Nếu đã có test cho `ListPurchaseOrdersUseCase`, thêm case filter `prId`.
+- Nếu controller test chưa có, ít nhất chạy `mvn -pl services/finance-service test`.
+
+---
+
+## 4. Slice 5b — Frontend Service Helpers
+
+**Files sửa:**
+- `frontend/eprocure-web/src/app/features/vendor/services/rfq.service.ts`
+- `frontend/eprocure-web/src/app/features/finance/models/purchase-order.model.ts`
+- `frontend/eprocure-web/src/app/features/finance/services/purchase-order.service.ts`
+
+**RFQ helper:**
 ```typescript
-// Hiện có:
-status: PrStatus;  // Bao gồm 'CONVERTED_TO_PO'
-approvalProcess: { ... } | null;
-budgetCheck: BudgetCheckResult | null;
-inventoryCheck: { ... } | null;
-// KHÔNG CÓ:
-// - rfqId / rfqNumber
-// - poId / poNumber
-// - prConversionStatus (chỉ finance-service biết, không trả về từ PR API)
-```
-
-### 1.2 Các trường hợp thiếu
-
-**Kịch bản 1 — PR APPROVED, đã tạo RFQ:**
-- Requester vào PR detail → thấy status `APPROVED` và nút "Tạo RFQ" vẫn hiện
-- Không biết purchasing đã tạo RFQ từ PR này chưa, RFQ số gì, trạng thái nào
-- Nếu nhấn lại "Tạo RFQ" → tạo RFQ trùng (business error)
-
-**Kịch bản 2 — PR APPROVED, đã tạo PO (manual direct PO):**
-- Status PR vẫn là `APPROVED` cho đến khi callback `CONVERTED_TO_PO` hoàn tất
-- Requester không biết PO đã được tạo, PO number là gì, trạng thái PO
-
-**Kịch bản 3 — PR `CONVERTED_TO_PO`:**
-- Status badge hiển thị `CONVERTED_TO_PO`
-- Nhưng không có link nào sang PO tương ứng
-- Purchasing không biết PO nào là từ PR này
-
-**Kịch bản 4 — PR List không có status indicator đầy đủ:**
-- PR list chỉ hiển thị `status` cơ bản
-- Không có visual "PR này đang ở giai đoạn: đang RFQ / đã có PO / đang GR"
-
----
-
-## 2. Vấn đề gốc rễ
-
-### 2.1 Backend không trả về traceability links trong PR API
-
-`GET /api/v1/purchase-requests/{id}` response hiện không bao gồm:
-- `rfqIds` / `rfqNumbers` (từ vendor-service)
-- `poId` / `poNumber` (từ finance-service)
-
-Đây là cross-service data: PR service không biết về RFQ và PO của service khác.
-
-### 2.2 Giải pháp không cần thay đổi backend
-
-**Cách 1 — Query cross-service từ frontend:**
-- Gọi `GET /api/v1/rfq?prId={prId}` (vendor-service) để tìm RFQ của PR này
-- Gọi `GET /api/v1/purchase-orders?pr_id={prId}` (finance-service, nếu filter đã có) để tìm PO
-
-**Cách 2 — Dùng URL params để truy ngược:**
-- Khi người dùng đến từ RFQ create flow, set state
-- Khi PO detail có `prNumber`, link ngược lại
-
-**Phương án chọn:** Cách 1 (query cross-service) — đơn giản nhất, không cần backend thay đổi, dữ liệu realtime.
-
----
-
-## 3. Thiết kế giải pháp
-
-### 3.1 PR Detail — "Traceability Section"
-
-**Vị trí:** Sidebar của PR detail, dưới approval card
-
-**Trigger load:** Khi `pr()?.status` thuộc `['APPROVED', 'CONVERTED_TO_PO', 'CLOSED']` — load lazy.
-
-**Cấu trúc section:**
-```html
-<ep-card tone="raised">
-  <div class="card-section">
-    <h2 class="card-section__title">{{ 'pr.detail.section.traceability' | translate }}</h2>
-    
-    <!-- RFQ liên quan -->
-    @if (relatedRfqLoading()) { <ep-skeleton [rows]="2" /> }
-    @else if (relatedRfqs().length) {
-      <div class="trace-group">
-        <span class="trace-label">{{ 'pr.detail.trace.rfq' | translate }}</span>
-        @for (rfq of relatedRfqs(); track rfq.id) {
-          <a [routerLink]="['/vendors/rfq', rfq.id]" class="trace-link">
-            <ep-icon name="file-search" [size]="14" />
-            {{ rfq.rfqNumber }}
-            <ep-badge [tone]="rfqStatusTone(rfq.status)" [labelKey]="'rfq.status.' + rfq.status" />
-          </a>
-        }
-      </div>
-    }
-    
-    <!-- PO liên quan -->
-    @if (relatedPoLoading()) { <ep-skeleton [rows]="2" /> }
-    @else if (relatedPos().length) {
-      <div class="trace-group">
-        <span class="trace-label">{{ 'pr.detail.trace.po' | translate }}</span>
-        @for (po of relatedPos(); track po.id) {
-          <a [routerLink]="['/finance/purchase-orders', po.id]" class="trace-link">
-            <ep-icon name="receipt-text" [size]="14" />
-            {{ po.poNumber }}
-            <ep-badge [tone]="poStatusTone(po.status)" [labelKey]="'po.status.' + po.status" />
-          </a>
-        }
-      </div>
-    }
-    
-    <!-- Không có liên kết nào -->
-    @if (!relatedRfqs().length && !relatedPos().length && !relatedRfqLoading() && !relatedPoLoading()) {
-      <p class="side-note">{{ 'pr.detail.trace.none' | translate }}</p>
-    }
-  </div>
-</ep-card>
-```
-
----
-
-### 3.2 Action buttons — logic cập nhật
-
-**Hiện tại:** Cả 2 nút "Tạo RFQ" và "Tạo PO" hiện khi `status === 'APPROVED'`
-
-**Cần thêm logic ẩn nút khi đã có liên kết:**
-```typescript
-// Ẩn "Tạo RFQ" nếu đã có ít nhất 1 RFQ OPEN/EVALUATING/AWARDED từ PR này
-readonly canCreateRfq = computed(() => {
-  if (this.pr()?.status !== 'APPROVED') return false;
-  const rfqs = this.relatedRfqs();
-  const hasActiveRfq = rfqs.some(r => ['OPEN', 'EVALUATING', 'AWARDED'].includes(r.status));
-  return !hasActiveRfq;
-});
-
-// Ẩn "Tạo PO" nếu đã có PO (bất kỳ status nào trừ CANCELLED)
-readonly canCreatePo = computed(() => {
-  if (this.pr()?.status !== 'APPROVED') return false;
-  const pos = this.relatedPos();
-  const hasActivePo = pos.some(p => p.status !== 'CANCELLED');
-  return !hasActivePo;
-});
-```
-
----
-
-### 3.3 PR Detail — Lifecycle Status Bar
-
-**Vị trí:** Ngay dưới page header, trên metric strip, full-width
-
-**Stages cho PR lifecycle:**
-```
-DRAFT → SUBMITTED → PENDING_APPROVAL → APPROVED → [PO / RFQ] → CLOSED
-                                           ↓
-                                     REJECTED | CANCELLED
-                                     CHANGES_REQUESTED (loop back)
-```
-
-**Visual:**
-```
-●──────────●──────────●──────────●──────────◌──────────◌
- Nháp      Đã nộp     Đang duyệt  Đã duyệt   PO/RFQ     Đóng
- ✓          ✓          ✓●          (current)
-```
-
-**Implementation:**
-```typescript
-// Tính stage hiện tại
-readonly lifecycleStage = computed(() => {
-  const status = this.pr()?.status;
-  const stageMap: Record<string, number> = {
-    'DRAFT': 0,
-    'SUBMITTED': 1,
-    'PENDING_APPROVAL': 2,
-    'CHANGES_REQUESTED': 2,    // vẫn ở stage duyệt
-    'APPROVED': 3,
-    'CONVERTED_TO_PO': 4,
-    'CLOSED': 5,
-    'REJECTED': -1,            // terminal state đặc biệt
-    'CANCELLED': -1
-  };
-  return stageMap[status ?? ''] ?? 0;
-});
-```
-
----
-
-### 3.4 PR List — Additional Status Context
-
-**File:** `features/procurement/pages/pr-list/`
-
-**Hiện tại:** Chỉ có `ep-badge` cho `status` cơ bản.
-
-**Thêm:** Mini trace indicator — icon nhỏ khi PR đã có RFQ hoặc PO liên kết:
-```html
-@if (pr.hasRfq) {
-  <ep-icon name="file-search" [size]="12" class="trace-indicator" title="Có RFQ" />
-}
-@if (pr.hasPo) {
-  <ep-icon name="receipt-text" [size]="12" class="trace-indicator" title="Có PO" />
+listByPrId(prId: string): Observable<ApiResponse<RfqDetail[]> & { meta: PageMeta }> {
+  return this.list({ page: 1, size: 10, sort: 'createdAt,desc', prId });
 }
 ```
 
-**Lưu ý:** Thông tin `hasRfq` / `hasPo` cần backend thêm vào PR list response, hoặc chỉ hiển thị khi user click vào detail (không load cho cả list vì performance).
-
-**Phương án thực tế:** Chỉ làm ở PR detail (sidebar section) — không thêm ở PR list để tránh N+1 queries.
-
----
-
-## 4. Services cần thay đổi
-
-### 4.1 RFQ Service — thêm filter `prId`
-
-**File:** `features/vendor/services/rfq.service.ts`
-
-**Thêm method:**
-```typescript
-listByPrId(prId: string): Observable<ApiResponse<RfqSummary[]>> {
-  const params = new HttpParams().set('pr_id', prId).set('page', 1).set('size', 10);
-  return this.http.get<...>(`${this.baseUrl}/rfq`, { params, withCredentials: true });
-}
-```
-
-**Interface `RfqSummary` (đã có trong models nhưng cần verify):**
-```typescript
-interface RfqSummary {
-  id: string;
-  rfqNumber: string;
-  status: 'OPEN' | 'EVALUATING' | 'AWARDED' | 'CLOSED' | 'CANCELLED';
-  prId: string | null;
-  prNumber: string | null;
-  title: string;
-  submissionDeadline: string;
-  awardedQuoteId: string | null;
-}
-```
-
-### 4.2 Purchase Order Service — thêm filter `pr_id`
-
-**File:** `features/finance/services/purchase-order.service.ts`
-
-**Kiểm tra `PurchaseOrderListFilter`** — thêm `pr_id?: string` nếu chưa có:
+**PO filter/helper:**
 ```typescript
 export interface PurchaseOrderListFilter {
   page: number;
   size: number;
   sort: string;
-  status?: string;
+  status?: PurchaseOrderStatus;
   vendor_id?: string;
-  pr_id?: string;       // ← cần thêm nếu chưa có
+  pr_id?: string;
   from_date?: string;
   to_date?: string;
 }
-```
 
-**Thêm method:**
-```typescript
-listByPrId(prId: string): Observable<ApiResponse<PurchaseOrder[]>> {
-  const params = new HttpParams().set('pr_id', prId).set('page', 1).set('size', 5);
-  return this.http.get<...>(`${this.baseUrl}/purchase-orders`, { params, withCredentials: true });
+listByPrId(prId: string): Observable<ApiResponse<PurchaseOrder[]> & { meta: PageMeta }> {
+  return this.list({ page: 1, size: 10, sort: 'createdAt,desc', pr_id: prId });
 }
 ```
 
 ---
 
-## 5. PR Detail Component — thêm state và logic
+## 5. Slice 5c — PR Detail Traceability Card
 
-**Thêm vào `pr-detail.component.ts`:**
+**Files sửa:**
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.ts`
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.html`
+- `frontend/eprocure-web/src/app/features/procurement/pages/pr-detail/pr-detail.component.scss`
+
+**State mới:**
 ```typescript
-// Inject thêm
 private readonly rfqService = inject(RfqService);
 private readonly poService = inject(PurchaseOrderService);
 
-// State mới
-readonly relatedRfqs = signal<RfqSummary[]>([]);
+readonly relatedRfqs = signal<RfqDetail[]>([]);
 readonly relatedPos = signal<PurchaseOrder[]>([]);
 readonly relatedRfqLoading = signal(false);
 readonly relatedPoLoading = signal(false);
 
-// Computed cập nhật (override hiện có)
-readonly canCreateRfq = computed(() => {
-  if (this.pr()?.status !== 'APPROVED') return false;
-  return !this.relatedRfqs().some(r => ['OPEN', 'EVALUATING', 'AWARDED'].includes(r.status));
-});
-readonly canCreatePo = computed(() => {
-  if (this.pr()?.status !== 'APPROVED') return false;
-  return !this.relatedPos().some(p => p.status !== 'CANCELLED');
-});
+readonly shouldLoadTraceability = computed(() =>
+  ['APPROVED', 'CONVERTED_TO_PO', 'CLOSED'].includes(this.pr()?.status ?? '')
+);
+readonly traceabilityLoading = computed(() => this.relatedRfqLoading() || this.relatedPoLoading());
+readonly hasTraceability = computed(() => this.relatedRfqs().length > 0 || this.relatedPos().length > 0);
+```
 
-// Load trong ngOnInit sau loadPr() success
-private loadTraceability(prId: string): void {
-  const status = this.pr()?.status;
-  if (!['APPROVED', 'CONVERTED_TO_PO', 'CLOSED'].includes(status ?? '')) return;
-  
-  this.relatedRfqLoading.set(true);
-  this.rfqService.listByPrId(prId)
-    .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.relatedRfqLoading.set(false)))
-    .subscribe({ next: res => this.relatedRfqs.set(res.data ?? []) });
-  
-  this.relatedPoLoading.set(true);
-  this.poService.listByPrId(prId)
-    .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.relatedPoLoading.set(false)))
-    .subscribe({ next: res => this.relatedPos.set(res.data ?? []) });
+**Load rule:**
+- Gọi sau `loadPr(id)` success.
+- Chỉ load khi `status ∈ APPROVED/CONVERTED_TO_PO/CLOSED`.
+- RFQ và PO load độc lập; lỗi một request không block request còn lại.
+- Khi không có permission/403, không toast lỗi trong PR detail, chỉ để empty/hidden state.
+
+**Template card:**
+```html
+@if (shouldLoadTraceability()) {
+  <ep-card tone="raised">
+    <div class="card-section traceability-card">
+      <div class="section-title-row">
+        <h2 class="card-section__title">{{ 'pr.detail.section.traceability' | translate }}</h2>
+        <ep-button variant="ghost" size="sm" icon="refresh-cw" (click)="reloadTraceability()">
+          {{ 'action.refresh' | translate }}
+        </ep-button>
+      </div>
+
+      @if (traceabilityLoading()) {
+        <ep-skeleton [rows]="2" />
+      } @else if (hasTraceability()) {
+        <!-- RFQ group + PO group -->
+      } @else {
+        <p class="side-note">{{ 'pr.detail.trace.none' | translate }}</p>
+      }
+    </div>
+  </ep-card>
 }
 ```
 
+**Trace link behavior:**
+- RFQ: `this.router.navigate(['/vendors', 'rfq', rfq.id])`.
+- PO: `this.router.navigate(['/finance', 'purchase-orders', po.id])`.
+- Dùng `<button type="button">` hoặc clickable card với keyboard Enter/Space, tránh `<a href>`.
+
 ---
 
-## 6. i18n keys cần thêm
+## 6. Slice 5d — Duplicate Action Guard
 
-```json
-"pr.detail.section.traceability": "Liên kết tài liệu",
-"pr.detail.trace.rfq": "RFQ liên quan",
-"pr.detail.trace.po": "Đơn đặt hàng liên quan",
-"pr.detail.trace.none": "Chưa có RFQ hoặc PO được tạo từ PR này",
-"pr.detail.section.lifecycle": "Vòng đời yêu cầu",
-"pr.lifecycle.DRAFT": "Nháp",
-"pr.lifecycle.SUBMITTED": "Đã nộp",
-"pr.lifecycle.PENDING_APPROVAL": "Đang duyệt",
-"pr.lifecycle.APPROVED": "Đã duyệt",
-"pr.lifecycle.CONVERTED_TO_PO": "Đã tạo PO",
-"pr.lifecycle.REJECTED": "Bị từ chối",
-"pr.lifecycle.CANCELLED": "Đã hủy",
-"pr.lifecycle.CLOSED": "Đã đóng"
+**Cập nhật computed hiện có:**
+```typescript
+readonly canCreateRfq = computed(() => {
+  if (this.pr()?.status !== 'APPROVED') return false;
+  return !this.relatedRfqs().some((rfq) => ['DRAFT', 'PUBLISHED', 'CLOSED', 'AWARDED'].includes(rfq.status));
+});
+
+readonly canCreatePo = computed(() => {
+  if (this.pr()?.status !== 'APPROVED') return false;
+  return !this.relatedPos().some((po) => po.status !== 'CANCELLED');
+});
 ```
 
+**Lưu ý status RFQ thật:** backend enum hiện là `DRAFT`, `PUBLISHED`, `CLOSED`, `AWARDED`, `CANCELLED`; không dùng `OPEN/EVALUATING`.
+
+**Refresh after handoff:**
+- Sau khi user quay lại PR detail từ RFQ/PO create, traceability load lại theo `loadPr()`.
+- Có nút reload traceability để xử lý eventual consistency/race condition.
+
 ---
 
-## 7. Phụ thuộc và rủi ro
+## 7. Slice 5e — i18n + Verify
 
-| Điểm | Loại | Mô tả | Giải pháp |
-|---|---|---|---|
-| `GET /rfq?pr_id={prId}` | API filter | Cần verify backend vendor-service có filter `pr_id` không | Kiểm tra `vendor-service.openapi.yaml`, nếu thiếu cần thêm backend |
-| `GET /purchase-orders?pr_id={prId}` | API filter | Tương tự | Kiểm tra `finance-service.openapi.yaml` filter params |
-| Load traceability bị chậm | Performance | 2 request song song khi vào PR detail APPROVED | Dùng `forkJoin`, chỉ load khi status phù hợp, không block render chính |
-| RFQ/PO không có khi mới tạo | Race condition | Vừa tạo RFQ, quay lại PR detail ngay → chưa có data | Thêm `[Reload]` button trong traceability section |
+**i18n keys thêm vào `vi.json` / `en.json`:**
+```json
+{
+  "pr": {
+    "detail": {
+      "section": {
+        "traceability": "Liên kết tài liệu"
+      },
+      "trace": {
+        "rfq": "RFQ liên quan",
+        "po": "Đơn đặt hàng liên quan",
+        "none": "Chưa có RFQ hoặc PO được tạo từ PR này",
+        "rfqCount": "{{count}} RFQ",
+        "poCount": "{{count}} PO",
+        "conversion": "Đồng bộ PR",
+        "openRfq": "Mở RFQ {{number}}",
+        "openPo": "Mở PO {{number}}"
+      }
+    }
+  }
+}
+```
+
+**Verify:**
+```powershell
+mvn -pl services/finance-service test
+cd frontend/eprocure-web
+npm run build
+git diff --check
+```
 
 ---
 
 ## 8. Nguyên tắc triển khai
 
-- Load traceability lazy — chỉ trigger khi `status` ∈ `['APPROVED', 'CONVERTED_TO_PO', 'CLOSED']`
-- Traceability section không block render chính của PR detail — skeleton riêng trong section
-- `relatedRfqs()` và `relatedPos()` load song song bằng 2 request độc lập (không dùng forkJoin để tránh block một cái khi cái kia lỗi)
-- Khi request lỗi (404, 403): section ẩn đi — không hiển thị error message trong traceability
-- Link sang RFQ/PO dùng `routerLink` (Angular router), không dùng `href`
-- Lifecycle status bar: full-width, không có overflow, mobile-friendly (thu gọn text, chỉ hiện icon)
+- Không thêm HTTP DELETE endpoint.
+- Backend filter phải đi qua query param typed UUID, không nối raw SQL.
+- MyBatis filter tiếp tục giữ `po.is_deleted = FALSE`.
+- OpenAPI phải cập nhật nếu thêm query param backend.
+- Frontend request dùng service hiện có, `withCredentials: true`.
+- Mọi visible text dùng translate key.
+- CSS dùng design tokens `var(--...)`, không hardcode màu.
+- Không query traceability ở PR List để tránh N+1.
+- Không block render chính khi traceability load lỗi/chậm.
+- Build/test pass mới coi plan hoàn thành.
