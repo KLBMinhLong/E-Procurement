@@ -29,6 +29,10 @@ Plan này là plan kế tiếp sau `UI_MODULE_FINANCE_BUDGET.md`. Rà soát code
 
 **Trạng thái triển khai 2026-06-13:** ✅ Slice 4c hoàn thành ở mức build: đã tạo shared component `ep-pr-lifecycle` với lifecycle stages, terminal node cho `REJECTED/CANCELLED/CHANGES_REQUESTED`, state complete/current/upcoming/blocked, responsive layout, export shared và i18n `pr.lifecycle.*`.
 
+**Trạng thái triển khai 2026-06-13:** ✅ Slice 4d hoàn thành ở mức build: PR Detail đã render `ep-pr-lifecycle` ngay sau page header, sidebar approval dùng lại `ep-approval-steps` vertical compact thay timeline thủ công, thêm link Approval Inbox có guard permission khi PR `PENDING_APPROVAL`, và i18n `pr.detail.approval.viewInbox`.
+
+**Trạng thái triển khai 2026-06-13:** ✅ Slice 4e hoàn thành ở mức build: đã polish navigation/UX cho Approval Detail và PR Detail, đảm bảo empty workflow hiển thị rõ, link PR/Approval Inbox chỉ render đúng điều kiện, và `ep-approval-steps` có keyboard toggle/aria-label cho step detail kể cả compact mode.
+
 ---
 
 ## 1. Hiện trạng

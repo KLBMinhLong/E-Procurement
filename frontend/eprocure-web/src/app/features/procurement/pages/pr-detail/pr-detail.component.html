@@ -79,6 +79,10 @@
       </div>
     </div>
 
+    <ep-pr-lifecycle
+      [status]="data.status"
+      [approvalStatus]="data.approvalProcess?.status ?? null" />
+
     <div class="metric-strip" [attr.aria-label]="'pr.detail.metricsLabel' | translate">
       <div class="metric-card">
         <span class="metric-card__label">{{ 'pr.detail.label.totalAmount' | translate }}</span>
@@ -324,51 +328,31 @@
           <div class="card-section">
             <div class="section-title-row">
               <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
-              @if (data.approvalProcess) {
-                <ep-badge [tone]="approvalStatusTone(data.approvalProcess.status)" [labelKey]="'approval.status.' + data.approvalProcess.status" />
-              }
+              <div class="section-title-row__actions">
+                @if (data.status === 'PENDING_APPROVAL') {
+                  <ep-button
+                    *epHasPermission="['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY']"
+                    variant="ghost"
+                    size="sm"
+                    icon="inbox"
+                    (click)="navigateApprovalInbox()">
+                    {{ 'pr.detail.approval.viewInbox' | translate }}
+                  </ep-button>
+                }
+                @if (data.approvalProcess) {
+                  <ep-badge [tone]="approvalStatusTone(data.approvalProcess.status)" [labelKey]="'approval.status.' + data.approvalProcess.status" />
+                }
+              </div>
             </div>
 
             @if (data.approvalProcess; as process) {
               @if (process.steps.length) {
-                <div class="approval-timeline">
-                  @for (step of process.steps; track step.stepIndex) {
-                    <div class="timeline-item" [class.timeline-item--active]="step.stepIndex === process.currentStep">
-                      <div class="timeline-item__marker">
-                        @if (step.status === 'APPROVED') {
-                          <ep-icon name="check" class="icon-success" />
-                        } @else if (step.status === 'REJECTED') {
-                          <ep-icon name="x" class="icon-danger" />
-                        } @else {
-                          <span class="dot"></span>
-                        }
-                      </div>
-                      <div class="timeline-item__content">
-                        <div class="timeline-item__header">
-                          <span class="timeline-item__role">{{ step.approverRole }}</span>
-                          <ep-badge [tone]="approvalStatusTone(step.status)" [labelKey]="'approval.status.' + step.status" />
-                        </div>
-                        <span class="timeline-item__person">
-                          {{ step.approver?.fullName || shortId(step.approver?.id) }}
-                        </span>
-                        <div class="timeline-item__meta">
-                          <span>{{ 'pr.detail.approval.assignedAt' | translate }} {{ formatDateTime(step.assignedAt) }}</span>
-                          <span>{{ 'pr.detail.approval.deadline' | translate }} {{ formatDateTime(step.slaDeadline) }}</span>
-                        </div>
-
-                        @if (step.status === 'PENDING' && step.slaRemainingHours !== null && step.assignedAt && step.slaDeadline) {
-                          <div class="timeline-item__sla">
-                            <ep-sla-bar [assignedAt]="step.assignedAt" [deadline]="step.slaDeadline" />
-                          </div>
-                        }
-
-                        @if (step.comment) {
-                          <div class="timeline-item__comment">{{ step.comment }}</div>
-                        }
-                      </div>
-                    </div>
-                  }
-                </div>
+                <ep-approval-steps
+                  [steps]="approvalSteps()"
+                  [currentStepIndex]="currentApprovalStep()"
+                  viewMode="vertical"
+                  [compact]="true"
+                  [showSlaBar]="true" />
               } @else {
                 <p class="side-note">{{ 'pr.detail.approval.none' | translate }}</p>
               }

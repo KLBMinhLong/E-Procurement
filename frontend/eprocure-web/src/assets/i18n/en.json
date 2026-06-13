@@ -48,7 +48,8 @@
       "forwarded": "Forwarded",
       "skipped": "Skipped",
       "escalated": "Escalated",
-      "stepNumber": "Step {{step}}"
+      "stepNumber": "Step {{step}}",
+      "stepAriaLabel": "Open details for step {{step}}: {{role}}"
     }
   },
   "auth": {
@@ -683,7 +684,8 @@
       "approval": {
         "none": "No approval workflow has been generated for this request.",
         "assignedAt": "Assigned:",
-        "deadline": "Due:"
+        "deadline": "Due:",
+        "viewInbox": "View approval inbox"
       },
       "step": {
         "count": "{{count}} rows"

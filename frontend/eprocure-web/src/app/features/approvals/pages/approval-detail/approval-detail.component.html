@@ -57,18 +57,16 @@
       </div>
     </header>
 
-    @if (approvalSteps().length) {
-      <section class="process-overview" aria-labelledby="process-overview-heading">
-        <h2 id="process-overview-heading" class="sr-only">
-          {{ 'approvals.detail.processOverview' | translate }}
-        </h2>
-        <ep-approval-steps
-          [steps]="approvalSteps()"
-          [currentStepIndex]="currentStepIndex()"
-          viewMode="horizontal"
-          [showSlaBar]="true" />
-      </section>
-    }
+    <section class="process-overview" aria-labelledby="process-overview-heading">
+      <h2 id="process-overview-heading" class="sr-only">
+        {{ 'approvals.detail.processOverview' | translate }}
+      </h2>
+      <ep-approval-steps
+        [steps]="approvalSteps()"
+        [currentStepIndex]="currentStepIndex()"
+        viewMode="horizontal"
+        [showSlaBar]="true" />
+    </section>
 
     <!-- ── Main Grid Layout ─────────────────────────────────────────── -->
     <div class="detail-grid">

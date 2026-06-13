@@ -85,9 +85,6 @@ export class EpApprovalStepsComponent {
   });
 
   toggleStep(step: ApprovalStepView): void {
-    if (this.compact()) {
-      return;
-    }
     this.expandedStepIndex.update((current) => (current === step.stepIndex ? null : step.stepIndex));
   }
 

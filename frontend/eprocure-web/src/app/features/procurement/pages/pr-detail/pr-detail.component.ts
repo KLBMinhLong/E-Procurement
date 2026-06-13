@@ -22,7 +22,8 @@ import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcru
 import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
-import { EpSlaBarComponent } from '../../../../shared/components/ep-sla-bar/ep-sla-bar.component';
+import { EpApprovalStepsComponent } from '../../../../shared/components/ep-approval-steps/ep-approval-steps.component';
+import { EpPrLifecycleComponent } from '../../../../shared/components/ep-pr-lifecycle/ep-pr-lifecycle.component';
 import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
 import { ToastService } from '../../../../core/services/toast.service';
 
@@ -78,7 +79,8 @@ const BUDGET_TONE: Record<string, EpBadgeTone> = {
     EpModalComponent,
     EpIconComponent,
     EpFormFieldComponent,
-    EpSlaBarComponent,
+    EpApprovalStepsComponent,
+    EpPrLifecycleComponent,
     HasPermissionDirective
   ],
   templateUrl: './pr-detail.component.html',
@@ -103,6 +105,8 @@ export class PrDetailComponent implements OnInit {
   readonly priorityTone = computed(() => PRIORITY_TONE[this.pr()?.priority ?? ''] ?? 'neutral');
   readonly totalLineItems = computed(() => this.pr()?.lineItems?.length ?? 0);
   readonly budgetUsagePercent = computed(() => this.calculateBudgetUsage(this.pr()?.budgetCheck ?? null));
+  readonly approvalSteps = computed(() => this.pr()?.approvalProcess?.steps ?? []);
+  readonly currentApprovalStep = computed(() => this.pr()?.approvalProcess?.currentStep ?? null);
 
   readonly canEdit = computed(() => {
     const status = this.pr()?.status as PrStatus;
@@ -164,6 +168,10 @@ export class PrDetailComponent implements OnInit {
     this.router.navigate(['/vendors', 'rfq', 'create'], {
       queryParams: { prId: data.id }
     });
+  }
+
+  navigateApprovalInbox(): void {
+    this.router.navigate(['/approvals']);
   }
 
   onSubmit(): void {

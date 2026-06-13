@@ -146,6 +146,14 @@
   align-items: flex-start;
 }
 
+.section-title-row__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
 .section-icon {
   color: var(--color-accent);
 }
@@ -431,116 +439,6 @@
   margin-top: var(--spacing-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
-}
-
-.approval-timeline {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-.approval-timeline::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0.6875rem;
-  width: 2px;
-  background: var(--color-border-subtle);
-}
-
-.timeline-item {
-  position: relative;
-  display: flex;
-  gap: var(--spacing-3);
-  padding-bottom: var(--spacing-5);
-}
-
-.timeline-item:last-child {
-  padding-bottom: 0;
-}
-
-.timeline-item__marker {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 1.5rem;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: var(--border-subtle);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-}
-
-.dot {
-  width: 0.625rem;
-  height: 0.625rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-text-muted);
-}
-
-.timeline-item--active .dot {
-  background: var(--color-accent);
-  box-shadow: 0 0 0 4px var(--color-accent-subtle);
-}
-
-.icon-success {
-  color: var(--color-success);
-}
-
-.icon-danger {
-  color: var(--color-danger);
-}
-
-.timeline-item__content {
-  flex: 1;
-  min-width: 0;
-}
-
-.timeline-item__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-}
-
-.timeline-item__role {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: 800;
-}
-
-.timeline-item__person,
-.timeline-item__meta,
-.timeline-item__comment {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.timeline-item__person {
-  display: block;
-  margin-top: var(--spacing-1);
-  overflow-wrap: anywhere;
-}
-
-.timeline-item__meta {
-  display: grid;
-  gap: var(--spacing-1);
-  margin-top: var(--spacing-2);
-  color: var(--color-text-muted);
-}
-
-.timeline-item__sla {
-  margin-top: var(--spacing-3);
-}
-
-.timeline-item__comment {
-  margin-top: var(--spacing-3);
-  padding: var(--spacing-3);
-  border-left: 2px solid var(--color-accent);
-  border-radius: var(--radius-2);
-  background: var(--color-surface-raised);
-  line-height: 1.5;
 }
 
 .cancel-modal {
