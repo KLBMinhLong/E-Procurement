@@ -139,6 +139,12 @@
       "DOWN": "giảm",
       "FLAT": "không đổi"
     },
+    "chart": {
+      "spent": "Đã chi",
+      "budget": "Ngân sách",
+      "late": "Trễ hạn",
+      "avgHours": "Giờ trung bình"
+    },
     "empty": {
       "title": "Chưa có dữ liệu",
       "message": "Dữ liệu projection có thể chưa được seed hoặc bộ lọc hiện tại chưa có kết quả.",

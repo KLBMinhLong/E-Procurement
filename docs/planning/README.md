@@ -16,7 +16,7 @@
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ✅ Hoàn thành | Build pass 2026-06-13; align RFQ status frontend với backend + comparison table |
-| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | ⬜ Chờ | Đã rà soát 2026-06-13; backend analytics đủ cho phase UI, cần nâng dashboard thành workflow hub |
+| 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | 🔄 Đang làm | Slice 8a hoàn thành 2026-06-13; chart dependency/foundation pass build, tiếp theo 8b shell UX |
 
 ---
 
@@ -150,7 +150,7 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 
 | Bước | Nội dung |
 |---|---|
-| 8a | Chart dependency + foundation (`chart.js`/`ng2-charts`, theme resolver, computed chart data/options) |
+| 8a | ✅ Chart dependency + foundation (`chart.js`/`ng2-charts`, theme resolver, computed chart data/options) |
 | 8b | Dashboard shell UX: URL-driven tab, auto-refresh, last updated/cache indicator, department dropdown từ IAM |
 | 8c | Executive visuals: KPI icon map, monthly grouped bar, category doughnut, SLA gauge, department spend, top vendors |
 | 8d | KPI deep-dive: cycle-time trend/priority, SLA role compliance/worst approvers |

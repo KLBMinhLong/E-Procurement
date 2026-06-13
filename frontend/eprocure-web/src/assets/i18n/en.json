@@ -139,6 +139,12 @@
       "DOWN": "down",
       "FLAT": "flat"
     },
+    "chart": {
+      "spent": "Spent",
+      "budget": "Budget",
+      "late": "Late",
+      "avgHours": "Average hours"
+    },
     "empty": {
       "title": "No data",
       "message": "Projection data may not be seeded yet or the current filters returned no results.",

@@ -49,9 +49,12 @@ Backend analytics đã expose đủ dữ liệu cho UI upgrade:
 
 ### 1.3 Package hiện tại
 
-`frontend/eprocure-web/package.json` chưa có `chart.js` hoặc `ng2-charts`.
+Trước slice 8a, `frontend/eprocure-web/package.json` chưa có `chart.js` hoặc `ng2-charts`. Hiện đã bổ sung:
+- `chart.js@4.5.1`
+- `ng2-charts@10.0.0`
+- `@angular/cdk@21.2.14`
 
-Thêm dependency là thay đổi bundle rõ ràng, nhưng phù hợp vì dashboard cần chart thật có tooltip/legend/trục. Không dùng D3/ECharts trong slice này.
+`@angular/cdk` được pin về bản Angular 21 tương thích vì `ng2-charts@10` có peer dependency CDK. Chart provider được scope tại `DashboardComponent`, không đặt global trong `app.config.ts`, để Chart.js chỉ đi vào lazy chunk dashboard và không làm vượt initial bundle budget.
 
 ---
 
@@ -98,7 +101,7 @@ Dùng `chart.js` + `ng2-charts`.
 
 ```powershell
 cd frontend/eprocure-web
-npm install chart.js ng2-charts --save-exact
+npm install chart.js@4.5.1 ng2-charts@10.0.0 @angular/cdk@21.2.14 --save-exact
 ```
 
 Lý do:
@@ -142,10 +145,12 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 
 ### Slice 8a — Chart dependency + chart foundation
 
+**Trạng thái 2026-06-13:** ✅ Hoàn thành. `npm run build` pass; initial bundle vẫn dưới budget nhờ chart provider local trong dashboard lazy chunk.
+
 | Việc | File |
 |---|---|
-| Cài `chart.js` + `ng2-charts` save-exact | `frontend/eprocure-web/package.json`, `package-lock.json` |
-| Import `BaseChartDirective` vào `DashboardComponent` | `dashboard.component.ts` |
+| Cài `chart.js` + `ng2-charts` + `@angular/cdk` save-exact | `frontend/eprocure-web/package.json`, `package-lock.json` |
+| Cấu hình chart provider local tại `DashboardComponent` | `dashboard.component.ts` |
 | Tạo chart theme resolver + format helpers | `dashboard.component.ts` |
 | Tạo computed chart data/options nền tảng | `dashboard.component.ts` |
 | Build verify sau dependency | `npm run build` |

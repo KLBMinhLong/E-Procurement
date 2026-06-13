@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { finalize, forkJoin } from 'rxjs';
 
 import { PermissionService } from '../../core/permissions/permission.service';
@@ -37,6 +39,21 @@ import { AnalyticsService } from './analytics.service';
 
 type DashboardTab = 'executive' | 'manager' | 'purchasing' | 'requester' | 'reports';
 
+interface DashboardChartTheme {
+  accent: string;
+  accentSubtle: string;
+  info: string;
+  infoSubtle: string;
+  success: string;
+  warning: string;
+  danger: string;
+  neutralSubtle: string;
+  surface: string;
+  border: string;
+  textMuted: string;
+  textPrimary: string;
+}
+
 const KPI_TONE: Record<KpiStatus, EpBadgeTone> = {
   GOOD: 'success',
   WARNING: 'warning',
@@ -48,6 +65,21 @@ const JOB_TONE: Record<ReportJobStatus, EpBadgeTone> = {
   PROCESSING: 'info',
   COMPLETED: 'success',
   FAILED: 'danger'
+};
+
+const DEFAULT_CHART_THEME: DashboardChartTheme = {
+  accent: '#f59e0b',
+  accentSubtle: 'rgba(245, 158, 11, 0.12)',
+  info: '#38bdf8',
+  infoSubtle: 'rgba(56, 189, 248, 0.12)',
+  success: '#22c55e',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  neutralSubtle: 'rgba(148, 163, 184, 0.12)',
+  surface: '#0f172a',
+  border: 'rgba(148, 163, 184, 0.18)',
+  textMuted: '#94a3b8',
+  textPrimary: '#f8fafc'
 };
 
 @Component({
@@ -65,6 +97,7 @@ const JOB_TONE: Record<ReportJobStatus, EpBadgeTone> = {
     EpIconComponent,
     EpSkeletonComponent
   ],
+  providers: [provideCharts(withDefaultRegisterables())],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -73,6 +106,7 @@ export class DashboardComponent implements OnInit {
   private readonly analyticsService = inject(AnalyticsService);
   private readonly permissionService = inject(PermissionService);
   private readonly toastService = inject(ToastService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly executiveDashboard = signal<ExecutiveDashboard | null>(null);
@@ -88,6 +122,8 @@ export class DashboardComponent implements OnInit {
   readonly isExporting = signal(false);
   readonly refreshingJobId = signal<string | null>(null);
   readonly downloadingJobId = signal<string | null>(null);
+  readonly chartTheme = signal<DashboardChartTheme>(DEFAULT_CHART_THEME);
+  private readonly chartTextVersion = signal(0);
 
   readonly kpiTone = KPI_TONE;
   readonly jobTone = JOB_TONE;
@@ -110,6 +146,130 @@ export class DashboardComponent implements OnInit {
     const pipeline = this.purchasingDashboard()?.poPipeline;
     return pipeline ? pipeline.draft + pipeline.pendingApproval + pipeline.sentToVendor + pipeline.partiallyReceived : 0;
   });
+  readonly monthlyTrendChartData = computed<ChartData<'bar', number[], string>>(() => {
+    const theme = this.chartTheme();
+    const trend = this.executiveDashboard()?.monthlyTrend ?? [];
+    return {
+      labels: trend.map((month) => month.month),
+      datasets: [
+        {
+          label: this.translate('dashboard.chart.spent'),
+          data: trend.map((month) => this.numeric(month.spent)),
+          backgroundColor: theme.accent,
+          borderColor: theme.accent,
+          borderRadius: 6,
+          maxBarThickness: 28
+        },
+        {
+          label: this.translate('dashboard.chart.budget'),
+          data: trend.map((month) => this.numeric(month.budget)),
+          backgroundColor: theme.infoSubtle,
+          borderColor: theme.info,
+          borderRadius: 6,
+          borderWidth: 1,
+          maxBarThickness: 28
+        }
+      ]
+    };
+  });
+  readonly categorySpendChartData = computed<ChartData<'doughnut', number[], string>>(() => {
+    const theme = this.chartTheme();
+    const palette = this.chartPalette(theme);
+    const categories = this.executiveDashboard()?.spendByCategory ?? [];
+    return {
+      labels: categories.map((category) => category.label),
+      datasets: [
+        {
+          data: categories.map((category) => this.numeric(category.value)),
+          backgroundColor: categories.map((_, index) => palette[index % palette.length]),
+          borderColor: theme.surface,
+          borderWidth: 2,
+          hoverOffset: 4
+        }
+      ]
+    };
+  });
+  readonly approvalSlaGaugeChartData = computed<ChartData<'doughnut', number[], string>>(() => {
+    const theme = this.chartTheme();
+    const sla = this.executiveDashboard()?.approvalSla;
+    const onTime = this.clampPercent(this.numeric(sla?.onTimePercent));
+    return {
+      labels: [
+        this.translate('dashboard.executive.onTime'),
+        this.translate('dashboard.chart.late')
+      ],
+      datasets: [
+        {
+          data: [onTime, 100 - onTime],
+          backgroundColor: [
+            this.slaColor(onTime, theme),
+            theme.neutralSubtle
+          ],
+          borderColor: theme.surface,
+          borderWidth: 2
+        }
+      ]
+    };
+  });
+  readonly cycleTimeTrendChartData = computed<ChartData<'line', number[], string>>(() => {
+    const theme = this.chartTheme();
+    const trend = this.cycleTimeKpi()?.trend ?? [];
+    return {
+      labels: trend.map((point) => point.week),
+      datasets: [
+        {
+          label: this.translate('dashboard.chart.avgHours'),
+          data: trend.map((point) => this.numeric(point.avgHours)),
+          borderColor: theme.accent,
+          backgroundColor: theme.accentSubtle,
+          fill: true,
+          pointBackgroundColor: theme.accent,
+          pointBorderColor: theme.surface,
+          tension: 0.35
+        }
+      ]
+    };
+  });
+  readonly priorityCycleTimeChartData = computed<ChartData<'bar', number[], string>>(() => {
+    const theme = this.chartTheme();
+    const priorities = this.cycleTimeKpi()?.byPriority ?? [];
+    return {
+      labels: priorities.map((priority) => priority.priority),
+      datasets: [
+        {
+          label: this.translate('dashboard.chart.avgHours'),
+          data: priorities.map((priority) => this.numeric(priority.avgHours)),
+          backgroundColor: theme.info,
+          borderColor: theme.info,
+          borderRadius: 6,
+          maxBarThickness: 28
+        }
+      ]
+    };
+  });
+  readonly slaRoleComplianceChartData = computed<ChartData<'bar', number[], string>>(() => {
+    const theme = this.chartTheme();
+    const roles = this.slaComplianceKpi()?.byApproverRole ?? [];
+    return {
+      labels: roles.map((role) => role.role),
+      datasets: [
+        {
+          label: this.translate('dashboard.kpi.compliance'),
+          data: roles.map((role) => this.numeric(role.compliancePct)),
+          backgroundColor: theme.success,
+          borderColor: theme.success,
+          borderRadius: 6,
+          maxBarThickness: 28
+        }
+      ]
+    };
+  });
+  readonly monthlyTrendChartOptions = computed<ChartOptions<'bar'>>(() => this.currencyBarOptions(this.chartTheme()));
+  readonly categorySpendChartOptions = computed<ChartOptions<'doughnut'>>(() => this.doughnutOptions(this.chartTheme()));
+  readonly approvalSlaGaugeChartOptions = computed<ChartOptions<'doughnut'>>(() => this.gaugeOptions(this.chartTheme()));
+  readonly cycleTimeTrendChartOptions = computed<ChartOptions<'line'>>(() => this.hoursLineOptions(this.chartTheme()));
+  readonly priorityCycleTimeChartOptions = computed<ChartOptions<'bar'>>(() => this.hoursBarOptions(this.chartTheme()));
+  readonly slaRoleComplianceChartOptions = computed<ChartOptions<'bar'>>(() => this.percentBarOptions(this.chartTheme()));
 
   readonly filterForm = new FormGroup({
     fiscalYear: new FormControl(this.currentYear, { nonNullable: true, validators: [Validators.required] }),
@@ -148,6 +308,11 @@ export class DashboardComponent implements OnInit {
   readonly quarters = [1, 2, 3, 4];
 
   ngOnInit(): void {
+    this.resolveChartTheme();
+    this.translateService.onLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.chartTextVersion.update((version) => version + 1));
+
     const firstTab = this.tabs()[0]?.id ?? 'requester';
     this.activeTab.set(firstTab);
     this.loadDashboards();
@@ -251,21 +416,21 @@ export class DashboardComponent implements OnInit {
     if (max <= 0) {
       return '0%';
     }
-    const percent = Math.max(0, Math.min(100, (Number(value ?? 0) / max) * 100));
+    const percent = Math.max(0, Math.min(100, (this.numeric(value) / max) * 100));
     return `${percent}%`;
   }
 
   utilizationWidth(value: string | number | null | undefined): string {
-    const percent = Math.max(0, Math.min(100, Number(value ?? 0)));
+    const percent = this.clampPercent(this.numeric(value));
     return `${percent}%`;
   }
 
   percent(value: string | number | null | undefined): string {
-    return `${Number(value ?? 0).toFixed(1)}%`;
+    return `${this.numeric(value).toFixed(1)}%`;
   }
 
   hours(value: string | number | null | undefined): string {
-    return `${Number(value ?? 0).toFixed(1)}h`;
+    return `${this.numeric(value).toFixed(1)}h`;
   }
 
   formatDate(iso: string | null | undefined): string {
@@ -286,6 +451,237 @@ export class DashboardComponent implements OnInit {
       month: '2-digit',
       year: 'numeric'
     }).format(new Date(iso));
+  }
+
+  private resolveChartTheme(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const style = getComputedStyle(document.documentElement);
+    this.chartTheme.set({
+      accent: this.cssVar(style, '--color-accent', DEFAULT_CHART_THEME.accent),
+      accentSubtle: this.cssVar(style, '--color-accent-subtle', DEFAULT_CHART_THEME.accentSubtle),
+      info: this.cssVar(style, '--color-info', DEFAULT_CHART_THEME.info),
+      infoSubtle: this.cssVar(style, '--color-info-subtle', DEFAULT_CHART_THEME.infoSubtle),
+      success: this.cssVar(style, '--color-success', DEFAULT_CHART_THEME.success),
+      warning: this.cssVar(style, '--color-warning', DEFAULT_CHART_THEME.warning),
+      danger: this.cssVar(style, '--color-danger', DEFAULT_CHART_THEME.danger),
+      neutralSubtle: this.cssVar(style, '--color-neutral-subtle', DEFAULT_CHART_THEME.neutralSubtle),
+      surface: this.cssVar(style, '--color-surface', DEFAULT_CHART_THEME.surface),
+      border: this.cssVar(style, '--color-border-subtle', DEFAULT_CHART_THEME.border),
+      textMuted: this.cssVar(style, '--color-text-muted', DEFAULT_CHART_THEME.textMuted),
+      textPrimary: this.cssVar(style, '--color-text-primary', DEFAULT_CHART_THEME.textPrimary)
+    });
+  }
+
+  private currencyBarOptions(theme: DashboardChartTheme): ChartOptions<'bar'> {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: theme.textMuted, boxHeight: 10, boxWidth: 10 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: TooltipItem<'bar'>) =>
+              `${context.dataset.label}: ${this.formatCompactNumber(this.tooltipNumber(context))}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: theme.textMuted }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: theme.border },
+          ticks: {
+            color: theme.textMuted,
+            callback: (value) => this.formatCompactNumber(this.numeric(value))
+          }
+        }
+      }
+    };
+  }
+
+  private hoursBarOptions(theme: DashboardChartTheme): ChartOptions<'bar'> {
+    return {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context: TooltipItem<'bar'>) =>
+              `${context.dataset.label}: ${this.hours(this.tooltipNumber(context))}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { color: theme.border },
+          ticks: { color: theme.textMuted }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: theme.textMuted }
+        }
+      }
+    };
+  }
+
+  private percentBarOptions(theme: DashboardChartTheme): ChartOptions<'bar'> {
+    return {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context: TooltipItem<'bar'>) =>
+              `${context.dataset.label}: ${this.percent(this.tooltipNumber(context))}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: theme.border },
+          ticks: {
+            color: theme.textMuted,
+            callback: (value) => this.percent(this.numeric(value))
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: theme.textMuted }
+        }
+      }
+    };
+  }
+
+  private hoursLineOptions(theme: DashboardChartTheme): ChartOptions<'line'> {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: theme.textMuted, boxHeight: 10, boxWidth: 10 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: TooltipItem<'line'>) =>
+              `${context.dataset.label}: ${this.hours(this.tooltipNumber(context))}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: theme.textMuted }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: theme.border },
+          ticks: { color: theme.textMuted }
+        }
+      }
+    };
+  }
+
+  private doughnutOptions(theme: DashboardChartTheme): ChartOptions<'doughnut'> {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: theme.textMuted, boxHeight: 10, boxWidth: 10 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: TooltipItem<'doughnut'>) =>
+              `${context.label}: ${this.formatCompactNumber(this.tooltipNumber(context))}`
+          }
+        }
+      }
+    };
+  }
+
+  private gaugeOptions(theme: DashboardChartTheme): ChartOptions<'doughnut'> {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      rotation: -90,
+      circumference: 180,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context: TooltipItem<'doughnut'>) =>
+              `${context.label}: ${this.percent(this.tooltipNumber(context))}`
+          }
+        }
+      }
+    };
+  }
+
+  private translate(key: string): string {
+    this.chartTextVersion();
+    return this.translateService.instant(key);
+  }
+
+  private chartPalette(theme: DashboardChartTheme): string[] {
+    return [theme.accent, theme.info, theme.success, theme.warning, theme.danger, theme.textMuted];
+  }
+
+  private slaColor(onTimePercent: number, theme: DashboardChartTheme): string {
+    if (onTimePercent >= 85) {
+      return theme.success;
+    }
+    if (onTimePercent >= 70) {
+      return theme.warning;
+    }
+    return theme.danger;
+  }
+
+  private clampPercent(value: number): number {
+    return Math.max(0, Math.min(100, value));
+  }
+
+  private numeric(value: string | number | null | undefined): number {
+    const normalized = String(value ?? '0').replace(/,/g, '');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private tooltipNumber(context: TooltipItem<'bar'> | TooltipItem<'line'> | TooltipItem<'doughnut'>): number {
+    const parsed = context.parsed as number | { x?: number; y?: number };
+    if (typeof parsed === 'number') {
+      return parsed;
+    }
+    return parsed.y ?? parsed.x ?? 0;
+  }
+
+  private formatCompactNumber(value: string | number | null | undefined): string {
+    return new Intl.NumberFormat('vi-VN', {
+      notation: 'compact',
+      maximumFractionDigits: 1
+    }).format(this.numeric(value));
+  }
+
+  private cssVar(style: CSSStyleDeclaration, name: string, fallback: string): string {
+    return style.getPropertyValue(name).trim() || fallback;
   }
 
   private loadDashboards(): void {
@@ -418,19 +814,19 @@ export class DashboardComponent implements OnInit {
   }
 
   private maxOf(items: DepartmentSpend[], key: 'spent' | 'budget'): number {
-    return Math.max(0, ...items.map((item) => Number(item[key] ?? 0)));
+    return Math.max(0, ...items.map((item) => this.numeric(item[key])));
   }
 
   private maxPoint(items: ChartDataPoint[]): number {
-    return Math.max(0, ...items.map((item) => Number(item.value ?? 0)));
+    return Math.max(0, ...items.map((item) => this.numeric(item.value)));
   }
 
   private maxMonthly(items: MonthlyTrend[]): number {
-    return Math.max(0, ...items.flatMap((item) => [Number(item.spent ?? 0), Number(item.budget ?? 0)]));
+    return Math.max(0, ...items.flatMap((item) => [this.numeric(item.spent), this.numeric(item.budget)]));
   }
 
   private maxPriorityAvgHours(items: { avgHours: string | number }[]): number {
-    return Math.max(0, ...items.map((item) => Number(item.avgHours ?? 0)));
+    return Math.max(0, ...items.map((item) => this.numeric(item.avgHours)));
   }
 
   private today(): string {
