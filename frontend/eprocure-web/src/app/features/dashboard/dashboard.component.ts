@@ -361,6 +361,11 @@ export class DashboardComponent implements OnInit {
     this.syncTabQueryParam(tab);
   }
 
+  openReportPreset(reportType: ReportType): void {
+    this.exportForm.controls.reportType.setValue(reportType);
+    this.setTab('reports');
+  }
+
   reload(): void {
     if (this.isRefreshing()) {
       return;
@@ -509,6 +514,25 @@ export class DashboardComponent implements OnInit {
   hasCategorySpend(dashboard: ExecutiveDashboard): boolean {
     return dashboard.spendByCategory.length > 0
       && this.hasChartValues(dashboard.spendByCategory.map((point) => point.value));
+  }
+
+  hasCycleTrend(kpi: CycleTimeKpi): boolean {
+    return kpi.trend.length > 0
+      && this.hasChartValues(kpi.trend.map((point) => point.avgHours));
+  }
+
+  hasPriorityCycleTime(kpi: CycleTimeKpi): boolean {
+    return kpi.byPriority.length > 0
+      && this.hasChartValues(kpi.byPriority.map((point) => point.avgHours));
+  }
+
+  hasRoleCompliance(kpi: SlaComplianceKpi): boolean {
+    return kpi.byApproverRole.length > 0
+      && this.hasChartValues(kpi.byApproverRole.map((role) => role.compliancePct));
+  }
+
+  hasWorstApprovers(kpi: SlaComplianceKpi): boolean {
+    return kpi.worstApprovers.length > 0;
   }
 
   formatDate(iso: string | null | undefined): string {

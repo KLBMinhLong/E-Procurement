@@ -114,7 +114,9 @@
     "subtitle": "Theo dõi KPI mua sắm, ngân sách, PO/GR/Invoice và tạo báo cáo PDF/Excel từ dữ liệu projection.",
     "action": {
       "apply": "Áp dụng",
-      "refresh": "Tải lại"
+      "refresh": "Tải lại",
+      "exportCycleTime": "Xuất cycle time",
+      "exportSla": "Xuất SLA"
     },
     "filter": {
       "fiscalYear": "Năm tài chính",
@@ -158,6 +160,9 @@
       "categoryAria": "Biểu đồ doughnut chi tiêu theo danh mục",
       "monthlyAria": "Biểu đồ cột so sánh chi tiêu và ngân sách theo tháng",
       "slaAria": "Biểu đồ gauge tỷ lệ phê duyệt đúng hạn",
+      "cycleTrendAria": "Biểu đồ đường cycle time trung bình theo tuần",
+      "priorityCycleAria": "Biểu đồ thanh cycle time trung bình theo mức độ ưu tiên",
+      "slaRoleAria": "Biểu đồ thanh tỷ lệ tuân thủ SLA theo vai trò duyệt",
       "prCountAria": "Số lượng PR theo tháng"
     },
     "empty": {
@@ -171,13 +176,24 @@
       "subtitle": "Cycle time PR -> PO và tuân thủ SLA phê duyệt theo khoảng ngày đã chọn.",
       "trend": "{{direction}} {{percent}}% · {{label}}",
       "cycleTime": "Cycle time",
+      "cycleTimeHint": "Theo dõi thời gian xử lý từ PR đến PO so với mục tiêu vận hành.",
+      "cycleTrend": "Xu hướng theo tuần",
+      "cycleTrendHint": "Cycle time trung bình theo các tuần trong bộ lọc.",
+      "priorityCycle": "Theo mức độ ưu tiên",
+      "priorityCycleHint": "So sánh giờ xử lý trung bình giữa các mức độ ưu tiên.",
       "slaCompliance": "SLA compliance",
+      "slaComplianceHint": "Tỷ lệ đúng hạn theo vai trò duyệt và approver có nhiều quá hạn.",
       "overallCompliance": "Tỷ lệ tuân thủ tổng",
+      "roleCompliance": "Tuân thủ theo vai trò",
+      "roleComplianceHint": "Tỷ lệ đúng hạn và số lượng quá hạn của từng vai trò duyệt.",
+      "worstApprovers": "Approver trễ SLA nhiều nhất",
+      "worstApproversHint": "Danh sách ưu tiên để manager theo dõi và phân bổ lại tải duyệt.",
       "avg": "Trung bình",
       "median": "Median",
       "p95": "P95",
       "target": "Mục tiêu",
       "role": "Vai trò",
+      "approver": "Người duyệt",
       "compliance": "Tuân thủ",
       "overdue": "Quá hạn",
       "status": {

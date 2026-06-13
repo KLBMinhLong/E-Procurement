@@ -273,6 +273,12 @@ select {
   padding: var(--spacing-3);
 }
 
+.chart-frame--line,
+.chart-frame--compact-bar {
+  height: 13rem;
+  padding: var(--spacing-3);
+}
+
 .trend-summary {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -591,6 +597,65 @@ select {
   }
 }
 
+.kpi-detail__heading,
+.kpi-chart-card__heading,
+.kpi-table-card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+
+  p,
+  span {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.45;
+  }
+
+  strong {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+  }
+}
+
+.kpi-chart-grid,
+.kpi-table-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+
+.kpi-chart-card,
+.kpi-table-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  min-width: 0;
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface);
+}
+
+.kpi-table-card .dense-table th,
+.kpi-table-card .dense-table td {
+  padding-inline: 0;
+}
+
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  justify-content: center;
+}
+
+.worst-approver-name {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
 .sla-summary--compact {
   padding: var(--spacing-4);
   border: var(--border-subtle);
@@ -610,6 +675,8 @@ select {
   .dashboard-grid,
   .dashboard-grid--executive,
   .kpi-detail-grid,
+  .kpi-chart-grid,
+  .kpi-table-stack,
   .chart-layout--category {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -635,6 +702,8 @@ select {
   .dashboard-grid--executive,
   .chart-layout--category,
   .kpi-detail-grid,
+  .kpi-chart-grid,
+  .kpi-table-stack,
   .three-counts,
   .requester-stats,
   .sla-summary dl,
@@ -654,6 +723,11 @@ select {
 
   .chart-frame--bar {
     height: 15rem;
+  }
+
+  .chart-frame--line,
+  .chart-frame--compact-bar {
+    height: 12rem;
   }
 
   .dense-table {

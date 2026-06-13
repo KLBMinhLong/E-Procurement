@@ -114,7 +114,9 @@
     "subtitle": "Monitor procurement KPIs, budgets, PO/GR/Invoice flow, and generate PDF/Excel reports from projection data.",
     "action": {
       "apply": "Apply",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "exportCycleTime": "Export cycle time",
+      "exportSla": "Export SLA"
     },
     "filter": {
       "fiscalYear": "Fiscal year",
@@ -158,6 +160,9 @@
       "categoryAria": "Doughnut chart for category spend",
       "monthlyAria": "Grouped bar chart comparing monthly spend and budget",
       "slaAria": "Gauge chart for on-time approval rate",
+      "cycleTrendAria": "Line chart for weekly average cycle time",
+      "priorityCycleAria": "Bar chart for average cycle time by priority",
+      "slaRoleAria": "Bar chart for SLA compliance by approval role",
       "prCountAria": "Monthly PR count"
     },
     "empty": {
@@ -171,13 +176,24 @@
       "subtitle": "PR-to-PO cycle time and approval SLA compliance for the selected date range.",
       "trend": "{{direction}} {{percent}}% · {{label}}",
       "cycleTime": "Cycle time",
+      "cycleTimeHint": "Track PR-to-PO processing time against the operational target.",
+      "cycleTrend": "Weekly trend",
+      "cycleTrendHint": "Average cycle time across weeks in the current filter.",
+      "priorityCycle": "By priority",
+      "priorityCycleHint": "Compare average processing hours across priority levels.",
       "slaCompliance": "SLA compliance",
+      "slaComplianceHint": "On-time rate by approval role and approvers with overdue work.",
       "overallCompliance": "Overall compliance",
+      "roleCompliance": "Compliance by role",
+      "roleComplianceHint": "On-time rate and overdue count for each approval role.",
+      "worstApprovers": "Approvers with most SLA delays",
+      "worstApproversHint": "Use this list to follow up and rebalance approval workload.",
       "avg": "Average",
       "median": "Median",
       "p95": "P95",
       "target": "Target",
       "role": "Role",
+      "approver": "Approver",
       "compliance": "Compliance",
       "overdue": "Overdue",
       "status": {

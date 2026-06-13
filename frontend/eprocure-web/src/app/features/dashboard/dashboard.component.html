@@ -440,49 +440,185 @@
         <div class="kpi-detail-grid">
           @if (cycleTimeKpi(); as cycle) {
             <div class="kpi-detail">
-              <h3>{{ 'dashboard.kpi.cycleTime' | translate }}</h3>
+              <div class="kpi-detail__heading">
+                <h3>{{ 'dashboard.kpi.cycleTime' | translate }}</h3>
+                <p>{{ 'dashboard.kpi.cycleTimeHint' | translate }}</p>
+              </div>
               <dl class="dense-dl">
                 <div><dt>{{ 'dashboard.kpi.avg' | translate }}</dt><dd>{{ hours(cycle.avgCycleHours) }}</dd></div>
                 <div><dt>{{ 'dashboard.kpi.median' | translate }}</dt><dd>{{ hours(cycle.medianCycleHours) }}</dd></div>
                 <div><dt>{{ 'dashboard.kpi.p95' | translate }}</dt><dd>{{ hours(cycle.p95CycleHours) }}</dd></div>
                 <div><dt>{{ 'dashboard.kpi.target' | translate }}</dt><dd>{{ hours(cycle.target) }}</dd></div>
               </dl>
-              <div class="compact-bars">
-                @for (item of cycle.byPriority; track item.priority) {
-                  <div class="compact-bar">
-                    <span>{{ item.priority }}</span>
-                    <div><i [style.width]="barWidth(item.avgHours, maxPriorityAvgValue())"></i></div>
-                    <strong>{{ hours(item.avgHours) }}</strong>
+              <div class="kpi-chart-grid">
+                <div class="kpi-chart-card">
+                  <div class="kpi-chart-card__heading">
+                    <strong>{{ 'dashboard.kpi.cycleTrend' | translate }}</strong>
+                    <span>{{ 'dashboard.kpi.cycleTrendHint' | translate }}</span>
                   </div>
-                }
+                  @if (hasCycleTrend(cycle)) {
+                    <div class="chart-frame chart-frame--line">
+                      <canvas
+                        baseChart
+                        [type]="'line'"
+                        [data]="cycleTimeTrendChartData()"
+                        [options]="cycleTimeTrendChartOptions()"
+                        [attr.aria-label]="'dashboard.chart.cycleTrendAria' | translate">
+                      </canvas>
+                    </div>
+                  } @else {
+                    <ep-empty-state icon="line-chart" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+                    <div class="empty-actions">
+                      <ep-button size="sm" variant="secondary" icon="refresh-cw" [loading]="isRefreshing()" (click)="reload()">
+                        {{ 'dashboard.action.refresh' | translate }}
+                      </ep-button>
+                      <ep-button size="sm" variant="ghost" icon="file-down" (click)="openReportPreset('CYCLE_TIME_ANALYSIS')">
+                        {{ 'dashboard.action.exportCycleTime' | translate }}
+                      </ep-button>
+                    </div>
+                  }
+                </div>
+
+                <div class="kpi-chart-card">
+                  <div class="kpi-chart-card__heading">
+                    <strong>{{ 'dashboard.kpi.priorityCycle' | translate }}</strong>
+                    <span>{{ 'dashboard.kpi.priorityCycleHint' | translate }}</span>
+                  </div>
+                  @if (hasPriorityCycleTime(cycle)) {
+                    <div class="chart-frame chart-frame--compact-bar">
+                      <canvas
+                        baseChart
+                        [type]="'bar'"
+                        [data]="priorityCycleTimeChartData()"
+                        [options]="priorityCycleTimeChartOptions()"
+                        [attr.aria-label]="'dashboard.chart.priorityCycleAria' | translate">
+                      </canvas>
+                    </div>
+                    <div class="compact-bars">
+                      @for (item of cycle.byPriority; track item.priority) {
+                        <div class="compact-bar">
+                          <span>{{ item.priority }}</span>
+                          <div><i [style.width]="barWidth(item.avgHours, maxPriorityAvgValue())"></i></div>
+                          <strong>{{ hours(item.avgHours) }}</strong>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <ep-empty-state icon="bar-chart-3" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+                    <div class="empty-actions">
+                      <ep-button size="sm" variant="secondary" icon="refresh-cw" [loading]="isRefreshing()" (click)="reload()">
+                        {{ 'dashboard.action.refresh' | translate }}
+                      </ep-button>
+                      <ep-button size="sm" variant="ghost" icon="file-down" (click)="openReportPreset('CYCLE_TIME_ANALYSIS')">
+                        {{ 'dashboard.action.exportCycleTime' | translate }}
+                      </ep-button>
+                    </div>
+                  }
+                </div>
               </div>
             </div>
           }
           @if (slaComplianceKpi(); as sla) {
             <div class="kpi-detail">
-              <h3>{{ 'dashboard.kpi.slaCompliance' | translate }}</h3>
+              <div class="kpi-detail__heading">
+                <h3>{{ 'dashboard.kpi.slaCompliance' | translate }}</h3>
+                <p>{{ 'dashboard.kpi.slaComplianceHint' | translate }}</p>
+              </div>
               <div class="sla-summary sla-summary--compact">
                 <strong>{{ percent(sla.overallCompliancePct) }}</strong>
                 <span>{{ 'dashboard.kpi.overallCompliance' | translate }}</span>
               </div>
-              <table class="dense-table">
-                <thead>
-                  <tr>
-                    <th>{{ 'dashboard.kpi.role' | translate }}</th>
-                    <th>{{ 'dashboard.kpi.compliance' | translate }}</th>
-                    <th class="align-right">{{ 'dashboard.kpi.overdue' | translate }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (role of sla.byApproverRole; track role.role) {
-                    <tr>
-                      <td>{{ role.role }}</td>
-                      <td>{{ percent(role.compliancePct) }}</td>
-                      <td class="align-right">{{ role.overdueCount }}</td>
-                    </tr>
+              <div class="kpi-chart-card">
+                <div class="kpi-chart-card__heading">
+                  <strong>{{ 'dashboard.kpi.roleCompliance' | translate }}</strong>
+                  <span>{{ 'dashboard.kpi.roleComplianceHint' | translate }}</span>
+                </div>
+                @if (hasRoleCompliance(sla)) {
+                  <div class="chart-frame chart-frame--compact-bar">
+                    <canvas
+                      baseChart
+                      [type]="'bar'"
+                      [data]="slaRoleComplianceChartData()"
+                      [options]="slaRoleComplianceChartOptions()"
+                      [attr.aria-label]="'dashboard.chart.slaRoleAria' | translate">
+                    </canvas>
+                  </div>
+                } @else {
+                  <ep-empty-state icon="bar-chart-3" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+                  <div class="empty-actions">
+                    <ep-button size="sm" variant="secondary" icon="refresh-cw" [loading]="isRefreshing()" (click)="reload()">
+                      {{ 'dashboard.action.refresh' | translate }}
+                    </ep-button>
+                    <ep-button size="sm" variant="ghost" icon="file-down" (click)="openReportPreset('SLA_COMPLIANCE')">
+                      {{ 'dashboard.action.exportSla' | translate }}
+                    </ep-button>
+                  </div>
+                }
+              </div>
+
+              <div class="kpi-table-stack">
+                <div class="kpi-table-card">
+                  <div class="kpi-table-card__heading">
+                    <strong>{{ 'dashboard.kpi.role' | translate }}</strong>
+                    <span>{{ 'dashboard.kpi.roleComplianceHint' | translate }}</span>
+                  </div>
+                  <table class="dense-table">
+                    <thead>
+                      <tr>
+                        <th>{{ 'dashboard.kpi.role' | translate }}</th>
+                        <th>{{ 'dashboard.kpi.compliance' | translate }}</th>
+                        <th class="align-right">{{ 'dashboard.kpi.overdue' | translate }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (role of sla.byApproverRole; track role.role) {
+                        <tr>
+                          <td>{{ role.role }}</td>
+                          <td>{{ percent(role.compliancePct) }}</td>
+                          <td class="align-right">{{ role.overdueCount }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="kpi-table-card">
+                  <div class="kpi-table-card__heading">
+                    <strong>{{ 'dashboard.kpi.worstApprovers' | translate }}</strong>
+                    <span>{{ 'dashboard.kpi.worstApproversHint' | translate }}</span>
+                  </div>
+                  @if (hasWorstApprovers(sla)) {
+                    <table class="dense-table">
+                      <thead>
+                        <tr>
+                          <th>{{ 'dashboard.kpi.approver' | translate }}</th>
+                          <th>{{ 'dashboard.kpi.compliance' | translate }}</th>
+                          <th class="align-right">{{ 'dashboard.kpi.overdue' | translate }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (approver of sla.worstApprovers; track approver.approverName) {
+                          <tr>
+                            <td class="worst-approver-name">{{ approver.approverName }}</td>
+                            <td>{{ percent(approver.compliancePct) }}</td>
+                            <td class="align-right">{{ approver.overdueCount }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  } @else {
+                    <ep-empty-state icon="users-round" [title]="'dashboard.empty.title' | translate" [message]="'dashboard.empty.message' | translate" />
+                    <div class="empty-actions">
+                      <ep-button size="sm" variant="secondary" icon="refresh-cw" [loading]="isRefreshing()" (click)="reload()">
+                        {{ 'dashboard.action.refresh' | translate }}
+                      </ep-button>
+                      <ep-button size="sm" variant="ghost" icon="file-down" (click)="openReportPreset('SLA_COMPLIANCE')">
+                        {{ 'dashboard.action.exportSla' | translate }}
+                      </ep-button>
+                    </div>
                   }
-                </tbody>
-              </table>
+                </div>
+              </div>
             </div>
           }
         </div>

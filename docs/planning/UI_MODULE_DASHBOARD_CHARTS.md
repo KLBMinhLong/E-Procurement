@@ -185,6 +185,8 @@ Phase UI đầu chỉ dùng contract hiện có. Backend follow-up không block 
 
 ### Slice 8d — KPI deep-dive panel
 
+**Trạng thái 2026-06-13:** ✅ Hoàn thành frontend. KPI panel dùng chart thật cho cycle time trend, priority cycle time và SLA role compliance; bổ sung bảng worst approvers, empty state theo từng chart và i18n VI/EN.
+
 | Khu vực | Nâng cấp |
 |---|---|
 | Cycle time | Line chart theo `trend[]`, bar chart theo `byPriority[]`, target marker |
