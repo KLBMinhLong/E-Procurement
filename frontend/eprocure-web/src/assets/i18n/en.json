@@ -604,6 +604,7 @@
   "validation": {
     "required": "This field is required",
     "minChars": "minimum characters",
+    "min": "This value is below the allowed minimum",
     "minLength": "This field is below the minimum length",
     "maxLength": "This field exceeds the allowed length"
   },
@@ -700,7 +701,9 @@
       },
       "summary": {
         "lineItems": "Total Line Items:",
-        "totalAmount": "Estimated Total:"
+        "totalAmount": "Estimated Total:",
+        "validationTitle": "Request cannot be created yet",
+        "validationHint": "Check required fields and line-item values before submitting."
       },
       "catalog": {
         "title": "Item Catalog",
@@ -715,7 +718,8 @@
       },
       "toast": {
         "createSuccess": "Purchase request created.",
-        "updateSuccess": "Purchase request updated."
+        "updateSuccess": "Purchase request updated.",
+        "validationFailed": "Check required fields before creating the request."
       }
     },
     "detail": {

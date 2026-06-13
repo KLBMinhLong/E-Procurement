@@ -118,6 +118,12 @@ import {
   LucidePackagePlus,
   LucideClock3,
   LucideCoins,
+  LucideUsersRound,
+  LucideAlarmClockCheck,
+  LucideBadgeDollarSign,
+  LucideHandCoins,
+  LucideArrowLeftRight,
+  LucideLockKeyhole,
   provideLucideConfig,
   provideLucideIcons
 } from '@lucide/angular';
@@ -268,7 +274,13 @@ export const appConfig: ApplicationConfig = {
       LucideRepeat2,
       LucidePackagePlus,
       LucideClock3,
-      LucideCoins
+      LucideCoins,
+      LucideUsersRound,
+      LucideAlarmClockCheck,
+      LucideBadgeDollarSign,
+      LucideHandCoins,
+      LucideArrowLeftRight,
+      LucideLockKeyhole
     ),
     provideLucideConfig({
       strokeWidth: 1.8,

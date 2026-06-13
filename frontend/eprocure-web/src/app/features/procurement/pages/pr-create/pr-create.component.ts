@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, finalize, of, Subject, switchMap } from 'rxjs';
 
@@ -71,6 +71,7 @@ export class PrCreateComponent implements OnInit {
   readonly isSubmitting = signal(false);
   readonly isEditLoading = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly hasSubmitAttempted = signal(false);
   readonly isUploadingFile = signal(false);
   readonly showCatalogPicker = signal(false);
   readonly catalogPickerTargetIndex = signal<number | null>(null);
@@ -82,6 +83,7 @@ export class PrCreateComponent implements OnInit {
   readonly autocompleteItemsMap = signal<Map<number, CatalogItem[]>>(new Map());
   readonly autocompleteLoadingMap = signal<Map<number, boolean>>(new Map());
   readonly uploadedAttachments = signal<{ id: string; fileName: string; fileSize: number }[]>([]);
+  readonly formRevision = signal(0);
   private readonly autocompleteQuery$ = new Subject<CatalogAutocompleteQuery>();
 
   readonly priorities: PrPriority[] = ['NORMAL', 'URGENT', 'EMERGENCY'];
@@ -89,18 +91,26 @@ export class PrCreateComponent implements OnInit {
   readonly isEditMode = computed(() => Boolean(this.editingId()));
 
   readonly showUrgencyReason = computed(() => {
+    this.formRevision();
     const p = this.form.get('priority')?.value as PrPriority;
     return p === 'URGENT' || p === 'EMERGENCY';
   });
 
+  readonly lineItemTotals = computed(() => {
+    this.formRevision();
+    return this.lineItems.controls.map((ctrl) => this.calculateLineTotal(ctrl));
+  });
+
   readonly totalAmount = computed(() => {
-    let total = 0;
-    this.lineItems.controls.forEach((ctrl) => {
-      const qty = parseFloat(ctrl.get('quantityAmount')?.value || '0');
-      const price = parseFloat(ctrl.get('unitPriceAmount')?.value || '0');
-      if (!isNaN(qty) && !isNaN(price)) total += qty * price;
-    });
-    return total.toFixed(4);
+    this.formRevision();
+    return this.lineItems.controls
+      .reduce((total, ctrl) => total + this.calculateLineTotalNumber(ctrl), 0)
+      .toFixed(4);
+  });
+
+  readonly showValidationSummary = computed(() => {
+    this.formRevision();
+    return this.hasSubmitAttempted() && this.form.invalid;
   });
 
   // ── Form ────────────────────────────────────────────────────────────
@@ -121,6 +131,9 @@ export class PrCreateComponent implements OnInit {
   ngOnInit(): void {
     this.loadCategories();
     this.bindAutocompleteSearch();
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.bumpFormRevision());
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
@@ -139,10 +152,10 @@ export class PrCreateComponent implements OnInit {
       itemName: [item?.itemName ?? '', [Validators.required, Validators.maxLength(300)]],
       description: [item?.description ?? null as string | null],
       categoryCode: [item?.categoryCode ?? '', Validators.required],
-      quantityAmount: [item?.quantity?.amount ?? '1', Validators.required],
+      quantityAmount: [item?.quantity?.amount ?? '1', [Validators.required, Validators.min(0.01)]],
       quantityUnit: [item?.quantity?.unit ?? 'EA', Validators.required],
-      unitPriceAmount: [item?.unitPrice?.amount ?? '0', Validators.required],
-      glAccountCode: [item?.glAccountCode ?? '', Validators.required],
+      unitPriceAmount: [item?.unitPrice?.amount ?? '0', [Validators.required, Validators.min(0)]],
+      glAccountCode: [item?.glAccountCode ?? '', [Validators.required, Validators.maxLength(10)]],
       specifications: [item?.specifications ?? null as string | null],
       isFromCatalog: [item?.isFromCatalog ?? false]
     });
@@ -150,12 +163,14 @@ export class PrCreateComponent implements OnInit {
 
   addLineItem(): void {
     this.lineItems.push(this.createLineItemGroup());
+    this.bumpFormRevision();
   }
 
   removeLineItem(index: number): void {
     if (this.lineItems.length > 1) {
       this.lineItems.removeAt(index);
       this.clearAutocompleteState();
+      this.bumpFormRevision();
     }
   }
 
@@ -202,11 +217,16 @@ export class PrCreateComponent implements OnInit {
 
   getLineItemError(index: number, field: string): string | null {
     const ctrl = this.lineItems.at(index).get(field);
-    if (ctrl?.invalid && ctrl.touched) {
+    if (ctrl?.invalid && (ctrl.touched || this.hasSubmitAttempted())) {
       if (ctrl.errors?.['required']) return 'validation.required';
+      if (ctrl.errors?.['min']) return 'validation.min';
       if (ctrl.errors?.['maxlength']) return 'validation.maxLength';
     }
     return null;
+  }
+
+  lineItemTotal(index: number): string {
+    return this.lineItemTotals()[index] ?? '0.0000';
   }
 
   // ── Catalog picker ─────────────────────────────────────────────────
@@ -269,8 +289,11 @@ export class PrCreateComponent implements OnInit {
 
   // ── Submit ─────────────────────────────────────────────────────────
   onSubmit(): void {
+    this.hasSubmitAttempted.set(true);
+    this.form.markAllAsTouched();
+    this.bumpFormRevision();
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      this.toastService.warningKey('pr.create.toast.validationFailed');
       return;
     }
     this.isSubmitting.set(true);
@@ -354,6 +377,7 @@ export class PrCreateComponent implements OnInit {
           if (!this.lineItems.length) {
             this.addLineItem();
           }
+          this.bumpFormRevision();
           this.uploadedAttachments.set(data.attachments?.map((att) => ({
             id: att.id,
             fileName: att.fileName,
@@ -402,6 +426,21 @@ export class PrCreateComponent implements OnInit {
       quantityUnit: item.unit,
       isFromCatalog: true
     });
+    this.bumpFormRevision();
+  }
+
+  private calculateLineTotal(ctrl: AbstractControl): string {
+    return this.calculateLineTotalNumber(ctrl).toFixed(4);
+  }
+
+  private calculateLineTotalNumber(ctrl: AbstractControl): number {
+    const qty = Number(ctrl.get('quantityAmount')?.value || 0);
+    const price = Number(ctrl.get('unitPriceAmount')?.value || 0);
+    return Number.isFinite(qty) && Number.isFinite(price) ? qty * price : 0;
+  }
+
+  private bumpFormRevision(): void {
+    this.formRevision.update((value) => value + 1);
   }
 
   private setAutocompleteOpen(index: number, open: boolean): void {
@@ -437,7 +476,7 @@ export class PrCreateComponent implements OnInit {
   // ── Field error helpers ────────────────────────────────────────────
   fieldError(field: string): string | null {
     const ctrl = this.form.get(field);
-    if (!ctrl?.invalid || !ctrl.touched) return null;
+    if (!ctrl?.invalid || (!ctrl.touched && !this.hasSubmitAttempted())) return null;
     if (ctrl.errors?.['required']) return 'validation.required';
     if (ctrl.errors?.['minlength']) return 'validation.minLength';
     if (ctrl.errors?.['maxlength']) return 'validation.maxLength';

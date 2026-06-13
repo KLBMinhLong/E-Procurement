@@ -253,7 +253,7 @@
                     <div class="line-item__total">
                       <span class="line-item__total-label">{{ 'pr.create.lineItem.total' | translate }}</span>
                       <ep-amount
-                        [value]="(+item.get('quantityAmount')!.value * +item.get('unitPriceAmount')!.value).toFixed(4)"
+                        [value]="lineItemTotal($index)"
                         currency="VND" />
                     </div>
                   </div>
@@ -324,6 +324,13 @@
               <span class="summary-row__label">{{ 'pr.create.summary.totalAmount' | translate }}</span>
               <ep-amount [value]="totalAmount()" currency="VND" />
             </div>
+
+            @if (showValidationSummary()) {
+              <div class="summary-validation" role="alert">
+                <strong>{{ 'pr.create.summary.validationTitle' | translate }}</strong>
+                <span>{{ 'pr.create.summary.validationHint' | translate }}</span>
+              </div>
+            }
 
             <div class="summary-actions">
               <ep-button

@@ -604,6 +604,7 @@
   "validation": {
     "required": "Thông tin này là bắt buộc",
     "minChars": "ký tự tối thiểu",
+    "min": "Giá trị thấp hơn mức tối thiểu cho phép",
     "minLength": "Thông tin chưa đủ độ dài tối thiểu",
     "maxLength": "Thông tin vượt quá độ dài cho phép"
   },
@@ -700,7 +701,9 @@
       },
       "summary": {
         "lineItems": "Tổng số hàng hóa:",
-        "totalAmount": "Tổng giá trị dự kiến:"
+        "totalAmount": "Tổng giá trị dự kiến:",
+        "validationTitle": "Chưa thể tạo yêu cầu",
+        "validationHint": "Vui lòng kiểm tra các trường bắt buộc và giá trị dòng hàng trước khi gửi."
       },
       "catalog": {
         "title": "Danh mục hàng hóa",
@@ -715,7 +718,8 @@
       },
       "toast": {
         "createSuccess": "Đã tạo yêu cầu mua sắm.",
-        "updateSuccess": "Đã cập nhật yêu cầu mua sắm."
+        "updateSuccess": "Đã cập nhật yêu cầu mua sắm.",
+        "validationFailed": "Vui lòng kiểm tra các trường bắt buộc trước khi tạo yêu cầu."
       }
     },
     "detail": {
