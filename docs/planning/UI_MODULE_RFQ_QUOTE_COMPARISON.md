@@ -2,6 +2,8 @@
 
 > **Mục tiêu:** Nâng cấp phần hiển thị quotes trong RFQ Detail từ dạng card grid thông tin đơn lẻ thành bảng so sánh cạnh nhau giữa các vendor, giúp Purchasing đưa ra quyết định award nhanh và có cơ sở rõ ràng.
 
+**Rà soát 2026-06-13:** Plan này cần thực hiện thêm bước align contract trước UI. Backend/OpenAPI hiện dùng RFQ status `DRAFT`, `PUBLISHED`, `CLOSED`, `AWARDED`, `CANCELLED`, trong khi frontend đang dùng `OPEN`, `EVALUATING`. Khi triển khai phải sửa model/list/detail conditions theo backend trước, nếu không action nộp báo giá/đóng/đánh giá/chọn thầu sẽ không hiện đúng.
+
 ---
 
 ## 1. Hiện trạng
@@ -63,14 +65,38 @@ export interface VendorQuote {
 }
 
 export interface VendorQuoteLineItem {
-  id: string;
   rfqLineItemId: string;
+  itemName: string;
   unitPrice: string;
+  currency: string;
+  quantity: string;
+  totalPrice: string;
   deliveryDays: number | null;
+  warranty: string | null;
 }
 ```
 
-**Vấn đề:** `VendorQuoteLineItem` có `rfqLineItemId` nhưng không có `itemName`. Phải join với `rfqData.lineItems` để lấy tên hàng.
+**Ghi chú sau rà soát:** Model frontend hiện đã có `itemName`, `currency`, `quantity`, `totalPrice`, `warranty`. Không cần gọi API thêm để lấy tên hàng. Vẫn nên join với `rfqData.lineItems` bằng `rfqLineItemId` để giữ thứ tự/baseline RFQ và hiển thị `categoryCode`, `specifications`, `quantity/unit` gốc.
+
+### 1.3 Contract drift cần sửa trước UI
+
+**Backend truth:** `services/vendor-service/src/main/java/.../RfqStatus.java` và `docs/api/vendor-service.openapi.yaml`
+
+```typescript
+type RfqStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'AWARDED' | 'CANCELLED';
+```
+
+**Frontend hiện tại:** `vendor.model.ts`, `rfq-list.component.ts`, `rfq-detail.component.ts`
+
+```typescript
+type RfqStatus = 'OPEN' | 'EVALUATING' | 'AWARDED' | 'CLOSED' | 'CANCELLED';
+```
+
+**Cần chỉnh trong slice đầu tiên:**
+- `RfqStatus` frontend đổi sang enum backend thật.
+- `STATUS_TONE`, filter list, counters và i18n list stat đổi `OPEN -> PUBLISHED`, bỏ `EVALUATING`.
+- RFQ Detail: submit quote/close chỉ dựa trên `PUBLISHED`; evaluate/award UI dựa trên `CLOSED` và quote đã có `evaluationScore`.
+- Không sửa backend/OpenAPI cho status trong plan này vì backend đang nhất quán với migration/test.
 
 ---
 
@@ -78,12 +104,13 @@ export interface VendorQuoteLineItem {
 
 | # | Vấn đề | Ảnh hưởng |
 |---|---|---|
+| 0 | Frontend RFQ status đang lệch backend (`OPEN/EVALUATING` vs `PUBLISHED/CLOSED`) | Nút submit/close/evaluate/award có thể không hiện hoặc filter status lỗi |
 | 1 | Card grid mỗi vendor 1 card — không so sánh ngang được | Purchasing phải nhìn qua lại từng card, dễ nhầm |
 | 2 | Không biết vendor nào có giá thấp nhất cho từng line item | Không có highlight để quét nhanh |
-| 3 | `totalAmount` chỉ là tổng cộng — không thể biết tổng tính từ line items nào | Nếu vendor chỉ quote 1 phần các items thì total bị sai |
+| 3 | `totalAmount` chỉ là tổng cộng — chưa đối chiếu từng `totalPrice` theo RFQ line | Nếu vendor chỉ quote một phần items thì cần thấy rõ coverage |
 | 4 | Không có cột "Delivery Days" trong view chính | Thông tin giao hàng quan trọng nhưng ẩn trong card |
 | 5 | Evaluate form xuất hiện inline trong card — layout bị vỡ khi form mở rộng | UX kém khi có nhiều quotes |
-| 6 | Không có tóm tắt điểm đánh giá tổng hợp theo tiêu chí | Chỉ có 1 số điểm tổng, không phân loại technical/price/delivery |
+| 6 | Không có tóm tắt tiến độ đánh giá | Không biết còn bao nhiêu quote chưa chấm điểm trước khi award |
 | 7 | Award button chỉ hiện khi đã evaluate, mỗi quote riêng — không có action tổng hợp | Khó biết status tổng thể: mấy vendor chưa evaluate? |
 | 8 | Không có "Quote coverage" — vendor có quote đủ tất cả line items không? | Vendor chỉ quote 3/5 items sẽ bị bỏ qua nếu không check kỹ |
 
@@ -116,7 +143,7 @@ Giữ nguyên card grid như hiện tại (cho trường hợp ít quotes), **th
 }
 ```
 
-**Default:** `compare` khi có ≥ 2 quotes, `cards` khi chỉ có 1 quote.
+**Default:** `compare` khi có ≥ 2 quotes, `cards` khi chỉ có 1 quote. Nếu người dùng đã đổi toggle trong phiên hiện tại thì không tự reset khi reload RFQ.
 
 ---
 
@@ -174,9 +201,9 @@ Item 3: Chuột Z     | 500,000★    | 600,000     | 450,000★    |
           <td class="row-label">{{ 'rfq.detail.compare.totalAmount' | translate }}</td>
           @for (quote of quotes(); track quote.id) {
             <td class="align-right" [class.comparison-table__cell--lowest]="quote.id === lowestTotalQuoteId()">
-              <ep-amount [value]="quote.totalAmount" />
+              <ep-amount [value]="quoteAmount(quote)" />
               @if (quote.id === lowestTotalQuoteId()) {
-                <ep-icon name="trending-down" [size]="12" class="best-icon" title="Giá thấp nhất" />
+                <ep-icon name="trending-down" [size]="12" class="best-icon" [attr.title]="'rfq.detail.compare.lowestPrice' | translate" />
               }
             </td>
           }
@@ -225,9 +252,10 @@ Item 3: Chuột Z     | 500,000★    | 600,000     | 450,000★    |
           <td class="row-label">{{ 'rfq.detail.compare.coverage' | translate }}</td>
           @for (quote of quotes(); track quote.id) {
             <td class="align-right">
-              {{ quoteCoverage(quote) }}
               @if (quoteCoverage(quote) < 100) {
-                <ep-badge tone="warning" [label]="quoteCoverage(quote) + '%'" />
+                <span class="coverage-pill coverage-pill--warning">{{ quoteCoverageLabel(quote) }}</span>
+              } @else {
+                <span class="mono">{{ quoteCoverageLabel(quote) }}</span>
               }
             </td>
           }
@@ -253,12 +281,15 @@ Item 3: Chuột Z     | 500,000★    | 600,000     | 450,000★    |
                   [class.comparison-table__cell--lowest]="isLowestForLine(quote.id, rfqItem.id)"
                   [class.comparison-table__cell--missing]="!linePrice">
                 @if (linePrice) {
-                  <ep-amount [value]="linePrice.unitPrice" />
+                  <ep-amount [value]="quoteLineUnitAmount(linePrice)" />
                   @if (isLowestForLine(quote.id, rfqItem.id)) {
                     <ep-icon name="star" [size]="10" class="best-icon" />
                   }
                   @if (linePrice.deliveryDays) {
-                    <small class="delivery-note">{{ linePrice.deliveryDays }}d</small>
+                    <small class="delivery-note">{{ linePrice.deliveryDays }} {{ 'rfq.detail.compare.days' | translate }}</small>
+                  }
+                  @if (linePrice.warranty) {
+                    <small class="delivery-note">{{ linePrice.warranty }}</small>
                   }
                 } @else {
                   <span class="text-muted" title="{{ 'rfq.detail.compare.notQuoted' | translate }}">—</span>
@@ -322,13 +353,29 @@ getLinePrice(quote: VendorQuote, rfqLineItemId: string): VendorQuoteLineItem | n
   return quote.lineItems.find(l => l.rfqLineItemId === rfqLineItemId) ?? null;
 }
 
+quoteAmount(quote: VendorQuote): Money {
+  return { amount: quote.totalAmount, currency: quote.currency };
+}
+
+quoteLineUnitAmount(line: VendorQuoteLineItem): Money {
+  return { amount: line.unitPrice, currency: line.currency };
+}
+
+quoteLineTotalAmount(line: VendorQuoteLineItem): Money {
+  return { amount: line.totalPrice, currency: line.currency };
+}
+
+quoteCoverageLabel(quote: VendorQuote): string {
+  return `${this.quoteCoverage(quote)}%`;
+}
+
 isLowestForLine(quoteId: string, rfqLineItemId: string): boolean {
   const prices = this.quotes()
     .map(q => ({
       quoteId: q.id,
       price: parseFloat(q.lineItems.find(l => l.rfqLineItemId === rfqLineItemId)?.unitPrice ?? 'Infinity')
     }))
-    .filter(p => isFinite(p.price));
+    .filter(p => Number.isFinite(p.price));
   
   if (!prices.length) return false;
   const minPrice = Math.min(...prices.map(p => p.price));
@@ -373,15 +420,16 @@ isLowestForLine(quoteId: string, rfqLineItemId: string): boolean {
 ```
 
 **Xóa:** `selectedQuoteId` signal và inline evaluate form trong card/bảng.
+**Thêm:** `evaluatingQuote = signal<VendorQuote | null>(null)` và `showEvaluateModal = computed(() => this.evaluatingQuote() !== null)`.
 
 ---
 
 ### 3.6 Quote status summary bar
 
-Thêm phía trên quotes section, sau khi RFQ status = EVALUATING:
+Thêm phía trên quotes section khi RFQ đã có quote và đang ở trạng thái `PUBLISHED` hoặc `CLOSED`; action evaluate/award chính dùng `CLOSED` để khớp backend lifecycle:
 
 ```html
-@if (rfqData.status === 'EVALUATING') {
+@if ((rfqData.status === 'PUBLISHED' || rfqData.status === 'CLOSED') && quotes().length) {
   <div class="eval-progress-bar">
     <span>{{ 'rfq.detail.eval.progress' | translate: { evaluated: evaluatedCount(), total: quotes().length } }}</span>
     <div class="progress-track">
@@ -442,7 +490,7 @@ Thêm phía trên quotes section, sau khi RFQ status = EVALUATING:
 
 // Cell not quoted
 .comparison-table__cell--missing {
-  background: color-mix(in srgb, var(--color-neutral) 8%, transparent);
+  background: var(--color-neutral-subtle);
   color: var(--color-text-muted);
 }
 
@@ -468,6 +516,23 @@ Thêm phía trên quotes section, sau khi RFQ status = EVALUATING:
 .best-icon {
   color: var(--color-success);
   margin-left: var(--spacing-1);
+}
+
+.coverage-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--spacing-2);
+  border: var(--border-subtle);
+  border-radius: var(--radius-1);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.coverage-pill--warning {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
 }
 
 .score-value {
@@ -503,10 +568,11 @@ Thêm phía trên quotes section, sau khi RFQ status = EVALUATING:
 "rfq.detail.compare.coverage": "Độ phủ báo giá",
 "rfq.detail.compare.lineItemPrices": "Giá từng mặt hàng",
 "rfq.detail.compare.notQuoted": "Không báo giá mặt hàng này",
+"rfq.detail.compare.lowestPrice": "Giá thấp nhất",
 "rfq.detail.compare.days": "ngày",
-"rfq.detail.eval.progress": "Đã đánh giá {evaluated}/{total} báo giá",
+"rfq.detail.eval.progress": "Đã đánh giá {{evaluated}}/{{total}} báo giá",
 "rfq.detail.eval.allDone": "Đã đánh giá đủ",
-"rfq.detail.modal.evaluateTitle": "Đánh giá báo giá — {vendor}",
+"rfq.detail.modal.evaluateTitle": "Đánh giá báo giá — {{vendor}}",
 "rfq.detail.action.saveEvaluation": "Lưu đánh giá"
 ```
 
@@ -514,11 +580,30 @@ Thêm phía trên quotes section, sau khi RFQ status = EVALUATING:
 
 ## 6. Nguyên tắc triển khai
 
+- Bước đầu tiên bắt buộc: align RFQ status frontend với backend (`PUBLISHED/CLOSED`, không dùng `OPEN/EVALUATING` trong logic mới)
+- Không cần backend/API mới cho comparison table; dữ liệu quote line đã có đủ trong `RfqDetail.quotes[].lineItems[]`
 - Chỉ thêm comparison view — không xóa card grid hiện tại; 2 view cùng tồn tại, toggle được
 - `quoteViewMode` là `signal<'cards' | 'compare'>` trong component — mặc định `compare` nếu `quotes().length >= 2`
-- `isLowestForLine` computation: tính mỗi lần render — không cần cache vì dữ liệu tĩnh sau khi load
+- `isLowestForLine` nên dựa trên computed map (`lineLowestQuoteIds`) thay vì gọi reduce trực tiếp trong template nhiều lần
 - Evaluate modal: dùng `ep-modal` component đã có — không tạo modal mới
-- Coverage < 100%: hiển thị `ep-badge tone="warning"` với % trong comparison table, thêm tooltip "Nhà cung cấp không báo giá đủ {n} mặt hàng"
+- Coverage < 100%: hiển thị custom `.coverage-pill--warning` với `%`; không dùng `ep-badge [label]` vì component chỉ nhận `labelKey/status`
 - Sticky first column (row header): `position: sticky; left: 0` trong CSS để khi scroll ngang vẫn thấy tên item
 - Score range slider: native `<input type="range">` — không cần component mới
-- `VendorQuoteLineItem` cần có `itemName` từ join với `rfqData.lineItems` — không gọi API thêm, dữ liệu đã có trong `rfq.lineItems` signal
+- `VendorQuoteLineItem` đã có `itemName`, `currency`, `quantity`, `totalPrice`, `warranty`; join với `rfqData.lineItems` chỉ để lấy baseline/thứ tự/category/specs
+- `ep-amount` dùng object `{ amount, currency }` cho quote total và line item price
+- `Idempotency-Key` đã được `idempotencyInterceptor` tự gắn cho POST/PATCH; service không cần tự sinh key trừ khi muốn key ổn định riêng
+
+---
+
+## 7. Kế hoạch triển khai đã chỉnh
+
+| Bước | Nội dung | Ghi chú |
+|---|---|---|
+| 7a | Align RFQ frontend status với backend contract | `RfqStatus`, `STATUS_TONE`, list filters/counters, detail action conditions; dùng `PUBLISHED` cho open-submit/close, `CLOSED` cho evaluate/award |
+| 7b | Thêm `quoteViewMode` + view toggle UI | Default `compare` khi có từ 2 quotes, giữ card grid hiện có |
+| 7c | Build comparison table vendor columns x RFQ line rows | Sticky first column, horizontal scroll, amount object cho `ep-amount` |
+| 7d | Computed helpers | `lowestTotalQuoteId`, `bestScoreQuoteId`, `fastestDeliveryQuoteId`, `quoteCoverage`, `lineLowestQuoteIds`, amount helpers |
+| 7e | Tách evaluate inline form thành `ep-modal` | Thay `selectedQuoteId` bằng `evaluatingQuote`; giữ permission `RFQ_EVALUATE` |
+| 7f | Quote evaluation progress + award affordance | Progress theo số quote đã chấm; award chỉ khi status `CLOSED` và quote có score |
+| 7g | i18n + SCSS polish | Không hardcode text/màu; dùng token hiện có |
+| 7h | Verify | `npm run build`; `git diff --check`; không mở browser nếu user không yêu cầu |

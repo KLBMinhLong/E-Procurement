@@ -15,7 +15,7 @@
 | 4 | `UI_MODULE_APPROVAL_FLOW_DIAGRAM.md` | Approval Process Visualization | ✅ Hoàn thành | Build pass 2026-06-13; không mở browser test |
 | 5 | `UI_MODULE_PR_LIFECYCLE_TRACEABILITY.md` | PR Lifecycle & Traceability | ✅ Hoàn thành | Build pass 2026-06-13; PO `pr_id` filter + PR Detail traceability RFQ/PO |
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
-| 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ⬜ Chờ | Không phụ thuộc — standalone |
+| 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ⬜ Chờ | Đã rà soát 2026-06-13; cần align RFQ status frontend với backend trước UI |
 | 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Charts & Visual Upgrade | ⬜ Chờ | Nên làm sau #3 (Budget nav cần có trước quick links) |
 
 ---
@@ -128,17 +128,18 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 ---
 
 #### 7. `UI_MODULE_RFQ_QUOTE_COMPARISON.md` — RFQ Quote Comparison Table
-**Độc lập hoàn toàn — có thể làm bất kỳ lúc nào sau #1.**
+**Đã rà soát 2026-06-13, làm sau plan #6.** Scope đã chỉnh theo backend hiện tại: frontend đang lệch RFQ status (`OPEN/EVALUATING`) so với backend/OpenAPI (`PUBLISHED/CLOSED`), nên phải align contract trước khi thêm comparison table.
 
 | Bước | Nội dung |
 |---|---|
-| 7a | Thêm toggle `quoteViewMode` signal và view toggle UI |
-| 7b | Build comparison table (vendor columns × item rows) |
-| 7c | Computed helpers: lowestTotal, bestScore, fastestDelivery, coverage |
-| 7d | Tách evaluate form ra `ep-modal` (xóa inline form) |
-| 7e | Thêm quote status summary progress bar |
-| 7f | i18n + SCSS |
-| 7g | Build verify |
+| 7a | Align RFQ frontend status với backend contract (`PUBLISHED/CLOSED`, bỏ logic mới dùng `OPEN/EVALUATING`) |
+| 7b | Thêm toggle `quoteViewMode` signal và view toggle UI |
+| 7c | Build comparison table (vendor columns × RFQ line rows) |
+| 7d | Computed helpers: lowestTotal, bestScore, fastestDelivery, coverage, lineLowestQuoteIds |
+| 7e | Tách evaluate form ra `ep-modal` (xóa inline form) |
+| 7f | Thêm quote evaluation progress + award affordance |
+| 7g | i18n + SCSS |
+| 7h | Build verify |
 
 **Lý do ưu tiên:** Purchasing cần so sánh ngang để award vendor — hiện tại phải nhìn từng card riêng. Quan trọng cho business nhưng không block workflow hiện tại.
 
