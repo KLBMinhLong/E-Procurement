@@ -45,7 +45,7 @@ public record ApprovalStepAssignedEvent(
             PurchaseRequestPriority priority,
             int stepIndex,
             ApprovalStepType stepType,
-            String approverRole,
+            String requiredPermission,
             UUID approverId,
             Instant assignedAt,
             Instant slaDeadline) {
@@ -59,7 +59,7 @@ public record ApprovalStepAssignedEvent(
                 throw new IllegalArgumentException("stepIndex must be positive");
             }
             stepType = Objects.requireNonNull(stepType, "stepType must not be null");
-            approverRole = requireText(approverRole, "approverRole").toUpperCase(Locale.ROOT);
+            requiredPermission = requireText(requiredPermission, "requiredPermission").toUpperCase(Locale.ROOT);
             approverId = Objects.requireNonNull(approverId, "approverId must not be null");
             assignedAt = Objects.requireNonNull(assignedAt, "assignedAt must not be null");
             slaDeadline = Objects.requireNonNull(slaDeadline, "slaDeadline must not be null");

@@ -133,7 +133,7 @@ class SlaEscalationUseCaseTest {
                 1,
                 1,
                 "VALUE_DEFAULT",
-                "MANAGER",
+                "PR_APPROVE_L1",
                 ApprovalStepType.SEQUENTIAL,
                 2,
                 slaDeadline,
@@ -178,6 +178,11 @@ class SlaEscalationUseCaseTest {
 
         @Override
         public Optional<ApprovalProcess> findRunningByCamundaTaskId(String camundaTaskId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<ApprovalProcess> findLatestByEntity(ApprovalEntityType entityType, UUID entityId) {
             return Optional.empty();
         }
 

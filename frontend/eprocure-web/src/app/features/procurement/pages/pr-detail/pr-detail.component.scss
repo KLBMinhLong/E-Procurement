@@ -146,6 +146,23 @@
   align-items: flex-start;
 }
 
+.section-title-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.card-section__subtitle {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .section-title-row__actions {
   display: flex;
   align-items: center;

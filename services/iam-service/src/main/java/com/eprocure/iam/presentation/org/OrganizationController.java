@@ -84,7 +84,7 @@ public class OrganizationController {
                 LogMaskingUtil.maskId(departmentId),
                 LogMaskingUtil.maskId(excludedUserId));
         return ResponseEntity.ok(ApiResponse.success(
-                resolveApproversUseCase.execute(new ResolveApproversQuery(roleCode, departmentId, excludedUserId)),
+                resolveApproversUseCase.execute(ResolveApproversQuery.byRole(roleCode, departmentId, excludedUserId)),
                 RequestIdUtil.resolve(request)));
     }
 }

@@ -29,11 +29,13 @@ import {
   resolveAwardedVendorName,
   RfqDetail,
   RfqInvitation,
+  SubmitQuoteRequest,
   VendorQuote,
   VendorQuoteLineItem
 } from '../../models/vendor.model';
 import { Money } from '../../../procurement/models/purchase-request.model';
 import { RfqService } from '../../services/rfq.service';
+import { RfqSubmitQuoteModalComponent } from './rfq-submit-quote-modal.component';
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
   DRAFT: 'neutral',
@@ -44,13 +46,6 @@ const STATUS_TONE: Record<string, EpBadgeTone> = {
 };
 
 type QuoteViewMode = 'cards' | 'compare';
-
-interface SubmitLineDraft {
-  rfqLineItemId: string;
-  itemName: string;
-  unitPrice: string;
-  deliveryDays: string;
-}
 
 @Component({
   selector: 'ep-rfq-detail',
@@ -68,7 +63,8 @@ interface SubmitLineDraft {
     EpIconComponent,
     EpModalComponent,
     EpSkeletonComponent,
-    HasPermissionDirective
+    HasPermissionDirective,
+    RfqSubmitQuoteModalComponent
   ],
   templateUrl: './rfq-detail.component.html',
   styleUrl: './rfq-detail.component.scss'
@@ -97,13 +93,6 @@ export class RfqDetailComponent implements OnInit {
   evalNote = '';
 
   readonly awardReason = new FormControl('', [Validators.required, Validators.minLength(20)]);
-
-  submitVendorId = '';
-  submitCurrency = 'VND';
-  submitValidUntil = '';
-  submitPaymentTerms = '';
-  submitNotes = '';
-  submitLineDrafts: SubmitLineDraft[] = [];
 
   readonly quotes = computed(() => this.rfq()?.quotes ?? []);
   readonly canSubmitQuote = computed(() => this.rfq()?.status === 'PUBLISHED' && this.pendingInvitations().length > 0);
@@ -301,57 +290,24 @@ export class RfqDetailComponent implements OnInit {
   }
 
   openSubmitQuoteModal(): void {
-    const data = this.rfq();
-    if (!data) return;
-
-    const firstPending = this.pendingInvitations()[0];
-    this.submitVendorId = firstPending?.vendor.id ?? '';
-    this.submitCurrency = 'VND';
-    this.submitValidUntil = '';
-    this.submitPaymentTerms = '';
-    this.submitNotes = '';
-    this.submitLineDrafts = data.lineItems.map((item) => ({
-      rfqLineItemId: item.id,
-      itemName: item.itemName,
-      unitPrice: '',
-      deliveryDays: ''
-    }));
+    if (!this.rfq() || !this.pendingInvitations().length) {
+      return;
+    }
     this.showSubmitQuoteModal.set(true);
   }
 
   closeSubmitQuoteModal(): void {
-    this.showSubmitQuoteModal.set(false);
+    if (!this.isActioning()) {
+      this.showSubmitQuoteModal.set(false);
+    }
   }
 
-  confirmSubmitQuote(): void {
+  submitQuote(request: SubmitQuoteRequest): void {
     const rfqId = this.rfq()?.id;
-    if (!rfqId || !this.submitVendorId || !this.submitValidUntil) {
-      this.toastService.error('rfq.detail.toast.submitValidation');
-      return;
-    }
-
-    const lineItems = this.submitLineDrafts
-      .filter((line) => line.unitPrice.trim())
-      .map((line) => ({
-        rfqLineItemId: line.rfqLineItemId,
-        unitPrice: line.unitPrice.trim(),
-        deliveryDays: line.deliveryDays ? Number(line.deliveryDays) : null
-      }));
-
-    if (!lineItems.length) {
-      this.toastService.error('rfq.detail.toast.submitValidation');
-      return;
-    }
+    if (!rfqId) return;
 
     this.isActioning.set(true);
-    this.rfqService.submitQuote(rfqId, {
-      vendorId: this.submitVendorId,
-      currency: this.submitCurrency,
-      validUntil: this.submitValidUntil,
-      lineItems,
-      paymentTerms: this.submitPaymentTerms.trim() || null,
-      notes: this.submitNotes.trim() || null
-    })
+    this.rfqService.submitQuote(rfqId, request)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isActioning.set(false))

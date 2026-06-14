@@ -63,20 +63,74 @@ public interface GoodsReceiptMapper {
     List<WarehouseListDbEntity> findActiveWarehouses();
 
     @Select("""
+            WITH po_line AS (
+                SELECT po_line_item_id, item_name, category_code, unit, unit_price, currency
+                FROM inventory.purchase_order_line_snapshots
+                WHERE po_line_item_id = #{poLineItemId}
+                  AND is_deleted = FALSE
+                LIMIT 1
+            ),
+            existing AS (
+                SELECT item.item_code
+                FROM po_line
+                JOIN inventory.items item
+                  ON lower(item.name) = lower(po_line.item_name)
+                 AND item.category_code = po_line.category_code
+                 AND item.unit = po_line.unit
+                 AND item.is_active = TRUE
+                 AND item.is_deleted = FALSE
+                ORDER BY item.item_code ASC
+                LIMIT 1
+            ),
+            inserted AS (
+                INSERT INTO inventory.items (
+                    id, item_code, name, description, category_code, unit,
+                    unit_price, currency, preferred_vendor_id, reorder_point,
+                    is_active, created_at, created_by, updated_by, is_deleted
+                )
+                SELECT
+                    gen_random_uuid(),
+                    #{generatedItemCode},
+                    po_line.item_name,
+                    'Auto-created from purchase order line ' || po_line.po_line_item_id::text,
+                    po_line.category_code,
+                    po_line.unit,
+                    po_line.unit_price,
+                    po_line.currency,
+                    NULL,
+                    NULL,
+                    TRUE,
+                    #{createdAt},
+                    #{actorId},
+                    #{actorId},
+                    FALSE
+                FROM po_line
+                WHERE NOT EXISTS (SELECT 1 FROM existing)
+                ON CONFLICT DO NOTHING
+                RETURNING item_code
+            )
+            SELECT item_code
+            FROM existing
+            UNION ALL
+            SELECT item_code
+            FROM inserted
+            UNION ALL
             SELECT item.item_code
-            FROM inventory.purchase_order_line_snapshots po_line
+            FROM po_line
             JOIN inventory.items item
-              ON lower(item.name) = lower(po_line.item_name)
+              ON item.item_code = #{generatedItemCode}
+             AND lower(item.name) = lower(po_line.item_name)
              AND item.category_code = po_line.category_code
              AND item.unit = po_line.unit
              AND item.is_active = TRUE
              AND item.is_deleted = FALSE
-            WHERE po_line.po_line_item_id = #{poLineItemId}
-              AND po_line.is_deleted = FALSE
-            ORDER BY item.item_code ASC
             LIMIT 1
             """)
-    Optional<String> findActiveItemCodeForPoLineItem(@Param("poLineItemId") UUID poLineItemId);
+    Optional<String> findOrCreateActiveItemCodeForPoLineItem(
+            @Param("poLineItemId") UUID poLineItemId,
+            @Param("generatedItemCode") String generatedItemCode,
+            @Param("actorId") UUID actorId,
+            @Param("createdAt") Instant createdAt);
 
     @Insert("""
             INSERT INTO inventory.goods_receipts (

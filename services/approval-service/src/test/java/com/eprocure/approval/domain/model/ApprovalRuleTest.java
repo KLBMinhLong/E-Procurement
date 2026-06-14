@@ -29,7 +29,7 @@ class ApprovalRuleTest {
                         Set.of(),
                         Set.of(),
                         Set.of(PurchaseRequestPriority.NORMAL, PurchaseRequestPriority.URGENT)),
-                List.of(new ApprovalStepTemplate(1, "MANAGER", ApprovalStepType.SEQUENTIAL, 48, true)),
+                List.of(new ApprovalStepTemplate(1, "PR_APPROVE_L1", ApprovalStepType.SEQUENTIAL, 48, true)),
                 null);
 
         // When/Then
@@ -50,7 +50,7 @@ class ApprovalRuleTest {
                 true,
                 ApprovalRuleType.CATEGORY,
                 ApprovalCondition.of(null, null, Set.of("SOFTWARE", "SAAS"), Set.of(), Set.of()),
-                List.of(new ApprovalStepTemplate(1, "CISO", ApprovalStepType.SEQUENTIAL, 48, true)),
+                List.of(new ApprovalStepTemplate(1, "PR_APPROVE_L3", ApprovalStepType.SEQUENTIAL, 48, true)),
                 null);
 
         // When/Then

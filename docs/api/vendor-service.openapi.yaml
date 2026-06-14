@@ -690,6 +690,7 @@ paths:
                 lineItems:
                   type: array
                   minItems: 1
+                  description: Must include every RFQ line item exactly once; partial quotes are rejected by the service.
                   items:
                     type: object
                     required: [rfqLineItemId, unitPrice]

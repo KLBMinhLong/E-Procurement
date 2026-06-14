@@ -45,7 +45,7 @@ public record ApprovalSlaBreachedEvent(
             PurchaseRequestPriority priority,
             int stepIndex,
             ApprovalStepType stepType,
-            String approverRole,
+            String requiredPermission,
             UUID breachedApproverId,
             UUID escalatedToApproverId,
             boolean reassigned,
@@ -62,7 +62,7 @@ public record ApprovalSlaBreachedEvent(
                 throw new IllegalArgumentException("stepIndex must be positive");
             }
             stepType = Objects.requireNonNull(stepType, "stepType must not be null");
-            approverRole = requireText(approverRole, "approverRole").toUpperCase(Locale.ROOT);
+            requiredPermission = requireText(requiredPermission, "requiredPermission").toUpperCase(Locale.ROOT);
             breachedApproverId = Objects.requireNonNull(breachedApproverId, "breachedApproverId must not be null");
             escalatedToApproverId = Objects.requireNonNull(escalatedToApproverId, "escalatedToApproverId must not be null");
             assignedAt = Objects.requireNonNull(assignedAt, "assignedAt must not be null");

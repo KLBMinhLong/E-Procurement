@@ -45,16 +45,16 @@ class ResolveApprovalChainUseCaseTest {
     @Test
     void should_resolve_chain_when_rule_steps_have_approvers() {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
-                "MANAGER", List.of(candidate(MANAGER_ID, "manager")),
-                "FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
+                "PR_APPROVE_L1", List.of(candidate(MANAGER_ID, "manager")),
+                "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
         ResolveApprovalChainUseCase useCase = newUseCase(orgApproverPort);
 
         ResolvedApprovalChainView result = useCase.execute(defaultCommand());
 
         assertThat(result.primaryRuleName()).isEqualTo("VALUE_DEFAULT");
         assertThat(result.steps())
-                .extracting(ResolvedApprovalChainView.ResolvedApprovalStepView::approverRole)
-                .containsExactly("MANAGER", "FINANCE");
+                .extracting(ResolvedApprovalChainView.ResolvedApprovalStepView::requiredPermission)
+                .containsExactly("PR_APPROVE_L1", "PR_APPROVE_FINANCE");
         assertThat(result.steps())
                 .extracting(step -> step.approver().id())
                 .containsExactly(MANAGER_ID, FINANCE_ID);
@@ -71,8 +71,8 @@ class ResolveApprovalChainUseCaseTest {
     @Test
     void should_skip_requester_candidate_when_other_approver_exists() {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
-                "MANAGER", List.of(candidate(REQUESTER_ID, "requester"), candidate(MANAGER_ID, "manager")),
-                "FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
+                "PR_APPROVE_L1", List.of(candidate(REQUESTER_ID, "requester"), candidate(MANAGER_ID, "manager")),
+                "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
         ResolveApprovalChainUseCase useCase = newUseCase(orgApproverPort);
 
         ResolvedApprovalChainView result = useCase.execute(defaultCommand());
@@ -83,8 +83,8 @@ class ResolveApprovalChainUseCaseTest {
     @Test
     void should_include_delegate_id_when_active_delegation_exists_for_approver() {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
-                "MANAGER", List.of(candidate(MANAGER_ID, "manager")),
-                "FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
+                "PR_APPROVE_L1", List.of(candidate(MANAGER_ID, "manager")),
+                "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
         FakeDelegationResolutionPort delegationResolutionPort = new FakeDelegationResolutionPort(Map.of(
                 MANAGER_ID,
                 new DelegationResolutionPort.ActiveDelegation(DELEGATION_ID, MANAGER_ID, MANAGER_DELEGATE_ID)));
@@ -105,8 +105,8 @@ class ResolveApprovalChainUseCaseTest {
     @Test
     void should_throw_apr_001_when_only_requester_can_approve() {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
-                "MANAGER", List.of(candidate(REQUESTER_ID, "requester")),
-                "FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
+                "PR_APPROVE_L1", List.of(candidate(REQUESTER_ID, "requester")),
+                "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
         ResolveApprovalChainUseCase useCase = newUseCase(orgApproverPort);
 
         assertThatThrownBy(() -> useCase.execute(defaultCommand()))
@@ -118,8 +118,8 @@ class ResolveApprovalChainUseCaseTest {
     @Test
     void should_throw_apr_002_when_no_approver_exists() {
         FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
-                "MANAGER", List.of(),
-                "FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
+                "PR_APPROVE_L1", List.of(),
+                "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance"))));
         ResolveApprovalChainUseCase useCase = newUseCase(orgApproverPort);
 
         assertThatThrownBy(() -> useCase.execute(defaultCommand()))
@@ -163,8 +163,8 @@ class ResolveApprovalChainUseCaseTest {
                 ApprovalRuleType.DEFAULT,
                 ApprovalCondition.of(null, null, Set.of(), Set.of(), Set.of(PurchaseRequestPriority.NORMAL)),
                 List.of(
-                        new ApprovalStepTemplate(1, "MANAGER", ApprovalStepType.SEQUENTIAL, 24, true),
-                        new ApprovalStepTemplate(2, "FINANCE", ApprovalStepType.SEQUENTIAL, 48, true)),
+                        new ApprovalStepTemplate(1, "PR_APPROVE_L1", ApprovalStepType.SEQUENTIAL, 24, true),
+                        new ApprovalStepTemplate(2, "PR_APPROVE_FINANCE", ApprovalStepType.SEQUENTIAL, 48, true)),
                 null);
     }
 
@@ -223,7 +223,7 @@ class ResolveApprovalChainUseCaseTest {
         @Override
         public List<ApproverCandidate> resolveApprovers(ResolveApproverQuery query) {
             queries.add(query);
-            return candidatesByRole.getOrDefault(query.approverRole(), List.of());
+            return candidatesByRole.getOrDefault(query.requiredPermission(), List.of());
         }
     }
 

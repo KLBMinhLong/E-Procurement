@@ -30,7 +30,11 @@ public interface GoodsReceiptRepository {
 
     boolean updateDraft(GoodsReceipt goodsReceipt, UUID actorId, Instant updatedAt, UUID idempotencyKey);
 
-    Optional<String> findActiveItemCodeForPoLineItem(UUID poLineItemId);
+    Optional<String> findOrCreateActiveItemCodeForPoLineItem(
+            UUID poLineItemId,
+            String generatedItemCode,
+            UUID actorId,
+            Instant createdAt);
 
     void updateLineItemCode(UUID lineItemId, String itemCode, UUID actorId);
 

@@ -139,7 +139,8 @@ components:
             type: object
             properties:
               stepIndex:    { type: integer }
-              approverRole: { type: string }
+              requiredPermission: { type: string }
+              stepType:     { type: string, enum: [SEQUENTIAL, PARALLEL] }
               approver:
                 type: object
                 properties:
@@ -160,10 +161,10 @@ components:
       type: object
       properties:
         stepIndex:    { type: integer }
-        approverRole: { type: string, example: MANAGER }
+        requiredPermission: { type: string, example: PR_APPROVE_L1 }
         stepType:     { type: string, enum: [SEQUENTIAL, PARALLEL] }
         slaHours:     { type: integer, description: Giờ làm việc (8h-17h30 T2-T6) }
-        isRequired:   { type: boolean }
+        required:     { type: boolean }
 
     ApprovalRuleDetail:
       type: object
@@ -353,7 +354,7 @@ paths:
                             type: object
                             nullable: true
                             properties:
-                              approverRole: { type: string }
+                              requiredPermission: { type: string }
                               approver:     { type: object }
                               slaDeadline:  { type: string, format: date-time }
                           isCompleted: { type: boolean }
@@ -485,6 +486,8 @@ paths:
       tags: [Processes]
       summary: Lấy tiến trình phê duyệt của một entity
       operationId: getApprovalProcess
+      x-required-permission: PR_VIEW_OWN
+      description: Người tạo PR, người có quyền xem theo phòng ban/toàn bộ, hoặc approver được gán có thể xem tiến trình.
       parameters:
         - name: entityType
           in: path

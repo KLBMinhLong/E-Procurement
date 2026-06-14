@@ -185,11 +185,11 @@
                   <div class="chain-summary__body">
                     <strong>{{ 'approvals.rules.step.count' | translate: { count: rule.steps.length } }}</strong>
                     @if (firstStep(rule); as first) {
-                      <span>{{ 'approvals.rules.step.firstRole' | translate: { role: first.approverRole } }}</span>
+                      <span>{{ 'approvals.rules.step.firstPermission' | translate: { permission: first.requiredPermission } }}</span>
                     }
                     @if (hasDistinctLastStep(rule)) {
                       @if (lastStep(rule); as last) {
-                        <span>{{ 'approvals.rules.step.lastRole' | translate: { role: last.approverRole } }}</span>
+                        <span>{{ 'approvals.rules.step.lastPermission' | translate: { permission: last.requiredPermission } }}</span>
                       }
                     }
                     @if (parallelStepCount(rule) > 0) {
@@ -271,12 +271,12 @@
 
       @if (selectedChainSteps().length) {
         <ol class="chain-diagram">
-          @for (step of selectedChainSteps(); track step.stepIndex + ':' + step.approverRole + ':' + $index) {
+          @for (step of selectedChainSteps(); track step.stepIndex + ':' + step.requiredPermission + ':' + $index) {
             <li class="chain-step" [class.chain-step--parallel]="step.stepType === 'PARALLEL'">
               <span class="chain-step__marker">{{ step.stepIndex }}</span>
               <div class="chain-step__content">
                 <div class="chain-step__title">
-                  <strong>{{ step.approverRole }}</strong>
+                  <strong>{{ step.requiredPermission }}</strong>
                   <ep-badge tone="neutral" [labelKey]="'approvals.rules.stepType.' + step.stepType" />
                 </div>
                 <div class="chain-step__meta">
@@ -449,7 +449,7 @@
             <header class="step-editor__header">
               <div class="step-editor__index">
                 <span>{{ step.controls.stepIndex.value }}</span>
-                <strong>{{ 'approvals.rules.field.approverRole' | translate }}</strong>
+                <strong>{{ 'approvals.rules.field.requiredPermission' | translate }}</strong>
               </div>
               <ep-button
                 variant="ghost"
@@ -465,12 +465,26 @@
               <ep-form-field [label]="'approvals.rules.field.stepIndex' | translate">
                 <input formControlName="stepIndex" type="number" min="1" />
               </ep-form-field>
-              <ep-form-field [label]="'approvals.rules.field.approverRole' | translate">
-                <input
-                  formControlName="approverRole"
-                  type="text"
-                  list="approval-role-options"
-                  [placeholder]="'approvals.rules.placeholder.approverRole' | translate" />
+              <ep-form-field [label]="'approvals.rules.field.requiredPermission' | translate">
+                <div class="permission-select">
+                  <select formControlName="requiredPermission">
+                    @for (permission of approvalPermissionOptions(); track permission.code) {
+                      <option [value]="permission.code">{{ permissionOptionLabel(permission) }}</option>
+                    }
+                  </select>
+                  @if (selectedPermission(step.controls.requiredPermission.value); as permission) {
+                    <p class="permission-select__hint">
+                      <code>{{ permission.code }}</code>
+                      <span>
+                        {{ permission.description || permission.name || ('approvals.rules.reference.permissionFallback' | translate) }}
+                      </span>
+                    </p>
+                  } @else {
+                    <p class="permission-select__hint">
+                      {{ 'approvals.rules.reference.permissionSelectHint' | translate }}
+                    </p>
+                  }
+                </div>
               </ep-form-field>
               <ep-form-field [label]="'approvals.rules.field.stepType' | translate">
                 <select formControlName="stepType">
@@ -497,12 +511,6 @@
         <textarea formControlName="description" rows="3" [placeholder]="'approvals.rules.placeholder.description' | translate"></textarea>
       </ep-form-field>
     </section>
-
-    <datalist id="approval-role-options">
-      @for (role of roleOptions(); track role.code) {
-        <option [value]="role.code">{{ role.name }}</option>
-      }
-    </datalist>
 
     <footer class="modal-actions">
       <ep-button variant="secondary" (click)="closeFormModal()">{{ 'action.cancel' | translate }}</ep-button>

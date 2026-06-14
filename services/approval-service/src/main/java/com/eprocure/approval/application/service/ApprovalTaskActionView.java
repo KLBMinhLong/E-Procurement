@@ -16,7 +16,7 @@ public record ApprovalTaskActionView(
     public record AssignedStepView(
             UUID stepId,
             int stepIndex,
-            String approverRole,
+            String requiredPermission,
             UUID approverId,
             Instant slaDeadline) {
     }

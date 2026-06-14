@@ -215,3 +215,46 @@
 - Root cause: Angular `computed()` values read `FormArray`/`FormControl` values directly; reactive form controls are not signals, so the computed summary and urgency conditional did not re-evaluate reliably under `OnPush`.
 - Fix: Add a form revision signal driven by `form.valueChanges`, use it for PR create totals and urgency display, move line-total calculation out of the template, and show validation feedback when submit is attempted with invalid fields.
 - Prevention: Any Angular `computed()` that derives from reactive forms must depend on a signal bridge such as `lineRevision`/`formRevision`; do not read form controls directly inside computed values without a signal dependency.
+
+## [2026-06-14] Bug: PR submit did not create usable approval workflow for permission-rich users
+
+- Symptom: Submitted PRs could stay without a visible approval workflow, and approver resolution depended on seeded roles such as `MANAGER` even when the user had broader permissions like `SUPER_ADMIN`.
+- Root cause: Approval rules stored role-like values and approval-service called IAM with `role=...`; IAM seeds also granted some approval permissions too broadly, so permission eligibility and workflow routing diverged.
+- Fix: Convert approval rules/steps to `requiredPermission`, route approval-service internal calls with `permission=...`, add IAM permission-based approver lookup, reset/reseed approval schema, add IAM V11/V12 migrations for Super Admin approval permissions plus cleanup of seeded approval grants, expose approval process detail endpoint, and make PR detail load workflow directly from approval-service.
+- Prevention: Approval workflow routing must be permission-driven; roles are only a way to grant permissions, not approval rule values. PR detail should read workflow state from approval-service instead of assuming purchase-request-service embeds `approvalProcess`.
+
+## [2026-06-14] Bug: Approval workflow timeline rendered wrong step numbers and poor responsive layout
+
+- Symptom: The approval workflow card showed duplicate/wrong labels such as `Bước 2`, highlighted approved steps as current, used short/misaligned connector lines in both vertical and horizontal layouts, and did not show a process name.
+- Root cause: The shared Angular workflow component treated backend `stepIndex` as zero-based even though approval-service returns one-based indexes, keyed expanded state only by `stepIndex`, anchored connector lines inside the marker button, and marked any matching index as current even when the step was already terminal. The process API also did not expose `stepType`, so the UI could not distinguish sequential and parallel steps.
+- Fix: Render one-based `stepIndex` directly, track steps with a composite key, restrict current styling to pending steps, move connectors to the article layout, add translated permission/type badges, expose `stepType` from approval-service process detail, and show process names on PR/approval detail screens.
+- Prevention: Workflow UI should treat backend ordering semantics as contract data, verify horizontal and vertical layouts together, and keep process metadata in the detail API rather than deriving it from generic section headings.
+
+## [2026-06-14] Bug: Additive approval category rule ran in parallel with the primary value rule
+
+- Symptom: A newly submitted PR with a software/SaaS category could create active parallel approvals for `PR_APPROVE_L1` and `PR_APPROVE_L3`, even though the visible value rule did not define that parallel step.
+- Root cause: Approval rule selection correctly merged additive category rules, but the process builder persisted `sourceStepIndex` from each source rule. Additive category rules often start at source step `1`, so their first step collided with the primary rule step `1` and was treated as parallel.
+- Fix: Compute runtime step sequence with an offset per applied rule, preserve same-index parallel steps within one rule such as emergency approval, and persist the runtime sequence into `approval_steps.step_index`.
+- Prevention: Any approval rule merge must distinguish source rule step index from runtime workflow step index, with tests covering both intentional parallel steps and additive rule offsetting.
+
+## [2026-06-14] Bug: Approval rule editor required manual permission code entry
+
+- Symptom: Creating or editing approval rules forced admins to type `requiredPermission` manually, making it easy to mistype a permission code that the approval engine cannot route.
+- Root cause: The Angular approval rule editor loaded IAM permissions but exposed them only through an HTML `datalist`, which still behaves like free text and does not clearly show available approval permissions.
+- Fix: Replace manual permission entry with a real select control populated from IAM approval permissions, keep fallback `PR_APPROVE_*` options, and preserve existing rule permission codes when editing.
+- Prevention: Business-critical code fields should use bounded controls backed by system reference data, with free text reserved only for descriptions and comments.
+
+## [2026-06-14] Bug: RFQ quote form allowed partial and unclear quote submissions
+
+- Symptom: The RFQ detail page opened a submit-quote form, but users could submit without a clear total, without warranty fields, and without understanding that every RFQ line item must be quoted.
+- Root cause: The Angular form used loose `ngModel` state and filtered out blank line items, while `SubmitVendorQuoteUseCase` rejects partial quotes by requiring the submitted line set to match all RFQ line items exactly.
+- Fix: Move quote submission into a dedicated reactive modal component, validate vendor/date/currency/every unit price, show line totals and estimated grand total, include warranty, and document the all-lines requirement in OpenAPI.
+- Follow-up fix: Angular `input[type=number]` can provide numeric values at runtime, so quote numeric normalization must accept `string | number` instead of calling `.trim()` directly.
+- Prevention: When backend enforces set equality or all-line coverage, the UI must use bounded form validation and show the derived total before any state-changing submit.
+
+## [2026-06-14] Bug: Goods Receipt completion failed for non-catalog PO items
+
+- Symptom: Completing a Goods Receipt created from a PO line not already present in the inventory catalog failed with `INV_001 Item not found`.
+- Root cause: GR draft lines persisted `itemCode = null`, and completion only resolved item codes by matching existing active catalog items on name/category/unit.
+- Fix: Complete GR now resolves an existing catalog item or auto-creates an active inventory item from the issued PO line snapshot using a stable `AUTO-*` item code before posting receipt stock movement.
+- Prevention: Cross-service snapshots that can contain free-text business lines must either carry a stable downstream key or the consuming service must create its own local reference before ledger posting.

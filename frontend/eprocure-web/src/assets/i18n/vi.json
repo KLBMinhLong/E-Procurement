@@ -32,13 +32,25 @@
       "ESCALATED": "Đã chuyển cấp",
       "SKIPPED": "Bỏ qua",
       "FORWARDED": "Chuyển tiếp",
+      "RUNNING": "Đang duyệt",
       "IN_PROGRESS": "Đang duyệt",
       "COMPLETED": "Hoàn tất",
       "CANCELLED": "Đã hủy"
     },
+    "permission": {
+      "PR_APPROVE_L1": "Duyệt cấp 1",
+      "PR_APPROVE_L2": "Duyệt cấp 2",
+      "PR_APPROVE_L3": "Duyệt cấp 3",
+      "PR_APPROVE_FINANCE": "Duyệt tài chính",
+      "PR_APPROVE_EMERGENCY": "Duyệt khẩn cấp"
+    },
     "steps": {
       "emptyTitle": "Chưa có bước phê duyệt",
       "emptyMessage": "Quy trình duyệt chưa được khởi tạo hoặc chưa trả dữ liệu.",
+      "type": {
+        "SEQUENTIAL": "Tuần tự",
+        "PARALLEL": "Song song"
+      },
       "waitingAssign": "Chờ giao việc",
       "assignedAt": "Giao lúc",
       "deadline": "Hạn xử lý",
@@ -49,7 +61,7 @@
       "skipped": "Đã bỏ qua",
       "escalated": "Đã chuyển cấp",
       "stepNumber": "Bước {{step}}",
-      "stepAriaLabel": "Mở chi tiết bước {{step}}: {{role}}"
+      "stepAriaLabel": "Mở chi tiết bước {{step}}: {{permission}}"
     }
   },
   "auth": {
@@ -790,6 +802,7 @@
       },
       "approval": {
         "none": "Quy trình phê duyệt sẽ được tạo sau khi gửi yêu cầu thành công. Nếu vừa gửi, hãy đợi approval service xử lý event rồi tải lại.",
+        "processName": "Quy trình {{number}}",
         "assignedAt": "Giao:",
         "deadline": "Hạn:",
         "viewInbox": "Xem hộp thư duyệt"
@@ -1977,6 +1990,7 @@
       "assignedAt": "Ngày giao",
       "deadlineAt": "Hạn xử lý",
       "processOverview": "Tổng quan quy trình phê duyệt",
+      "processName": "Quy trình {{number}}",
       "processHeader": "Quy trình phê duyệt",
       "viewFullPr": "Xem PR đầy đủ",
       "step": "Bước",
@@ -2039,9 +2053,9 @@
       },
       "filter": {
         "title": "Bộ lọc vận hành",
-        "description": "Thu hẹp danh sách theo loại quy tắc, trạng thái hoặc tên vai trò duyệt.",
+        "description": "Thu hẹp danh sách theo loại quy tắc, trạng thái hoặc quyền phê duyệt bắt buộc.",
         "searchLabel": "Tìm quy tắc",
-        "searchPlaceholder": "Tìm tên, loại, vai trò hoặc mô tả...",
+        "searchPlaceholder": "Tìm tên, loại, quyền hoặc mô tả...",
         "type": "Loại quy tắc",
         "status": "Trạng thái",
         "allTypes": "Tất cả loại",
@@ -2098,8 +2112,8 @@
       "step": {
         "slaSummary": "{{hours}}h SLA",
         "count": "{{count}} bước",
-        "firstRole": "Bắt đầu: {{role}}",
-        "lastRole": "Kết thúc: {{role}}",
+        "firstPermission": "Bắt đầu: {{permission}}",
+        "lastPermission": "Kết thúc: {{permission}}",
         "parallelCount": "{{count}} bước song song",
         "required": "Bắt buộc",
         "optional": "Không bắt buộc"
@@ -2113,7 +2127,9 @@
       "reference": {
         "selectedCount": "{{count}} đã chọn",
         "noCategories": "Chưa tải được danh mục. Vẫn có thể lưu các giá trị đã có của quy tắc.",
-        "noDepartments": "Chưa tải được phòng ban. Kiểm tra quyền ORG_VIEW hoặc thử tải lại trang."
+        "noDepartments": "Chưa tải được phòng ban. Kiểm tra quyền ORG_VIEW hoặc thử tải lại trang.",
+        "permissionSelectHint": "Chọn quyền phê duyệt có sẵn. Hệ thống sẽ lưu mã quyền vào quy tắc.",
+        "permissionFallback": "Quyền phê duyệt"
       },
       "field": {
         "ruleName": "Tên quy tắc",
@@ -2126,7 +2142,7 @@
         "departmentIds": "Phòng ban áp dụng",
         "priorities": "Mức độ PR",
         "stepIndex": "Thứ tự",
-        "approverRole": "Vai trò duyệt",
+        "requiredPermission": "Quyền phê duyệt",
         "stepType": "Kiểu bước",
         "slaHours": "SLA giờ",
         "required": "Bắt buộc",
@@ -2138,7 +2154,7 @@
         "money": "VD: 5000000.0000",
         "categories": "VD: SOFTWARE, SAAS",
         "departmentIds": "UUID phòng ban, phân tách bằng dấu phẩy",
-        "approverRole": "VD: MANAGER",
+        "requiredPermission": "VD: PR_APPROVE_L1",
         "description": "Mô tả phạm vi áp dụng quy tắc",
         "reason": "Nhập lý do vô hiệu hóa quy tắc"
       },
@@ -2433,20 +2449,39 @@
       },
       "submit": {
         "vendor": "Nhà cung cấp",
+        "selectedVendor": "NCC đang báo giá",
         "currency": "Tiền tệ",
         "validUntil": "Hiệu lực đến",
         "paymentTerms": "Điều khoản thanh toán",
+        "paymentTermsPlaceholder": "Ví dụ: Net 30, thanh toán sau nghiệm thu...",
         "notes": "Ghi chú",
+        "notesPlaceholder": "Ghi chú thương mại, điều kiện giao hàng hoặc ràng buộc đặc biệt...",
         "lineItems": "Chi tiết báo giá",
         "unitPrice": "Đơn giá",
-        "deliveryDays": "Ngày giao"
+        "deliveryDays": "Thời gian giao dự kiến (ngày)",
+        "warranty": "Bảo hành",
+        "warrantyPlaceholder": "Ví dụ: 12 tháng",
+        "lineTotal": "Thành tiền",
+        "estimatedTotal": "Tổng tạm tính",
+        "completedLines": "Dòng đã nhập",
+        "completedLinesValue": "{{count}} / {{total}}",
+        "allLinesRequired": "Backend yêu cầu báo giá đủ tất cả dòng hàng trong RFQ.",
+        "noPendingVendor": "Không còn nhà cung cấp nào đang chờ nộp báo giá.",
+        "validation": {
+          "required": "Trường này là bắt buộc.",
+          "positive": "Giá trị phải lớn hơn 0.",
+          "currency": "Mã tiền tệ phải gồm 3 ký tự ISO.",
+          "validUntil": "Ngày hiệu lực không được trước hôm nay.",
+          "maxLength": "Nội dung quá dài.",
+          "invalid": "Giá trị không hợp lệ."
+        }
       },
       "toast": {
         "evaluated": "Đã đánh giá báo giá.",
         "awarded": "Đã chọn thầu RFQ thành công.",
         "closed": "Đã đóng RFQ để đánh giá.",
         "quoteSubmitted": "Đã nộp báo giá thành công.",
-        "submitValidation": "Vui lòng chọn NCC, ngày hiệu lực và ít nhất một đơn giá."
+        "submitValidation": "Vui lòng chọn NCC, ngày hiệu lực và nhập đủ đơn giá cho tất cả dòng RFQ."
       }
     },
     "create": {

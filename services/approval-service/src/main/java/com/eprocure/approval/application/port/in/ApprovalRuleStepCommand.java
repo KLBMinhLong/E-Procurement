@@ -4,7 +4,7 @@ import com.eprocure.approval.domain.model.ApprovalStepType;
 
 public record ApprovalRuleStepCommand(
         int stepIndex,
-        String approverRole,
+        String requiredPermission,
         ApprovalStepType stepType,
         int slaHours,
         boolean required) {

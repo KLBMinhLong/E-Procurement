@@ -67,6 +67,13 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
     }
 
     @Override
+    public Optional<ApprovalProcess> findLatestByEntity(ApprovalEntityType entityType, UUID entityId) {
+        log.debug("[REPO] findLatestByEntity approval_processes | entityType={} | entityId={}", entityType, entityId);
+        return Optional.ofNullable(mapper.findLatestByEntity(entityType.name(), entityId))
+                .map(this::toDomainWithSteps);
+    }
+
+    @Override
     public List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit) {
         log.debug("[REPO] findRunningProcessesWithOverdueSteps approval_processes | now={} | limit={}", now, limit);
         return mapper.findRunningProcessesWithOverdueSteps(now, limit).stream()
@@ -120,7 +127,7 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
         entity.setProcessId(step.getProcessId());
         entity.setStepIndex(step.getStepIndex());
         entity.setStepType(step.getStepType().name());
-        entity.setApproverRole(step.getApproverRole());
+        entity.setRequiredPermission(step.getRequiredPermission());
         entity.setApproverId(step.getApproverId());
         entity.setDelegateId(step.getDelegateId().orElse(null));
         entity.setStatus(step.getStatus().name());
@@ -164,7 +171,7 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
                 entity.getProcessId(),
                 entity.getStepIndex(),
                 ApprovalStepType.valueOf(entity.getStepType()),
-                entity.getApproverRole(),
+                entity.getRequiredPermission(),
                 entity.getApproverId(),
                 entity.getDelegateId(),
                 ApprovalStepStatus.valueOf(entity.getStatus()),

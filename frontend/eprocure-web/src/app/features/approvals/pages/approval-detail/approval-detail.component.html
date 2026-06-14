@@ -58,9 +58,15 @@
     </header>
 
     <section class="process-overview" aria-labelledby="process-overview-heading">
-      <h2 id="process-overview-heading" class="sr-only">
-        {{ 'approvals.detail.processOverview' | translate }}
-      </h2>
+      <div class="process-overview__header">
+        <div>
+          <span class="process-overview__eyebrow">{{ 'approvals.detail.processOverview' | translate }}</span>
+          <h2 id="process-overview-heading">{{ 'approvals.detail.processName' | translate: { number: task()?.entityNumber } }}</h2>
+        </div>
+        @if (process(); as processData) {
+          <ep-badge [tone]="statusTone[processData.status] || 'neutral'" [labelKey]="'approval.status.' + processData.status" />
+        }
+      </div>
       <ep-approval-steps
         [steps]="approvalSteps()"
         [currentStepIndex]="currentStepIndex()"
@@ -222,7 +228,15 @@
 
         <!-- Timeline Workflow Process Card -->
         <div class="card sidebar-card process-card">
-          <h2 class="card__title">{{ 'approvals.detail.processHeader' | translate }}</h2>
+          <div class="card__title-row">
+            <h2 class="card__title">{{ 'approvals.detail.processHeader' | translate }}</h2>
+            @if (process(); as processData) {
+              <ep-badge [tone]="statusTone[processData.status] || 'neutral'" [labelKey]="'approval.status.' + processData.status" />
+            }
+          </div>
+          @if (process(); as processData) {
+            <p class="process-card__name">{{ 'approvals.detail.processName' | translate: { number: processData.entityNumber } }}</p>
+          }
           <ep-approval-steps
             [steps]="approvalSteps()"
             [currentStepIndex]="currentStepIndex()"

@@ -12,6 +12,7 @@
 .approval-steps--horizontal {
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   align-items: start;
+  gap: var(--spacing-4);
 }
 
 .approval-steps--vertical,
@@ -23,9 +24,10 @@
 .approval-step {
   position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: 2.5rem minmax(0, 1fr);
   gap: var(--spacing-3);
   min-width: 0;
+  isolation: isolate;
 }
 
 .approval-steps--horizontal .approval-step {
@@ -36,10 +38,10 @@
 .approval-step__trigger {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: flex-start;
+  justify-content: center;
   width: 100%;
-  min-height: 2.25rem;
+  min-height: 2.5rem;
   padding: 0;
   border: 0;
   background: transparent;
@@ -57,12 +59,12 @@
 
 .approval-step__marker {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border: var(--border-subtle);
   border-radius: var(--radius-pill);
   background: var(--color-neutral-subtle);
@@ -74,6 +76,10 @@
   border-color: var(--color-success-border);
   background: var(--color-success-subtle);
   color: var(--color-success);
+}
+
+.approval-step--complete .approval-step__body {
+  border-color: var(--color-success-border);
 }
 
 .approval-step--pending .approval-step__marker {
@@ -96,21 +102,23 @@
   position: absolute;
   display: block;
   background: var(--color-border-subtle);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .approval-steps--horizontal .approval-step__connector {
-  left: 2.5rem;
-  right: calc(-100% + 2.5rem);
-  top: 50%;
+  left: calc(50% + 1.5rem);
+  right: calc(-50% + 1.5rem);
+  top: 1.25rem;
   height: 0.125rem;
   transform: translateY(-50%);
 }
 
 .approval-steps--vertical .approval-step__connector,
 .approval-steps--compact .approval-step__connector {
-  top: 2.25rem;
-  bottom: calc(-1 * var(--spacing-4));
-  left: 1.0625rem;
+  top: 2.5rem;
+  bottom: calc(-1 * var(--spacing-3));
+  left: 1.1875rem;
   width: 0.125rem;
 }
 
@@ -131,7 +139,8 @@
   flex-direction: column;
   gap: var(--spacing-2);
   min-width: 0;
-  padding: var(--spacing-3);
+  min-height: 7rem;
+  padding: var(--spacing-4);
   border: var(--border-subtle);
   border-radius: var(--radius-3);
   background: var(--color-surface);
@@ -151,6 +160,14 @@
   min-width: 0;
 }
 
+.approval-step__badges {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+  justify-content: flex-end;
+}
+
 .approval-step__index {
   color: var(--color-text-muted);
   font-family: var(--font-mono);
@@ -160,10 +177,32 @@
   text-transform: uppercase;
 }
 
-.approval-step__role {
+.approval-step__permission {
+  display: grid;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.approval-step__permission strong {
   overflow: hidden;
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.approval-step__permission code {
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--border-subtle);
+  border-radius: var(--radius-1);
+  background: var(--color-neutral-subtle);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -247,14 +286,15 @@
 }
 
 .approval-steps--compact .approval-step__body {
-  padding: var(--spacing-3);
+  min-height: 6.75rem;
+  padding: var(--spacing-4);
 }
 
 .approval-steps--compact .approval-step__header {
   align-items: flex-start;
 }
 
-.approval-steps--compact .approval-step__role,
+.approval-steps--compact .approval-step__permission strong,
 .approval-steps--compact .approval-step__approver {
   white-space: normal;
 }
@@ -292,9 +332,9 @@
   }
 
   .approval-steps--horizontal .approval-step__connector {
-    top: 2.25rem;
-    bottom: calc(-1 * var(--spacing-4));
-    left: 1.0625rem;
+    top: 2.5rem;
+    bottom: calc(-1 * var(--spacing-3));
+    left: 1.1875rem;
     right: auto;
     width: 0.125rem;
     height: auto;

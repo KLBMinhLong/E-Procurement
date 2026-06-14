@@ -18,6 +18,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -76,7 +77,7 @@ public class CompleteGoodsReceiptUseCase {
         Map<String, CompleteGoodsReceiptResult.StockUpdate> updatedStocks = new LinkedHashMap<>();
         int movementsCreated = 0;
         for (GoodsReceiptLineItem lineItem : goodsReceipt.lineItems()) {
-            String itemCode = resolveItemCode(lineItem, command.actorId());
+            String itemCode = resolveItemCode(lineItem, command.actorId(), completedAt);
             resolvedItemCodes.put(lineItem.id(), itemCode);
             if (lineItem.receivedQuantity().compareTo(BigDecimal.ZERO) <= 0) {
                 continue;
@@ -124,14 +125,23 @@ public class CompleteGoodsReceiptUseCase {
                 List.copyOf(updatedStocks.values()));
     }
 
-    private String resolveItemCode(GoodsReceiptLineItem lineItem, UUID actorId) {
+    private String resolveItemCode(GoodsReceiptLineItem lineItem, UUID actorId, Instant occurredAt) {
         if (lineItem.itemCode() != null && !lineItem.itemCode().isBlank()) {
             return lineItem.itemCode();
         }
-        String itemCode = goodsReceiptRepository.findActiveItemCodeForPoLineItem(lineItem.poLineItemId())
+        String itemCode = goodsReceiptRepository.findOrCreateActiveItemCodeForPoLineItem(
+                        lineItem.poLineItemId(),
+                        generatedItemCode(lineItem.poLineItemId()),
+                        actorId,
+                        occurredAt)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INV_001));
         goodsReceiptRepository.updateLineItemCode(lineItem.id(), itemCode, actorId);
         return itemCode;
+    }
+
+    private String generatedItemCode(UUID poLineItemId) {
+        return ("AUTO-" + poLineItemId.toString().replace("-", "").substring(0, 15))
+                .toUpperCase(Locale.ROOT);
     }
 
     private CompleteGoodsReceiptResult replayResult(GoodsReceipt goodsReceipt) {

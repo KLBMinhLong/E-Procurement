@@ -45,18 +45,21 @@ public class ApprovalRuleSelectionService {
 
     private SelectedApprovalRuleView toView(ApprovalRule primaryRule, List<ApprovalRule> appliedRules) {
         List<SelectedApprovalRuleView.StepView> steps = new ArrayList<>();
-        int sequence = 1;
+        int sequenceOffset = 0;
         for (ApprovalRule rule : appliedRules) {
+            int maxSourceStepIndex = 0;
             for (ApprovalStepTemplate template : rule.getStepTemplates()) {
+                maxSourceStepIndex = Math.max(maxSourceStepIndex, template.stepIndex());
                 steps.add(new SelectedApprovalRuleView.StepView(
-                        sequence++,
+                        sequenceOffset + template.stepIndex(),
                         template.stepIndex(),
                         rule.getRuleName(),
-                        template.approverRole(),
+                        template.requiredPermission(),
                         template.stepType(),
                         template.slaHours(),
                         template.required()));
             }
+            sequenceOffset += maxSourceStepIndex;
         }
         return new SelectedApprovalRuleView(
                 primaryRule.getId(),

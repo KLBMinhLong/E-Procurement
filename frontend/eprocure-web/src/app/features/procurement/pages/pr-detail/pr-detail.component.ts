@@ -29,6 +29,8 @@ import { ToastService } from '../../../../core/services/toast.service';
 
 import { PurchaseRequestService } from '../../services/purchase-request.service';
 import { BudgetCheckResult, Money, PrLineItemResponse, PrStatus, PurchaseRequestDetail } from '../../models/purchase-request.model';
+import { ApprovalProcessDetail } from '../../../approvals/models/approvals.model';
+import { ApprovalsService } from '../../../approvals/services/approvals.service';
 import { PurchaseOrder, PurchaseOrderStatus } from '../../../finance/models/purchase-order.model';
 import { PurchaseOrderService } from '../../../finance/services/purchase-order.service';
 import { RfqDetail } from '../../../vendor/models/vendor.model';
@@ -53,6 +55,9 @@ const PRIORITY_TONE: Record<string, EpBadgeTone> = {
 };
 
 const APPROVAL_STEP_TONE: Record<string, EpBadgeTone> = {
+  RUNNING: 'warning',
+  COMPLETED: 'success',
+  CANCELLED: 'neutral',
   PENDING: 'neutral',
   APPROVED: 'success',
   REJECTED: 'danger',
@@ -92,6 +97,7 @@ const BUDGET_TONE: Record<string, EpBadgeTone> = {
 })
 export class PrDetailComponent implements OnInit {
   private readonly prService = inject(PurchaseRequestService);
+  private readonly approvalsService = inject(ApprovalsService);
   private readonly rfqService = inject(RfqService);
   private readonly poService = inject(PurchaseOrderService);
   private readonly toastService = inject(ToastService);
@@ -100,7 +106,9 @@ export class PrDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly pr = signal<PurchaseRequestDetail | null>(null);
+  readonly approvalProcess = signal<ApprovalProcessDetail | null>(null);
   readonly isLoading = signal(true);
+  readonly isApprovalLoading = signal(false);
   readonly isSubmitting = signal(false);
   readonly isCancelling = signal(false);
   readonly showCancelModal = signal(false);
@@ -115,8 +123,8 @@ export class PrDetailComponent implements OnInit {
   readonly priorityTone = computed(() => PRIORITY_TONE[this.pr()?.priority ?? ''] ?? 'neutral');
   readonly totalLineItems = computed(() => this.pr()?.lineItems?.length ?? 0);
   readonly budgetUsagePercent = computed(() => this.calculateBudgetUsage(this.pr()?.budgetCheck ?? null));
-  readonly approvalSteps = computed(() => this.pr()?.approvalProcess?.steps ?? []);
-  readonly currentApprovalStep = computed(() => this.pr()?.approvalProcess?.currentStep ?? null);
+  readonly approvalSteps = computed(() => this.approvalProcess()?.steps ?? []);
+  readonly currentApprovalStep = computed(() => this.approvalProcess()?.currentStepIndex ?? null);
   readonly shouldLoadTraceability = computed(() => {
     const status = this.pr()?.status;
     return status === 'APPROVED' || status === 'CONVERTED_TO_PO' || status === 'CLOSED';
@@ -367,9 +375,26 @@ export class PrDetailComponent implements OnInit {
         next: (res) => {
           this.pr.set(res.data);
           this.loadTraceability(res.data);
+          this.loadApprovalProcess(res.data);
         },
         error: () => this.router.navigate(['/procurement'])
       });
+  }
+
+  private loadApprovalProcess(data: PurchaseRequestDetail): void {
+    if (!this.shouldLoadApprovalProcess(data.status)) {
+      this.approvalProcess.set(null);
+      return;
+    }
+    this.isApprovalLoading.set(true);
+    this.approvalsService.getProcessDetail('PURCHASE_REQUEST', data.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map((response) => response.data ?? null),
+        catchError(() => of(null)),
+        finalize(() => this.isApprovalLoading.set(false))
+      )
+      .subscribe((process) => this.approvalProcess.set(process));
   }
 
   private loadTraceability(data: PurchaseRequestDetail): void {
@@ -431,5 +456,9 @@ export class PrDetailComponent implements OnInit {
 
   private isActiveRfqStatus(status: string): boolean {
     return status === 'DRAFT' || status === 'PUBLISHED' || status === 'CLOSED' || status === 'AWARDED';
+  }
+
+  private shouldLoadApprovalProcess(status: PrStatus): boolean {
+    return status !== 'DRAFT' && status !== 'CANCELLED';
   }
 }

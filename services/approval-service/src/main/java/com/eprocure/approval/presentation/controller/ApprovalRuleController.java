@@ -162,7 +162,7 @@ public class ApprovalRuleController {
         return steps.stream()
                 .map(step -> new ApprovalRuleStepCommand(
                         step.stepIndex(),
-                        step.approverRole(),
+                        step.requiredPermission(),
                         step.stepType(),
                         step.slaHours(),
                         step.required()))

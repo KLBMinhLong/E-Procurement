@@ -138,7 +138,7 @@ public class ApprovalTaskActionUseCase {
             }
             ApprovalStep step = process.findStep(stepId).orElseThrow(() -> new BusinessException(ErrorCode.APR_004));
             boolean eligible = orgApproverPort.resolveApprovers(new ResolveApproverQuery(
-                            step.getApproverRole(),
+                            step.getRequiredPermission(),
                             process.getRequesterDepartmentId(),
                             process.getRequesterId()))
                     .stream()
@@ -215,7 +215,7 @@ public class ApprovalTaskActionUseCase {
                         process.getPriority(),
                         step.getStepIndex(),
                         step.getStepType(),
-                        step.getApproverRole(),
+                        step.getRequiredPermission(),
                         step.getApproverId(),
                         step.getAssignedAt(),
                         step.getSlaDeadline())));
@@ -236,7 +236,7 @@ public class ApprovalTaskActionUseCase {
                         .map(step -> new ApprovalTaskActionView.AssignedStepView(
                                 step.getId(),
                                 step.getStepIndex(),
-                                step.getApproverRole(),
+                                step.getRequiredPermission(),
                                 step.getApproverId(),
                                 step.getSlaDeadline()))
                         .toList());

@@ -32,13 +32,25 @@
       "ESCALATED": "Escalated",
       "SKIPPED": "Skipped",
       "FORWARDED": "Forwarded",
+      "RUNNING": "In progress",
       "IN_PROGRESS": "In progress",
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
     },
+    "permission": {
+      "PR_APPROVE_L1": "Level 1 approval",
+      "PR_APPROVE_L2": "Level 2 approval",
+      "PR_APPROVE_L3": "Level 3 approval",
+      "PR_APPROVE_FINANCE": "Finance approval",
+      "PR_APPROVE_EMERGENCY": "Emergency approval"
+    },
     "steps": {
       "emptyTitle": "No approval steps yet",
       "emptyMessage": "The approval workflow has not started or has not returned step data.",
+      "type": {
+        "SEQUENTIAL": "Sequential",
+        "PARALLEL": "Parallel"
+      },
       "waitingAssign": "Waiting assignment",
       "assignedAt": "Assigned at",
       "deadline": "Deadline",
@@ -49,7 +61,7 @@
       "skipped": "Skipped",
       "escalated": "Escalated",
       "stepNumber": "Step {{step}}",
-      "stepAriaLabel": "Open details for step {{step}}: {{role}}"
+      "stepAriaLabel": "Open details for step {{step}}: {{permission}}"
     }
   },
   "auth": {
@@ -790,6 +802,7 @@
       },
       "approval": {
         "none": "The approval workflow is created after the request is submitted successfully. If it was just submitted, wait for approval-service to process the event and refresh.",
+        "processName": "Process {{number}}",
         "assignedAt": "Assigned:",
         "deadline": "Due:",
         "viewInbox": "View approval inbox"
@@ -1977,6 +1990,7 @@
       "assignedAt": "Assigned At",
       "deadlineAt": "Deadline",
       "processOverview": "Approval workflow overview",
+      "processName": "Process {{number}}",
       "processHeader": "Approval Workflow",
       "viewFullPr": "View full PR",
       "step": "Step",
@@ -2039,9 +2053,9 @@
       },
       "filter": {
         "title": "Operational filters",
-        "description": "Narrow the matrix by rule type, status, or approver role.",
+        "description": "Narrow the matrix by rule type, status, or required approval permission.",
         "searchLabel": "Search rules",
-        "searchPlaceholder": "Search name, type, role, or description...",
+        "searchPlaceholder": "Search name, type, permission, or description...",
         "type": "Rule type",
         "status": "Status",
         "allTypes": "All types",
@@ -2098,8 +2112,8 @@
       "step": {
         "slaSummary": "{{hours}}h SLA",
         "count": "{{count}} steps",
-        "firstRole": "Starts with {{role}}",
-        "lastRole": "Ends with {{role}}",
+        "firstPermission": "Starts with {{permission}}",
+        "lastPermission": "Ends with {{permission}}",
         "parallelCount": "{{count}} parallel steps",
         "required": "Required",
         "optional": "Optional"
@@ -2113,7 +2127,9 @@
       "reference": {
         "selectedCount": "{{count}} selected",
         "noCategories": "Categories could not be loaded. Existing rule values can still be saved.",
-        "noDepartments": "Departments could not be loaded. Check ORG_VIEW permission or reload the page."
+        "noDepartments": "Departments could not be loaded. Check ORG_VIEW permission or reload the page.",
+        "permissionSelectHint": "Select an existing approval permission. The permission code is saved into the rule.",
+        "permissionFallback": "Approval permission"
       },
       "field": {
         "ruleName": "Rule name",
@@ -2126,7 +2142,7 @@
         "departmentIds": "Departments",
         "priorities": "PR priorities",
         "stepIndex": "Order",
-        "approverRole": "Approver role",
+        "requiredPermission": "Required permission",
         "stepType": "Step type",
         "slaHours": "SLA hours",
         "required": "Required",
@@ -2138,7 +2154,7 @@
         "money": "E.g. 5000000.0000",
         "categories": "E.g. SOFTWARE, SAAS",
         "departmentIds": "Department UUIDs separated by commas",
-        "approverRole": "E.g. MANAGER",
+        "requiredPermission": "E.g. PR_APPROVE_L1",
         "description": "Describe when this rule applies",
         "reason": "Enter the reason for deactivation"
       },
@@ -2433,20 +2449,39 @@
       },
       "submit": {
         "vendor": "Vendor",
+        "selectedVendor": "Quoting vendor",
         "currency": "Currency",
         "validUntil": "Valid until",
         "paymentTerms": "Payment terms",
+        "paymentTermsPlaceholder": "Example: Net 30, payment after acceptance...",
         "notes": "Notes",
+        "notesPlaceholder": "Commercial notes, delivery conditions, or special constraints...",
         "lineItems": "Quoted line items",
         "unitPrice": "Unit price",
-        "deliveryDays": "Delivery days"
+        "deliveryDays": "Estimated delivery time (days)",
+        "warranty": "Warranty",
+        "warrantyPlaceholder": "Example: 12 months",
+        "lineTotal": "Line total",
+        "estimatedTotal": "Estimated total",
+        "completedLines": "Completed lines",
+        "completedLinesValue": "{{count}} / {{total}}",
+        "allLinesRequired": "The backend requires a quote for every RFQ line item.",
+        "noPendingVendor": "There are no invited vendors still pending quote submission.",
+        "validation": {
+          "required": "This field is required.",
+          "positive": "Value must be greater than 0.",
+          "currency": "Currency code must contain 3 ISO characters.",
+          "validUntil": "Valid-until date cannot be before today.",
+          "maxLength": "Content is too long.",
+          "invalid": "Invalid value."
+        }
       },
       "toast": {
         "evaluated": "Quote evaluated successfully.",
         "awarded": "RFQ awarded successfully.",
         "closed": "RFQ closed for evaluation.",
         "quoteSubmitted": "Quote submitted successfully.",
-        "submitValidation": "Complete vendor, validity date, and at least one unit price."
+        "submitValidation": "Complete vendor, validity date, and unit prices for every RFQ line."
       }
     },
     "create": {

@@ -56,6 +56,13 @@ public class OrganizationRepositoryImpl implements OrganizationRepository {
                 .toList();
     }
 
+    @Override
+    public List<User> findApproversByPermission(String permissionCode, UUID departmentId, UUID excludedUserId, int limit) {
+        return organizationMapper.findApproversByPermission(permissionCode, departmentId, excludedUserId, limit).stream()
+                .map(this::toUser)
+                .toList();
+    }
+
     private Department toDepartment(DepartmentDbEntity entity) {
         return objectMapper.convertValue(entity, Department.class);
     }

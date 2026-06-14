@@ -45,7 +45,8 @@ export interface ApprovalInboxCount {
 
 export interface ApprovalStepDetail {
   stepIndex: number;
-  approverRole: string;
+  requiredPermission: string;
+  stepType?: ApprovalStepType;
   approver: {
     id: string;
     fullName: string;
@@ -120,7 +121,7 @@ export interface ApprovalRuleCondition {
 
 export interface ApprovalRuleStepTemplate {
   stepIndex: number;
-  approverRole: string;
+  requiredPermission: string;
   stepType: ApprovalStepType;
   slaHours: number;
   required: boolean;

@@ -44,8 +44,8 @@ class SelectApprovalRuleUseCaseTest {
         // Then
         assertThat(result.primaryRuleName()).isEqualTo("VALUE_20M_50M");
         assertThat(result.steps())
-                .extracting(SelectedApprovalRuleView.StepView::approverRole)
-                .containsExactly("MANAGER", "DIRECTOR", "FINANCE");
+                .extracting(SelectedApprovalRuleView.StepView::requiredPermission)
+                .containsExactly("PR_APPROVE_L1", "PR_APPROVE_L2", "PR_APPROVE_FINANCE");
     }
 
     @Test
@@ -65,8 +65,11 @@ class SelectApprovalRuleUseCaseTest {
         // Then
         assertThat(result.primaryRuleName()).isEqualTo("EMERGENCY");
         assertThat(result.steps())
-                .extracting(SelectedApprovalRuleView.StepView::approverRole)
-                .containsExactly("MANAGER", "DIRECTOR", "POST_AUDIT");
+                .extracting(SelectedApprovalRuleView.StepView::requiredPermission)
+                .containsExactly("PR_APPROVE_EMERGENCY", "PR_APPROVE_L2", "PR_APPROVE_FINANCE");
+        assertThat(result.steps())
+                .extracting(SelectedApprovalRuleView.StepView::sequence)
+                .containsExactly(1, 1, 2);
     }
 
     @Test
@@ -87,8 +90,11 @@ class SelectApprovalRuleUseCaseTest {
         assertThat(result.primaryRuleName()).isEqualTo("VALUE_5M_20M");
         assertThat(result.appliedRuleNames()).containsExactly("VALUE_5M_20M", "CAT_IT_SOFTWARE");
         assertThat(result.steps())
-                .extracting(SelectedApprovalRuleView.StepView::approverRole)
-                .containsExactly("MANAGER", "FINANCE", "CISO", "IT_MANAGER");
+                .extracting(SelectedApprovalRuleView.StepView::requiredPermission)
+                .containsExactly("PR_APPROVE_L1", "PR_APPROVE_FINANCE", "PR_APPROVE_L3");
+        assertThat(result.steps())
+                .extracting(SelectedApprovalRuleView.StepView::sequence)
+                .containsExactly(1, 2, 3);
     }
 
     @Test
@@ -129,9 +135,9 @@ class SelectApprovalRuleUseCaseTest {
                 ApprovalRuleType.DEFAULT,
                 ApprovalCondition.of(null, null, Set.of(), Set.of(), Set.of(PurchaseRequestPriority.EMERGENCY)),
                 List.of(
-                        new ApprovalStepTemplate(1, "MANAGER", ApprovalStepType.PARALLEL, 2, true),
-                        new ApprovalStepTemplate(1, "DIRECTOR", ApprovalStepType.PARALLEL, 4, true),
-                        new ApprovalStepTemplate(2, "POST_AUDIT", ApprovalStepType.SEQUENTIAL, 24, true)),
+                        new ApprovalStepTemplate(1, "PR_APPROVE_EMERGENCY", ApprovalStepType.PARALLEL, 2, true),
+                        new ApprovalStepTemplate(1, "PR_APPROVE_L2", ApprovalStepType.PARALLEL, 4, true),
+                        new ApprovalStepTemplate(2, "PR_APPROVE_FINANCE", ApprovalStepType.SEQUENTIAL, 24, true)),
                 null);
     }
 
@@ -143,9 +149,7 @@ class SelectApprovalRuleUseCaseTest {
                 true,
                 ApprovalRuleType.CATEGORY,
                 ApprovalCondition.of(null, null, Set.of("SOFTWARE", "SAAS"), Set.of(), Set.of()),
-                List.of(
-                        new ApprovalStepTemplate(1, "CISO", ApprovalStepType.SEQUENTIAL, 48, true),
-                        new ApprovalStepTemplate(2, "IT_MANAGER", ApprovalStepType.SEQUENTIAL, 48, true)),
+                List.of(new ApprovalStepTemplate(1, "PR_APPROVE_L3", ApprovalStepType.SEQUENTIAL, 48, true)),
                 null);
     }
 
@@ -163,9 +167,9 @@ class SelectApprovalRuleUseCaseTest {
                         Set.of(),
                         Set.of(PurchaseRequestPriority.NORMAL, PurchaseRequestPriority.URGENT)),
                 List.of(
-                        new ApprovalStepTemplate(1, "MANAGER", ApprovalStepType.SEQUENTIAL, 48, true),
-                        new ApprovalStepTemplate(2, "DIRECTOR", ApprovalStepType.SEQUENTIAL, 48, true),
-                        new ApprovalStepTemplate(3, "FINANCE", ApprovalStepType.SEQUENTIAL, 48, true)),
+                        new ApprovalStepTemplate(1, "PR_APPROVE_L1", ApprovalStepType.SEQUENTIAL, 48, true),
+                        new ApprovalStepTemplate(2, "PR_APPROVE_L2", ApprovalStepType.SEQUENTIAL, 48, true),
+                        new ApprovalStepTemplate(3, "PR_APPROVE_FINANCE", ApprovalStepType.SEQUENTIAL, 48, true)),
                 null);
     }
 
@@ -183,8 +187,8 @@ class SelectApprovalRuleUseCaseTest {
                         Set.of(),
                         Set.of(PurchaseRequestPriority.NORMAL, PurchaseRequestPriority.URGENT)),
                 List.of(
-                        new ApprovalStepTemplate(1, "MANAGER", ApprovalStepType.SEQUENTIAL, 48, true),
-                        new ApprovalStepTemplate(2, "FINANCE", ApprovalStepType.SEQUENTIAL, 48, true)),
+                        new ApprovalStepTemplate(1, "PR_APPROVE_L1", ApprovalStepType.SEQUENTIAL, 48, true),
+                        new ApprovalStepTemplate(2, "PR_APPROVE_FINANCE", ApprovalStepType.SEQUENTIAL, 48, true)),
                 null);
     }
 

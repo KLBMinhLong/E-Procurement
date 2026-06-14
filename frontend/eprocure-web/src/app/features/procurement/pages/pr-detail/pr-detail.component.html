@@ -81,7 +81,7 @@
 
     <ep-pr-lifecycle
       [status]="data.status"
-      [approvalStatus]="data.approvalProcess?.status ?? null" />
+      [approvalStatus]="approvalProcess()?.status ?? null" />
 
     <div class="metric-strip" [attr.aria-label]="'pr.detail.metricsLabel' | translate">
       <div class="metric-card">
@@ -418,7 +418,14 @@
         <ep-card tone="raised">
           <div class="card-section">
             <div class="section-title-row">
-              <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
+              <div class="section-title-stack">
+                <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
+                @if (approvalProcess(); as process) {
+                  <p class="card-section__subtitle">
+                    {{ 'pr.detail.approval.processName' | translate: { number: process.entityNumber } }}
+                  </p>
+                }
+              </div>
               <div class="section-title-row__actions">
                 @if (data.status === 'PENDING_APPROVAL') {
                   <ep-button
@@ -430,13 +437,15 @@
                     {{ 'pr.detail.approval.viewInbox' | translate }}
                   </ep-button>
                 }
-                @if (data.approvalProcess) {
-                  <ep-badge [tone]="approvalStatusTone(data.approvalProcess.status)" [labelKey]="'approval.status.' + data.approvalProcess.status" />
+                @if (approvalProcess(); as process) {
+                  <ep-badge [tone]="approvalStatusTone(process.status)" [labelKey]="'approval.status.' + process.status" />
                 }
               </div>
             </div>
 
-            @if (data.approvalProcess; as process) {
+            @if (isApprovalLoading()) {
+              <ep-skeleton [rows]="3" />
+            } @else if (approvalProcess(); as process) {
               @if (process.steps.length) {
                 <ep-approval-steps
                   [steps]="approvalSteps()"

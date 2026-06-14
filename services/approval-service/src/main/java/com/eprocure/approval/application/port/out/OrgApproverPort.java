@@ -8,14 +8,14 @@ public interface OrgApproverPort {
     List<ApproverCandidate> resolveApprovers(ResolveApproverQuery query);
 
     record ResolveApproverQuery(
-            String approverRole,
+            String requiredPermission,
             UUID departmentId,
             UUID requesterId) {
         public ResolveApproverQuery {
-            if (approverRole == null || approverRole.isBlank()) {
-                throw new IllegalArgumentException("approverRole must not be blank");
+            if (requiredPermission == null || requiredPermission.isBlank()) {
+                throw new IllegalArgumentException("requiredPermission must not be blank");
             }
-            approverRole = approverRole.trim().toUpperCase();
+            requiredPermission = requiredPermission.trim().toUpperCase();
             departmentId = Objects.requireNonNull(departmentId, "departmentId must not be null");
             requesterId = Objects.requireNonNull(requesterId, "requesterId must not be null");
         }

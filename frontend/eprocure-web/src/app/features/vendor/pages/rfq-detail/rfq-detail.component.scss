@@ -598,37 +598,6 @@
   resize: vertical;
 }
 
-.submit-quote-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-}
-
-.submit-quote-form__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-3);
-}
-
-.submit-quote-form__subtitle {
-  margin: var(--spacing-2) 0 0;
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.submit-line-row {
-  display: grid;
-  grid-template-columns: 1fr 8rem 6rem;
-  gap: var(--spacing-2);
-  align-items: center;
-}
-
-.submit-line-row__name {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
 .mono { font-family: var(--font-mono); }
 .font-semibold { font-weight: 600; }
 .text-muted { color: var(--color-text-muted); }

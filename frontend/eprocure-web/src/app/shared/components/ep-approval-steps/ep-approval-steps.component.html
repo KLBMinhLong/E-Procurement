@@ -9,7 +9,7 @@
     [class.approval-steps--horizontal]="viewMode() === 'horizontal'"
     [class.approval-steps--vertical]="viewMode() === 'vertical'"
     [class.approval-steps--compact]="compact()">
-    @for (step of sortedSteps(); track step.stepIndex; let last = $last) {
+    @for (step of sortedSteps(); track stepKey(step); let last = $last) {
       <article
         class="approval-step"
         [class.approval-step--current]="isCurrent(step)"
@@ -22,31 +22,43 @@
           class="approval-step__trigger"
           [attr.aria-current]="isCurrent(step) ? 'step' : null"
           [attr.aria-expanded]="isExpanded(step)"
-          [attr.aria-label]="'approval.steps.stepAriaLabel' | translate: { step: step.stepIndex + 1, role: step.approverRole }"
+          [attr.aria-label]="'approval.steps.stepAriaLabel' | translate: { step: step.stepIndex, permission: step.requiredPermission }"
           (click)="toggleStep(step)">
           <span class="approval-step__marker" [class.approval-step__marker--current]="isCurrent(step)">
             <ep-icon [name]="statusIcon(step.status)" [size]="16" />
           </span>
-
-          @if (!last) {
-            <span
-              class="approval-step__connector"
-              [class.approval-step__connector--success]="connectorTone(step) === 'success'"
-              [class.approval-step__connector--warning]="connectorTone(step) === 'warning'"
-              [class.approval-step__connector--danger]="connectorTone(step) === 'danger'">
-            </span>
-          }
         </button>
+
+        @if (!last) {
+          <span
+            class="approval-step__connector"
+            [class.approval-step__connector--success]="connectorTone(step) === 'success'"
+            [class.approval-step__connector--warning]="connectorTone(step) === 'warning'"
+            [class.approval-step__connector--danger]="connectorTone(step) === 'danger'">
+          </span>
+        }
 
         <div class="approval-step__body">
           <div class="approval-step__header">
             <span class="approval-step__index">
-              {{ 'approval.steps.stepNumber' | translate: { step: step.stepIndex + 1 } }}
+              {{ 'approval.steps.stepNumber' | translate: { step: step.stepIndex } }}
             </span>
-            <ep-badge [tone]="statusTone(step.status)" [labelKey]="'approval.status.' + step.status" />
+            <span class="approval-step__badges">
+              @if (step.stepType) {
+                <ep-badge tone="neutral" [labelKey]="'approval.steps.type.' + step.stepType" />
+              }
+              <ep-badge [tone]="statusTone(step.status)" [labelKey]="'approval.status.' + step.status" />
+            </span>
           </div>
 
-          <strong class="approval-step__role">{{ step.approverRole }}</strong>
+          <div class="approval-step__permission">
+            @if (permissionLabelKey(step.requiredPermission); as labelKey) {
+              <strong>{{ labelKey | translate }}</strong>
+              <code>{{ step.requiredPermission }}</code>
+            } @else {
+              <strong>{{ step.requiredPermission }}</strong>
+            }
+          </div>
 
           <span class="approval-step__approver">
             @if (hasApprover(step)) {

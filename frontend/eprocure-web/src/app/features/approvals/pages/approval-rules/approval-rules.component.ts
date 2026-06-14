@@ -30,7 +30,7 @@ import {
   ApprovalStepType
 } from '../../models/approvals.model';
 import { ApprovalsService } from '../../services/approvals.service';
-import { AdminDepartment, AdminRole } from '../../../admin/models/admin.model';
+import { AdminDepartment, AdminPermission } from '../../../admin/models/admin.model';
 import { AdminOrgService } from '../../../admin/services/admin-org.service';
 import { AdminRbacService } from '../../../admin/services/admin-rbac.service';
 import { CatalogCategory } from '../../../procurement/models/purchase-request.model';
@@ -38,7 +38,7 @@ import { CatalogService } from '../../../procurement/services/catalog.service';
 
 type StepFormGroup = FormGroup<{
   stepIndex: FormControl<number>;
-  approverRole: FormControl<string>;
+  requiredPermission: FormControl<string>;
   stepType: FormControl<ApprovalStepType>;
   slaHours: FormControl<number>;
   required: FormControl<boolean>;
@@ -67,6 +67,39 @@ interface RuleSummaryCard {
   value: number;
   tone: 'neutral' | 'success' | 'warning' | 'info';
 }
+
+const DEFAULT_APPROVAL_PERMISSIONS: AdminPermission[] = [
+  {
+    code: 'PR_APPROVE_L1',
+    name: 'PR_APPROVE_L1',
+    description: null,
+    module: 'PROCUREMENT'
+  },
+  {
+    code: 'PR_APPROVE_L2',
+    name: 'PR_APPROVE_L2',
+    description: null,
+    module: 'PROCUREMENT'
+  },
+  {
+    code: 'PR_APPROVE_L3',
+    name: 'PR_APPROVE_L3',
+    description: null,
+    module: 'PROCUREMENT'
+  },
+  {
+    code: 'PR_APPROVE_FINANCE',
+    name: 'PR_APPROVE_FINANCE',
+    description: null,
+    module: 'PROCUREMENT'
+  },
+  {
+    code: 'PR_APPROVE_EMERGENCY',
+    name: 'PR_APPROVE_EMERGENCY',
+    description: null,
+    module: 'PROCUREMENT'
+  }
+];
 
 @Component({
   selector: 'ep-approval-rules',
@@ -116,7 +149,7 @@ export class ApprovalRulesComponent implements OnInit {
   readonly deactivateReason = signal('');
   readonly departments = signal<AdminDepartment[]>([]);
   readonly catalogCategories = signal<CatalogCategory[]>([]);
-  readonly roleOptions = signal<AdminRole[]>([]);
+  readonly permissionOptions = signal<AdminPermission[]>(DEFAULT_APPROVAL_PERMISSIONS);
 
   readonly form: RuleForm = this.fb.group({
     ruleName: this.fb.control('', { validators: [Validators.required] }),
@@ -184,6 +217,16 @@ export class ApprovalRulesComponent implements OnInit {
   });
   readonly flatDepartments = computed(() => this.flattenDepartments(this.departments()));
   readonly flatCategories = computed(() => this.flattenCategories(this.catalogCategories()));
+  readonly approvalPermissionOptions = computed(() => {
+    const options = new Map(DEFAULT_APPROVAL_PERMISSIONS.map((permission) => [permission.code, permission]));
+    this.rules()
+      .flatMap((rule) => rule.steps)
+      .forEach((step) => options.set(step.requiredPermission, this.toPermissionOption(step.requiredPermission)));
+    this.permissionOptions()
+      .filter((permission) => permission.code.startsWith('PR_APPROVE_'))
+      .forEach((permission) => options.set(permission.code, permission));
+    return [...options.values()].sort((left, right) => left.code.localeCompare(right.code));
+  });
 
   get stepsArray(): FormArray<StepFormGroup> {
     return this.form.controls.steps;
@@ -292,6 +335,20 @@ export class ApprovalRulesComponent implements OnInit {
   departmentLabel(id: string): string {
     const department = this.flatDepartments().find((item) => item.id === id);
     return department ? `${department.code} - ${department.name}` : id;
+  }
+
+  selectedPermission(code: string): AdminPermission | null {
+    return this.approvalPermissionOptions().find((permission) => permission.code === code) ?? null;
+  }
+
+  permissionOptionLabel(permission: AdminPermission): string {
+    if (permission.name && permission.name !== permission.code) {
+      return `${permission.code} - ${permission.name}`;
+    }
+    if (permission.description) {
+      return `${permission.code} - ${permission.description}`;
+    }
+    return permission.code;
   }
 
   submitForm(): void {
@@ -411,7 +468,7 @@ export class ApprovalRulesComponent implements OnInit {
   hasDistinctLastStep(rule: ApprovalRuleDetail): boolean {
     const first = this.firstStep(rule);
     const last = this.lastStep(rule);
-    return Boolean(first && last && (first.stepIndex !== last.stepIndex || first.approverRole !== last.approverRole));
+    return Boolean(first && last && (first.stepIndex !== last.stepIndex || first.requiredPermission !== last.requiredPermission));
   }
 
   parallelStepCount(rule: ApprovalRuleDetail): number {
@@ -428,7 +485,7 @@ export class ApprovalRulesComponent implements OnInit {
     }
     return rule.ruleName.toLowerCase().includes(query) ||
       rule.ruleType.toLowerCase().includes(query) ||
-      rule.steps.some((step) => step.approverRole.toLowerCase().includes(query)) ||
+      rule.steps.some((step) => step.requiredPermission.toLowerCase().includes(query)) ||
       (rule.description?.toLowerCase().includes(query) ?? false);
   }
 
@@ -441,7 +498,7 @@ export class ApprovalRulesComponent implements OnInit {
 
   private sortedSteps(rule: ApprovalRuleDetail): ApprovalRuleStepTemplate[] {
     return [...rule.steps].sort((left, right) =>
-      left.stepIndex - right.stepIndex || left.approverRole.localeCompare(right.approverRole)
+      left.stepIndex - right.stepIndex || left.requiredPermission.localeCompare(right.requiredPermission)
     );
   }
 
@@ -465,7 +522,7 @@ export class ApprovalRulesComponent implements OnInit {
   private createStepGroup(step?: Partial<ReturnType<ApprovalRulesComponent['toStepValue']>>): StepFormGroup {
     return this.fb.group({
       stepIndex: this.fb.control(step?.stepIndex ?? 1, { validators: [Validators.required, Validators.min(1)] }),
-      approverRole: this.fb.control(step?.approverRole ?? 'MANAGER', { validators: [Validators.required] }),
+      requiredPermission: this.fb.control(step?.requiredPermission ?? 'PR_APPROVE_L1', { validators: [Validators.required] }),
       stepType: this.fb.control<ApprovalStepType>(step?.stepType ?? 'SEQUENTIAL', { validators: [Validators.required] }),
       slaHours: this.fb.control(step?.slaHours ?? 48, { validators: [Validators.required, Validators.min(1)] }),
       required: this.fb.control(step?.required ?? true)
@@ -497,17 +554,26 @@ export class ApprovalRulesComponent implements OnInit {
 
   private toStepValue(step: {
     stepIndex: number;
-    approverRole: string;
+    requiredPermission: string;
     stepType: ApprovalStepType;
     slaHours: number;
     required: boolean;
   }) {
     return {
       stepIndex: step.stepIndex,
-      approverRole: step.approverRole.trim().toUpperCase(),
+      requiredPermission: step.requiredPermission.trim().toUpperCase(),
       stepType: step.stepType,
       slaHours: step.slaHours,
       required: step.required
+    };
+  }
+
+  private toPermissionOption(code: string): AdminPermission {
+    return {
+      code,
+      name: code,
+      description: null,
+      module: 'PROCUREMENT'
     };
   }
 
@@ -531,11 +597,11 @@ export class ApprovalRulesComponent implements OnInit {
         error: () => this.catalogCategories.set([])
       });
 
-    this.rbacService.getRoles()
+    this.rbacService.getPermissions()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => this.roleOptions.set(response.data ?? []),
-        error: () => this.roleOptions.set([])
+        next: (response) => this.permissionOptions.set(response.data?.length ? response.data : DEFAULT_APPROVAL_PERMISSIONS),
+        error: () => this.permissionOptions.set(DEFAULT_APPROVAL_PERMISSIONS)
       });
   }
 

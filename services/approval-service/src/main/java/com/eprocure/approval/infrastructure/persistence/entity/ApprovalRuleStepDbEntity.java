@@ -6,7 +6,7 @@ public class ApprovalRuleStepDbEntity {
     private UUID id;
     private UUID ruleId;
     private Integer stepIndex;
-    private String approverRole;
+    private String requiredPermission;
     private String stepType;
     private Integer slaHours;
     private Boolean required;
@@ -35,12 +35,12 @@ public class ApprovalRuleStepDbEntity {
         this.stepIndex = stepIndex;
     }
 
-    public String getApproverRole() {
-        return approverRole;
+    public String getRequiredPermission() {
+        return requiredPermission;
     }
 
-    public void setApproverRole(String approverRole) {
-        this.approverRole = approverRole;
+    public void setRequiredPermission(String requiredPermission) {
+        this.requiredPermission = requiredPermission;
     }
 
     public String getStepType() {

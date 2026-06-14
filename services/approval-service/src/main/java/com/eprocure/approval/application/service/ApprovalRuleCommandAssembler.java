@@ -43,7 +43,7 @@ public class ApprovalRuleCommandAssembler {
         return steps.stream()
                 .map(step -> new ApprovalStepTemplate(
                         step.stepIndex(),
-                        step.approverRole(),
+                        step.requiredPermission(),
                         step.stepType(),
                         step.slaHours(),
                         step.required()))

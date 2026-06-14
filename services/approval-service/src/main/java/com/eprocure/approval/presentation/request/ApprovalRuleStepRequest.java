@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record ApprovalRuleStepRequest(
         @Min(1) int stepIndex,
-        @NotBlank String approverRole,
+        @NotBlank String requiredPermission,
         @NotNull ApprovalStepType stepType,
         @Min(1) int slaHours,
         boolean required) {

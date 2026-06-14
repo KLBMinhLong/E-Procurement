@@ -87,8 +87,8 @@ class ApprovalRuleAdminUseCaseTest {
 
         assertThat(result.view().priority()).isEqualTo(900);
         assertThat(result.view().steps())
-                .extracting(ApprovalRuleAdminView.StepTemplateView::approverRole)
-                .containsExactly("DIRECTOR");
+                .extracting(ApprovalRuleAdminView.StepTemplateView::requiredPermission)
+                .containsExactly("PR_APPROVE_L2");
         assertThat(repository.updatedRule.getRuleName()).isEqualTo("VALUE_UPDATED");
     }
 
@@ -131,8 +131,8 @@ class ApprovalRuleAdminUseCaseTest {
                         List.of(DEPARTMENT_ID),
                         List.of("normal")),
                 List.of(
-                        new ApprovalRuleStepCommand(1, "manager", ApprovalStepType.SEQUENTIAL, 24, true),
-                        new ApprovalRuleStepCommand(2, "finance", ApprovalStepType.SEQUENTIAL, 48, true)),
+                        new ApprovalRuleStepCommand(1, "pr_approve_l1", ApprovalStepType.SEQUENTIAL, 24, true),
+                        new ApprovalRuleStepCommand(2, "pr_approve_finance", ApprovalStepType.SEQUENTIAL, 48, true)),
                 "Custom approval rule");
     }
 
@@ -145,7 +145,7 @@ class ApprovalRuleAdminUseCaseTest {
                 true,
                 ApprovalRuleType.VALUE,
                 new ApprovalRuleConditionCommand(null, "10000000.0000", List.of(), List.of(), List.of("URGENT")),
-                List.of(new ApprovalRuleStepCommand(1, "director", ApprovalStepType.SEQUENTIAL, 12, true)),
+                List.of(new ApprovalRuleStepCommand(1, "pr_approve_l2", ApprovalStepType.SEQUENTIAL, 12, true)),
                 "Updated");
     }
 
@@ -162,7 +162,7 @@ class ApprovalRuleAdminUseCaseTest {
                         Set.of("OFFICE_SUPPLIES"),
                         Set.of(DEPARTMENT_ID),
                         Set.of(PurchaseRequestPriority.NORMAL)),
-                List.of(new ApprovalStepTemplate(1, "MANAGER", ApprovalStepType.SEQUENTIAL, 24, true)),
+                List.of(new ApprovalStepTemplate(1, "PR_APPROVE_L1", ApprovalStepType.SEQUENTIAL, 24, true)),
                 "Custom");
     }
 

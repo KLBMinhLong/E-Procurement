@@ -1,0 +1,137 @@
+<ep-modal
+  [open]="open()"
+  [title]="'rfq.detail.modal.submitQuoteTitle' | translate"
+  size="xl"
+  (close)="closeModal()">
+  <form class="submit-quote" [formGroup]="form" (ngSubmit)="submitForm()">
+    <div class="submit-quote__summary">
+      <div>
+        <span class="summary-label">{{ 'rfq.detail.submit.selectedVendor' | translate }}</span>
+        <strong>{{ selectedVendorName() }}</strong>
+      </div>
+      <div>
+        <span class="summary-label">{{ 'rfq.detail.submit.completedLines' | translate }}</span>
+        <strong>{{ 'rfq.detail.submit.completedLinesValue' | translate: { count: completedLineCount(), total: lineItems.length } }}</strong>
+      </div>
+      <div>
+        <span class="summary-label">{{ 'rfq.detail.submit.estimatedTotal' | translate }}</span>
+        <strong><ep-amount [value]="estimatedTotalAmount()" /></strong>
+      </div>
+    </div>
+
+    @if (pendingInvitations().length === 0) {
+      <div class="submit-quote__empty">
+        <ep-icon name="info" [size]="18" />
+        <span>{{ 'rfq.detail.submit.noPendingVendor' | translate }}</span>
+      </div>
+    } @else {
+      <div class="submit-quote__grid">
+        <ep-form-field
+          [label]="'rfq.detail.submit.vendor' | translate"
+          [error]="fieldError('vendorId') ? (fieldError('vendorId')! | translate) : null">
+          <select class="form-control" formControlName="vendorId">
+            @for (invitation of pendingInvitations(); track trackInvitation($index, invitation)) {
+              <option [value]="invitation.vendor.id">{{ invitation.vendor.name }}</option>
+            }
+          </select>
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'rfq.detail.submit.currency' | translate"
+          [error]="fieldError('currency') ? (fieldError('currency')! | translate) : null">
+          <input class="form-control mono" formControlName="currency" maxlength="3" autocomplete="off" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'rfq.detail.submit.validUntil' | translate"
+          [error]="fieldError('validUntil') ? (fieldError('validUntil')! | translate) : null">
+          <input class="form-control" type="date" formControlName="validUntil" [attr.min]="today" />
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'rfq.detail.submit.paymentTerms' | translate"
+          [error]="fieldError('paymentTerms') ? (fieldError('paymentTerms')! | translate) : null">
+          <input
+            class="form-control"
+            formControlName="paymentTerms"
+            [placeholder]="'rfq.detail.submit.paymentTermsPlaceholder' | translate" />
+        </ep-form-field>
+      </div>
+
+      <ep-form-field
+        [label]="'rfq.detail.submit.notes' | translate"
+        [error]="fieldError('notes') ? (fieldError('notes')! | translate) : null">
+        <textarea
+          class="form-control form-control--textarea"
+          formControlName="notes"
+          rows="2"
+          [placeholder]="'rfq.detail.submit.notesPlaceholder' | translate"></textarea>
+      </ep-form-field>
+
+      <section class="quote-lines" formArrayName="lineItems">
+        <div class="quote-lines__header">
+          <div>
+            <h3>{{ 'rfq.detail.submit.lineItems' | translate }}</h3>
+            <p>{{ 'rfq.detail.submit.allLinesRequired' | translate }}</p>
+          </div>
+        </div>
+
+        @for (line of lineItems.controls; track trackLine($index, line); let i = $index) {
+          <div class="quote-line" [formGroupName]="i">
+            <div class="quote-line__item">
+              <strong>{{ line.controls.itemName.value }}</strong>
+              <span>{{ quantityLabel(line) }}</span>
+            </div>
+
+            <ep-form-field
+              [label]="'rfq.detail.submit.unitPrice' | translate"
+              [error]="lineError(i, 'unitPrice') ? (lineError(i, 'unitPrice')! | translate) : null">
+              <input
+                class="form-control mono"
+                type="number"
+                min="0.0001"
+                step="0.0001"
+                formControlName="unitPrice"
+                inputmode="decimal" />
+            </ep-form-field>
+
+            <ep-form-field
+              [label]="'rfq.detail.submit.deliveryDays' | translate"
+              [error]="lineError(i, 'deliveryDays') ? (lineError(i, 'deliveryDays')! | translate) : null">
+              <input
+                class="form-control mono"
+                type="number"
+                min="0"
+                step="1"
+                formControlName="deliveryDays"
+                inputmode="numeric" />
+            </ep-form-field>
+
+            <ep-form-field
+              [label]="'rfq.detail.submit.warranty' | translate"
+              [error]="lineError(i, 'warranty') ? (lineError(i, 'warranty')! | translate) : null">
+              <input
+                class="form-control"
+                formControlName="warranty"
+                [placeholder]="'rfq.detail.submit.warrantyPlaceholder' | translate" />
+            </ep-form-field>
+
+            <div class="quote-line__total">
+              <span>{{ 'rfq.detail.submit.lineTotal' | translate }}</span>
+              <strong><ep-amount [value]="lineTotalAmount(i)" /></strong>
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <div class="modal-actions">
+      <ep-button type="button" variant="ghost" (click)="closeModal()" [disabled]="loading()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button type="submit" variant="primary" [loading]="loading()" [disabled]="pendingInvitations().length === 0">
+        {{ 'rfq.detail.action.submitQuote' | translate }}
+      </ep-button>
+    </div>
+  </form>
+</ep-modal>

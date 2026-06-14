@@ -54,14 +54,14 @@ public record ApprovalRuleAdminView(
 
     public record StepTemplateView(
             int stepIndex,
-            String approverRole,
+            String requiredPermission,
             ApprovalStepType stepType,
             int slaHours,
             boolean required) {
         private static StepTemplateView from(ApprovalStepTemplate step) {
             return new StepTemplateView(
                     step.stepIndex(),
-                    step.approverRole(),
+                    step.requiredPermission(),
                     step.stepType(),
                     step.slaHours(),
                     step.required());
