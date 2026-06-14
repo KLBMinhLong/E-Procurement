@@ -466,11 +466,25 @@
                 <input formControlName="stepIndex" type="number" min="1" />
               </ep-form-field>
               <ep-form-field [label]="'approvals.rules.field.requiredPermission' | translate">
-                <input
-                  formControlName="requiredPermission"
-                  type="text"
-                  list="approval-permission-options"
-                  [placeholder]="'approvals.rules.placeholder.requiredPermission' | translate" />
+                <div class="permission-select">
+                  <select formControlName="requiredPermission">
+                    @for (permission of approvalPermissionOptions(); track permission.code) {
+                      <option [value]="permission.code">{{ permissionOptionLabel(permission) }}</option>
+                    }
+                  </select>
+                  @if (selectedPermission(step.controls.requiredPermission.value); as permission) {
+                    <p class="permission-select__hint">
+                      <code>{{ permission.code }}</code>
+                      <span>
+                        {{ permission.description || permission.name || ('approvals.rules.reference.permissionFallback' | translate) }}
+                      </span>
+                    </p>
+                  } @else {
+                    <p class="permission-select__hint">
+                      {{ 'approvals.rules.reference.permissionSelectHint' | translate }}
+                    </p>
+                  }
+                </div>
               </ep-form-field>
               <ep-form-field [label]="'approvals.rules.field.stepType' | translate">
                 <select formControlName="stepType">
@@ -497,12 +511,6 @@
         <textarea formControlName="description" rows="3" [placeholder]="'approvals.rules.placeholder.description' | translate"></textarea>
       </ep-form-field>
     </section>
-
-    <datalist id="approval-permission-options">
-      @for (permission of approvalPermissionOptions(); track permission.code) {
-        <option [value]="permission.code">{{ permission.name || permission.code }}</option>
-      }
-    </datalist>
 
     <footer class="modal-actions">
       <ep-button variant="secondary" (click)="closeFormModal()">{{ 'action.cancel' | translate }}</ep-button>

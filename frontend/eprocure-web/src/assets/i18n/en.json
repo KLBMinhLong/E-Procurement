@@ -2127,7 +2127,9 @@
       "reference": {
         "selectedCount": "{{count}} selected",
         "noCategories": "Categories could not be loaded. Existing rule values can still be saved.",
-        "noDepartments": "Departments could not be loaded. Check ORG_VIEW permission or reload the page."
+        "noDepartments": "Departments could not be loaded. Check ORG_VIEW permission or reload the page.",
+        "permissionSelectHint": "Select an existing approval permission. The permission code is saved into the rule.",
+        "permissionFallback": "Approval permission"
       },
       "field": {
         "ruleName": "Rule name",

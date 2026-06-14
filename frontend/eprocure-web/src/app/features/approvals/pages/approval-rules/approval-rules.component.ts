@@ -219,6 +219,9 @@ export class ApprovalRulesComponent implements OnInit {
   readonly flatCategories = computed(() => this.flattenCategories(this.catalogCategories()));
   readonly approvalPermissionOptions = computed(() => {
     const options = new Map(DEFAULT_APPROVAL_PERMISSIONS.map((permission) => [permission.code, permission]));
+    this.rules()
+      .flatMap((rule) => rule.steps)
+      .forEach((step) => options.set(step.requiredPermission, this.toPermissionOption(step.requiredPermission)));
     this.permissionOptions()
       .filter((permission) => permission.code.startsWith('PR_APPROVE_'))
       .forEach((permission) => options.set(permission.code, permission));
@@ -332,6 +335,20 @@ export class ApprovalRulesComponent implements OnInit {
   departmentLabel(id: string): string {
     const department = this.flatDepartments().find((item) => item.id === id);
     return department ? `${department.code} - ${department.name}` : id;
+  }
+
+  selectedPermission(code: string): AdminPermission | null {
+    return this.approvalPermissionOptions().find((permission) => permission.code === code) ?? null;
+  }
+
+  permissionOptionLabel(permission: AdminPermission): string {
+    if (permission.name && permission.name !== permission.code) {
+      return `${permission.code} - ${permission.name}`;
+    }
+    if (permission.description) {
+      return `${permission.code} - ${permission.description}`;
+    }
+    return permission.code;
   }
 
   submitForm(): void {
@@ -548,6 +565,15 @@ export class ApprovalRulesComponent implements OnInit {
       stepType: step.stepType,
       slaHours: step.slaHours,
       required: step.required
+    };
+  }
+
+  private toPermissionOption(code: string): AdminPermission {
+    return {
+      code,
+      name: code,
+      description: null,
+      module: 'PROCUREMENT'
     };
   }
 

@@ -67,6 +67,9 @@ class SelectApprovalRuleUseCaseTest {
         assertThat(result.steps())
                 .extracting(SelectedApprovalRuleView.StepView::requiredPermission)
                 .containsExactly("PR_APPROVE_EMERGENCY", "PR_APPROVE_L2", "PR_APPROVE_FINANCE");
+        assertThat(result.steps())
+                .extracting(SelectedApprovalRuleView.StepView::sequence)
+                .containsExactly(1, 1, 2);
     }
 
     @Test
@@ -89,6 +92,9 @@ class SelectApprovalRuleUseCaseTest {
         assertThat(result.steps())
                 .extracting(SelectedApprovalRuleView.StepView::requiredPermission)
                 .containsExactly("PR_APPROVE_L1", "PR_APPROVE_FINANCE", "PR_APPROVE_L3");
+        assertThat(result.steps())
+                .extracting(SelectedApprovalRuleView.StepView::sequence)
+                .containsExactly(1, 2, 3);
     }
 
     @Test

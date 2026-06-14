@@ -2127,7 +2127,9 @@
       "reference": {
         "selectedCount": "{{count}} đã chọn",
         "noCategories": "Chưa tải được danh mục. Vẫn có thể lưu các giá trị đã có của quy tắc.",
-        "noDepartments": "Chưa tải được phòng ban. Kiểm tra quyền ORG_VIEW hoặc thử tải lại trang."
+        "noDepartments": "Chưa tải được phòng ban. Kiểm tra quyền ORG_VIEW hoặc thử tải lại trang.",
+        "permissionSelectHint": "Chọn quyền phê duyệt có sẵn. Hệ thống sẽ lưu mã quyền vào quy tắc.",
+        "permissionFallback": "Quyền phê duyệt"
       },
       "field": {
         "ruleName": "Tên quy tắc",

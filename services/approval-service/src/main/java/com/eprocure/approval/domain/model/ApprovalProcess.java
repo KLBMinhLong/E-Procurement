@@ -87,7 +87,7 @@ public class ApprovalProcess {
         List<ApprovalStep> steps = chain.steps().stream()
                 .map(step -> ApprovalStep.pending(
                         processId,
-                        step.sourceStepIndex(),
+                        step.sequence(),
                         step.stepType(),
                         step.requiredPermission(),
                         step.approver().id(),

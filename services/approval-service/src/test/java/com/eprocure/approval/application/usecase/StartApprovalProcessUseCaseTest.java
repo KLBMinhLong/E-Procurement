@@ -107,6 +107,42 @@ class StartApprovalProcessUseCaseTest {
     }
 
     @Test
+    void should_persist_runtime_sequence_when_additive_category_source_step_index_overlaps() {
+        FakeEventProcessingLogRepository eventLogRepository = new FakeEventProcessingLogRepository(false);
+        FakeApprovalProcessRepository processRepository = new FakeApprovalProcessRepository(false);
+        FakeApprovalWorkflowPort workflowPort = new FakeApprovalWorkflowPort("camunda-001");
+        FakeApprovalStepAssignedEventPublisher eventPublisher = new FakeApprovalStepAssignedEventPublisher();
+        FakePurchaseRequestStatusPort purchaseRequestStatusPort = new FakePurchaseRequestStatusPort();
+        StartApprovalProcessUseCase useCase = newUseCase(
+                eventLogRepository,
+                processRepository,
+                workflowPort,
+                eventPublisher,
+                purchaseRequestStatusPort,
+                List.of(categorySoftwareRule(), value5To20Rule()),
+                Map.of(
+                        "PR_APPROVE_L1", List.of(candidate(MANAGER_ID, "manager")),
+                        "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance")),
+                        "PR_APPROVE_L3", List.of(candidate(DIRECTOR_ID, "director"))));
+
+        StartApprovalProcessResult result = useCase.execute(commandWithCategories(
+                PurchaseRequestPriority.NORMAL,
+                Money.vnd("12000000.0000"),
+                Set.of("SAAS")));
+
+        assertThat(result.skipped()).isFalse();
+        assertThat(processRepository.savedProcess.getSteps())
+                .extracting(ApprovalStep::getStepIndex)
+                .containsExactly(1, 2, 3);
+        assertThat(processRepository.savedProcess.getSteps())
+                .extracting(ApprovalStep::getRequiredPermission)
+                .containsExactly("PR_APPROVE_L1", "PR_APPROVE_FINANCE", "PR_APPROVE_L3");
+        assertThat(eventPublisher.events).hasSize(1);
+        assertThat(eventPublisher.events.get(0).payload().stepIndex()).isEqualTo(1);
+        assertThat(eventPublisher.events.get(0).payload().requiredPermission()).isEqualTo("PR_APPROVE_L1");
+    }
+
+    @Test
     void should_skip_when_event_was_already_processed() {
         FakeEventProcessingLogRepository eventLogRepository = new FakeEventProcessingLogRepository(true);
         FakeApprovalProcessRepository processRepository = new FakeApprovalProcessRepository(false);
@@ -197,13 +233,31 @@ class StartApprovalProcessUseCaseTest {
             FakeApprovalWorkflowPort workflowPort,
             FakeApprovalStepAssignedEventPublisher eventPublisher,
             FakePurchaseRequestStatusPort purchaseRequestStatusPort) {
-        FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(Map.of(
-                "PR_APPROVE_L1", List.of(candidate(MANAGER_ID, "manager")),
-                "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance")),
-                "PR_APPROVE_L2", List.of(candidate(DIRECTOR_ID, "director")),
-                "PR_APPROVE_EMERGENCY", List.of(candidate(MANAGER_ID, "emergency-manager"))));
+        return newUseCase(
+                eventLogRepository,
+                processRepository,
+                workflowPort,
+                eventPublisher,
+                purchaseRequestStatusPort,
+                List.of(emergencyRule(), defaultRule()),
+                Map.of(
+                        "PR_APPROVE_L1", List.of(candidate(MANAGER_ID, "manager")),
+                        "PR_APPROVE_FINANCE", List.of(candidate(FINANCE_ID, "finance")),
+                        "PR_APPROVE_L2", List.of(candidate(DIRECTOR_ID, "director")),
+                        "PR_APPROVE_EMERGENCY", List.of(candidate(MANAGER_ID, "emergency-manager"))));
+    }
+
+    private StartApprovalProcessUseCase newUseCase(
+            FakeEventProcessingLogRepository eventLogRepository,
+            FakeApprovalProcessRepository processRepository,
+            FakeApprovalWorkflowPort workflowPort,
+            FakeApprovalStepAssignedEventPublisher eventPublisher,
+            FakePurchaseRequestStatusPort purchaseRequestStatusPort,
+            List<ApprovalRule> rules,
+            Map<String, List<OrgApproverPort.ApproverCandidate>> candidatesByPermission) {
+        FakeOrgApproverPort orgApproverPort = new FakeOrgApproverPort(candidatesByPermission);
         ApprovalChainResolutionService approvalChainResolutionService = new ApprovalChainResolutionService(
-                new ApprovalRuleSelectionService(new StubApprovalRuleRepository(List.of(emergencyRule(), defaultRule()))),
+                new ApprovalRuleSelectionService(new StubApprovalRuleRepository(rules)),
                 orgApproverPort,
                 query -> Optional.empty(),
                 new SlaDeadlineCalculator(
@@ -239,6 +293,29 @@ class StartApprovalProcessUseCaseTest {
                         "prNumber", "PR-2026-05-00001"));
     }
 
+    private StartApprovalProcessCommand commandWithCategories(
+            PurchaseRequestPriority priority,
+            Money totalAmount,
+            Set<String> categories) {
+        return new StartApprovalProcessCommand(
+                "evt-pr-submitted-001",
+                "procurement.pr.submitted",
+                1,
+                25L,
+                TRACE_ID,
+                PR_ID,
+                "PR-2026-05-00001",
+                "Mua thiet bi van phong",
+                REQUESTER_ID,
+                DEPARTMENT_ID,
+                totalAmount,
+                categories,
+                priority,
+                Map.of(
+                        "purchaseRequestId", PR_ID.toString(),
+                        "prNumber", "PR-2026-05-00001"));
+    }
+
     private ApprovalRule defaultRule() {
         return ApprovalRule.restore(
                 UUID.fromString("550e8400-e29b-41d4-a716-446655441000"),
@@ -265,6 +342,37 @@ class StartApprovalProcessUseCaseTest {
                         new ApprovalStepTemplate(1, "PR_APPROVE_EMERGENCY", ApprovalStepType.PARALLEL, 2, true),
                         new ApprovalStepTemplate(1, "PR_APPROVE_L2", ApprovalStepType.PARALLEL, 4, true),
                         new ApprovalStepTemplate(2, "PR_APPROVE_FINANCE", ApprovalStepType.SEQUENTIAL, 24, true)),
+                null);
+    }
+
+    private ApprovalRule categorySoftwareRule() {
+        return ApprovalRule.restore(
+                UUID.fromString("550e8400-e29b-41d4-a716-446655441002"),
+                "CAT_IT_SOFTWARE",
+                650,
+                true,
+                ApprovalRuleType.CATEGORY,
+                ApprovalCondition.of(null, null, Set.of("SOFTWARE", "SAAS", "IT_SOFTWARE"), Set.of(), Set.of()),
+                List.of(new ApprovalStepTemplate(1, "PR_APPROVE_L3", ApprovalStepType.SEQUENTIAL, 48, true)),
+                null);
+    }
+
+    private ApprovalRule value5To20Rule() {
+        return ApprovalRule.restore(
+                UUID.fromString("550e8400-e29b-41d4-a716-446655441003"),
+                "VALUE_5M_20M",
+                200,
+                true,
+                ApprovalRuleType.VALUE,
+                ApprovalCondition.of(
+                        Money.vnd("5000000.0000"),
+                        Money.vnd("20000000.0000"),
+                        Set.of(),
+                        Set.of(),
+                        Set.of(PurchaseRequestPriority.NORMAL, PurchaseRequestPriority.URGENT)),
+                List.of(
+                        new ApprovalStepTemplate(1, "PR_APPROVE_L1", ApprovalStepType.SEQUENTIAL, 48, true),
+                        new ApprovalStepTemplate(2, "PR_APPROVE_FINANCE", ApprovalStepType.SEQUENTIAL, 48, true)),
                 null);
     }
 

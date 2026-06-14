@@ -229,3 +229,17 @@
 - Root cause: The shared Angular workflow component treated backend `stepIndex` as zero-based even though approval-service returns one-based indexes, keyed expanded state only by `stepIndex`, anchored connector lines inside the marker button, and marked any matching index as current even when the step was already terminal. The process API also did not expose `stepType`, so the UI could not distinguish sequential and parallel steps.
 - Fix: Render one-based `stepIndex` directly, track steps with a composite key, restrict current styling to pending steps, move connectors to the article layout, add translated permission/type badges, expose `stepType` from approval-service process detail, and show process names on PR/approval detail screens.
 - Prevention: Workflow UI should treat backend ordering semantics as contract data, verify horizontal and vertical layouts together, and keep process metadata in the detail API rather than deriving it from generic section headings.
+
+## [2026-06-14] Bug: Additive approval category rule ran in parallel with the primary value rule
+
+- Symptom: A newly submitted PR with a software/SaaS category could create active parallel approvals for `PR_APPROVE_L1` and `PR_APPROVE_L3`, even though the visible value rule did not define that parallel step.
+- Root cause: Approval rule selection correctly merged additive category rules, but the process builder persisted `sourceStepIndex` from each source rule. Additive category rules often start at source step `1`, so their first step collided with the primary rule step `1` and was treated as parallel.
+- Fix: Compute runtime step sequence with an offset per applied rule, preserve same-index parallel steps within one rule such as emergency approval, and persist the runtime sequence into `approval_steps.step_index`.
+- Prevention: Any approval rule merge must distinguish source rule step index from runtime workflow step index, with tests covering both intentional parallel steps and additive rule offsetting.
+
+## [2026-06-14] Bug: Approval rule editor required manual permission code entry
+
+- Symptom: Creating or editing approval rules forced admins to type `requiredPermission` manually, making it easy to mistype a permission code that the approval engine cannot route.
+- Root cause: The Angular approval rule editor loaded IAM permissions but exposed them only through an HTML `datalist`, which still behaves like free text and does not clearly show available approval permissions.
+- Fix: Replace manual permission entry with a real select control populated from IAM approval permissions, keep fallback `PR_APPROVE_*` options, and preserve existing rule permission codes when editing.
+- Prevention: Business-critical code fields should use bounded controls backed by system reference data, with free text reserved only for descriptions and comments.
