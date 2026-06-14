@@ -24,7 +24,7 @@ eprocure:
     api-key: ${PR_INTERNAL_API_KEY:change-me-internal-api-key}
   pr:
     integration:
-      fallback-enabled: ${PR_INTEGRATION_FALLBACK_ENABLED:true}
+      fallback-enabled: ${PR_INTEGRATION_FALLBACK_ENABLED:false}
       finance-enabled: ${PR_FINANCE_INTEGRATION_ENABLED:false}
       finance:
         base-url: ${FINANCE_SERVICE_URL:http://localhost:8084}
