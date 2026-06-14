@@ -10,4 +10,5 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 export class EpFormFieldComponent {
   readonly label = input.required<string>();
   readonly error = input<string | null>(null);
+  readonly required = input<boolean>(false);
 }

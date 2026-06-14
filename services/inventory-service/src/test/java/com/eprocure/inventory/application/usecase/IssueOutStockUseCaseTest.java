@@ -7,6 +7,7 @@ import com.eprocure.inventory.application.port.in.IssueOutStockCommand;
 import com.eprocure.inventory.application.service.IdempotencyService;
 import com.eprocure.inventory.common.exception.BusinessException;
 import com.eprocure.inventory.common.exception.ErrorCode;
+import com.eprocure.inventory.domain.model.StockAdjustmentRequest;
 import com.eprocure.inventory.domain.model.StockEntry;
 import com.eprocure.inventory.domain.model.StockIssueOutRequest;
 import com.eprocure.inventory.domain.model.StockMovement;
@@ -191,6 +192,21 @@ class IssueOutStockUseCaseTest {
         }
 
         @Override
+        public Optional<StockAdjustmentRequest> findAdjustmentRequestByIdempotencyKey(UUID idempotencyKey) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public void insertAdjustmentRequest(StockAdjustmentRequest adjustmentRequest) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
+        public Optional<BigDecimal> findStockQuantity(String itemCode, UUID warehouseId, String unit) {
+            throw new UnsupportedOperationException("not used");
+        }
+
+        @Override
         public Optional<BigDecimal> issueStock(
                 String itemCode,
                 UUID warehouseId,
@@ -206,6 +222,17 @@ class IssueOutStockUseCaseTest {
             BigDecimal balanceAfter = current.subtract(quantity);
             stockBalances.put(key, balanceAfter);
             return Optional.of(balanceAfter);
+        }
+
+        @Override
+        public BigDecimal adjustStock(
+                String itemCode,
+                UUID warehouseId,
+                BigDecimal newQuantity,
+                String unit,
+                UUID actorId,
+                Instant occurredAt) {
+            throw new UnsupportedOperationException("not used");
         }
 
         @Override

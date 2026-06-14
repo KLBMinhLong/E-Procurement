@@ -1,0 +1,229 @@
+<section class="gr-create-page" aria-labelledby="gr-create-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">
+        {{ 'inventory.gr.create.eyebrow' | translate }}
+      </span>
+      <h1 id="gr-create-heading" class="page-header__title">
+        {{ 'inventory.gr.create.title' | translate }}
+      </h1>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else {
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="gr-form" novalidate>
+    <div class="gr-form__layout">
+
+      <!-- ── LEFT COLUMN: main details ─────────────────────────── -->
+      <div class="gr-form__main">
+
+        <!-- Basic info card -->
+        <ep-card>
+          <div class="card-section">
+            <h2 class="card-section__title">{{ 'inventory.gr.create.section.basic' | translate }}</h2>
+
+            <div class="form-row">
+              <ep-form-field
+                [label]="'inventory.gr.create.field.poId' | translate"
+                [error]="fieldError('poId') ? (fieldError('poId')! | translate) : null">
+                <select
+                  id="poId"
+                  formControlName="poId"
+                  class="ep-select"
+                  (change)="onPoSelected($event)">
+                  <option value="" disabled>{{ 'inventory.gr.create.field.poIdPlaceholder' | translate }}</option>
+                  @for (po of pos(); track po.id) {
+                    <option [value]="po.id">
+                      {{ po.poNumber }} - {{ po.vendor.name }}
+                    </option>
+                  }
+                </select>
+              </ep-form-field>
+
+              <ep-form-field
+                [label]="'inventory.gr.create.field.warehouse' | translate"
+                [error]="fieldError('warehouseId') ? (fieldError('warehouseId')! | translate) : null">
+                <select
+                  id="warehouseId"
+                  formControlName="warehouseId"
+                  class="ep-select">
+                  <option value="" disabled>{{ 'inventory.gr.create.field.warehousePlaceholder' | translate }}</option>
+                  @for (wh of warehouses(); track wh.id) {
+                    <option [value]="wh.id">{{ wh.code }} — {{ wh.name }}</option>
+                  }
+                </select>
+              </ep-form-field>
+            </div>
+
+            <ep-form-field
+              [label]="'inventory.gr.create.field.notes' | translate"
+              [error]="fieldError('notes') ? (fieldError('notes')! | translate) : null">
+              <textarea
+                id="notes"
+                formControlName="notes"
+                class="ep-textarea"
+                rows="3"
+                [placeholder]="'inventory.gr.create.field.notesPlaceholder' | translate">
+              </textarea>
+            </ep-form-field>
+          </div>
+        </ep-card>
+
+        <!-- Line items card -->
+        @if (selectedPo()) {
+          <ep-card>
+            <div class="card-section">
+              <div class="card-section__header">
+                <h2 class="card-section__title">{{ 'inventory.gr.create.section.lineItems' | translate }}</h2>
+              </div>
+
+              @if (isLoadingPoLines()) {
+                <ep-skeleton [rows]="4" />
+              } @else {
+                <div formArrayName="items" class="line-items">
+                  @for (item of items.controls; track $index) {
+                    <div [formGroupName]="$index" class="line-item">
+                      <div class="line-item__header">
+                        <span class="line-item__number">{{ 'inventory.gr.create.lineItem.label' | translate }} #{{ $index + 1 }}</span>
+                      </div>
+
+                      <div class="line-item__body">
+                        <ep-form-field [label]="'inventory.gr.create.lineItem.itemName' | translate">
+                          <input
+                            [id]="'line-item-name-' + $index"
+                            type="text"
+                            formControlName="itemName"
+                            class="ep-input ep-input-disabled">
+                        </ep-form-field>
+
+                        <div class="form-row form-row--line">
+                          <ep-form-field [label]="'inventory.gr.create.lineItem.orderedQty' | translate">
+                            <input
+                              [id]="'line-item-ordered-' + $index"
+                              type="number"
+                              formControlName="orderedQty"
+                              class="ep-input ep-input-disabled">
+                          </ep-form-field>
+
+                          <ep-form-field [label]="'inventory.gr.create.lineItem.unit' | translate">
+                            <input
+                              [id]="'line-item-unit-' + $index"
+                              type="text"
+                              formControlName="orderedUnit"
+                              class="ep-input ep-input-disabled">
+                          </ep-form-field>
+
+                          <ep-form-field
+                            [label]="'inventory.gr.create.lineItem.receivedQty' | translate"
+                            [error]="getLineItemError($index, 'receivedQuantity') ? (getLineItemError($index, 'receivedQuantity')! | translate) : null">
+                            <input
+                              [id]="'line-item-received-' + $index"
+                              type="number"
+                              formControlName="receivedQuantity"
+                              class="ep-input"
+                              min="0"
+                              step="1">
+                          </ep-form-field>
+
+                          <ep-form-field
+                            [label]="'inventory.gr.create.lineItem.rejectedQty' | translate"
+                            [error]="getLineItemError($index, 'rejectedQuantity') ? (getLineItemError($index, 'rejectedQuantity')! | translate) : null">
+                            <input
+                              [id]="'line-item-rejected-' + $index"
+                              type="number"
+                              formControlName="rejectedQuantity"
+                              class="ep-input"
+                              min="0"
+                              step="1">
+                          </ep-form-field>
+
+                          <ep-form-field
+                            [label]="'inventory.gr.create.lineItem.rejectionReason' | translate"
+                            [error]="getLineItemError($index, 'rejectionReason') ? (getLineItemError($index, 'rejectionReason')! | translate) : null">
+                            <input
+                              [id]="'line-item-rejection-reason-' + $index"
+                              type="text"
+                              formControlName="rejectionReason"
+                              class="ep-input"
+                              [placeholder]="'inventory.gr.create.lineItem.rejectionReasonPlaceholder' | translate">
+                          </ep-form-field>
+
+                          <ep-form-field [label]="'inventory.gr.create.lineItem.lotNumber' | translate">
+                            <input
+                              [id]="'line-item-lot-' + $index"
+                              type="text"
+                              formControlName="lotNumber"
+                              class="ep-input"
+                              [placeholder]="'inventory.gr.create.lineItem.lotNumberPlaceholder' | translate">
+                          </ep-form-field>
+                        </div>
+
+                        <div class="line-item__total">
+                          <span class="line-item__total-label">{{ 'inventory.gr.create.lineItem.total' | translate }}</span>
+                          <ep-amount
+                            [value]="(+item.get('receivedQuantity')!.value * +item.get('unitPrice')!.value).toFixed(4)"
+                            [currency]="item.get('currency')!.value" />
+                        </div>
+                      </div>
+                    </div>
+                  }
+
+                  @if (items.length === 0) {
+                    <div class="empty-state">
+                      <p>{{ 'inventory.gr.create.lineItem.empty' | translate }}</p>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </ep-card>
+        }
+
+      </div><!-- /main -->
+
+      <!-- ── RIGHT COLUMN: summary sidebar ──────────────────────── -->
+      <aside class="gr-form__sidebar">
+        <ep-card tone="raised">
+          <div class="card-section">
+            <h2 class="card-section__title">{{ 'inventory.gr.create.section.summary' | translate }}</h2>
+
+            <div class="summary-row">
+              <span class="summary-row__label">{{ 'inventory.gr.create.summary.lineItems' | translate }}</span>
+              <span class="summary-row__value">{{ items.length }}</span>
+            </div>
+
+            <div class="summary-row summary-row--total">
+              <span class="summary-row__label">{{ 'inventory.gr.create.summary.totalValue' | translate }}</span>
+              <ep-amount [value]="totalReceivedAmount()" currency="VND" />
+            </div>
+
+            <div class="summary-actions">
+              <ep-button
+                id="btn-submit-gr"
+                type="submit"
+                variant="primary"
+                [loading]="submitting()"
+                [disabled]="form.invalid || submitting() || items.length === 0">
+                {{ 'inventory.gr.create.action.submit' | translate }}
+              </ep-button>
+              <ep-button
+                id="btn-cancel-create"
+                type="button"
+                variant="ghost"
+                [disabled]="submitting()"
+                (click)="cancel()">
+                {{ 'action.cancel' | translate }}
+              </ep-button>
+            </div>
+          </div>
+        </ep-card>
+      </aside>
+
+    </div><!-- /layout -->
+  </form>
+  }
+</section>

@@ -1,0 +1,240 @@
+<section class="catalog-detail-page" aria-labelledby="catalog-detail-heading">
+  <ep-breadcrumb />
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (item(); as detail) {
+    <div class="catalog-detail-page__nav">
+      <ep-button id="btn-back-catalog-list" variant="ghost" icon="arrow-left" (click)="backToList()">
+        {{ 'inventory.catalog.detail.action.back' | translate }}
+      </ep-button>
+    </div>
+
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'inventory.catalog.detail.eyebrow' | translate }}</span>
+        <h1 id="catalog-detail-heading" class="page-header__title">{{ detail.name }}</h1>
+        <div class="page-header__badges">
+          <ep-badge
+            [tone]="statusTone(detail)"
+            [labelKey]="detail.isActive
+              ? 'inventory.catalog.status.active'
+              : 'inventory.catalog.status.inactive'" />
+          @if (belowReorder()) {
+            <ep-badge tone="warning" [labelKey]="'inventory.catalog.status.belowReorder'" />
+          }
+        </div>
+      </div>
+      <div class="page-header__actions">
+        <ep-button id="btn-catalog-detail-movements" variant="secondary" icon="history" (click)="viewMovements()">
+          {{ 'inventory.catalog.action.movements' | translate }}
+        </ep-button>
+        <ep-button
+          *epHasPermission="'ADMIN_CATALOG_MANAGE'"
+          id="btn-edit-catalog-detail"
+          variant="primary"
+          icon="pencil"
+          (click)="openEditModal(detail)">
+          {{ 'inventory.catalog.action.edit' | translate }}
+        </ep-button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <ep-icon name="barcode" />
+        <span class="summary-card__label">{{ 'inventory.catalog.detail.summary.itemCode' | translate }}</span>
+        <span class="summary-card__value">{{ detail.itemCode }}</span>
+      </div>
+      <div class="summary-card">
+        <ep-icon name="boxes" />
+        <span class="summary-card__label">{{ 'inventory.catalog.detail.summary.totalStock' | translate }}</span>
+        <span class="summary-card__value">{{ totalStock() }} {{ detail.unit }}</span>
+      </div>
+      <div class="summary-card">
+        <ep-icon name="warehouse" />
+        <span class="summary-card__label">{{ 'inventory.catalog.detail.summary.warehouses' | translate }}</span>
+        <span class="summary-card__value">{{ warehouseCount() }}</span>
+      </div>
+      <div class="summary-card">
+        <ep-icon name="coins" />
+        <span class="summary-card__label">{{ 'inventory.catalog.col.unitPrice' | translate }}</span>
+        <span class="summary-card__value summary-card__value--amount">
+          <ep-amount [value]="detail.unitPrice" />
+        </span>
+      </div>
+    </div>
+
+    <div class="catalog-detail-layout">
+      <div class="catalog-detail-layout__main">
+        <section class="card-section">
+          <div class="section-title-row">
+            <h2 class="card-section__title">{{ 'inventory.catalog.detail.section.info' | translate }}</h2>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">{{ 'inventory.catalog.form.categoryCode' | translate }}</span>
+              <strong class="mono">{{ detail.categoryCode }}</strong>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'inventory.catalog.form.unit' | translate }}</span>
+              <strong class="mono">{{ detail.unit }}</strong>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'inventory.catalog.form.reorderPoint' | translate }}</span>
+              <strong>{{ detail.reorderPoint ? formatQuantity(detail.reorderPoint) : '--' }}</strong>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'inventory.catalog.form.preferredVendorId' | translate }}</span>
+              <strong class="mono">{{ detail.preferredVendorId || '--' }}</strong>
+            </div>
+          </div>
+
+          <div class="narrative-block">
+            <span class="info-label">{{ 'inventory.catalog.form.description' | translate }}</span>
+            <p>{{ detail.description || ('inventory.catalog.detail.emptyDescription' | translate) }}</p>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <div class="section-title-row">
+            <h2 class="card-section__title">{{ 'inventory.catalog.detail.section.stockSummary' | translate }}</h2>
+            <span class="info-pill">
+              {{ 'inventory.catalog.detail.stock.count' | translate: { count: detail.stockSummary.length } }}
+            </span>
+          </div>
+
+          @if (detail.stockSummary.length === 0) {
+            <ep-empty-state
+              icon="warehouse"
+              [title]="'inventory.catalog.detail.stock.emptyTitle' | translate"
+              [message]="'inventory.catalog.detail.stock.emptyMessage' | translate" />
+          } @else {
+            <div class="catalog-table-wrapper">
+              <table class="catalog-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'inventory.catalog.detail.stock.warehouse' | translate }}</th>
+                    <th scope="col" class="align-right">{{ 'inventory.catalog.detail.stock.quantity' | translate }}</th>
+                    <th scope="col">{{ 'inventory.catalog.detail.stock.unit' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (stock of detail.stockSummary; track stock.warehouseId) {
+                    <tr>
+                      <td>
+                        <span class="catalog-table__primary">{{ stock.warehouseName }}</span>
+                        <span class="catalog-table__subtitle mono">{{ stock.warehouseId }}</span>
+                      </td>
+                      <td class="align-right catalog-table__quantity">{{ formatQuantity(stock.quantityOnHand) }}</td>
+                      <td class="mono">{{ stock.unit }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      </div>
+
+      <aside class="catalog-detail-layout__side">
+        <section class="card-section card-section--compact">
+          <h2 class="card-section__title">{{ 'inventory.catalog.detail.section.workflow' | translate }}</h2>
+          <div class="info-list">
+            <div class="list-item">
+              <span>{{ 'inventory.catalog.detail.workflow.readPermission' | translate }}</span>
+              <strong class="value mono">GR_VIEW</strong>
+            </div>
+            <div class="list-item">
+              <span>{{ 'inventory.catalog.detail.workflow.mutationPermission' | translate }}</span>
+              <strong class="value mono">ADMIN_CATALOG_MANAGE</strong>
+            </div>
+            <div class="list-item">
+              <span>{{ 'inventory.catalog.detail.workflow.stockSource' | translate }}</span>
+              <strong class="value">{{ 'inventory.catalog.detail.workflow.stockProjection' | translate }}</strong>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <ep-modal
+      [open]="isModalOpen()"
+      [size]="'lg'"
+      [title]="'inventory.catalog.modal.editTitle' | translate"
+      (close)="closeModal()">
+      <form class="catalog-form" [formGroup]="form" (ngSubmit)="save()">
+        <div class="catalog-form__grid">
+          <ep-form-field [label]="'inventory.catalog.form.itemCode' | translate">
+            <input class="form-control" formControlName="itemCode" readonly />
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'inventory.catalog.form.name' | translate"
+            [required]="true"
+            [error]="formError('name') ? (formError('name')! | translate) : null">
+            <input class="form-control" formControlName="name" />
+          </ep-form-field>
+
+          <ep-form-field [label]="'inventory.catalog.form.categoryCode' | translate">
+            <input class="form-control" formControlName="categoryCode" readonly />
+          </ep-form-field>
+
+          <ep-form-field [label]="'inventory.catalog.form.unit' | translate">
+            <input class="form-control" formControlName="unit" readonly />
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'inventory.catalog.form.unitPrice' | translate"
+            [required]="true"
+            [error]="formError('unitPrice') ? (formError('unitPrice')! | translate) : null">
+            <input class="form-control" formControlName="unitPrice" inputmode="decimal" />
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'inventory.catalog.form.currency' | translate"
+            [required]="true"
+            [error]="formError('currency') ? (formError('currency')! | translate) : null">
+            <input class="form-control" formControlName="currency" maxlength="3" />
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'inventory.catalog.form.reorderPoint' | translate"
+            [error]="formError('reorderPoint') ? (formError('reorderPoint')! | translate) : null">
+            <input class="form-control" formControlName="reorderPoint" inputmode="decimal" />
+          </ep-form-field>
+
+          <ep-form-field [label]="'inventory.catalog.form.preferredVendorId' | translate">
+            <input class="form-control" formControlName="preferredVendorId" />
+          </ep-form-field>
+        </div>
+
+        <ep-form-field
+          [label]="'inventory.catalog.form.description' | translate"
+          [error]="formError('description') ? (formError('description')! | translate) : null">
+          <textarea class="form-control form-control--textarea" formControlName="description"></textarea>
+        </ep-form-field>
+
+        <label class="toggle-field toggle-field--modal">
+          <input id="catalog-detail-active" type="checkbox" formControlName="isActive" />
+          <span>{{ 'inventory.catalog.form.active' | translate }}</span>
+        </label>
+
+        <div class="modal-actions">
+          <ep-button type="button" variant="ghost" (click)="closeModal()">
+            {{ 'action.cancel' | translate }}
+          </ep-button>
+          <ep-button type="submit" variant="primary" icon="save" [loading]="isSaving()" [disabled]="form.invalid || isSaving()">
+            {{ 'action.submit' | translate }}
+          </ep-button>
+        </div>
+      </form>
+    </ep-modal>
+  } @else {
+    <ep-empty-state
+      icon="package-x"
+      [title]="'inventory.catalog.detail.notFoundTitle' | translate"
+      [message]="'inventory.catalog.detail.notFoundMessage' | translate" />
+  }
+</section>

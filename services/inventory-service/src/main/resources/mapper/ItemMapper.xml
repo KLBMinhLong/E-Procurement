@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.inventory.infrastructure.persistence.mapper.ItemMapper">
+
+    <resultMap id="itemResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.ItemDbEntity">
+        <id property="id" column="id"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="categoryCode" column="category_code"/>
+        <result property="unit" column="unit"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="currency" column="currency"/>
+        <result property="preferredVendorId" column="preferred_vendor_id"/>
+        <result property="reorderPoint" column="reorder_point"/>
+        <result property="active" column="is_active"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+
+    <resultMap id="mutationRequestResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.CatalogItemMutationRequestDbEntity">
+        <id property="id" column="id"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+        <result property="operation" column="operation"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="actorId" column="actor_id"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="stockSummaryResultMap"
+               type="com.eprocure.inventory.infrastructure.persistence.entity.ItemStockSummaryDbEntity">
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="warehouseName" column="warehouse_name"/>
+        <result property="quantityOnHand" column="quantity_on_hand"/>
+        <result property="unit" column="unit"/>
+    </resultMap>
+
+    <sql id="itemColumns">
+        id,
+        item_code,
+        name,
+        description,
+        category_code,
+        unit,
+        unit_price,
+        currency,
+        preferred_vendor_id,
+        reorder_point,
+        is_active,
+        created_at,
+        created_by,
+        updated_by
+    </sql>
+
+    <sql id="itemWhereClause">
+        WHERE item.is_deleted = FALSE
+        <if test="filter.query != null">
+            AND (
+                LOWER(item.name) LIKE CONCAT('%', LOWER(#{filter.query}), '%')
+                OR LOWER(item.item_code) LIKE CONCAT('%', LOWER(#{filter.query}), '%')
+                OR LOWER(COALESCE(item.description, '')) LIKE CONCAT('%', LOWER(#{filter.query}), '%')
+            )
+        </if>
+        <if test="filter.categoryCode != null">
+            AND item.category_code = #{filter.categoryCode}
+        </if>
+        <if test="filter.active != null">
+            AND item.is_active = #{filter.active}
+        </if>
+        <if test="filter.belowReorder != null and filter.belowReorder == true">
+            AND item.reorder_point IS NOT NULL
+            AND COALESCE(stock.total_quantity_on_hand, 0) &lt; item.reorder_point
+        </if>
+        <if test="filter.belowReorder != null and filter.belowReorder == false">
+            AND (
+                item.reorder_point IS NULL
+                OR COALESCE(stock.total_quantity_on_hand, 0) &gt;= item.reorder_point
+            )
+        </if>
+    </sql>
+
+    <sql id="stockAggregateJoin">
+        LEFT JOIN (
+            SELECT item_code, SUM(quantity_on_hand) AS total_quantity_on_hand
+            FROM inventory.stock_entries
+            WHERE is_deleted = FALSE
+            GROUP BY item_code
+        ) stock ON stock.item_code = item.item_code
+    </sql>
+
+    <select id="findByCode" resultMap="itemResultMap">
+        SELECT <include refid="itemColumns"/>
+        FROM inventory.items item
+        WHERE item.item_code = #{itemCode}
+          AND item.is_deleted = FALSE
+    </select>
+
+    <select id="findByFilter" resultMap="itemResultMap">
+        SELECT
+            item.id,
+            item.item_code,
+            item.name,
+            item.description,
+            item.category_code,
+            item.unit,
+            item.unit_price,
+            item.currency,
+            item.preferred_vendor_id,
+            item.reorder_point,
+            item.is_active,
+            item.created_at,
+            item.created_by,
+            item.updated_by
+        FROM inventory.items item
+        <include refid="stockAggregateJoin"/>
+        <include refid="itemWhereClause"/>
+        ORDER BY item.name ASC, item.item_code ASC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="countByFilter" resultType="long">
+        SELECT COUNT(*)
+        FROM inventory.items item
+        <include refid="stockAggregateJoin"/>
+        <include refid="itemWhereClause"/>
+    </select>
+
+    <select id="findStockSummary" resultMap="stockSummaryResultMap">
+        SELECT
+            se.warehouse_id,
+            wh.name AS warehouse_name,
+            se.quantity_on_hand,
+            se.unit
+        FROM inventory.stock_entries se
+        JOIN inventory.warehouses wh
+          ON wh.id = se.warehouse_id
+         AND wh.is_deleted = FALSE
+        WHERE se.item_code = #{itemCode}
+          AND se.is_deleted = FALSE
+        ORDER BY wh.name ASC, se.warehouse_id ASC
+    </select>
+
+    <select id="findMutationRequestByIdempotencyKey" resultMap="mutationRequestResultMap">
+        SELECT
+            id,
+            idempotency_key,
+            operation,
+            item_code,
+            actor_id,
+            created_at
+        FROM inventory.catalog_item_mutation_requests
+        WHERE idempotency_key = #{idempotencyKey}
+          AND is_deleted = FALSE
+    </select>
+</mapper>

@@ -1,0 +1,194 @@
+<section class="vendor-create-page" aria-labelledby="vendor-create-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'vendor.create.eyebrow' | translate }}</span>
+      <h1 id="vendor-create-heading" class="page-header__title">{{ 'vendor.create.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'vendor.create.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <form class="vendor-form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-card">
+      <h2 class="form-card__title">
+        <ep-icon name="building-2" [size]="18" />
+        {{ 'vendor.create.section.info' | translate }}
+      </h2>
+
+      <div class="form-grid">
+        <ep-form-field
+          [label]="'vendor.create.field.name' | translate"
+          [error]="fieldError('name') ? (fieldError('name')! | translate) : null">
+          <input
+            id="vendor-name"
+            type="text"
+            class="form-control"
+            formControlName="name"
+            [placeholder]="'vendor.create.field.namePlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.taxCode' | translate"
+          [error]="fieldError('taxCode') ? (fieldError('taxCode')! | translate) : null">
+          <input
+            id="vendor-tax-code"
+            type="text"
+            class="form-control mono"
+            formControlName="taxCode"
+            [placeholder]="'vendor.create.field.taxCodePlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.email' | translate"
+          [error]="fieldError('email') ? (fieldError('email')! | translate) : null">
+          <input
+            id="vendor-email"
+            type="email"
+            class="form-control"
+            formControlName="email"
+            [placeholder]="'vendor.create.field.emailPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.phone' | translate"
+          [error]="fieldError('phone') ? (fieldError('phone')! | translate) : null">
+          <input
+            id="vendor-phone"
+            type="tel"
+            class="form-control mono"
+            formControlName="phone"
+            [placeholder]="'vendor.create.field.phonePlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          class="form-field--full"
+          [label]="'vendor.create.field.street' | translate"
+          [error]="null">
+          <input
+            id="vendor-street"
+            type="text"
+            class="form-control"
+            formControlName="street"
+            [placeholder]="'vendor.create.field.streetPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.district' | translate"
+          [error]="null">
+          <input
+            id="vendor-district"
+            type="text"
+            class="form-control"
+            formControlName="district"
+            [placeholder]="'vendor.create.field.districtPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.city' | translate"
+          [error]="null">
+          <input
+            id="vendor-city"
+            type="text"
+            class="form-control"
+            formControlName="city"
+            [placeholder]="'vendor.create.field.cityPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          [label]="'vendor.create.field.country' | translate"
+          [error]="null">
+          <input
+            id="vendor-country"
+            type="text"
+            class="form-control"
+            formControlName="country"
+            [placeholder]="'vendor.create.field.countryPlaceholder' | translate">
+        </ep-form-field>
+
+        <ep-form-field
+          class="form-field--full"
+          [label]="'vendor.create.field.categories' | translate"
+          [error]="fieldError('categoriesRaw') ? (fieldError('categoriesRaw')! | translate) : null">
+          <input
+            id="vendor-categories"
+            type="text"
+            class="form-control"
+            formControlName="categoriesRaw"
+            [placeholder]="'vendor.create.field.categoriesPlaceholder' | translate">
+          <small class="form-hint">{{ 'vendor.create.field.categoriesHint' | translate }}</small>
+        </ep-form-field>
+
+        <ep-form-field
+          class="form-field--full"
+          [label]="'vendor.create.field.notes' | translate"
+          [error]="null">
+          <textarea
+            id="vendor-notes"
+            class="form-control form-control--textarea"
+            formControlName="notes"
+            rows="2"
+            [placeholder]="'vendor.create.field.notesPlaceholder' | translate"></textarea>
+        </ep-form-field>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card__header">
+        <h2 class="form-card__title">
+          <ep-icon name="users" [size]="18" />
+          {{ 'vendor.create.section.contacts' | translate }}
+        </h2>
+        <ep-button type="button" variant="ghost" size="sm" icon="plus" (click)="addContact()">
+          {{ 'vendor.create.action.addContact' | translate }}
+        </ep-button>
+      </div>
+
+      <div formArrayName="contacts">
+        @for (contact of contacts.controls; track $index; let i = $index) {
+          <div class="contact-row" [formGroupName]="i">
+            <ep-form-field
+              [label]="'vendor.create.contact.name' | translate"
+              [error]="contactFieldError(i, 'name') ? (contactFieldError(i, 'name')! | translate) : null">
+              <input type="text" class="form-control" formControlName="name">
+            </ep-form-field>
+            <ep-form-field
+              [label]="'vendor.create.contact.role' | translate"
+              [error]="null">
+              <input type="text" class="form-control" formControlName="role">
+            </ep-form-field>
+            <ep-form-field
+              [label]="'vendor.create.contact.email' | translate"
+              [error]="contactFieldError(i, 'email') ? (contactFieldError(i, 'email')! | translate) : null">
+              <input type="email" class="form-control" formControlName="email">
+            </ep-form-field>
+            <ep-form-field
+              [label]="'vendor.create.contact.phone' | translate"
+              [error]="contactFieldError(i, 'phone') ? (contactFieldError(i, 'phone')! | translate) : null">
+              <input type="tel" class="form-control mono" formControlName="phone">
+            </ep-form-field>
+            <div class="contact-actions">
+              @if (contacts.length > 1) {
+                <ep-button type="button" variant="ghost" size="sm" icon="trash-2" (click)="removeContact(i)" />
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <ep-button type="button" variant="ghost" (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button
+        id="btn-save-vendor"
+        type="submit"
+        variant="primary"
+        icon="save"
+        [disabled]="isSaving()">
+        {{ 'vendor.create.action.save' | translate }}
+      </ep-button>
+    </div>
+  </form>
+</section>

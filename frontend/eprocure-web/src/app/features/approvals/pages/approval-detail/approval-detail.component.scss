@@ -46,6 +46,25 @@
   flex-wrap: wrap;
 }
 
+.process-overview {
+  padding: var(--spacing-5);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── Grid Layout ─────────────────────────────────────────────────── */
 .detail-grid {
   display: grid;
@@ -91,6 +110,22 @@
   margin-bottom: var(--spacing-4);
   padding-bottom: var(--spacing-2);
   border-bottom: var(--border-subtle);
+}
+
+.card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+  padding-bottom: var(--spacing-2);
+  border-bottom: var(--border-subtle);
+
+  .card__title {
+    margin: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
 }
 
 /* ── Basic Info Card ─────────────────────────────────────────────── */
@@ -193,6 +228,10 @@
     color: var(--color-text-muted);
     text-align: left;
     white-space: nowrap;
+  }
+
+  .line-number-col {
+    width: 3.75rem;
   }
 
   td {
@@ -368,129 +407,6 @@
       color: var(--color-text-secondary);
     }
   }
-}
-
-/* ── Timeline workflow ───────────────────────────────────────────── */
-.timeline {
-  display: flex;
-  flex-direction: column;
-  margin-left: var(--spacing-2);
-}
-
-.timeline-item {
-  display: flex;
-  gap: var(--spacing-4);
-  position: relative;
-
-  &--active {
-    .timeline-content strong {
-      color: var(--color-accent);
-    }
-  }
-}
-
-.timeline-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 16px;
-}
-
-.timeline-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--color-neutral);
-  z-index: 1;
-
-  &--pending {
-    background: var(--color-warning);
-    box-shadow: 0 0 0 4px var(--color-warning-subtle);
-  }
-
-  &--approved {
-    background: var(--color-success);
-    box-shadow: 0 0 0 4px var(--color-success-subtle);
-  }
-
-  &--rejected {
-    background: var(--color-danger);
-    box-shadow: 0 0 0 4px var(--color-danger-subtle);
-  }
-
-  &--changes_requested {
-    background: var(--color-warning);
-    box-shadow: 0 0 0 4px var(--color-warning-subtle);
-  }
-
-  &--forwarded {
-    background: var(--color-info);
-    box-shadow: 0 0 0 4px var(--color-info-subtle);
-  }
-}
-
-.timeline-line {
-  width: 2px;
-  flex-grow: 1;
-  background: var(--color-border-subtle);
-  margin-top: 4px;
-  margin-bottom: 4px;
-}
-
-.timeline-content {
-  flex-grow: 1;
-  padding-bottom: var(--spacing-6);
-}
-
-.timeline-content__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-1);
-
-  strong {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-  }
-}
-
-.timeline-content__body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.timeline-role {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-.timeline-approver {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-}
-
-.timeline-comment {
-  margin: var(--spacing-2) 0 0 0;
-  padding: var(--spacing-2) var(--spacing-3);
-  background: var(--color-surface-raised);
-  border-left: 2px solid var(--color-accent-border);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  font-style: italic;
-  border-radius: 0 var(--radius-2) var(--radius-2) 0;
-}
-
-.timeline-time {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xxs);
-  color: var(--color-text-muted);
-  margin-top: 4px;
 }
 
 /* ── Modals Form ─────────────────────────────────────────────────── */

@@ -1,0 +1,207 @@
+<section class="invoice-list-page" aria-labelledby="invoice-list-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'finance.invoice.list.eyebrow' | translate }}</span>
+      <h1 id="invoice-list-heading" class="page-header__title">{{ 'finance.invoice.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'finance.invoice.list.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        *epHasPermission="'INVOICE_CREATE'"
+        id="btn-create-invoice"
+        variant="primary"
+        icon="file-plus-2"
+        (click)="navigateCreate()">
+        {{ 'finance.invoice.list.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="summary-grid" [attr.aria-label]="'finance.invoice.list.summaryLabel' | translate">
+    <div class="summary-card">
+      <ep-icon name="receipt-text" />
+      <span class="summary-card__label">{{ 'finance.invoice.list.stat.total' | translate }}</span>
+      <span class="summary-card__value">{{ meta()?.totalElements ?? items().length }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="scan-search" />
+      <span class="summary-card__label">{{ 'finance.invoice.list.stat.pending' | translate }}</span>
+      <span class="summary-card__value">{{ pendingCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="triangle-alert" />
+      <span class="summary-card__label">{{ 'finance.invoice.list.stat.mismatch' | translate }}</span>
+      <span class="summary-card__value">{{ mismatchCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="badge-check" />
+      <span class="summary-card__label">{{ 'finance.invoice.list.stat.approved' | translate }}</span>
+      <span class="summary-card__value">{{ approvedCount() }}</span>
+    </div>
+    <div class="summary-card summary-card--amount">
+      <ep-icon name="banknote" />
+      <span class="summary-card__label">{{ 'finance.invoice.list.stat.visibleAmount' | translate }}</span>
+      <ep-amount class="summary-card__amount" [value]="visibleTotalAmount()" currency="VND" />
+    </div>
+  </div>
+
+  <div class="invoice-toolbar">
+    <div class="invoice-toolbar__top">
+      <ep-filter-bar
+        id="invoice-vendor-filter"
+        placeholderKey="finance.invoice.list.filter.vendorPlaceholder"
+        [value]="vendorId()"
+        (valueChange)="onVendorSearch($event)"
+        (refresh)="loadData()">
+      </ep-filter-bar>
+
+      <label class="compact-search">
+        <span>{{ 'finance.invoice.list.filter.poId' | translate }}</span>
+        <input
+          id="invoice-po-filter"
+          type="text"
+          [value]="poId()"
+          autocomplete="off"
+          [placeholder]="'finance.invoice.list.filter.poPlaceholder' | translate"
+          (change)="onPoSearch($any($event.target).value)">
+      </label>
+
+      <label class="toggle-filter">
+        <input
+          id="invoice-overdue-filter"
+          type="checkbox"
+          [checked]="overdueOnly()"
+          (change)="onOverdueToggle($any($event.target).checked)">
+        <span>{{ 'finance.invoice.list.filter.overdueOnly' | translate }}</span>
+      </label>
+
+      @if (hasActiveFilters()) {
+        <ep-button id="btn-clear-invoice-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'finance.invoice.list.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
+
+    <div class="filter-chip-group" [attr.aria-label]="'finance.invoice.list.filter.status' | translate">
+      <button
+        id="filter-invoice-status-all"
+        class="filter-chip"
+        [class.filter-chip--active]="activeStatus() === ''"
+        (click)="onStatusChange('')">
+        {{ 'finance.invoice.list.filter.allStatus' | translate }}
+      </button>
+      @for (status of statuses; track status) {
+        <button
+          [id]="'filter-invoice-status-' + status"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === status"
+          (click)="onStatusChange(status)">
+          {{ ('finance.invoice.status.' + status) | translate }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="receipt-text"
+      [title]="'finance.invoice.list.empty.title' | translate"
+      [message]="'finance.invoice.list.empty.message' | translate" />
+  } @else {
+    <div class="invoice-table-wrapper">
+      <table class="invoice-table" role="grid" aria-labelledby="invoice-list-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'finance.invoice.list.col.number' | translate }}</th>
+            <th scope="col">{{ 'finance.invoice.list.col.vendor' | translate }}</th>
+            <th scope="col">{{ 'finance.invoice.list.col.po' | translate }}</th>
+            <th scope="col">{{ 'finance.invoice.list.col.status' | translate }}</th>
+            <th scope="col">{{ 'finance.invoice.list.col.match' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'finance.invoice.list.col.amount' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'finance.invoice.list.col.dueDate' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (invoice of items(); track invoice.id) {
+            <tr
+              [id]="'invoice-row-' + invoice.id"
+              class="invoice-table__row"
+              role="button"
+              tabindex="0"
+              (click)="navigateDetail(invoice.id)"
+              (keydown.enter)="navigateDetail(invoice.id)">
+              <td class="invoice-table__number">
+                <span class="mono">{{ invoice.invoiceNumber }}</span>
+                <span class="invoice-table__subtitle">{{ shortId(invoice.id) }}</span>
+              </td>
+              <td class="invoice-table__vendor">
+                <span class="invoice-table__primary">{{ invoice.vendor.name }}</span>
+                <span class="invoice-table__subtitle">{{ shortId(invoice.vendor.id) }}</span>
+              </td>
+              <td>
+                <span class="mono">{{ invoice.po.poNumber }}</span>
+              </td>
+              <td>
+                <ep-badge
+                  [tone]="statusTone[invoice.status] || 'neutral'"
+                  [labelKey]="'finance.invoice.status.' + invoice.status" />
+              </td>
+              <td>
+                <div class="match-pair">
+                  @if (matchStatus(invoice, 'po'); as poStatus) {
+                    <ep-badge [tone]="matchTone[poStatus] || 'neutral'" [labelKey]="'finance.invoice.match.po.' + poStatus" />
+                  } @else {
+                    <span class="muted">{{ 'finance.invoice.match.none' | translate }}</span>
+                  }
+                  @if (matchStatus(invoice, 'gr'); as grStatus) {
+                    <ep-badge [tone]="matchTone[grStatus] || 'neutral'" [labelKey]="'finance.invoice.match.gr.' + grStatus" />
+                  }
+                </div>
+              </td>
+              <td class="align-right">
+                <ep-amount [value]="amount(invoice)" />
+              </td>
+              <td class="align-right invoice-table__date">
+                {{ formatDate(invoice.dueDate) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as metaData) {
+      <div class="invoice-pagination">
+        <span class="invoice-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="invoice-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'finance.invoice.list.totalItems' | translate }}
+        </span>
+        <div class="invoice-pagination__controls">
+          <ep-button
+            id="btn-prev-invoice-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange({ page: metaData.page - 1, size: metaData.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-invoice-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="metaData.isLast"
+            (click)="onPageChange({ page: metaData.page + 1, size: metaData.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+</section>

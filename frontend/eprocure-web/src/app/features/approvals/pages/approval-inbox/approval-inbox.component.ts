@@ -19,6 +19,7 @@ import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-st
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpFilterBarComponent } from '../../../../shared/components/ep-filter-bar/ep-filter-bar.component';
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
+import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpStatCardComponent } from '../../../../shared/components/ep-stat-card/ep-stat-card.component';
 import { EpSlaBarComponent } from '../../../../shared/components/ep-sla-bar/ep-sla-bar.component';
 import { PageMeta } from '../../../../core/models/api-response.model';
@@ -35,6 +36,16 @@ const PRIORITY_TONE: Record<string, EpBadgeTone> = {
   EMERGENCY: 'danger'
 };
 
+type InboxSectionName = 'emergency' | 'overdue' | 'normal';
+
+interface InboxSection {
+  name: InboxSectionName;
+  icon: string;
+  titleKey: string;
+  countTone: 'danger' | 'warning' | 'neutral';
+  tasks: ApprovalTaskSummary[];
+}
+
 @Component({
   selector: 'ep-approval-inbox',
   standalone: true,
@@ -48,6 +59,7 @@ const PRIORITY_TONE: Record<string, EpBadgeTone> = {
     EpButtonComponent,
     EpFilterBarComponent,
     EpBreadcrumbComponent,
+    EpIconComponent,
     EpStatCardComponent,
     EpSlaBarComponent
   ],
@@ -68,6 +80,7 @@ export class ApprovalInboxComponent implements OnInit {
   readonly activeEntityType = signal<string>('');
   readonly overdueOnly = signal<boolean>(false);
   readonly counts = signal<ApprovalInboxCount>({ total: 0, overdue: 0, emergency: 0 });
+  readonly openSections = signal<Set<InboxSectionName>>(new Set(['emergency', 'overdue', 'normal']));
 
   readonly filter = computed<ApprovalInboxFilter>(() => ({
     page: 1,
@@ -81,6 +94,41 @@ export class ApprovalInboxComponent implements OnInit {
   readonly priorityTone = PRIORITY_TONE;
   readonly priorities = ['NORMAL', 'URGENT', 'EMERGENCY'];
   readonly entityTypes = ['PURCHASE_REQUEST'];
+  readonly emergencyTasks = computed(() =>
+    this.items().filter((task) => task.priority === 'EMERGENCY')
+  );
+  readonly overdueTasks = computed(() =>
+    this.items().filter((task) => task.priority !== 'EMERGENCY' && task.sla.isOverdue)
+  );
+  readonly normalTasks = computed(() =>
+    this.items().filter((task) => task.priority !== 'EMERGENCY' && !task.sla.isOverdue)
+  );
+  readonly inboxSections = computed<InboxSection[]>(() => {
+    const sections: InboxSection[] = [
+      {
+        name: 'emergency',
+        icon: 'shield-alert',
+        titleKey: 'approvals.inbox.section.emergency',
+        countTone: 'danger',
+        tasks: this.emergencyTasks()
+      },
+      {
+        name: 'overdue',
+        icon: 'alarm-clock',
+        titleKey: 'approvals.inbox.section.overdue',
+        countTone: 'warning',
+        tasks: this.overdueTasks()
+      },
+      {
+        name: 'normal',
+        icon: 'inbox',
+        titleKey: 'approvals.inbox.section.normal',
+        countTone: 'neutral',
+        tasks: this.normalTasks()
+      }
+    ];
+    return sections.filter((section) => section.tasks.length > 0);
+  });
 
   // ── Lifecycle ─────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -115,6 +163,35 @@ export class ApprovalInboxComponent implements OnInit {
 
   onRowClick(row: Record<string, unknown>): void {
     this.router.navigate(['/approvals', row['id']]);
+  }
+
+  toggleSection(name: InboxSectionName): void {
+    this.openSections.update((sections) => {
+      const next = new Set(sections);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }
+
+  sectionOpen(name: InboxSectionName): boolean {
+    return this.openSections().has(name);
+  }
+
+  slaRemainingHours(task: ApprovalTaskSummary): number {
+    if (task.sla.remainingHours !== null && task.sla.remainingHours !== undefined) {
+      return task.sla.remainingHours;
+    }
+    const deadline = new Date(task.sla.deadlineAt).getTime();
+    return Math.round((deadline - Date.now()) / (1000 * 60 * 60));
+  }
+
+  slaDisplayHours(task: ApprovalTaskSummary): number {
+    const hours = this.slaRemainingHours(task);
+    return task.sla.isOverdue ? Math.abs(hours) : Math.max(0, hours);
   }
 
   formatDate(iso: string): string {

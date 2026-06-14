@@ -1,0 +1,260 @@
+<section class="invoice-create-page" aria-labelledby="invoice-create-heading">
+  <ep-breadcrumb />
+
+  <div class="invoice-create-page__nav">
+    <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="navigateBack()">
+      {{ 'finance.invoice.create.action.back' | translate }}
+    </ep-button>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'finance.invoice.create.eyebrow' | translate }}</span>
+      <h1 id="invoice-create-heading" class="page-header__title">{{ 'finance.invoice.create.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'finance.invoice.create.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <form class="invoice-create-layout" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="invoice-create-main">
+      <section class="invoice-create-panel" aria-labelledby="invoice-source-heading">
+        <div class="panel-heading">
+          <ep-icon name="file-check-2" />
+          <div>
+            <h2 id="invoice-source-heading">{{ 'finance.invoice.create.section.source' | translate }}</h2>
+            <p>{{ 'finance.invoice.create.section.sourceHint' | translate }}</p>
+          </div>
+        </div>
+
+        @if (isLoadingPo()) {
+          <ep-skeleton [rows]="3" />
+        } @else if (invoiceablePurchaseOrders().length === 0 && !hasPoSelection()) {
+          <ep-empty-state
+            icon="file-warning"
+            [title]="'finance.invoice.create.emptyPo.title' | translate"
+            [message]="'finance.invoice.create.emptyPo.message' | translate" />
+        } @else {
+          <div class="form-grid">
+            <ep-form-field
+              [label]="'finance.invoice.create.field.po' | translate"
+              [error]="fieldError('poId') ? (fieldError('poId')! | translate) : null">
+              <select
+                id="invoice-create-po"
+                formControlName="poId"
+                (change)="onPoChange($any($event.target).value)">
+                <option value="">{{ 'finance.invoice.create.placeholder.po' | translate }}</option>
+                @for (po of invoiceablePurchaseOrders(); track po.id) {
+                  <option [value]="po.id">{{ po.poNumber }} - {{ po.vendor.name }}</option>
+                }
+              </select>
+            </ep-form-field>
+
+            <ep-form-field
+              [label]="'finance.invoice.create.field.invoiceNumber' | translate"
+              [error]="fieldError('invoiceNumber') ? (fieldError('invoiceNumber')! | translate) : null">
+              <input
+                id="invoice-create-number"
+                type="text"
+                formControlName="invoiceNumber"
+                autocomplete="off"
+                [placeholder]="'finance.invoice.create.placeholder.invoiceNumber' | translate">
+            </ep-form-field>
+          </div>
+
+          @if (selectedPo(); as po) {
+            <div class="po-source-card">
+              <div>
+                <span class="po-source-card__label">{{ 'finance.invoice.create.source.poNumber' | translate }}</span>
+                <strong>{{ po.poNumber }}</strong>
+              </div>
+              <div>
+                <span class="po-source-card__label">{{ 'finance.invoice.create.source.vendor' | translate }}</span>
+                <strong>{{ po.vendor.name }}</strong>
+              </div>
+              <div>
+                <span class="po-source-card__label">{{ 'finance.invoice.create.source.status' | translate }}</span>
+                <ep-badge [tone]="poStatusTone[po.status] || 'neutral'" [labelKey]="'finance.po.status.' + po.status" />
+              </div>
+              <div class="po-source-card__amount">
+                <span class="po-source-card__label">{{ 'finance.invoice.create.source.poAmount' | translate }}</span>
+                <ep-amount [value]="{ amount: po.totalAmount, currency: po.currency }" />
+              </div>
+            </div>
+          }
+        }
+      </section>
+
+      <section class="invoice-create-panel" aria-labelledby="invoice-dates-heading">
+        <div class="panel-heading">
+          <ep-icon name="calendar-days" />
+          <div>
+            <h2 id="invoice-dates-heading">{{ 'finance.invoice.create.section.dates' | translate }}</h2>
+            <p>{{ 'finance.invoice.create.section.datesHint' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <ep-form-field
+            [label]="'finance.invoice.create.field.invoiceDate' | translate"
+            [error]="fieldError('invoiceDate') ? (fieldError('invoiceDate')! | translate) : null">
+            <input id="invoice-create-date" type="date" formControlName="invoiceDate">
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'finance.invoice.create.field.dueDate' | translate"
+            [error]="fieldError('dueDate') ? (fieldError('dueDate')! | translate) : null">
+            <input id="invoice-create-due-date" type="date" formControlName="dueDate">
+          </ep-form-field>
+        </div>
+      </section>
+
+      <section class="invoice-create-panel" aria-labelledby="invoice-lines-heading">
+        <div class="panel-heading panel-heading--with-action">
+          <div class="panel-heading__title">
+            <ep-icon name="rows-3" />
+            <div>
+              <h2 id="invoice-lines-heading">{{ 'finance.invoice.create.section.lines' | translate }}</h2>
+              <p>{{ 'finance.invoice.create.section.linesHint' | translate }}</p>
+            </div>
+          </div>
+          <ep-button type="button" variant="ghost" size="sm" icon="rotate-ccw" [disabled]="!hasPoSelection()" (click)="restorePoLines()">
+            {{ 'finance.invoice.create.action.restoreLines' | translate }}
+          </ep-button>
+        </div>
+
+        <div class="line-table-wrapper" formArrayName="lineItems">
+          <table class="line-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'finance.invoice.create.line.description' | translate }}</th>
+                <th scope="col">{{ 'finance.invoice.create.line.quantity' | translate }}</th>
+                <th scope="col">{{ 'finance.invoice.create.line.unitPrice' | translate }}</th>
+                <th scope="col">{{ 'finance.invoice.create.line.taxRate' | translate }}</th>
+                <th scope="col" class="align-right">{{ 'finance.invoice.create.line.total' | translate }}</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of lineItems.controls; track line.controls.poLineItemId.value; let i = $index) {
+                <tr [formGroupName]="i">
+                  <td>
+                    <input
+                      [id]="'invoice-line-description-' + i"
+                      type="text"
+                      formControlName="description"
+                      [attr.aria-label]="'finance.invoice.create.line.description' | translate">
+                    @if (lineError(i, 'description'); as errorKey) {
+                      <span class="field-error">{{ errorKey | translate }}</span>
+                    }
+                  </td>
+                  <td>
+                    <input
+                      [id]="'invoice-line-quantity-' + i"
+                      type="number"
+                      min="0"
+                      step="0.0001"
+                      formControlName="quantity"
+                      [attr.aria-label]="'finance.invoice.create.line.quantity' | translate">
+                    @if (lineError(i, 'quantity'); as errorKey) {
+                      <span class="field-error">{{ errorKey | translate }}</span>
+                    }
+                  </td>
+                  <td>
+                    <input
+                      [id]="'invoice-line-unit-price-' + i"
+                      type="number"
+                      min="0"
+                      step="0.0001"
+                      formControlName="unitPrice"
+                      [attr.aria-label]="'finance.invoice.create.line.unitPrice' | translate">
+                    @if (lineError(i, 'unitPrice'); as errorKey) {
+                      <span class="field-error">{{ errorKey | translate }}</span>
+                    }
+                  </td>
+                  <td>
+                    <input
+                      [id]="'invoice-line-tax-rate-' + i"
+                      type="number"
+                      min="0"
+                      step="0.0001"
+                      formControlName="taxRate"
+                      [attr.aria-label]="'finance.invoice.create.line.taxRate' | translate">
+                  </td>
+                  <td class="align-right">
+                    <ep-amount [value]="lineEstimatedTotal(i)" [currency]="selectedPo()?.currency ?? 'VND'" />
+                  </td>
+                  <td class="align-right">
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [disabled]="lineItems.length <= 1"
+                      [attr.aria-label]="'finance.invoice.create.action.removeLine' | translate"
+                      (click)="removeLine(i)">
+                      <ep-icon name="trash-2" [size]="16" />
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="invoice-create-summary" aria-labelledby="invoice-create-summary-heading">
+      <div class="panel-heading">
+        <ep-icon name="calculator" />
+        <div>
+          <h2 id="invoice-create-summary-heading">{{ 'finance.invoice.create.summary.title' | translate }}</h2>
+          <p>{{ 'finance.invoice.create.summary.subtitle' | translate }}</p>
+        </div>
+      </div>
+
+      <dl class="summary-list">
+        <div>
+          <dt>{{ 'finance.invoice.create.summary.po' | translate }}</dt>
+          <dd>{{ selectedPoNumber() }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'finance.invoice.create.summary.vendor' | translate }}</dt>
+          <dd>{{ selectedVendorName() }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'finance.invoice.create.summary.vendorId' | translate }}</dt>
+          <dd class="mono">{{ selectedVendorId() }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'finance.invoice.create.summary.lines' | translate }}</dt>
+          <dd>{{ lineCount() }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'finance.invoice.create.summary.subtotal' | translate }}</dt>
+          <dd><ep-amount [value]="estimatedSubtotal()" [currency]="selectedPo()?.currency ?? 'VND'" /></dd>
+        </div>
+        <div>
+          <dt>{{ 'finance.invoice.create.summary.tax' | translate }}</dt>
+          <dd><ep-amount [value]="estimatedTax()" [currency]="selectedPo()?.currency ?? 'VND'" /></dd>
+        </div>
+        <div class="summary-list__total">
+          <dt>{{ 'finance.invoice.create.summary.total' | translate }}</dt>
+          <dd><ep-amount [value]="estimatedTotal()" [currency]="selectedPo()?.currency ?? 'VND'" /></dd>
+        </div>
+      </dl>
+
+      <div class="invoice-create-actions">
+        <ep-button id="btn-cancel-create-invoice" type="button" variant="ghost" icon="x" (click)="navigateBack()">
+          {{ 'finance.invoice.create.action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-submit-create-invoice"
+          type="submit"
+          variant="primary"
+          icon="file-plus-2"
+          [loading]="isSubmitting()"
+          [disabled]="isSubmitting()">
+          {{ 'finance.invoice.create.action.submit' | translate }}
+        </ep-button>
+      </div>
+    </aside>
+  </form>
+</section>

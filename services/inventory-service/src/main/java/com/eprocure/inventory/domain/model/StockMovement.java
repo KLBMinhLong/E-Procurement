@@ -85,6 +85,31 @@ public record StockMovement(
                 notes);
     }
 
+    public static StockMovement adjustment(
+            String itemCode,
+            UUID warehouseId,
+            BigDecimal delta,
+            String unit,
+            BigDecimal balanceAfter,
+            UUID adjustmentRequestId,
+            UUID actorId,
+            Instant performedAt,
+            String notes) {
+        return new StockMovement(
+                UUID.randomUUID(),
+                itemCode,
+                warehouseId,
+                StockMovementType.ADJUSTMENT,
+                delta,
+                unit,
+                balanceAfter,
+                "STOCK_ADJUSTMENT",
+                adjustmentRequestId,
+                actorId,
+                performedAt,
+                notes);
+    }
+
     private static String requireText(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " must not be blank");

@@ -1,1 +1,7 @@
-<span class="ep-amount">{{ formattedValue() }}</span>
+<span class="ep-amount">
+  @if (formattedNumber() !== '--') {
+    {{ formattedNumber() }} <span class="ep-amount__currency">{{ resolvedCurrency() }}</span>
+  } @else {
+    --
+  }
+</span>

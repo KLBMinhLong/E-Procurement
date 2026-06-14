@@ -99,6 +99,7 @@ public class PurchaseOrderController {
     public ResponseEntity<ApiResponse<List<PurchaseOrderResponse>>> list(
             @RequestParam(value = "status", required = false) PurchaseOrderStatus status,
             @RequestParam(value = "vendor_id", required = false) UUID vendorId,
+            @RequestParam(value = "pr_id", required = false) UUID prId,
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(value = "page", defaultValue = "1") int page,
@@ -113,6 +114,7 @@ public class PurchaseOrderController {
                         principal,
                         status,
                         vendorId,
+                        prId,
                         fromDate,
                         toDate,
                         page,

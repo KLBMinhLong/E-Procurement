@@ -1,5 +1,6 @@
 package com.eprocure.inventory.infrastructure.persistence.repository;
 
+import com.eprocure.inventory.domain.model.StockAdjustmentRequest;
 import com.eprocure.inventory.domain.model.StockEntry;
 import com.eprocure.inventory.domain.model.StockIssueOutRequest;
 import com.eprocure.inventory.domain.model.StockMovement;
@@ -7,6 +8,7 @@ import com.eprocure.inventory.domain.model.StockMovementHistory;
 import com.eprocure.inventory.domain.repository.StockEntryFilter;
 import com.eprocure.inventory.domain.repository.StockMovementFilter;
 import com.eprocure.inventory.domain.repository.StockRepository;
+import com.eprocure.inventory.infrastructure.persistence.entity.StockAdjustmentRequestDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockIssueOutRequestDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockMovementDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.mapper.StockMapper;
@@ -78,6 +80,23 @@ public class StockRepositoryImpl implements StockRepository {
     }
 
     @Override
+    public Optional<StockAdjustmentRequest> findAdjustmentRequestByIdempotencyKey(UUID idempotencyKey) {
+        return stockMapper.findAdjustmentRequestByIdempotencyKey(idempotencyKey)
+                .map(entity -> domainObjectMapper.convertValue(entity, StockAdjustmentRequest.class));
+    }
+
+    @Override
+    public void insertAdjustmentRequest(StockAdjustmentRequest adjustmentRequest) {
+        stockMapper.insertAdjustmentRequest(
+                domainObjectMapper.convertValue(adjustmentRequest, StockAdjustmentRequestDbEntity.class));
+    }
+
+    @Override
+    public Optional<BigDecimal> findStockQuantity(String itemCode, UUID warehouseId, String unit) {
+        return stockMapper.findStockQuantity(itemCode, warehouseId, unit);
+    }
+
+    @Override
     public Optional<BigDecimal> issueStock(
             String itemCode,
             UUID warehouseId,
@@ -86,6 +105,17 @@ public class StockRepositoryImpl implements StockRepository {
             UUID actorId,
             Instant occurredAt) {
         return stockMapper.issueStock(itemCode, warehouseId, quantity, unit, actorId, occurredAt);
+    }
+
+    @Override
+    public BigDecimal adjustStock(
+            String itemCode,
+            UUID warehouseId,
+            BigDecimal newQuantity,
+            String unit,
+            UUID actorId,
+            Instant occurredAt) {
+        return stockMapper.adjustStock(itemCode, warehouseId, newQuantity, unit, actorId, occurredAt);
     }
 
     @Override

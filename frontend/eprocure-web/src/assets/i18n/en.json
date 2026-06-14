@@ -35,6 +35,21 @@
       "IN_PROGRESS": "In progress",
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
+    },
+    "steps": {
+      "emptyTitle": "No approval steps yet",
+      "emptyMessage": "The approval workflow has not started or has not returned step data.",
+      "waitingAssign": "Waiting assignment",
+      "assignedAt": "Assigned at",
+      "deadline": "Deadline",
+      "actedAt": "Acted at",
+      "comment": "Comment",
+      "noComment": "No comment",
+      "forwarded": "Forwarded",
+      "skipped": "Skipped",
+      "escalated": "Escalated",
+      "stepNumber": "Step {{step}}",
+      "stepAriaLabel": "Open details for step {{step}}: {{role}}"
     }
   },
   "auth": {
@@ -94,44 +109,300 @@
     "logout": "Sign out"
   },
   "dashboard": {
-    "badge": {
-      "live": "Live data"
+    "eyebrow": "Analytics center",
+    "title": "Dashboard & report exports",
+    "subtitle": "Monitor procurement KPIs, budgets, PO/GR/Invoice flow, and generate PDF/Excel reports from projection data.",
+    "loading": "Loading dashboard",
+    "action": {
+      "apply": "Apply",
+      "refresh": "Refresh",
+      "exportCycleTime": "Export cycle time",
+      "exportSla": "Export SLA"
     },
-    "eyebrow": "Command center",
-    "panel": {
-      "monthSpend": "Month spend",
-      "pipeline": "Purchase request pipeline",
-      "sla": "Approval SLA"
+    "filter": {
+      "fiscalYear": "Fiscal year",
+      "quarter": "Quarter",
+      "allQuarters": "All quarters",
+      "quarterValue": "Q{{quarter}}",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "department": "Department",
+      "departmentId": "Department UUID",
+      "departmentPlaceholder": "Enter department UUID",
+      "allDepartments": "All departments",
+      "departmentLoading": "Loading departments...",
+      "departmentLoadFailed": "Could not load departments. You can enter a department UUID manually."
     },
-    "sla": {
-      "finance": "Finance approval",
-      "procurement": "Procurement review"
+    "data": {
+      "label": "Dashboard data status",
+      "lastUpdated": "Updated at {{time}}",
+      "cachedAt": "Cached at {{time}}",
+      "notLoaded": "Data not loaded yet",
+      "stale": "Data may be stale"
     },
-    "stat": {
-      "completed": {
-        "hint": "Last 30 days",
-        "title": "On-time completion"
-      },
-      "pending": {
-        "hint": "Needs action today",
-        "title": "Pending"
-      },
-      "sla": {
-        "hint": "Near breach",
-        "title": "SLA risk"
-      },
-      "spend": {
-        "hint": "VND this month",
-        "title": "Total spend"
+    "tabs": {
+      "label": "Dashboard group",
+      "executive": "Executive",
+      "manager": "Manager",
+      "purchasing": "Purchasing",
+      "requester": "Personal",
+      "reports": "Reports"
+    },
+    "quick": {
+      "label": "Quick actions",
+      "subtitle": "Open frequent workflows based on the current account permissions.",
+      "createPr": "Create request",
+      "createPrHint": "Start a PR from catalog",
+      "approvalInbox": "Approval inbox",
+      "approvalInboxHint": "Process approval tasks",
+      "createPo": "Create PO",
+      "createPoHint": "Issue a PO from approved demand",
+      "viewBudgets": "View budgets",
+      "viewBudgetsHint": "Check utilization",
+      "viewRfqs": "View RFQs",
+      "viewRfqsHint": "Track quotations",
+      "createGr": "Create receipt",
+      "createGrHint": "Record received goods",
+      "createInvoice": "Create invoice",
+      "createInvoiceHint": "Prepare 3-way matching",
+      "reports": "Export reports",
+      "reportsHint": "Open preset for this tab"
+    },
+    "trend": {
+      "UP": "up",
+      "DOWN": "down",
+      "FLAT": "flat"
+    },
+    "chart": {
+      "spent": "Spent",
+      "budget": "Budget",
+      "late": "Late",
+      "avgHours": "Average hours",
+      "categoryAria": "Doughnut chart for category spend",
+      "monthlyAria": "Grouped bar chart comparing monthly spend and budget",
+      "slaAria": "Gauge chart for on-time approval rate",
+      "cycleTrendAria": "Line chart for weekly average cycle time",
+      "priorityCycleAria": "Bar chart for average cycle time by priority",
+      "slaRoleAria": "Bar chart for SLA compliance by approval role",
+      "requesterStatusAria": "Doughnut chart for personal PR status distribution",
+      "prCountAria": "Monthly PR count"
+    },
+    "empty": {
+      "title": "No data",
+      "message": "Projection data may not be seeded yet or the current filters returned no results.",
+      "notAvailable": "Not available",
+      "noPermissionTitle": "No dashboard available",
+      "noPermissionMessage": "The current account does not have permission to view analytics dashboards."
+    },
+    "kpi": {
+      "title": "Operational KPIs",
+      "subtitle": "PR-to-PO cycle time and approval SLA compliance for the selected date range.",
+      "trend": "{{direction}} {{percent}}% · {{label}}",
+      "cycleTime": "Cycle time",
+      "cycleTimeHint": "Track PR-to-PO processing time against the operational target.",
+      "cycleTrend": "Weekly trend",
+      "cycleTrendHint": "Average cycle time across weeks in the current filter.",
+      "priorityCycle": "By priority",
+      "priorityCycleHint": "Compare average processing hours across priority levels.",
+      "slaCompliance": "SLA compliance",
+      "slaComplianceHint": "On-time rate by approval role and approvers with overdue work.",
+      "overallCompliance": "Overall compliance",
+      "roleCompliance": "Compliance by role",
+      "roleComplianceHint": "On-time rate and overdue count for each approval role.",
+      "worstApprovers": "Approvers with most SLA delays",
+      "worstApproversHint": "Use this list to follow up and rebalance approval workload.",
+      "avg": "Average",
+      "median": "Median",
+      "p95": "P95",
+      "target": "Target",
+      "role": "Role",
+      "approver": "Approver",
+      "compliance": "Compliance",
+      "overdue": "Overdue",
+      "status": {
+        "GOOD": "Good",
+        "WARNING": "Warning",
+        "CRITICAL": "Critical",
+        "UNKNOWN": "Unclassified"
       }
     },
-    "table": {
-      "amount": "Amount",
-      "code": "PR code",
-      "owner": "Owner",
-      "status": "Status"
+    "budgetHealth": {
+      "good": "Healthy budget",
+      "watch": "Needs monitoring",
+      "risk": "Budget risk"
     },
-    "title": "Procurement overview"
+    "executive": {
+      "departmentSpend": "Department spend",
+      "departmentSpendHint": "Compare actual spend with budget and utilization status.",
+      "categorySpend": "Category spend",
+      "categorySpendHint": "Top spending categories for the period.",
+      "monthlyTrend": "Monthly trend",
+      "monthlyTrendHint": "Accent column is spend; info column is budget.",
+      "approvalSla": "Approval SLA",
+      "approvalSlaHint": "On-time rate, average cycle time, and overdue count.",
+      "topVendors": "Top vendors",
+      "topVendorsHint": "Ranked by total spend, orders, and average score.",
+      "prCount": "PR",
+      "onTime": "on time",
+      "avgCycle": "Average cycle",
+      "overdue": "Overdue",
+      "orders": "orders"
+    },
+    "manager": {
+      "budget": "Department budget",
+      "budgetHint": "Allocated, committed, spent, and available values for the current department.",
+      "allocated": "Allocated",
+      "committed": "Committed",
+      "spent": "Spent",
+      "available": "Available",
+      "forecastRunOutDate": "Forecast run-out date: {{date}}",
+      "openBudgets": "Open budgets",
+      "pendingApprovals": "Pending approvals",
+      "pendingApprovalsHint": "Workload requiring action and SLA risk.",
+      "openApprovals": "Open approval inbox",
+      "pending": "Pending",
+      "overdue": "Overdue",
+      "urgent": "Urgent",
+      "recentPrs": "Recent PRs",
+      "recentPrsHint": "Latest requests in the department scope.",
+      "recentPrsRouteNote": "Dashboard rows currently expose PR number only; open the PR list to enter detail by UUID.",
+      "openPrList": "Open PR list",
+      "slaWarnings": "SLA warnings",
+      "slaWarningsHint": "Tasks near or past due.",
+      "slaEmpty": "No tasks are near or past due in the current scope.",
+      "slaOverdue": "Overdue",
+      "slaNear": "Near due",
+      "reviewSlaTasks": "Review SLA tasks",
+      "col": {
+        "pr": "PR",
+        "title": "Title",
+        "requester": "Requester",
+        "status": "Status",
+        "amount": "Amount"
+      }
+    },
+    "purchasing": {
+      "poPipeline": "PO pipeline",
+      "poPipelineHint": "PO distribution by issue and receiving status.",
+      "draft": "Draft",
+      "pendingApproval": "Pending approval",
+      "sentToVendor": "Sent to vendor",
+      "partiallyReceived": "Partially received",
+      "openPurchaseOrders": "Open purchase orders",
+      "workload": "Purchasing workload",
+      "workloadHint": "RFQ, GR, and invoices requiring action.",
+      "openRfqs": "Open RFQs",
+      "grPending": "Pending GR",
+      "invoicesPendingMatch": "Invoices pending match",
+      "vendorPerformance": "Vendor performance",
+      "vendorPerformanceHint": "On-time delivery, quality score, and pending orders.",
+      "col": {
+        "vendor": "Vendor",
+        "onTime": "On time",
+        "quality": "Quality",
+        "pendingOrders": "Pending orders"
+      }
+    },
+    "requester": {
+      "myPrStats": "My PRs",
+      "myPrStatsHint": "Status distribution for your purchase requests.",
+      "departmentBudget": "Department budget",
+      "departmentBudgetHint": "Available department budget balance.",
+      "recentPrs": "Recent requests",
+      "recentPrsHint": "Latest PRs for the current account.",
+      "totalPrs": "{{count}} PRs in the current filter",
+      "createPr": "Create PR",
+      "openPrList": "Open PR list",
+      "recentPrsRouteNote": "Dashboard rows currently expose PR number only; open the PR list to enter detail by UUID.",
+      "col": {
+        "pr": "PR",
+        "title": "Title",
+        "approver": "Current approver",
+        "status": "Status",
+        "amount": "Amount"
+      }
+    },
+    "reports": {
+      "title": "Report export",
+      "subtitle": "Create async report jobs, check status, and download files when completed.",
+      "field": {
+        "reportType": "Report type",
+        "format": "Format",
+        "vendorId": "Vendor UUID",
+        "categoryCode": "Category code"
+      },
+      "placeholder": {
+        "vendorId": "Filter by vendor if needed",
+        "categoryCode": "Example: IT, OFFICE"
+      },
+      "action": {
+        "export": "Create report",
+        "refreshJob": "Check",
+        "download": "Download"
+      },
+      "presetsLabel": "Report presets",
+      "polling": "Auto-updating {{count}} jobs",
+      "noActiveJobs": "No jobs are processing.",
+      "preset": {
+        "executive": "Executive",
+        "manager": "Manager",
+        "purchasing": "Purchasing",
+        "requester": "Personal"
+      },
+      "empty": {
+        "title": "No report jobs",
+        "message": "Create a new report to track processing status here."
+      },
+      "toast": {
+        "created": "Report export job created.",
+        "downloadFailed": "Could not download report file."
+      },
+      "col": {
+        "type": "Type",
+        "format": "Format",
+        "status": "Status",
+        "createdAt": "Created at",
+        "expiresAt": "Expires at",
+        "actions": "Actions"
+      },
+      "format": {
+        "PDF": "PDF",
+        "EXCEL": "Excel"
+      },
+      "status": {
+        "QUEUED": "Queued",
+        "PROCESSING": "Processing",
+        "COMPLETED": "Completed",
+        "FAILED": "Failed"
+      },
+      "type": {
+        "SPENDING_BY_DEPARTMENT": "Spending by department",
+        "BUDGET_VS_PLAN": "Budget vs plan",
+        "VENDOR_SCORECARD": "Vendor scorecard",
+        "CYCLE_TIME_ANALYSIS": "Cycle time analysis",
+        "SLA_COMPLIANCE": "SLA compliance",
+        "THREE_WAY_MATCH": "Three-way match",
+        "INVENTORY_PENDING": "Inventory pending",
+        "RFQ_SAVINGS": "RFQ savings",
+        "MAVERICK_SPENDING": "Maverick spending",
+        "AUDIT_TRAIL": "Audit trail",
+        "PR_SUMMARY": "PR summary",
+        "PO_SUMMARY": "PO summary"
+      }
+    }
+  },
+  "analytics": {
+    "kpi": {
+      "totalSpendYtd": "Total spend YTD",
+      "approvedPrCount": "Approved PRs",
+      "rfqSavings": "RFQ savings",
+      "submittedPrCount": "Submitted PRs",
+      "submittedPrTotal": "Submitted PR value",
+      "slaBreachCount": "SLA breaches",
+      "issuedPoCount": "Issued POs",
+      "issuedPoTotal": "Issued PO value",
+      "matchedInvoiceCount": "Matched invoices"
+    }
   },
   "error": {
     "backDashboard": "Back to overview",
@@ -171,7 +442,16 @@
     "primary": "Primary navigation",
     "procurement": "Procurement",
     "purchaseRequest": "Purchase Requests",
-    "purchaseOrders": "Purchase Orders"
+    "purchaseOrders": "Purchase Orders",
+    "budgets": "Budgets",
+    "invoices": "Invoices & Payments",
+    "vendors": "Vendors",
+    "rfq": "RFQs",
+    "inventory": "Inventory",
+    "inventoryStock": "Stock Dashboard",
+    "inventoryMovements": "Stock Movements",
+    "inventoryIssueOut": "Issue Out",
+    "inventoryCatalog": "Inventory Catalog"
   },
   "notification": {
     "empty": "No notifications",
@@ -203,13 +483,43 @@
     "profile": "Personal Profile",
     "uiShowcase": "UI library",
     "finance": {
+      "self": "Finance",
       "purchaseOrders": "Purchase Orders",
       "createPo": "Create Purchase Order",
-      "poDetail": "Purchase Order Detail"
+      "poDetail": "Purchase Order Detail",
+      "budgets": "Budgets",
+      "budgetDetail": "Budget Detail",
+      "invoices": "Invoices & Payments",
+      "createInvoice": "Create Invoice",
+      "invoiceDetail": "Invoice Detail"
     },
     "pr": {
       "create": "Create Request",
       "detail": "Request Details"
+    },
+    "vendor": {
+      "self": "Vendors",
+      "list": "Vendor Directory",
+      "create": "Register Vendor",
+      "detail": "Vendor Details"
+    },
+    "rfq": {
+      "list": "RFQ List",
+      "create": "Create RFQ",
+      "detail": "RFQ Details"
+    },
+    "inventory": {
+      "self": "Inventory",
+      "gr": {
+        "list": "Goods Receipts",
+        "create": "Create Receipt",
+        "detail": "Receipt Details"
+      },
+      "stock": "Stock Dashboard",
+      "movements": "Stock Movements",
+      "issueOut": "Issue Out",
+      "catalog": "Item Catalog",
+      "catalogDetail": "Catalog Detail"
     }
   },
   "shared": {
@@ -236,10 +546,18 @@
     "table": {
       "next": "Next",
       "pageSummary": "Page {{page}} / {{total}}",
-      "previous": "Previous"
+      "previous": "Previous",
+      "actions": "Actions"
     },
     "toast": {
       "dismiss": "Dismiss notification"
+    },
+    "action": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "approve": "Approve",
+      "reject": "Reject"
     }
   },
   "showcase": {
@@ -286,6 +604,7 @@
   "validation": {
     "required": "This field is required",
     "minChars": "minimum characters",
+    "min": "This value is below the allowed minimum",
     "minLength": "This field is below the minimum length",
     "maxLength": "This field exceeds the allowed length"
   },
@@ -382,16 +701,25 @@
       },
       "summary": {
         "lineItems": "Total Line Items:",
-        "totalAmount": "Estimated Total:"
+        "totalAmount": "Estimated Total:",
+        "validationTitle": "Request cannot be created yet",
+        "validationHint": "Check required fields and line-item values before submitting."
       },
       "catalog": {
         "title": "Item Catalog",
         "searchPlaceholder": "Search item name or code...",
         "noResults": "No items match your search."
       },
+      "autocomplete": {
+        "label": "Catalog suggestions",
+        "hint": "Type at least 2 characters to search catalog inline.",
+        "loading": "Searching...",
+        "noResults": "No matching suggestions."
+      },
       "toast": {
         "createSuccess": "Purchase request created.",
-        "updateSuccess": "Purchase request updated."
+        "updateSuccess": "Purchase request updated.",
+        "validationFailed": "Check required fields before creating the request."
       }
     },
     "detail": {
@@ -400,7 +728,8 @@
       "action": {
         "submit": "Submit for Approval",
         "confirmCancel": "Confirm Cancel",
-        "createPo": "Create PO"
+        "createPo": "Create PO",
+        "createRfq": "Create RFQ"
       },
       "label": {
         "justification": "Justification",
@@ -425,9 +754,24 @@
         "attachments": "Attachments",
         "budget": "Budget Check",
         "inventory": "Related Inventory",
-        "approval": "Approval Workflow"
+        "approval": "Approval Workflow",
+        "traceability": "Linked documents"
+      },
+      "trace": {
+        "kicker": "Traceability",
+        "rfq": "Related RFQs",
+        "po": "Related purchase orders",
+        "none": "No RFQ or PO has been created from this PR yet.",
+        "noRfq": "No related RFQ yet.",
+        "noPo": "No related PO yet.",
+        "rfqCount": "{{count}} RFQ",
+        "poCount": "{{count}} PO",
+        "conversion": "PR sync",
+        "openRfq": "Open RFQ {{number}}",
+        "openPo": "Open PO {{number}}"
       },
       "col": {
+        "lineNumber": "#",
         "item": "Item",
         "category": "Category",
         "quantity": "Qty",
@@ -445,9 +789,10 @@
         "empty": "No replacement stock is available for this request."
       },
       "approval": {
-        "none": "No approval workflow has been generated for this request.",
+        "none": "The approval workflow is created after the request is submitted successfully. If it was just submitted, wait for approval-service to process the event and refresh.",
         "assignedAt": "Assigned:",
-        "deadline": "Due:"
+        "deadline": "Due:",
+        "viewInbox": "View approval inbox"
       },
       "step": {
         "count": "{{count}} rows"
@@ -463,6 +808,54 @@
           "reason": "Reason for cancellation",
           "reasonPlaceholder": "Enter reason for cancellation (required)..."
         }
+      }
+    },
+    "lifecycle": {
+      "title": "Purchase request lifecycle",
+      "approvalStatus": "Approval status",
+      "emptyTitle": "No PR status available",
+      "emptyMessage": "The request lifecycle appears after the PR data is loaded.",
+      "state": {
+        "complete": "Complete",
+        "current": "Current",
+        "upcoming": "Upcoming",
+        "blocked": "Paused"
+      },
+      "DRAFT": {
+        "label": "Draft",
+        "description": "The requester is preparing request details and line items."
+      },
+      "SUBMITTED": {
+        "label": "Submitted",
+        "description": "The request has been submitted for business processing."
+      },
+      "PENDING_APPROVAL": {
+        "label": "Pending approval",
+        "description": "The approval workflow is waiting for approver action."
+      },
+      "APPROVED": {
+        "label": "Approved",
+        "description": "The request has completed the required approval steps."
+      },
+      "CONVERTED_TO_PO": {
+        "label": "Converted to PO",
+        "description": "The request has been converted into a purchase order."
+      },
+      "CLOSED": {
+        "label": "Closed",
+        "description": "The PR lifecycle is complete after downstream processing."
+      },
+      "CHANGES_REQUESTED": {
+        "label": "Changes requested",
+        "description": "The request returned to the requester for revision before continuing."
+      },
+      "REJECTED": {
+        "label": "Rejected",
+        "description": "The request was rejected and will not continue in the current workflow."
+      },
+      "CANCELLED": {
+        "label": "Cancelled",
+        "description": "The request was cancelled and no longer continues processing."
       }
     },
     "status": {
@@ -490,6 +883,161 @@
     }
   },
   "finance": {
+    "budget": {
+      "list": {
+        "eyebrow": "Finance",
+        "title": "Budget Management",
+        "subtitle": "Track allocated, committed, spent, and available budget by department, fiscal year, quarter, and GL account.",
+        "summaryLabel": "Budget metrics for the current filter",
+        "totalItems": "budgets",
+        "action": {
+          "refresh": "Refresh"
+        },
+        "filter": {
+          "fiscalYear": "Fiscal year",
+          "quarter": "Quarter",
+          "allQuarters": "All quarters",
+          "department": "Department",
+          "departmentPlaceholder": "Department ID",
+          "glAccount": "GL account",
+          "glAccountPlaceholder": "Ex: 6421",
+          "status": "Status",
+          "allStatus": "All statuses",
+          "clear": "Clear filters"
+        },
+        "period": {
+          "allYear": "Full year",
+          "quarter": "Q{{quarter}}"
+        },
+        "empty": {
+          "title": "No matching budgets",
+          "message": "Adjust fiscal year, department, status, or GL account to find the budgets you need to monitor."
+        }
+      },
+      "detail": {
+        "eyebrow": "Budget dashboard",
+        "title": "Budget Detail",
+        "subtitle": "Read-only dashboard data and override/transfer actions will be implemented in the next slices.",
+        "subtitleData": "Fiscal year {{fiscalYear}} · {{period}}",
+        "action": {
+          "back": "Back to budget list",
+          "refresh": "Refresh",
+          "override": "Approve override",
+          "transfer": "Transfer budget",
+          "confirmOverride": "Confirm override approval",
+          "confirmTransfer": "Confirm transfer"
+        },
+        "actionHint": {
+          "activeOnly": "Only active budgets can be overridden or transferred."
+        },
+        "period": {
+          "allYear": "Full year",
+          "quarter": "Q{{quarter}}"
+        },
+        "metric": {
+          "allocated": "Allocated",
+          "committed": "Committed",
+          "spent": "Spent",
+          "available": "Available"
+        },
+        "section": {
+          "utilization": "Budget utilization",
+          "info": "Budget information",
+          "waterfall": "Waterfall allocated committed spent available"
+        },
+        "utilization": {
+          "availablePercent": "available",
+          "usedPercent": "{{percent}}% used by committed + spent"
+        },
+        "field": {
+          "burnRate": "Burn rate",
+          "perMonth": "per month",
+          "forecast": "Forecast exhausted at",
+          "departmentId": "Department ID",
+          "glAccountCode": "GL account",
+          "fiscalYear": "Fiscal year",
+          "quarter": "Budget period",
+          "status": "Status",
+          "health": "Health",
+          "prId": "Purchase request ID",
+          "overrideAmount": "Override amount",
+          "currency": "Currency",
+          "overrideReason": "Override reason",
+          "targetBudgetId": "Target budget",
+          "transferAmount": "Transfer amount",
+          "transferReason": "Transfer reason"
+        },
+        "forecast": {
+          "soon": "Within 30 days",
+          "normal": "Monitor"
+        },
+        "modal": {
+          "overrideTitle": "Approve budget override",
+          "overrideMessage": "Approve only when the PR has clear business justification and the over-budget amount has been checked against finance policy.",
+          "transferTitle": "Transfer budget",
+          "transferMessage": "Choose a target budget in the same period or enter the target budget UUID when it is not listed.",
+          "loadingTargets": "Loading active budgets in the same period for suggestions.",
+          "noTargets": "No matching target budgets were found in suggestions. You can still enter the target budget UUID manually."
+        },
+        "placeholder": {
+          "prId": "UUID of the over-budget PR",
+          "amount": "0.0000",
+          "overrideReason": "Enter at least 50 characters",
+          "targetBudgetId": "Target budget UUID",
+          "transferReason": "Enter at least 20 characters"
+        },
+        "validation": {
+          "required": "This field is required.",
+          "uuid": "Value must be a valid UUID.",
+          "format": "Invalid format.",
+          "amountPositive": "Amount must be greater than 0.",
+          "amountExceedsAvailable": "Transfer amount cannot exceed available budget.",
+          "targetDifferent": "Target budget must be different from source budget.",
+          "overrideReasonMinLength": "Override reason must be at least 50 characters.",
+          "transferReasonMinLength": "Transfer reason must be at least 20 characters.",
+          "maxLength": "Content is too long."
+        },
+        "toast": {
+          "overrideApproved": "Budget override approved.",
+          "transferCompleted": "Budget transfer completed."
+        },
+        "empty": {
+          "title": "Budget not found",
+          "message": "The budget does not exist, you do not have access, or the backend has not returned dashboard data."
+        }
+      },
+      "status": {
+        "PLANNING": "Planning",
+        "SUBMITTED": "Submitted",
+        "APPROVED": "Approved",
+        "ACTIVE": "Active",
+        "CLOSED": "Closed"
+      },
+      "health": {
+        "HEALTHY": "Healthy",
+        "WARNING": "Warning",
+        "EXCEEDED": "Exceeded"
+      },
+      "col": {
+        "department": "Department",
+        "glAccount": "GL account",
+        "period": "Year / Quarter",
+        "allocated": "Allocated",
+        "committed": "Committed",
+        "spent": "Spent",
+        "available": "Available",
+        "utilization": "Utilization",
+        "status": "Status",
+        "forecast": "Forecast"
+      },
+      "kpi": {
+        "totalBudgets": "Total budgets",
+        "totalAllocated": "Total allocated",
+        "totalAvailable": "Total available",
+        "warningCount": "Warning budgets",
+        "exceededCount": "Exceeded budgets"
+      }
+    },
     "po": {
       "status": {
         "DRAFT": "Draft",
@@ -601,7 +1149,20 @@
         "subtitle": "Source PR {{prNumber}} · Vendor {{vendor}}",
         "action": {
           "back": "Back to PO list",
-          "refresh": "Reload"
+          "refresh": "Reload",
+          "editDraft": "Edit draft",
+          "saveDraft": "Save draft",
+          "send": "Send vendor",
+          "confirmSend": "Confirm send",
+          "cancelPo": "Cancel PO",
+          "confirmCancel": "Confirm cancel",
+          "createInvoice": "Create invoice"
+        },
+        "actionHint": {
+          "noData": "PO data is not loaded.",
+          "notSendableStatus": "Only draft or approved POs can be sent.",
+          "waitingPrCallback": "PR conversion must be delivered before vendor dispatch.",
+          "missingVendorEmail": "This vendor has no email for PO delivery."
         },
         "stat": {
           "totalAmount": "Total amount",
@@ -619,8 +1180,35 @@
           "vendorEmail": "Email",
           "vendorTaxCode": "Tax code",
           "deliveryAddress": "Delivery address",
+          "deliveryDeadline": "Delivery deadline",
           "paymentTerms": "Payment terms",
-          "officer": "Purchasing officer"
+          "officer": "Purchasing officer",
+          "additionalNote": "Vendor note",
+          "cancelReason": "Cancellation reason"
+        },
+        "placeholder": {
+          "deliveryAddress": "Enter the full receiving address",
+          "paymentTerms": "E.g. NET30",
+          "additionalNote": "Optional note to include in the vendor email",
+          "cancelReason": "Enter why this PO is being cancelled, minimum 10 characters"
+        },
+        "modal": {
+          "editTitle": "Update draft PO",
+          "editMessage": "Delivery address, deadline, and payment terms can be changed only while the PO is still in draft.",
+          "sendTitle": "Send PO to vendor",
+          "sendMessage": "Send this PO to {{vendor}} by email and publish the receiving event for warehouse operations.",
+          "cancelTitle": "Cancel purchase order",
+          "cancelMessage": "The PO will move to cancelled status. Use this only before receiving or invoice processing starts."
+        },
+        "validation": {
+          "required": "This field is required",
+          "maxLength": "The value is too long",
+          "cancelMinLength": "Cancellation reason must be at least 10 characters"
+        },
+        "toast": {
+          "updated": "Draft PO updated.",
+          "sent": "PO sent to vendor.",
+          "cancelled": "PO cancelled."
         },
         "line": {
           "lineNumber": "Line",
@@ -633,6 +1221,257 @@
         "empty": {
           "title": "PO not found",
           "message": "The PO may have been removed or you may not have access."
+        }
+      }
+    },
+    "invoice": {
+      "status": {
+        "PENDING_MATCH": "Pending match",
+        "MATCHED": "Matched",
+        "MISMATCHED": "Mismatched",
+        "APPROVED": "Approved",
+        "DISPUTED": "Disputed",
+        "PAID": "Paid",
+        "CANCELLED": "Cancelled"
+      },
+      "paymentStatus": {
+        "CONFIRMED": "Confirmed",
+        "VOIDED": "Voided"
+      },
+      "match": {
+        "none": "Not matched",
+        "requiresReview": "The match result needs manual review before approval.",
+        "noReview": "The invoice is matched and can move to approval.",
+        "empty": "PO/GR matching has not run for this invoice.",
+        "poTitle": "Purchase order (PO)",
+        "grTitle": "Goods receipt (GR)",
+        "qtyVariance": "Quantity variance",
+        "priceVariance": "Value variance",
+        "overCharged": "Invoice is higher than PO",
+        "underCharged": "Invoice is lower than PO",
+        "exact": "Exact match",
+        "unit": "units",
+        "threeWayTitle": "3-way match: PO / GR / Invoice",
+        "noCompletedGr": "No completed goods receipt exists for this PO; GR columns show available data only.",
+        "matchDataUnavailable": "Could not load supplementary PO/GR data, showing original invoice lines.",
+        "invoiceLinesFallback": "This invoice has no match result yet, showing original invoice lines.",
+        "col": {
+          "lineItem": "Line item",
+          "poGroup": "PO",
+          "grGroup": "Received GR",
+          "invoiceGroup": "Invoice",
+          "qty": "Quantity",
+          "unitPrice": "Unit price",
+          "receivedQty": "Received",
+          "rejectedQty": "Rejected",
+          "lineTotal": "Line total",
+          "matchResult": "Result"
+        },
+        "status": {
+          "MATCHED": "Matched",
+          "MISMATCHED": "Mismatched",
+          "PARTIAL": "Partial"
+        },
+        "po": {
+          "MATCHED": "PO matched",
+          "MISMATCHED": "PO mismatched",
+          "PARTIAL": "PO partial"
+        },
+        "gr": {
+          "MATCHED": "GR matched",
+          "MISMATCHED": "GR mismatched",
+          "PARTIAL": "GR partial"
+        }
+      },
+      "list": {
+        "eyebrow": "Accounts payable",
+        "title": "Invoices & Payments",
+        "subtitle": "Track invoices from creation, 3-way matching, accounting approval, and payment confirmation.",
+        "summaryLabel": "Invoice list summary",
+        "stat": {
+          "total": "Total invoices",
+          "pending": "Pending match",
+          "mismatch": "Mismatched",
+          "approved": "Awaiting payment",
+          "visibleAmount": "Visible amount"
+        },
+        "action": {
+          "create": "Create invoice"
+        },
+        "filter": {
+          "vendorPlaceholder": "Enter Vendor UUID to filter",
+          "poId": "PO UUID",
+          "poPlaceholder": "Filter by PO UUID",
+          "overdueOnly": "Overdue only",
+          "clear": "Clear filters",
+          "status": "Status",
+          "allStatus": "All statuses"
+        },
+        "col": {
+          "number": "Invoice no.",
+          "vendor": "Vendor",
+          "po": "Source PO",
+          "status": "Status",
+          "match": "Match",
+          "amount": "Amount",
+          "dueDate": "Due date"
+        },
+        "empty": {
+          "title": "No matching invoices",
+          "message": "Create an invoice from an issued PO or adjust the filters."
+        },
+        "totalItems": "invoices"
+      },
+      "create": {
+        "eyebrow": "Invoice capture",
+        "title": "Create invoice from purchase order",
+        "subtitle": "Select the source PO; the vendor is locked from the PO and PO lines become the matching baseline.",
+        "section": {
+          "source": "Source PO",
+          "sourceHint": "Only sent or receiving-stage POs should be used for invoice capture.",
+          "dates": "Invoice dates",
+          "datesHint": "The due date cannot be earlier than the invoice date.",
+          "lines": "Invoice lines",
+          "linesHint": "Lines are populated from the PO and can be adjusted to match the supplier invoice before backend matching."
+        },
+        "field": {
+          "po": "Source PO",
+          "invoiceNumber": "Invoice number",
+          "invoiceDate": "Invoice date",
+          "dueDate": "Due date"
+        },
+        "placeholder": {
+          "po": "Select PO",
+          "invoiceNumber": "Enter supplier invoice number"
+        },
+        "source": {
+          "poNumber": "PO number",
+          "vendor": "Vendor",
+          "status": "PO status",
+          "poAmount": "PO amount"
+        },
+        "line": {
+          "description": "Description",
+          "quantity": "Quantity",
+          "unitPrice": "Unit price",
+          "taxRate": "Tax rate",
+          "total": "Estimate"
+        },
+        "summary": {
+          "title": "Estimated total",
+          "subtitle": "The backend remains the final source for invoice totals.",
+          "po": "PO",
+          "vendor": "Vendor",
+          "vendorId": "Vendor UUID",
+          "lines": "Lines",
+          "subtotal": "Subtotal",
+          "tax": "Tax",
+          "total": "Total"
+        },
+        "emptyPo": {
+          "title": "No invoiceable POs",
+          "message": "A PO must be sent to the vendor or already in receiving flow."
+        },
+        "validation": {
+          "required": "This field is required",
+          "maxLength": "Content is too long",
+          "positive": "Value must be greater than 0",
+          "dueDateRange": "Due date cannot be before invoice date",
+          "invalid": "Invalid value"
+        },
+        "action": {
+          "back": "Back to invoice list",
+          "restoreLines": "Restore PO lines",
+          "removeLine": "Remove invoice line",
+          "cancel": "Cancel",
+          "submit": "Create invoice"
+        },
+        "toast": {
+          "success": "Invoice created successfully."
+        }
+      },
+      "detail": {
+        "eyebrow": "Invoice detail",
+        "subtitle": "PO {{poNumber}} · Vendor {{vendor}}",
+        "action": {
+          "back": "Back to invoice list",
+          "refresh": "Refresh",
+          "match": "Run match",
+          "approve": "Approve invoice",
+          "confirmApprove": "Confirm approval",
+          "dispute": "Open dispute",
+          "confirmDispute": "Confirm dispute",
+          "confirmPayment": "Confirm payment",
+          "confirmPaymentSubmit": "Record payment"
+        },
+        "stat": {
+          "totalAmount": "Total amount",
+          "lines": "Invoice lines",
+          "invoiceDate": "Invoice date",
+          "dueDate": "Due date"
+        },
+        "section": {
+          "source": "Invoice source",
+          "match": "PO/GR matching",
+          "lines": "Invoice lines"
+        },
+        "field": {
+          "vendorName": "Vendor",
+          "vendorId": "Vendor UUID",
+          "poNumber": "Source PO",
+          "poMatch": "PO match",
+          "grMatch": "GR match",
+          "qtyVariance": "Quantity variance",
+          "priceVariance": "Price variance",
+          "matchedAt": "Matched at",
+          "comment": "Approval comment",
+          "disputeReason": "Dispute reason",
+          "paymentDate": "Payment date",
+          "paymentReference": "Payment reference",
+          "paidAmount": "Paid amount",
+          "paymentNotes": "Payment notes"
+        },
+        "placeholder": {
+          "comment": "Optional comment for approval",
+          "disputeReason": "Describe the invoice/PO/GR mismatch, minimum 20 characters",
+          "paymentReference": "Example: BANK-TRANSFER-20260612-001",
+          "paymentNotes": "Bank transfer or payment reconciliation notes"
+        },
+        "modal": {
+          "approveTitle": "Approve invoice",
+          "approveMessage": "Only matched invoices can be approved for payment.",
+          "disputeTitle": "Open invoice dispute",
+          "disputeMessage": "Use disputes for mismatched invoices that require supplier or warehouse follow-up.",
+          "paymentTitle": "Confirm payment",
+          "paymentMessage": "The amount must match the invoice total {{amount}} {{currency}}. The backend records the payment ledger and releases the budget hold."
+        },
+        "validation": {
+          "required": "This field is required",
+          "maxLength": "Content is too long",
+          "positive": "Amount must be greater than 0",
+          "disputeMinLength": "Dispute reason must be at least 20 characters"
+        },
+        "toast": {
+          "matched": "Invoice matching completed.",
+          "approved": "Invoice approved.",
+          "disputed": "Invoice dispute opened.",
+          "paid": "Payment confirmed."
+        },
+        "line": {
+          "lineNumber": "Line",
+          "description": "Description",
+          "quantity": "Quantity",
+          "unitPrice": "Unit price",
+          "totalPrice": "Line total"
+        },
+        "total": {
+          "subtotal": "Subtotal",
+          "tax": "Tax",
+          "total": "Grand total"
+        },
+        "empty": {
+          "title": "Invoice not found",
+          "message": "The invoice may have been removed or you do not have permission to view it."
         }
       }
     }
@@ -1073,7 +1912,6 @@
       "select": "Set as Profile Picture"
     }
   },
-
   "approvals": {
     "inbox": {
       "eyebrow": "Business Approvals",
@@ -1090,6 +1928,15 @@
         "allPriority": "All Priorities",
         "allTypes": "All Request Types",
         "overdueOnly": "Overdue Only"
+      },
+      "section": {
+        "emergency": "Emergency",
+        "overdue": "Overdue",
+        "normal": "Normal"
+      },
+      "sla": {
+        "remaining": "{{hours}}h remaining",
+        "overdue": "{{hours}}h late"
       },
       "empty": {
         "title": "Inbox is empty",
@@ -1129,7 +1976,9 @@
       "slaHeader": "Approval SLA Deadline",
       "assignedAt": "Assigned At",
       "deadlineAt": "Deadline",
+      "processOverview": "Approval workflow overview",
       "processHeader": "Approval Workflow",
+      "viewFullPr": "View full PR",
       "step": "Step",
       "approver": "Approver",
       "empty": {
@@ -1312,6 +2161,751 @@
       "empty": {
         "title": "No matching rules",
         "message": "Create the first approval rule or adjust the search filter."
+      }
+    }
+  },
+  "vendor": {
+    "status": {
+      "PENDING": "Pending approval",
+      "APPROVED": "Approved",
+      "BLACKLISTED": "Blacklisted",
+      "INACTIVE": "Inactive"
+    },
+    "list": {
+      "eyebrow": "Supplier management",
+      "title": "Vendor directory",
+      "subtitle": "Manage supplier master data, AVL status, and performance scores.",
+      "summaryLabel": "Vendor summary",
+      "totalItems": "vendors",
+      "avlBadge": "AVL",
+      "action": {
+        "create": "Register vendor"
+      },
+      "stat": {
+        "total": "Total vendors",
+        "approved": "Approved (page)",
+        "pending": "Pending (page)",
+        "avl": "On AVL (page)"
+      },
+      "filter": {
+        "searchPlaceholder": "Search by name, code, tax ID, email...",
+        "clear": "Clear filters",
+        "status": "Filter by status",
+        "allStatus": "All statuses",
+        "avlOnly": "AVL only"
+      },
+      "col": {
+        "code": "Vendor code",
+        "name": "Vendor name",
+        "taxCode": "Tax ID",
+        "email": "Email",
+        "categories": "Categories",
+        "status": "Status",
+        "avl": "AVL",
+        "score": "Score"
+      },
+      "empty": {
+        "title": "No vendors found",
+        "message": "Adjust your filters or register a new vendor."
+      }
+    },
+    "detail": {
+      "eyebrow": "Vendor profile",
+      "avlBadge": "Approved Vendor List",
+      "action": {
+        "approve": "Approve vendor"
+      },
+      "modal": {
+        "approveTitle": "Approve vendor",
+        "approveMessage": "Approve {{name}} and add to the Approved Vendor List (AVL)?"
+      },
+      "toast": {
+        "approved": "Vendor approved successfully."
+      },
+      "info": {
+        "title": "Company information",
+        "taxCode": "Tax ID",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "categories": "Categories",
+        "createdAt": "Registered at",
+        "notes": "Notes"
+      },
+      "score": {
+        "title": "Performance scorecard",
+        "quality": "Quality",
+        "delivery": "Delivery",
+        "pricing": "Pricing",
+        "responsiveness": "Responsiveness",
+        "overall": "Overall",
+        "lastEvaluated": "Last evaluated",
+        "totalOrders": "Total orders",
+        "onTimeRate": "On-time delivery",
+        "empty": "No scorecard data yet."
+      },
+      "contacts": {
+        "title": "Contact persons",
+        "name": "Name",
+        "role": "Role",
+        "email": "Email",
+        "phone": "Phone",
+        "primary": "Primary",
+        "isPrimary": "Primary",
+        "empty": "No contacts registered."
+      }
+    },
+    "create": {
+      "eyebrow": "New supplier",
+      "title": "Register vendor",
+      "subtitle": "Enter company details to create a new vendor record. Required fields are marked.",
+      "section": {
+        "info": "Company information",
+        "contacts": "Contact persons"
+      },
+      "field": {
+        "name": "Company name",
+        "namePlaceholder": "e.g. ABC Technology Co., Ltd.",
+        "taxCode": "Tax ID",
+        "taxCodePlaceholder": "e.g. 0123456789",
+        "email": "Company email",
+        "emailPlaceholder": "contact@company.com",
+        "phone": "Phone number",
+        "phonePlaceholder": "e.g. 028 1234 5678",
+        "street": "Street address",
+        "streetPlaceholder": "House number, street name",
+        "district": "District",
+        "districtPlaceholder": "District / ward",
+        "city": "City / Province",
+        "cityPlaceholder": "e.g. Ho Chi Minh City",
+        "country": "Country",
+        "countryPlaceholder": "e.g. Vietnam",
+        "categories": "Categories",
+        "categoriesPlaceholder": "IT_EQUIPMENT, OFFICE_SUPPLIES",
+        "categoriesHint": "Separate multiple categories with commas. At least one is required.",
+        "notes": "Notes",
+        "notesPlaceholder": "Additional information (optional)"
+      },
+      "contact": {
+        "name": "Contact name",
+        "role": "Role / title",
+        "email": "Email",
+        "phone": "Phone"
+      },
+      "action": {
+        "addContact": "Add contact",
+        "save": "Save vendor"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "email": "Enter a valid email address.",
+        "maxLength": "Value is too long.",
+        "categoriesRequired": "Enter at least one category."
+      },
+      "toast": {
+        "success": "Vendor registered successfully."
+      }
+    }
+  },
+  "rfq": {
+    "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "OPEN": "Open",
+      "EVALUATING": "Evaluating",
+      "AWARDED": "Awarded",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled"
+    },
+    "invitation": {
+      "submitted": "Quoted",
+      "pending": "Awaiting quote"
+    },
+    "list": {
+      "eyebrow": "Sourcing",
+      "title": "Request for Quotation",
+      "subtitle": "Create RFQs from approved PRs, collect vendor quotes, and award suppliers.",
+      "summaryLabel": "RFQ summary",
+      "totalItems": "RFQs",
+      "action": {
+        "create": "Create RFQ"
+      },
+      "stat": {
+        "total": "Total RFQs",
+        "published": "Published (page)",
+        "closed": "Closed (page)",
+        "awarded": "Awarded (page)"
+      },
+      "filter": {
+        "status": "Filter by status",
+        "allStatus": "All statuses"
+      },
+      "col": {
+        "rfqNumber": "RFQ number",
+        "prNumber": "PR number",
+        "title": "Title",
+        "invitations": "Quotes",
+        "status": "Status",
+        "deadline": "Deadline",
+        "awardedVendor": "Awarded vendor"
+      },
+      "empty": {
+        "title": "No RFQs found",
+        "message": "Create an RFQ from an approved purchase request."
+      }
+    },
+    "detail": {
+      "eyebrow": "RFQ workspace",
+      "info": {
+        "title": "RFQ information",
+        "deadline": "Submission deadline",
+        "awardedVendor": "Awarded vendor",
+        "awardReason": "Award reason",
+        "createdAt": "Created at",
+        "prNumberPrefix": "PR"
+      },
+      "invitations": {
+        "title": "Invited vendors",
+        "empty": "No vendors invited."
+      },
+      "items": {
+        "title": "Line items",
+        "name": "Item",
+        "category": "Category",
+        "quantity": "Quantity",
+        "specs": "Specifications"
+      },
+      "quotes": {
+        "title": "Vendor quotes",
+        "awardedRibbon": "Awarded",
+        "awarded": "Awarded",
+        "bestScore": "Best score",
+        "viewMode": "Quote view mode",
+        "viewCards": "Cards",
+        "viewCompare": "Compare",
+        "submittedAt": "Submitted",
+        "validUntil": "Valid until",
+        "paymentTerms": "Payment terms",
+        "score": "Evaluation score",
+        "notEvaluated": "Not evaluated yet",
+        "empty": "No quotes submitted yet."
+      },
+      "eval": {
+        "score": "Score",
+        "note": "Evaluation note",
+        "notePlaceholder": "Record scoring rationale, delivery risks, or commercial conditions...",
+        "progress": "Evaluated {{evaluated}}/{{total}} quotes",
+        "allDone": "All evaluated",
+        "scoreSuffix": "/100"
+      },
+      "compare": {
+        "totalAmount": "Total amount",
+        "score": "Score",
+        "validUntil": "Valid until",
+        "paymentTerms": "Payment terms",
+        "avgDeliveryDays": "Avg. delivery",
+        "coverage": "Line coverage",
+        "lineItemPrices": "Line-item prices",
+        "notQuoted": "Not quoted for this line",
+        "lowestPrice": "Lowest price",
+        "days": "days",
+        "lineTotal": "Line total",
+        "lineTotalLabel": "Line total:"
+      },
+      "action": {
+        "evaluate": "Evaluate",
+        "reEvaluate": "Re-evaluate",
+        "saveEvaluation": "Save evaluation",
+        "award": "Award RFQ",
+        "close": "Close RFQ",
+        "submitQuote": "Submit quote"
+      },
+      "modal": {
+        "awardTitle": "Award RFQ",
+        "awardMessage": "Confirm awarding this RFQ to the selected quote. A draft PO will be created automatically.",
+        "awardReason": "Award reason",
+        "awardReasonPlaceholder": "Explain why this vendor was selected (min. 20 characters)",
+        "awardReasonMin": "Award reason must be at least 20 characters.",
+        "closeTitle": "Close RFQ",
+        "closeMessage": "Close this RFQ for evaluation? Vendors will no longer be able to submit quotes.",
+        "evaluateTitle": "Evaluate {{vendor}}",
+        "submitQuoteTitle": "Submit vendor quote"
+      },
+      "submit": {
+        "vendor": "Vendor",
+        "currency": "Currency",
+        "validUntil": "Valid until",
+        "paymentTerms": "Payment terms",
+        "notes": "Notes",
+        "lineItems": "Quoted line items",
+        "unitPrice": "Unit price",
+        "deliveryDays": "Delivery days"
+      },
+      "toast": {
+        "evaluated": "Quote evaluated successfully.",
+        "awarded": "RFQ awarded successfully.",
+        "closed": "RFQ closed for evaluation.",
+        "quoteSubmitted": "Quote submitted successfully.",
+        "submitValidation": "Complete vendor, validity date, and at least one unit price."
+      }
+    },
+    "create": {
+      "eyebrow": "New RFQ",
+      "title": "Create RFQ",
+      "subtitle": "Select an approved PR and invite at least two AVL vendors.",
+      "sourcePrNote": "Creating this RFQ from PR {{prNumber}}.",
+      "section": {
+        "rfq": "RFQ details",
+        "vendors": "Invite vendors (AVL)"
+      },
+      "field": {
+        "pr": "Purchase request",
+        "prPlaceholder": "Select approved PR...",
+        "title": "RFQ title",
+        "titlePlaceholder": "e.g. IT equipment RFQ Q2",
+        "deadline": "Submission deadline",
+        "requirements": "Requirements / notes",
+        "requirementsPlaceholder": "Technical or commercial requirements (optional)"
+      },
+      "vendorCount": "{{count}} vendors selected (min. 2)",
+      "noAvlVendors": "Not enough AVL vendors available. Approve vendors first.",
+      "action": {
+        "save": "Create RFQ"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "maxLength": "Value is too long.",
+        "vendorsMin": "Select at least two AVL vendors.",
+        "deadlineFuture": "Submission deadline must be in the future."
+      },
+      "toast": {
+        "success": "RFQ created successfully.",
+        "sourcePrUnavailable": "The source PR is no longer available as an approved RFQ source."
+      }
+    }
+  },
+  "inventory": {
+    "gr": {
+      "list": {
+        "eyebrow": "Warehouse operations",
+        "title": "Goods Receipts",
+        "subtitle": "Record incoming deliveries against purchase orders and update stock balances.",
+        "summaryLabel": "Receipt summary",
+        "totalItems": "receipts",
+        "filterStatus": "Filter by status",
+        "filter": {
+          "allStatus": "All statuses",
+          "allWarehouses": "All warehouses",
+          "poId": "PO ID",
+          "poIdPlaceholder": "Purchase order UUID",
+          "warehouse": "Warehouse",
+          "fromDate": "From date",
+          "toDate": "To date",
+          "clear": "Clear filters"
+        },
+        "stat": {
+          "total": "Total receipts"
+        }
+      },
+      "action": {
+        "create": "Create Receipt"
+      },
+      "col": {
+        "number": "GR Number",
+        "poNumber": "PO Number",
+        "warehouse": "Warehouse",
+        "status": "Status",
+        "receivedAt": "Received At",
+        "createdAt": "Created At"
+      },
+      "status": {
+        "DRAFT": "Draft",
+        "PARTIAL": "Partial",
+        "COMPLETE": "Complete",
+        "DISCREPANCY": "Discrepancy"
+      },
+      "empty": {
+        "title": "No receipts found",
+        "message": "Try adjusting your filters or create a new receipt."
+      },
+      "create": {
+        "eyebrow": "New receipt",
+        "title": "Create Goods Receipt",
+        "section": {
+          "basic": "Receipt details",
+          "lineItems": "Line items",
+          "summary": "Summary"
+        },
+        "field": {
+          "poId": "Purchase order",
+          "poIdPlaceholder": "Select a sent PO...",
+          "warehouse": "Warehouse",
+          "warehousePlaceholder": "Select warehouse...",
+          "notes": "Notes",
+          "notesPlaceholder": "Delivery notes (optional)"
+        },
+        "lineItem": {
+          "label": "Line",
+          "itemName": "Item",
+          "orderedQty": "Ordered qty",
+          "unit": "Unit",
+          "receivedQty": "Received qty",
+          "rejectedQty": "Rejected qty",
+          "rejectionReason": "Rejection reason",
+          "rejectionReasonPlaceholder": "Required when rejected qty is entered",
+          "lotNumber": "Lot number",
+          "lotNumberPlaceholder": "Optional",
+          "notes": "Line notes",
+          "notesPlaceholder": "Optional",
+          "total": "Line total",
+          "empty": "Select a PO to load line items."
+        },
+        "summary": {
+          "lineItems": "Line items",
+          "totalValue": "Estimated value"
+        },
+        "action": {
+          "submit": "Create receipt"
+        },
+        "validation": {
+          "required": "This field is required.",
+          "min": "Value must be zero or greater.",
+          "overQuantity": "Received plus rejected quantity cannot exceed ordered quantity.",
+          "rejectionReasonRequired": "Enter a reason when rejected quantity is provided."
+        },
+        "toast": {
+          "success": "Goods receipt created successfully.",
+          "failed": "Could not create goods receipt.",
+          "loadPoFailed": "Could not load purchase order details.",
+          "errorNoItems": "Enter received quantity for at least one line item."
+        }
+      },
+      "detail": {
+        "eyebrow": "Goods receipt",
+        "section": {
+          "info": "Receipt information",
+          "lineItems": "Line items",
+          "system": "System",
+          "match": "3-way match",
+          "completeSummary": "Stock update result"
+        },
+        "info": {
+          "poNumber": "PO number",
+          "warehouse": "Warehouse",
+          "receivedBy": "Received by",
+          "receivedDate": "Received date",
+          "notes": "Notes"
+        },
+        "line": {
+          "count": "{{count}} items",
+          "item": "Item",
+          "ordered": "Ordered",
+          "received": "Received",
+          "rejected": "Rejected",
+          "lotNumber": "Lot number",
+          "condition": "Rejection reason",
+          "empty": "No line items."
+        },
+        "complete": {
+          "grStatus": "GR status",
+          "movementsCreated": "Movements created"
+        },
+        "system": {
+          "createdAt": "Created at",
+          "systemId": "System ID",
+          "matchDesc": "Track matching progress from PO to invoice."
+        },
+        "match": {
+          "po": "Purchase order",
+          "gr": "Goods receipt",
+          "invoice": "Invoice",
+          "pendingInvoice": "Awaiting invoice"
+        },
+        "action": {
+          "complete": "Complete receipt",
+          "editDraft": "Edit draft",
+          "viewStock": "View stock",
+          "viewMovements": "View movements"
+        },
+        "edit": {
+          "title": "Edit draft receipt",
+          "receivedAt": "Received date",
+          "notes": "Notes",
+          "lineItems": "Line items",
+          "receivedQuantity": "Received qty",
+          "rejectedQuantity": "Rejected qty",
+          "lotNumber": "Lot number",
+          "rejectionReason": "Rejection reason",
+          "validation": {
+            "required": "This field is required.",
+            "numeric": "Enter a non-negative number with up to 4 decimals.",
+            "invalid": "Please check the receipt information."
+          }
+        },
+        "modal": {
+          "completeTitle": "Complete goods receipt",
+          "completeMessage": "Complete this receipt? Stock movements will be created and balances updated."
+        },
+        "toast": {
+          "notFound": "Goods receipt not found.",
+          "loadFailed": "Could not load goods receipt.",
+          "updateSuccess": "Draft goods receipt updated.",
+          "updateFailed": "Could not update draft goods receipt.",
+          "completeSuccess": "Goods receipt completed successfully.",
+          "completeFailed": "Could not complete goods receipt."
+        }
+      }
+    },
+    "stock": {
+      "eyebrow": "Stock control",
+      "title": "Stock Dashboard",
+      "subtitle": "Track stock on hand by warehouse and highlight below-reorder items.",
+      "filter": {
+        "warehouse": "Warehouse",
+        "warehousePlaceholder": "Select warehouse...",
+        "belowReorder": "Below reorder only",
+        "clear": "Clear filters"
+      },
+      "stat": {
+        "sku": "SKU",
+        "belowReorder": "Below reorder",
+        "quantityRows": "Stock rows",
+        "lastUpdated": "Last updated"
+      },
+      "col": {
+        "itemCode": "Item code",
+        "itemName": "Item name",
+        "warehouse": "Warehouse",
+        "quantityOnHand": "Quantity on hand",
+        "unit": "Unit",
+        "reorderPoint": "Reorder point",
+        "lastUpdated": "Updated",
+        "status": "Status"
+      },
+      "status": {
+        "belowReorder": "Below reorder",
+        "normal": "Normal"
+      },
+      "action": {
+        "viewMovements": "View movements",
+        "issueOut": "Issue out",
+        "adjust": "Adjust"
+      },
+      "totalItems": "stock rows",
+      "empty": {
+        "title": "No stock rows",
+        "message": "Select another warehouse or complete a goods receipt to create stock."
+      },
+      "adjustment": {
+        "title": "Adjust stock",
+        "item": "Item",
+        "itemCode": "Item code",
+        "unit": "Unit",
+        "currentQuantity": "Current quantity",
+        "newQuantity": "New quantity",
+        "delta": "Delta",
+        "reason": "Adjustment reason",
+        "validation": {
+          "required": "This field is required.",
+          "numeric": "Enter a non-negative number with up to 4 decimals.",
+          "reasonLength": "Reason must be at least 10 characters.",
+          "maxLength": "Value exceeds the allowed length.",
+          "unchanged": "New quantity must differ from current quantity.",
+          "invalid": "Please check the adjustment information."
+        },
+        "toast": {
+          "success": "Stock adjusted.",
+          "failed": "Could not adjust stock."
+        }
+      }
+    },
+    "movements": {
+      "eyebrow": "Inventory ledger",
+      "title": "Stock Movements",
+      "subtitle": "Review receipt, issue-out, adjustment and transfer ledger entries in read-only mode.",
+      "filter": {
+        "itemCode": "Item code",
+        "itemCodePlaceholder": "E.g. E15-OFFICE-KIT",
+        "warehouse": "Warehouse",
+        "allWarehouses": "All warehouses",
+        "movementType": "Movement type",
+        "allTypes": "All types",
+        "fromDate": "From date",
+        "toDate": "To date",
+        "clear": "Clear filters"
+      },
+      "type": {
+        "RECEIPT_IN": "Receipt in",
+        "ISSUE_OUT": "Issue out",
+        "ADJUSTMENT": "Adjustment",
+        "TRANSFER": "Transfer"
+      },
+      "col": {
+        "item": "Item",
+        "warehouse": "Warehouse",
+        "type": "Type",
+        "quantity": "Quantity",
+        "balanceAfter": "Balance after",
+        "source": "Source",
+        "performedBy": "Performed by",
+        "performedAt": "Performed at",
+        "notes": "Notes"
+      },
+      "totalItems": "movements",
+      "empty": {
+        "title": "No stock movements",
+        "message": "Adjust filters or complete receipt/issue-out operations."
+      }
+    },
+    "issueOut": {
+      "eyebrow": "Internal allocation",
+      "title": "Issue Out",
+      "subtitle": "Issue warehouse stock to an employee and record ISSUE_OUT movements.",
+      "section": {
+        "basic": "Issue information",
+        "lines": "Issue lines",
+        "line": "Line",
+        "summary": "Summary",
+        "result": "Created movements"
+      },
+      "field": {
+        "warehouse": "Source warehouse",
+        "recipientId": "Recipient",
+        "recipientPlaceholder": "Recipient UUID",
+        "prId": "Related PR",
+        "notes": "Notes",
+        "itemCode": "Item code",
+        "itemPlaceholder": "Select stock item",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "available": "Available"
+      },
+      "action": {
+        "addLine": "Add line",
+        "submit": "Issue stock",
+        "removeLine": "Remove line"
+      },
+      "summary": {
+        "lines": "Lines"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "positive": "Quantity must be greater than zero.",
+        "insufficient": "Quantity exceeds stock on hand.",
+        "invalid": "Please check the issue-out information."
+      },
+      "toast": {
+        "success": "Stock issued successfully.",
+        "failed": "Could not issue stock."
+      }
+    },
+    "catalog": {
+      "eyebrow": "Inventory master data",
+      "title": "Item Catalog",
+      "subtitle": "Manage item master data, standard price, reorder point, and stock summary by warehouse.",
+      "summary": {
+        "label": "Catalog summary",
+        "active": "Active",
+        "inactive": "Inactive",
+        "belowReorder": "Below reorder",
+        "categories": "Categories"
+      },
+      "filter": {
+        "search": "Search",
+        "searchPlaceholder": "Item code or item name",
+        "category": "Category",
+        "categoryPlaceholder": "E.g. IT, OFFICE",
+        "status": "Status",
+        "allStatus": "All",
+        "belowReorder": "Below reorder point",
+        "clear": "Clear filters"
+      },
+      "col": {
+        "itemCode": "Item code",
+        "name": "Item name",
+        "category": "Category",
+        "unitPrice": "Unit price",
+        "stock": "Stock",
+        "reorderPoint": "Reorder",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "belowReorder": "Below reorder"
+      },
+      "action": {
+        "create": "Create item",
+        "edit": "Edit",
+        "view": "View",
+        "movements": "Movements"
+      },
+      "form": {
+        "itemCode": "Item code",
+        "name": "Item name",
+        "description": "Description",
+        "categoryCode": "Category code",
+        "unit": "Unit",
+        "unitPrice": "Unit price",
+        "currency": "Currency",
+        "preferredVendorId": "Preferred vendor",
+        "reorderPoint": "Reorder point",
+        "active": "Item is active"
+      },
+      "modal": {
+        "createTitle": "Create catalog item",
+        "editTitle": "Edit catalog item"
+      },
+      "validation": {
+        "required": "This field is required.",
+        "maxLength": "Value exceeds the allowed length.",
+        "numeric": "Enter a non-negative number with up to 4 decimals.",
+        "invalid": "Please check the item information."
+      },
+      "empty": {
+        "title": "No items",
+        "message": "No catalog items match the current filters."
+      },
+      "toast": {
+        "loadFailed": "Could not load catalog.",
+        "createSuccess": "Catalog item created.",
+        "createFailed": "Could not create catalog item.",
+        "updateSuccess": "Catalog item updated.",
+        "updateFailed": "Could not update catalog item."
+      },
+      "totalItems": "items",
+      "detail": {
+        "eyebrow": "Item detail",
+        "action": {
+          "back": "Back to catalog"
+        },
+        "summary": {
+          "itemCode": "Item code",
+          "totalStock": "Total stock",
+          "warehouses": "Warehouses"
+        },
+        "section": {
+          "info": "Item information",
+          "stockSummary": "Stock by warehouse",
+          "workflow": "Permissions and data source"
+        },
+        "stock": {
+          "count": "{{count}} stock rows",
+          "emptyTitle": "No stock",
+          "emptyMessage": "This item has not been received or issued in any warehouse.",
+          "warehouse": "Warehouse",
+          "quantity": "Quantity on hand",
+          "unit": "Unit"
+        },
+        "workflow": {
+          "readPermission": "Read permission",
+          "mutationPermission": "Mutation permission",
+          "stockSource": "Stock source",
+          "stockProjection": "Stock projection"
+        },
+        "emptyDescription": "No description.",
+        "notFoundTitle": "Item not found",
+        "notFoundMessage": "The catalog item does not exist or you do not have access."
       }
     }
   }

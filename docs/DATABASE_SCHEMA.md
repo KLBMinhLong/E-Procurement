@@ -875,6 +875,12 @@ inventory.items
   preferred_vendor_id UUID, reorder_point NUMERIC(19,4), is_active BOOLEAN
   ux_items_code_active(item_code) WHERE is_deleted = FALSE
 
+inventory.catalog_item_mutation_requests
+  id UUID PK, idempotency_key UUID, operation VARCHAR(20), item_code VARCHAR(20),
+  actor_id UUID, created_at TIMESTAMPTZ
+  operation IN ('CREATE','UPDATE')
+  ux_catalog_item_mutation_idempotency_active(idempotency_key) WHERE is_deleted = FALSE
+
 inventory.stock_entries
   id UUID PK, item_code VARCHAR(20), warehouse_id UUID FK warehouses(id),
   quantity_on_hand NUMERIC(19,4), unit VARCHAR(20), last_updated TIMESTAMPTZ
@@ -900,10 +906,12 @@ inventory.goods_receipts
   id UUID PK, gr_number VARCHAR(30), po_id UUID, warehouse_id UUID FK warehouses(id),
   warehouse_keeper_id UUID, warehouse_keeper_full_name VARCHAR(200),
   received_at TIMESTAMPTZ, status VARCHAR(30), notes TEXT, idempotency_key UUID,
-  completed_at TIMESTAMPTZ, completed_by UUID, completed_idempotency_key UUID
+  completed_at TIMESTAMPTZ, completed_by UUID, completed_idempotency_key UUID,
+  update_idempotency_key UUID
   status IN ('DRAFT','PARTIAL','COMPLETE','DISCREPANCY')
   ux_goods_receipts_idempotency_active(idempotency_key) WHERE idempotency_key IS NOT NULL AND is_deleted = FALSE
   ux_goods_receipts_completed_idempotency_active(completed_idempotency_key) WHERE completed_idempotency_key IS NOT NULL AND is_deleted = FALSE
+  idx_goods_receipts_update_idempotency(id, update_idempotency_key) WHERE update_idempotency_key IS NOT NULL AND is_deleted = FALSE
   ix_goods_receipts_received_at_active(received_at) WHERE is_deleted = FALSE
   ix_goods_receipts_created_at_active(created_at DESC, gr_number DESC) WHERE is_deleted = FALSE
   ix_goods_receipts_completed_at_active(completed_at DESC) WHERE completed_at IS NOT NULL AND is_deleted = FALSE
@@ -923,6 +931,7 @@ inventory.stock_movements -- immutable, no soft delete
   movement_type IN ('RECEIPT_IN','ISSUE_OUT','ADJUSTMENT','TRANSFER')
   Complete GR writes RECEIPT_IN rows with source_ref_type = 'GOODS_RECEIPT'
   Issue-out writes ISSUE_OUT rows with negative quantity and source_ref_type = 'STOCK_ISSUE_OUT'
+  Stock adjustment writes signed ADJUSTMENT rows with source_ref_type = 'STOCK_ADJUSTMENT'
   ix_stock_movements_type_performed(movement_type, performed_at DESC)
 
 inventory.stock_issue_out_requests
@@ -931,6 +940,15 @@ inventory.stock_issue_out_requests
   ux_stock_issue_out_idempotency_active(idempotency_key) WHERE is_deleted = FALSE
   ix_stock_issue_out_warehouse_issued_active(warehouse_id, issued_at DESC) WHERE is_deleted = FALSE
   ix_stock_issue_out_recipient_issued_active(recipient_id, issued_at DESC) WHERE is_deleted = FALSE
+
+inventory.stock_adjustment_requests
+  id UUID PK, idempotency_key UUID, warehouse_id UUID FK warehouses(id),
+  item_code VARCHAR(20), previous_quantity NUMERIC(19,4), new_quantity NUMERIC(19,4),
+  unit VARCHAR(20), adjusted_by UUID, adjusted_at TIMESTAMPTZ, reason TEXT
+  previous_quantity >= 0, new_quantity >= 0, previous_quantity <> new_quantity
+  ux_stock_adjustment_idempotency_active(idempotency_key) WHERE is_deleted = FALSE
+  ix_stock_adjustment_item_adjusted_active(item_code, adjusted_at DESC) WHERE is_deleted = FALSE
+  ix_stock_adjustment_warehouse_adjusted_active(warehouse_id, adjusted_at DESC) WHERE is_deleted = FALSE
 
 inventory.event_processing_log -- immutable Kafka idempotency log
   event_id VARCHAR(100) PK, topic VARCHAR(200), partition_id INTEGER,

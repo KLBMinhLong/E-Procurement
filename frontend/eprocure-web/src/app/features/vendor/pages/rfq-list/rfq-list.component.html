@@ -1,0 +1,160 @@
+<section class="rfq-list-page" aria-labelledby="rfq-list-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'rfq.list.eyebrow' | translate }}</span>
+      <h1 id="rfq-list-heading" class="page-header__title">{{ 'rfq.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'rfq.list.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button
+        *epHasPermission="'RFQ_CREATE'"
+        id="btn-create-rfq"
+        variant="primary"
+        icon="file-plus"
+        (click)="navigateCreate()">
+        {{ 'rfq.list.action.create' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="summary-grid" [attr.aria-label]="'rfq.list.summaryLabel' | translate">
+    <div class="summary-card">
+      <ep-icon name="file-search" />
+      <span class="summary-card__label">{{ 'rfq.list.stat.total' | translate }}</span>
+      <span class="summary-card__value">{{ meta()?.totalElements ?? items().length }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="clock" />
+      <span class="summary-card__label">{{ 'rfq.list.stat.published' | translate }}</span>
+      <span class="summary-card__value">{{ publishedCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="scale" />
+      <span class="summary-card__label">{{ 'rfq.list.stat.closed' | translate }}</span>
+      <span class="summary-card__value">{{ closedCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="award" />
+      <span class="summary-card__label">{{ 'rfq.list.stat.awarded' | translate }}</span>
+      <span class="summary-card__value">{{ awardedCount() }}</span>
+    </div>
+  </div>
+
+  <div class="rfq-toolbar">
+    <div class="filter-chip-group" [attr.aria-label]="'rfq.list.filter.status' | translate">
+      <button
+        id="filter-rfq-status-all"
+        class="filter-chip"
+        [class.filter-chip--active]="activeStatus() === ''"
+        (click)="onStatusChange('')">
+        {{ 'rfq.list.filter.allStatus' | translate }}
+      </button>
+      @for (status of statuses; track status) {
+        <button
+          [id]="'filter-rfq-status-' + status"
+          class="filter-chip"
+          [class.filter-chip--active]="activeStatus() === status"
+          (click)="onStatusChange(status)">
+          {{ ('rfq.status.' + status) | translate }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="file-search"
+      [title]="'rfq.list.empty.title' | translate"
+      [message]="'rfq.list.empty.message' | translate" />
+  } @else {
+    <div class="rfq-table-wrapper">
+      <table class="rfq-table" role="grid" aria-labelledby="rfq-list-heading">
+        <thead>
+          <tr>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('rfqNumber')">
+                {{ 'rfq.list.col.rfqNumber' | translate }}
+                <ep-icon [name]="sortIcon('rfqNumber')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col">{{ 'rfq.list.col.prNumber' | translate }}</th>
+            <th scope="col">{{ 'rfq.list.col.title' | translate }}</th>
+            <th scope="col" class="align-center">{{ 'rfq.list.col.invitations' | translate }}</th>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('status')">
+                {{ 'rfq.list.col.status' | translate }}
+                <ep-icon [name]="sortIcon('status')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('submissionDeadline')">
+                {{ 'rfq.list.col.deadline' | translate }}
+                <ep-icon [name]="sortIcon('submissionDeadline')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col">{{ 'rfq.list.col.awardedVendor' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rfq of items(); track rfq.id) {
+            <tr
+              [id]="'rfq-row-' + rfq.id"
+              class="rfq-table__row"
+              role="button"
+              tabindex="0"
+              (click)="navigateDetail(rfq.id)"
+              (keydown.enter)="navigateDetail(rfq.id)">
+              <td class="rfq-table__code">
+                <span class="mono">{{ rfq.rfqNumber }}</span>
+              </td>
+              <td class="mono">{{ rfq.prNumber }}</td>
+              <td class="rfq-table__title">{{ rfq.title }}</td>
+              <td class="align-center mono">{{ invitationSummary(rfq) }}</td>
+              <td>
+                <ep-badge
+                  [tone]="statusTone[rfq.status] || 'neutral'"
+                  [labelKey]="'rfq.status.' + rfq.status" />
+              </td>
+              <td class="mono">{{ formatDate(rfq.submissionDeadline) }}</td>
+              <td>{{ awardedVendorName(rfq) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as metaData) {
+      <div class="rfq-pagination">
+        <span class="rfq-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="rfq-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'rfq.list.totalItems' | translate }}
+        </span>
+        <div class="rfq-pagination__controls">
+          <ep-button
+            id="btn-prev-rfq-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange({ page: metaData.page - 1, size: metaData.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-rfq-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="metaData.isLast"
+            (click)="onPageChange({ page: metaData.page + 1, size: metaData.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+</section>

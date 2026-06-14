@@ -32,6 +32,55 @@
           [tone]="callbackTone()"
           [labelKey]="data.prConversionStatus ? 'finance.po.callback.' + data.prConversionStatus : 'finance.po.callback.none'" />
       </div>
+      <div class="page-header__actions">
+        @if (canEditDraft()) {
+          <ep-button
+            *epHasPermission="'PO_EDIT'"
+            id="btn-edit-po-draft"
+            variant="secondary"
+            icon="pencil"
+            (click)="openEditModal()">
+            {{ 'finance.po.detail.action.editDraft' | translate }}
+          </ep-button>
+        }
+
+        @if (canCancel()) {
+          <ep-button
+            *epHasPermission="'PO_CANCEL'"
+            id="btn-cancel-po"
+            variant="danger"
+            icon="x-circle"
+            (click)="openCancelModal()">
+            {{ 'finance.po.detail.action.cancelPo' | translate }}
+          </ep-button>
+        }
+
+        @if (canCreateInvoice()) {
+          <ep-button
+            *epHasPermission="'INVOICE_CREATE'"
+            id="btn-create-invoice-from-po"
+            variant="secondary"
+            icon="receipt-text"
+            (click)="navigateCreateInvoice()">
+            {{ 'finance.po.detail.action.createInvoice' | translate }}
+          </ep-button>
+        }
+
+        <div class="send-action">
+          @if (canSend()) {
+            <ep-button
+              *epHasPermission="'PO_SEND_TO_VENDOR'"
+              id="btn-send-po"
+              variant="primary"
+              icon="send"
+              (click)="openSendModal()">
+              {{ 'finance.po.detail.action.send' | translate }}
+            </ep-button>
+          } @else if (sendBlockKey()) {
+            <span class="action-hint">{{ sendBlockKey()! | translate }}</span>
+          }
+        </div>
+      </div>
     </div>
 
     <div class="summary-grid">
@@ -137,5 +186,119 @@
         </table>
       </div>
     </section>
+
+    <ep-modal
+      [open]="showEditModal()"
+      [title]="'finance.po.detail.modal.editTitle' | translate"
+      size="lg"
+      (close)="closeEditModal()">
+      <form class="po-action-form" [formGroup]="editForm" (ngSubmit)="saveDraft()">
+        <p class="po-action-form__hint">{{ 'finance.po.detail.modal.editMessage' | translate }}</p>
+
+        <ep-form-field
+          [label]="'finance.po.detail.field.deliveryAddress' | translate"
+          [error]="fieldError('deliveryAddress') ? (fieldError('deliveryAddress')! | translate) : null">
+          <textarea
+            id="po-edit-delivery-address"
+            class="form-control form-control--textarea"
+            rows="4"
+            formControlName="deliveryAddress"
+            [placeholder]="'finance.po.detail.placeholder.deliveryAddress' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="po-action-form__grid">
+          <ep-form-field
+            [label]="'finance.po.detail.field.deliveryDeadline' | translate"
+            [error]="fieldError('deliveryDeadline') ? (fieldError('deliveryDeadline')! | translate) : null">
+            <input
+              id="po-edit-delivery-deadline"
+              type="date"
+              class="form-control"
+              formControlName="deliveryDeadline">
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'finance.po.detail.field.paymentTerms' | translate"
+            [error]="fieldError('paymentTerms') ? (fieldError('paymentTerms')! | translate) : null">
+            <input
+              id="po-edit-payment-terms"
+              type="text"
+              class="form-control"
+              formControlName="paymentTerms"
+              [placeholder]="'finance.po.detail.placeholder.paymentTerms' | translate">
+          </ep-form-field>
+        </div>
+
+        <div class="po-action-form__actions">
+          <ep-button type="button" variant="ghost" (click)="closeEditModal()" [disabled]="isSavingDraft()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button type="submit" variant="primary" icon="save" [loading]="isSavingDraft()">
+            {{ 'finance.po.detail.action.saveDraft' | translate }}
+          </ep-button>
+        </div>
+      </form>
+    </ep-modal>
+
+    <ep-modal
+      [open]="showSendModal()"
+      [title]="'finance.po.detail.modal.sendTitle' | translate"
+      (close)="closeSendModal()">
+      <div class="po-action-form">
+        <p class="po-action-form__hint">{{ 'finance.po.detail.modal.sendMessage' | translate: { vendor: data.vendor.name } }}</p>
+
+        <ep-form-field
+          [label]="'finance.po.detail.field.additionalNote' | translate"
+          [error]="noteError() ? (noteError()! | translate) : null">
+          <textarea
+            id="po-send-note"
+            class="form-control form-control--textarea"
+            rows="4"
+            [formControl]="sendNote"
+            [placeholder]="'finance.po.detail.placeholder.additionalNote' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="po-action-form__actions">
+          <ep-button variant="ghost" (click)="closeSendModal()" [disabled]="isSending()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button variant="primary" icon="send" (click)="confirmSend()" [loading]="isSending()">
+            {{ 'finance.po.detail.action.confirmSend' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    </ep-modal>
+
+    <ep-modal
+      [open]="showCancelModal()"
+      [title]="'finance.po.detail.modal.cancelTitle' | translate"
+      (close)="closeCancelModal()">
+      <div class="po-action-form">
+        <p class="po-action-form__hint">{{ 'finance.po.detail.modal.cancelMessage' | translate }}</p>
+
+        <ep-form-field
+          [label]="'finance.po.detail.field.cancelReason' | translate"
+          [error]="cancelReasonError() ? (cancelReasonError()! | translate) : null">
+          <textarea
+            id="po-cancel-reason"
+            class="form-control form-control--textarea"
+            rows="4"
+            [formControl]="cancelReason"
+            [placeholder]="'finance.po.detail.placeholder.cancelReason' | translate">
+          </textarea>
+        </ep-form-field>
+
+        <div class="po-action-form__actions">
+          <ep-button variant="ghost" (click)="closeCancelModal()" [disabled]="isCancelling()">
+            {{ 'action.close' | translate }}
+          </ep-button>
+          <ep-button variant="danger" icon="x-circle" (click)="confirmCancel()" [loading]="isCancelling()">
+            {{ 'finance.po.detail.action.confirmCancel' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    </ep-modal>
   }
 </section>

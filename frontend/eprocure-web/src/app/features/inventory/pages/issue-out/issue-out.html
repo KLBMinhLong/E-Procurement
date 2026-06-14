@@ -1,0 +1,239 @@
+<section class="issue-page" aria-labelledby="issue-out-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'inventory.issueOut.eyebrow' | translate }}</span>
+      <h1 id="issue-out-heading" class="page-header__title">
+        {{ 'inventory.issueOut.title' | translate }}
+      </h1>
+      <p class="page-header__subtitle">{{ 'inventory.issueOut.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button id="btn-issue-stock-dashboard" variant="secondary" icon="boxes" (click)="navigateStock()">
+        {{ 'inventory.stock.title' | translate }}
+      </ep-button>
+      <ep-button id="btn-issue-movements" variant="secondary" icon="history" (click)="navigateMovements()">
+        {{ 'inventory.stock.action.viewMovements' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="issue-form" novalidate>
+      <div class="issue-form__layout">
+        <div class="issue-form__main">
+          <ep-card>
+            <div class="card-section">
+              <h2 class="card-section__title">{{ 'inventory.issueOut.section.basic' | translate }}</h2>
+
+              <div class="form-row">
+                <ep-form-field
+                  [label]="'inventory.issueOut.field.warehouse' | translate"
+                  [error]="fieldError('warehouseId') ? (fieldError('warehouseId')! | translate) : null">
+                  <select
+                    id="issue-warehouse"
+                    formControlName="warehouseId"
+                    class="ep-select"
+                    (change)="onWarehouseChange()">
+                    <option value="" disabled>{{ 'inventory.stock.filter.warehousePlaceholder' | translate }}</option>
+                    @for (warehouse of warehouses(); track warehouse.id) {
+                      <option [value]="warehouse.id">{{ warehouse.code }} - {{ warehouse.name }}</option>
+                    }
+                  </select>
+                </ep-form-field>
+
+                <ep-form-field
+                  [label]="'inventory.issueOut.field.recipientId' | translate"
+                  [error]="fieldError('recipientId') ? (fieldError('recipientId')! | translate) : null">
+                  <input
+                    id="issue-recipient"
+                    type="text"
+                    formControlName="recipientId"
+                    class="ep-input"
+                    [placeholder]="'inventory.issueOut.field.recipientPlaceholder' | translate">
+                </ep-form-field>
+              </div>
+
+              <div class="form-row">
+                <ep-form-field [label]="'inventory.issueOut.field.prId' | translate">
+                  <input id="issue-pr-id" type="text" formControlName="prId" class="ep-input">
+                </ep-form-field>
+
+                <ep-form-field [label]="'inventory.issueOut.field.notes' | translate">
+                  <input id="issue-notes" type="text" formControlName="notes" class="ep-input">
+                </ep-form-field>
+              </div>
+            </div>
+          </ep-card>
+
+          <ep-card>
+            <div class="card-section">
+              <div class="card-section__header">
+                <h2 class="card-section__title">{{ 'inventory.issueOut.section.lines' | translate }}</h2>
+                <ep-button
+                  id="btn-add-issue-line"
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  icon="plus"
+                  [disabled]="stockRows().length === 0"
+                  (click)="addLine()">
+                  {{ 'inventory.issueOut.action.addLine' | translate }}
+                </ep-button>
+              </div>
+
+              @if (stockLoading()) {
+                <ep-skeleton [rows]="4" />
+              } @else if (stockRows().length === 0) {
+                <ep-empty-state
+                  icon="package-search"
+                  [title]="'inventory.stock.empty.title' | translate"
+                  [message]="'inventory.stock.empty.message' | translate" />
+              } @else {
+                <div formArrayName="lines" class="line-items">
+                  @for (line of lines.controls; track $index) {
+                    <div [formGroupName]="$index" class="line-item">
+                      <div class="line-item__header">
+                        <span class="line-item__number">
+                          {{ 'inventory.issueOut.section.line' | translate }} #{{ $index + 1 }}
+                        </span>
+                        <ep-button
+                          [id]="'btn-remove-issue-line-' + $index"
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          icon="x"
+                          (click)="removeLine($index)">
+                          {{ 'inventory.issueOut.action.removeLine' | translate }}
+                        </ep-button>
+                      </div>
+
+                      <div class="form-row form-row--4">
+                        <ep-form-field
+                          [label]="'inventory.issueOut.field.itemCode' | translate"
+                          [error]="lineError($index, 'itemCode') ? (lineError($index, 'itemCode')! | translate) : null">
+                          <select
+                            [id]="'issue-item-' + $index"
+                            formControlName="itemCode"
+                            class="ep-select"
+                            (change)="onLineItemChange($index, $any($event.target).value)">
+                            <option value="" disabled>{{ 'inventory.issueOut.field.itemPlaceholder' | translate }}</option>
+                            @for (stock of stockRows(); track stock.itemCode) {
+                              <option [value]="stock.itemCode">
+                                {{ stock.itemCode }} - {{ stock.itemName }} ({{ formatQuantity(stock.quantityOnHand) }} {{ stock.unit }})
+                              </option>
+                            }
+                          </select>
+                        </ep-form-field>
+
+                        <ep-form-field
+                          [label]="'inventory.issueOut.field.quantity' | translate"
+                          [error]="lineError($index, 'quantity') ? (lineError($index, 'quantity')! | translate) : null">
+                          <input
+                            [id]="'issue-quantity-' + $index"
+                            type="number"
+                            formControlName="quantity"
+                            class="ep-input"
+                            min="0.0001"
+                            step="0.0001">
+                        </ep-form-field>
+
+                        <ep-form-field [label]="'inventory.issueOut.field.unit' | translate">
+                          <input
+                            [id]="'issue-unit-' + $index"
+                            type="text"
+                            formControlName="unit"
+                            class="ep-input ep-input-disabled">
+                        </ep-form-field>
+
+                        <div class="available-box">
+                          <span class="available-box__label">{{ 'inventory.issueOut.field.available' | translate }}</span>
+                          <span class="available-box__value">{{ formatQuantity(availableQuantity($index)) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </ep-card>
+        </div>
+
+        <aside class="issue-form__sidebar">
+          <ep-card tone="raised">
+            <div class="card-section">
+              <h2 class="card-section__title">{{ 'inventory.issueOut.section.summary' | translate }}</h2>
+
+              <div class="summary-row">
+                <span class="summary-row__label">{{ 'inventory.issueOut.summary.lines' | translate }}</span>
+                <span class="summary-row__value">{{ lines.length }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-row__label">{{ 'inventory.issueOut.field.warehouse' | translate }}</span>
+                <span class="summary-row__value">{{ form.get('warehouseId')?.value || '--' }}</span>
+              </div>
+
+              <div class="summary-actions">
+                <ep-button
+                  id="btn-submit-issue-out"
+                  type="submit"
+                  variant="primary"
+                  icon="package-minus"
+                  [loading]="submitting()"
+                  [disabled]="form.invalid || hasInvalidLines() || submitting() || stockRows().length === 0">
+                  {{ 'inventory.issueOut.action.submit' | translate }}
+                </ep-button>
+                <ep-button
+                  id="btn-cancel-issue-out"
+                  type="button"
+                  variant="ghost"
+                  [disabled]="submitting()"
+                  (click)="navigateStock()">
+                  {{ 'action.cancel' | translate }}
+                </ep-button>
+              </div>
+            </div>
+          </ep-card>
+        </aside>
+      </div>
+    </form>
+
+    @if (createdMovements().length > 0) {
+      <section class="result-panel" aria-labelledby="issue-result-heading">
+        <div class="result-panel__header">
+          <h2 id="issue-result-heading">{{ 'inventory.issueOut.section.result' | translate }}</h2>
+          <ep-badge tone="success" [labelKey]="'inventory.issueOut.toast.success'" />
+        </div>
+
+        <div class="result-table-wrapper">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'inventory.movements.col.item' | translate }}</th>
+                <th scope="col">{{ 'inventory.movements.col.quantity' | translate }}</th>
+                <th scope="col">{{ 'inventory.movements.col.balanceAfter' | translate }}</th>
+                <th scope="col">{{ 'inventory.movements.col.performedAt' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (movement of createdMovements(); track movement.id) {
+                <tr>
+                  <td>
+                    <span class="result-table__primary">{{ movement.itemName }}</span>
+                    <span class="result-table__subtitle">{{ movement.itemCode }}</span>
+                  </td>
+                  <td class="result-table__quantity">{{ formatQuantity(movement.quantity) }} {{ movement.unit }}</td>
+                  <td class="result-table__quantity">{{ formatQuantity(movement.balanceAfter) }}</td>
+                  <td class="result-table__date">{{ formatDateTime(movement.performedAt) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</section>

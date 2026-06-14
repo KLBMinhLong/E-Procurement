@@ -208,3 +208,10 @@
 - Root cause: MyBatis bound a nullable UUID parameter into `? IS NULL OR pr.department_id = ?`; PostgreSQL could not infer the type of the null placeholder.
 - Fix: Cast the nullable `departmentId` placeholders to UUID in all cycle-time KPI queries.
 - Prevention: PostgreSQL nullable UUID filters in annotation/XML mappers should cast placeholders or use dynamic SQL branches, and dashboard smoke should include the omitted-filter path.
+
+## [2026-06-14] Bug: PR create estimated total did not refresh while editing line items
+
+- Symptom: `/procurement/create` accepted quantity/unit price input but the estimated total stayed stale, making users think the create action was not working.
+- Root cause: Angular `computed()` values read `FormArray`/`FormControl` values directly; reactive form controls are not signals, so the computed summary and urgency conditional did not re-evaluate reliably under `OnPush`.
+- Fix: Add a form revision signal driven by `form.valueChanges`, use it for PR create totals and urgency display, move line-total calculation out of the template, and show validation feedback when submit is attempted with invalid fields.
+- Prevention: Any Angular `computed()` that derives from reactive forms must depend on a signal bridge such as `lineRevision`/`formRevision`; do not read form controls directly inside computed values without a signal dependency.

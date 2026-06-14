@@ -70,6 +70,7 @@ export interface PurchaseOrderListFilter {
   sort: string;
   status?: PurchaseOrderStatus;
   vendor_id?: string;
+  pr_id?: string;
   from_date?: string;
   to_date?: string;
 }
@@ -81,6 +82,20 @@ export interface CreatePurchaseOrderRequest {
   deliveryDeadline?: string | null;
   paymentTerms?: string | null;
   notes?: string | null;
+}
+
+export interface UpdatePurchaseOrderDraftRequest {
+  deliveryAddress: string;
+  deliveryDeadline?: string | null;
+  paymentTerms?: string | null;
+}
+
+export interface SendPurchaseOrderRequest {
+  additionalNote?: string | null;
+}
+
+export interface CancelPurchaseOrderRequest {
+  reason: string;
 }
 
 export interface PurchaseOrderPage {

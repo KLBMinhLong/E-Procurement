@@ -21,8 +21,26 @@ const PATH_MAP: Record<string, string> = {
   '/admin/roles': 'route.admin.roles',
   '/admin/rbac': 'route.admin.rbac',
   '/admin/org-chart': 'route.admin.orgChart',
+  '/admin/notification-templates': 'route.admin.notificationTemplates',
   '/profile': 'route.profile',
-  '/ui-showcase': 'route.uiShowcase'
+  '/ui-showcase': 'route.uiShowcase',
+  '/vendors': 'route.vendor.self',
+  '/vendors/list': 'route.vendor.list',
+  '/vendors/create': 'route.vendor.create',
+  '/vendors/rfq': 'route.rfq.list',
+  '/vendors/rfq/create': 'route.rfq.create',
+  '/inventory': 'route.inventory.self',
+  '/inventory/goods-receipts': 'route.inventory.gr.list',
+  '/inventory/goods-receipts/create': 'route.inventory.gr.create',
+  '/inventory/stock': 'route.inventory.stock',
+  '/inventory/stock/movements': 'route.inventory.movements',
+  '/inventory/issue-out': 'route.inventory.issueOut',
+  '/inventory/catalog': 'route.inventory.catalog',
+  '/finance': 'route.finance.self',
+  '/finance/purchase-orders': 'route.finance.purchaseOrders',
+  '/finance/purchase-orders/create': 'route.finance.createPo',
+  '/finance/invoices': 'route.finance.invoices',
+  '/finance/invoices/create': 'route.finance.createInvoice'
 };
 
 @Component({
@@ -67,6 +85,18 @@ export class EpBreadcrumbComponent {
           labelKey = 'route.pr.detail';
         } else if (/^\/approvals\/[^/]+$/.test(path)) {
           labelKey = 'route.approvals.detail';
+        } else if (/^\/vendors\/rfq\/[^/]+$/.test(path)) {
+          labelKey = 'route.rfq.detail';
+        } else if (/^\/vendors\/[^/]+$/.test(path) && segment !== 'list' && segment !== 'create' && segment !== 'rfq') {
+          labelKey = 'route.vendor.detail';
+        } else if (/^\/inventory\/goods-receipts\/[^/]+$/.test(path) && segment !== 'create') {
+          labelKey = 'route.inventory.gr.detail';
+        } else if (/^\/inventory\/catalog\/[^/]+$/.test(path)) {
+          labelKey = 'route.inventory.catalogDetail';
+        } else if (/^\/finance\/purchase-orders\/[^/]+$/.test(path) && segment !== 'create') {
+          labelKey = 'route.finance.poDetail';
+        } else if (/^\/finance\/invoices\/[^/]+$/.test(path) && segment !== 'create') {
+          labelKey = 'route.finance.invoiceDetail';
         }
       }
 

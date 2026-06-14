@@ -65,8 +65,23 @@
             {{ 'pr.detail.action.createPo' | translate }}
           </ep-button>
         }
+
+        @if (canCreateRfq()) {
+          <ep-button
+            *epHasPermission="'RFQ_CREATE'"
+            id="btn-create-rfq-from-pr"
+            variant="secondary"
+            icon="file-search"
+            (click)="navigateCreateRfq()">
+            {{ 'pr.detail.action.createRfq' | translate }}
+          </ep-button>
+        }
       </div>
     </div>
+
+    <ep-pr-lifecycle
+      [status]="data.status"
+      [approvalStatus]="data.approvalProcess?.status ?? null" />
 
     <div class="metric-strip" [attr.aria-label]="'pr.detail.metricsLabel' | translate">
       <div class="metric-card">
@@ -309,55 +324,126 @@
           </ep-card>
         }
 
+        @if (shouldLoadTraceability()) {
+          <ep-card tone="raised">
+            <div class="card-section traceability-card">
+              <div class="section-title-row">
+                <div>
+                  <span class="section-kicker">{{ 'pr.detail.trace.kicker' | translate }}</span>
+                  <h2 class="card-section__title">{{ 'pr.detail.section.traceability' | translate }}</h2>
+                </div>
+                <ep-button
+                  variant="ghost"
+                  size="sm"
+                  icon="refresh-cw"
+                  [loading]="traceabilityLoading()"
+                  (click)="reloadTraceability()">
+                  {{ 'action.refresh' | translate }}
+                </ep-button>
+              </div>
+
+              @if (traceabilityLoading()) {
+                <ep-skeleton [rows]="4" />
+              } @else if (hasTraceability()) {
+                <div class="traceability-group">
+                  <div class="traceability-group__header">
+                    <span>{{ 'pr.detail.trace.rfq' | translate }}</span>
+                    <span class="info-pill">{{ 'pr.detail.trace.rfqCount' | translate:{ count: relatedRfqs().length } }}</span>
+                  </div>
+                  @if (relatedRfqs().length) {
+                    <div class="traceability-list">
+                      @for (rfq of relatedRfqs(); track rfq.id) {
+                        <button
+                          type="button"
+                          class="traceability-item"
+                          [attr.aria-label]="'pr.detail.trace.openRfq' | translate:{ number: rfq.rfqNumber }"
+                          (click)="navigateRfqDetail(rfq.id)">
+                          <span class="traceability-item__icon">
+                            <ep-icon name="file-search" [size]="16" />
+                          </span>
+                          <span class="traceability-item__body">
+                            <strong class="mono">{{ rfq.rfqNumber }}</strong>
+                            <small>{{ rfq.title }}</small>
+                          </span>
+                          <ep-badge [tone]="rfqStatusTone(rfq.status)" [labelKey]="'rfq.status.' + rfq.status" />
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <p class="side-note">{{ 'pr.detail.trace.noRfq' | translate }}</p>
+                  }
+                </div>
+
+                <div class="traceability-group">
+                  <div class="traceability-group__header">
+                    <span>{{ 'pr.detail.trace.po' | translate }}</span>
+                    <span class="info-pill">{{ 'pr.detail.trace.poCount' | translate:{ count: relatedPos().length } }}</span>
+                  </div>
+                  @if (relatedPos().length) {
+                    <div class="traceability-list">
+                      @for (po of relatedPos(); track po.id) {
+                        <button
+                          type="button"
+                          class="traceability-item traceability-item--po"
+                          [attr.aria-label]="'pr.detail.trace.openPo' | translate:{ number: po.poNumber }"
+                          (click)="navigatePoDetail(po.id)">
+                          <span class="traceability-item__icon">
+                            <ep-icon name="file-text" [size]="16" />
+                          </span>
+                          <span class="traceability-item__body">
+                            <strong class="mono">{{ po.poNumber }}</strong>
+                            <small>
+                              {{ 'pr.detail.trace.conversion' | translate }}:
+                              {{ ('finance.po.callback.' + (po.prConversionStatus || 'none')) | translate }}
+                            </small>
+                          </span>
+                          <span class="traceability-item__amount">
+                            <ep-amount [value]="po.totalAmount" [currency]="po.currency" />
+                            <ep-badge [tone]="poStatusTone(po.status)" [labelKey]="'finance.po.status.' + po.status" />
+                          </span>
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <p class="side-note">{{ 'pr.detail.trace.noPo' | translate }}</p>
+                  }
+                </div>
+              } @else {
+                <p class="side-note">{{ 'pr.detail.trace.none' | translate }}</p>
+              }
+            </div>
+          </ep-card>
+        }
+
         <ep-card tone="raised">
           <div class="card-section">
             <div class="section-title-row">
               <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
-              @if (data.approvalProcess) {
-                <ep-badge [tone]="approvalStatusTone(data.approvalProcess.status)" [labelKey]="'approval.status.' + data.approvalProcess.status" />
-              }
+              <div class="section-title-row__actions">
+                @if (data.status === 'PENDING_APPROVAL') {
+                  <ep-button
+                    *epHasPermission="['PR_APPROVE_L1', 'PR_APPROVE_L2', 'PR_APPROVE_L3', 'PR_APPROVE_FINANCE', 'PR_APPROVE_EMERGENCY']"
+                    variant="ghost"
+                    size="sm"
+                    icon="inbox"
+                    (click)="navigateApprovalInbox()">
+                    {{ 'pr.detail.approval.viewInbox' | translate }}
+                  </ep-button>
+                }
+                @if (data.approvalProcess) {
+                  <ep-badge [tone]="approvalStatusTone(data.approvalProcess.status)" [labelKey]="'approval.status.' + data.approvalProcess.status" />
+                }
+              </div>
             </div>
 
             @if (data.approvalProcess; as process) {
               @if (process.steps.length) {
-                <div class="approval-timeline">
-                  @for (step of process.steps; track step.stepIndex) {
-                    <div class="timeline-item" [class.timeline-item--active]="step.stepIndex === process.currentStep">
-                      <div class="timeline-item__marker">
-                        @if (step.status === 'APPROVED') {
-                          <ep-icon name="check" class="icon-success" />
-                        } @else if (step.status === 'REJECTED') {
-                          <ep-icon name="x" class="icon-danger" />
-                        } @else {
-                          <span class="dot"></span>
-                        }
-                      </div>
-                      <div class="timeline-item__content">
-                        <div class="timeline-item__header">
-                          <span class="timeline-item__role">{{ step.approverRole }}</span>
-                          <ep-badge [tone]="approvalStatusTone(step.status)" [labelKey]="'approval.status.' + step.status" />
-                        </div>
-                        <span class="timeline-item__person">
-                          {{ step.approver?.fullName || shortId(step.approver?.id) }}
-                        </span>
-                        <div class="timeline-item__meta">
-                          <span>{{ 'pr.detail.approval.assignedAt' | translate }} {{ formatDateTime(step.assignedAt) }}</span>
-                          <span>{{ 'pr.detail.approval.deadline' | translate }} {{ formatDateTime(step.slaDeadline) }}</span>
-                        </div>
-
-                        @if (step.status === 'PENDING' && step.slaRemainingHours !== null && step.assignedAt && step.slaDeadline) {
-                          <div class="timeline-item__sla">
-                            <ep-sla-bar [assignedAt]="step.assignedAt" [deadline]="step.slaDeadline" />
-                          </div>
-                        }
-
-                        @if (step.comment) {
-                          <div class="timeline-item__comment">{{ step.comment }}</div>
-                        }
-                      </div>
-                    </div>
-                  }
-                </div>
+                <ep-approval-steps
+                  [steps]="approvalSteps()"
+                  [currentStepIndex]="currentApprovalStep()"
+                  viewMode="vertical"
+                  [compact]="true"
+                  [showSlaBar]="true" />
               } @else {
                 <p class="side-note">{{ 'pr.detail.approval.none' | translate }}</p>
               }

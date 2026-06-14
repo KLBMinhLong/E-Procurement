@@ -1,9 +1,11 @@
 package com.eprocure.inventory.presentation.controller;
 
+import com.eprocure.inventory.application.usecase.AdjustStockUseCase;
 import com.eprocure.inventory.application.service.PageResult;
 import com.eprocure.inventory.application.usecase.GetItemStockUseCase;
 import com.eprocure.inventory.application.usecase.IssueOutStockUseCase;
 import com.eprocure.inventory.application.usecase.ListStockMovementsUseCase;
+import com.eprocure.inventory.application.usecase.ListWarehousesUseCase;
 import com.eprocure.inventory.application.usecase.ListWarehouseStockUseCase;
 import com.eprocure.inventory.common.api.ApiResponse;
 import com.eprocure.inventory.common.api.RequestIdUtil;
@@ -11,10 +13,12 @@ import com.eprocure.inventory.common.security.UserPrincipal;
 import com.eprocure.inventory.common.util.LogMaskingUtil;
 import com.eprocure.inventory.domain.model.StockMovementType;
 import com.eprocure.inventory.presentation.mapper.StockPresentationMapper;
+import com.eprocure.inventory.presentation.request.AdjustStockRequest;
 import com.eprocure.inventory.presentation.request.IssueOutStockRequest;
 import com.eprocure.inventory.presentation.response.IssueOutStockResponse;
 import com.eprocure.inventory.presentation.response.StockEntryResponse;
 import com.eprocure.inventory.presentation.response.StockMovementResponse;
+import com.eprocure.inventory.presentation.response.WarehouseListResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -41,22 +45,40 @@ public class StockController {
     private static final Logger log = LogManager.getLogger(StockController.class);
 
     private final GetItemStockUseCase getItemStockUseCase;
+    private final ListWarehousesUseCase listWarehousesUseCase;
     private final ListWarehouseStockUseCase listWarehouseStockUseCase;
     private final ListStockMovementsUseCase listStockMovementsUseCase;
     private final IssueOutStockUseCase issueOutStockUseCase;
+    private final AdjustStockUseCase adjustStockUseCase;
     private final StockPresentationMapper mapper;
 
     public StockController(
             GetItemStockUseCase getItemStockUseCase,
+            ListWarehousesUseCase listWarehousesUseCase,
             ListWarehouseStockUseCase listWarehouseStockUseCase,
             ListStockMovementsUseCase listStockMovementsUseCase,
             IssueOutStockUseCase issueOutStockUseCase,
+            AdjustStockUseCase adjustStockUseCase,
             StockPresentationMapper mapper) {
         this.getItemStockUseCase = getItemStockUseCase;
+        this.listWarehousesUseCase = listWarehousesUseCase;
         this.listWarehouseStockUseCase = listWarehouseStockUseCase;
         this.listStockMovementsUseCase = listStockMovementsUseCase;
         this.issueOutStockUseCase = issueOutStockUseCase;
+        this.adjustStockUseCase = adjustStockUseCase;
         this.mapper = mapper;
+    }
+
+    @GetMapping("/warehouses")
+    @PreAuthorize("hasAuthority('GR_VIEW')")
+    public ResponseEntity<ApiResponse<List<WarehouseListResponse>>> listWarehouses(
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] GET /api/v1/warehouses | userId={}",
+                LogMaskingUtil.maskId(principal.getId()));
+        return ResponseEntity.ok(ApiResponse.success(
+                listWarehousesUseCase.execute(),
+                RequestIdUtil.resolve(request)));
     }
 
     @GetMapping("/items/{itemCode}/stock")
@@ -157,5 +179,26 @@ public class StockController {
             builder.header("Idempotency-Replayed", "true");
         }
         return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+    }
+
+    @PostMapping("/stock/adjustment")
+    @PreAuthorize("hasAuthority('ADMIN_CATALOG_MANAGE')")
+    public ResponseEntity<ApiResponse<StockMovementResponse>> adjustStock(
+            @Valid @RequestBody AdjustStockRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest request) {
+        log.info("[CONTROLLER] POST /api/v1/stock/adjustment | userId={} | warehouseId={} | itemCode={}",
+                LogMaskingUtil.maskId(principal.getId()),
+                LogMaskingUtil.maskId(body.warehouseId()),
+                body.itemCode());
+        var result = adjustStockUseCase.execute(
+                mapper.toAdjustStockCommand(principal, body),
+                idempotencyKey);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        if (result.replayed()) {
+            builder.header("Idempotency-Replayed", "true");
+        }
+        return builder.body(ApiResponse.success(mapper.toResponse(result.movement()), RequestIdUtil.resolve(request)));
     }
 }

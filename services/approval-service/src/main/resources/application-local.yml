@@ -29,7 +29,7 @@ eprocure:
     api-key: ${APPROVAL_INTERNAL_API_KEY:change-me-internal-api-key}
   approval:
     integration:
-      fallback-enabled: ${APPROVAL_INTEGRATION_FALLBACK_ENABLED:true}
+      fallback-enabled: ${APPROVAL_INTEGRATION_FALLBACK_ENABLED:false}
   integration:
     iam:
       base-url: ${IAM_SERVICE_URL:http://localhost:8081}

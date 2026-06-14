@@ -135,6 +135,7 @@
 | WebSocket service | ✅ |
 | Permission guard + directive | ✅ |
 | Rewrite User Profile UI Screen (Personal details, avatar selector, password change checklist, 2FA toggle setup) | ✅ |
+| UI planning #2: Shell Nav + Approval/PR/GR UX polish | ✅ | Approval Inbox grouping/SLA countdown, PR catalog autocomplete, GR over-quantity validation; `npm run build` pass 2026-06-13 |
 | Unit tests / compilation validation | ✅ |
 
 ### E04: Purchase Request Service
@@ -154,7 +155,7 @@
 | Unit tests (domain + CreatePR + SubmitPR + UpdatePR + CancelPR + pending approval callback) | ✅ | 35 tests pass |
 | Frontend: PR list page | ✅ |
 | Frontend: PR create form | ✅ |
-| Frontend: PR detail page | ✅ |
+| Frontend: PR detail page | ✅ | 2026-06-13: PR Detail có traceability card RFQ/PO, reload/empty/loading state, link sang RFQ/PO detail, và ẩn tạo RFQ/PO khi đã có document active; `npm run build` pass |
 
 ### E13-A: Admin Portal (User, RBAC, Org Chart UI) [PRIORITIZED 🚀]
 | Task | Status |
@@ -185,6 +186,7 @@
 | Admin: CRUD approval rules | ✅ |
 | Frontend: Approval inbox | ✅ |
 | Frontend: Task detail + actions | ✅ |
+| Frontend: Approval/PR workflow visualization | ✅ | 2026-06-13: `ep-approval-steps` + `ep-pr-lifecycle`, Approval Detail/PR Detail wiring, navigation polish, VI/EN i18n; `npm run build` pass |
 | Frontend: Approval rule admin page | ✅ |
 | Unit tests (rule selection foundation + BPMN diagram metadata + chain/SLA resolution + process start + Kafka consumer + approval actions + inbox/detail retrieval + SLA escalation + delegation awareness + admin rule CRUD) | ✅ | 36 tests pass |
 
@@ -199,7 +201,7 @@
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
 | E12: Analytics & Reports | ✅ |
-| E13: Admin & Config Portal (Rest UI/BPMN) | ⬜ |
+| E13: Admin & Config Portal (Rest UI/BPMN) | 🔄 | 2026-06-14: created `docs/planning/UI_MODULE_ADMIN_CONFIG_PORTAL.md`; next slice is contract truth/runtime alignment because admin-service OpenAPI includes config/audit/health/sessions but no `services/admin-service` runtime exists |
 | E14: Security Hardening | ⬜ |
 | E15: Testing & CI/CD | 🔄 | E15-A Runtime/API Smoke Pack baseline passed on Docker; Newman/perf/CI hardening remain |
 
@@ -214,6 +216,7 @@
 | Kafka commit/release budget events | ✅ | Finance consumes submitted/approved/rejected/cancelled/changes-requested and writes idempotent ledger |
 | Budget dashboard/list API | ✅ | `GET /api/v1/budgets` + `GET /api/v1/budgets/{id}/dashboard`; scope quyền + Redis cache |
 | Override/transfer API | ✅ | `PATCH /api/v1/budgets/{id}/override-approval` + `PATCH /api/v1/budgets/{id}/transfer`; idempotent audit/ledger + tests |
+| Budget management UI | ✅ | Angular `/finance/budgets` list + `/finance/budgets/:id` dashboard, Override/Transfer modals, nav/i18n; `npm run build` pass |
 | Budget warning/exceeded events | ✅ | `BudgetAlertService` publishes `finance.budget.warning` / `finance.budget.exceeded` for low/negative projected available budget; notification consumption remains E11 |
 
 ### E11: Notification & Realtime
@@ -242,13 +245,18 @@
 | RFQ quote submit/evaluate/award | ✅ | `vendor_quotes`, `vendor_quote_line_items`; `POST /rfq/{id}/quotes`, `POST /rfq/{id}/quotes/{quoteId}/evaluate`, `POST /rfq/{id}/award` |
 | PO handoff after award event | ✅ | `procurement.rfq.awarded` published after award commit; finance-service consumes it and creates/list/detail DRAFT PO |
 | Unit tests | ✅ | Vendor master + RFQ quote/use-case tests pass |
+| Frontend: Vendor Management | ✅ | 2026-06-08: `/vendors/list`, `/vendors/create`, `/vendors/:id` — i18n VI/EN, models khớp backend (`VendorSummary`/`VendorDetail`, address object, scorecard, AVL filter), approve modal + reload; bỏ deactivate (API chưa có) |
+| Frontend: RFQ Management | ✅ | 2026-06-08: `/vendors/rfq`, `/vendors/rfq/create`, `/vendors/rfq/:id` — list/detail/create, quotes từ `GET /rfq/{id}`, submit/evaluate/award/close, award reason ≥20 chars; i18n đầy đủ; `npm run build` pass |
+| Frontend: RFQ quote comparison | ✅ | 2026-06-13: RFQ frontend status align backend (`PUBLISHED/CLOSED`), `/vendors/rfq/:id` có quote comparison table, line price highlight, quote coverage, evaluation progress, evaluate modal; `npm run build` pass |
+| Frontend: PR → RFQ handoff | ✅ | 2026-06-12: PR detail có nút tạo RFQ cho PR APPROVED; `/vendors/rfq/create?prId=...` tự chọn PR nguồn, gợi ý tiêu đề, hiển thị source note; `npm run build` pass |
+| Frontend: Inventory/GR UI | ✅ | 2026-06-08: `/inventory/goods-receipts` list/create/detail — warehouse dropdown (`GET /warehouses` mới), PO page=1, complete modal DRAFT-only, i18n đầy đủ; Stock/catalog UI ⬜ |
 
 ### E07: Purchase Order
 | Task | Status | Ghi chú |
 |---|---|---|
 | User story/use case chi tiết | ✅ | `docs/user-stories/E07-purchase-order.md`; chốt manual PO contract: PR `po-source`, PR `converted-to-po`, Vendor `po-source`, Finance callback outbox |
 | RFQ award consumer + PO persistence | ✅ | finance-service consumes `procurement.rfq.awarded`, dedups via `finance.event_processing_log`, creates `finance.purchase_orders` + `finance.po_line_items` |
-| PO list/detail API | ✅ | `GET /api/v1/purchase-orders`, `GET /api/v1/purchase-orders/{id}` guarded by `PO_VIEW_OWN`/`PO_VIEW_ALL` |
+| PO list/detail API | ✅ | `GET /api/v1/purchase-orders`, `GET /api/v1/purchase-orders/{id}` guarded by `PO_VIEW_OWN`/`PO_VIEW_ALL`; 2026-06-13 thêm list filter `pr_id` để PR Detail truy vết PO liên quan |
 | PO draft edit before send | ✅ | `PATCH /api/v1/purchase-orders/{id}` updates delivery details/payment terms for DRAFT PO with `PO_EDIT` + Idempotency-Key |
 | PO send/cancel actions | ✅ | `POST /api/v1/purchase-orders/{id}/send` and `PATCH /api/v1/purchase-orders/{id}/cancel`; idempotent Redis replay + status fallback |
 | PO issue event | ✅ | Finance publishes `procurement.po.issued`; Notification subscribes and creates `PO_ISSUED` in-app notification |
@@ -257,6 +265,8 @@
 | Vendor PO source contract | ✅ | `GET /internal/vendors/{id}/po-source`; vendor-service tests pass |
 | Manual PO create API | ✅ | `POST /api/v1/purchase-orders` creates DRAFT PO from approved PR + AVL vendor, stores callback outbox, exposes `prConversionStatus`, and blocks send until callback delivered |
 | Frontend: Manual PO create UI | ✅ | Angular `/finance/purchase-orders` list/detail/create screens, PR detail handoff, PO navigation/i18n; `npm run build` passes |
+| Frontend: PO detail actions | ✅ | 2026-06-12: PO detail hỗ trợ edit DRAFT delivery/payment terms, send to vendor khi PR callback DELIVERED + vendor email sẵn sàng, cancel trước fulfillment; permission-gated modals, i18n VI/EN; `npm run build` pass |
+| Frontend: PR → PO traceability | ✅ | 2026-06-13: `PurchaseOrderService.listByPrId()` dùng `GET /purchase-orders?pr_id=...`; PR Detail hiển thị PO liên quan và trạng thái callback PR; `mvn -pl services/finance-service test` + `npm run build` pass |
 
 ### E08: Goods Receipt & Inventory
 | Task | Status | Ghi chú |
@@ -266,9 +276,18 @@
 | PO issued consumer + snapshot persistence | ✅ | inventory-service consumes `procurement.po.issued`, dedups via `inventory.event_processing_log`, stores issued PO header/line snapshots |
 | Unit tests | ✅ | PO issued snapshot + GR create/list/get/complete + stock query + issue-out use-case tests pass |
 | Goods Receipt create/list/detail API | ✅ | `GET/POST /api/v1/goods-receipts`, `GET /api/v1/goods-receipts/{id}`; creates DRAFT GR from issued PO snapshot with DB idempotency |
+| Goods Receipt draft edit API | ✅ | 2026-06-12: Slice 6 done — `PUT /api/v1/goods-receipts/{id}` guarded by `GR_CREATE`, DRAFT-only, validates PO snapshot lines/tolerance, replaces draft line items via soft delete + insert, tracks `update_idempotency_key`; use-case tests cover update/replay/completed conflict; `mvn -pl services/inventory-service test` passes |
 | Complete GR + stock receipt movement | ✅ | `POST /api/v1/goods-receipts/{id}/complete`; resolves catalog `itemCode`, updates `stock_entries`, creates `RECEIPT_IN` movements, publishes `inventory.gr.created` |
 | Stock list/movement API | ✅ | `GET /api/v1/items/{itemCode}/stock`, `GET /api/v1/warehouses/{id}/stock`, `GET /api/v1/stock/movements`; read-only stock projections with `GR_VIEW` |
 | Issue-out API | ✅ | `POST /api/v1/stock/issue-out`; validates active item/warehouse, decrements stock atomically, stores idempotent request header, creates `ISSUE_OUT` movements |
+| Stock adjustment API | ✅ | 2026-06-12: Slice 7 done — `POST /api/v1/stock/adjustment` guarded by `ADMIN_CATALOG_MANAGE`, validates active item/warehouse and non-zero delta, stores idempotent `inventory.stock_adjustment_requests`, upserts stock balance, creates signed `ADJUSTMENT` movement; use-case tests cover adjust/replay/missing item/warehouse/delta-zero; `mvn -pl services/inventory-service test` passes |
+| Catalog item backend API | ✅ | 2026-06-12: Slice 4 done — `GET/POST /api/v1/items`, `GET/PUT /api/v1/items/{itemCode}` implemented with Item domain/repository/use cases/controller, `ADMIN_CATALOG_MANAGE` mutation permission, `GR_VIEW` read permission, idempotency log table `inventory.catalog_item_mutation_requests`, unit tests for duplicate/missing/search/update/replay; `mvn -pl services/inventory-service test` passes |
+| Frontend: GR List & Create | ✅ | 2026-06-12: Slice 3 done — GR list has `po_id` quick filter, create form supports rejected quantity, rejection reason, and lot number, and sends backend-compatible line payload; `npm run build` passes |
+| Frontend: GR Detail & Complete/Edit | ✅ | 2026-06-12: Slice 6 done — detail displays lot/rejection fields, links stock/movements by warehouse/item, stores complete response summary, and exposes DRAFT edit modal for received/rejected quantity, rejection reason, lot number, receivedAt, notes with `GoodsReceiptService.update()` and generated `Idempotency-Key`; `npm run build` passes |
+| Frontend: Stock Dashboard & Movements | ✅ | 2026-06-12: Slice 0-1 done — `StockEntry` model aligned to backend, `StockService` added, Inventory permissions normalized away from non-seeded `STOCK_VIEW`, routes `/inventory/stock` and `/inventory/stock/movements` added, warehouse stock dashboard and immutable movement ledger implemented; `npm run build` passes |
+| Frontend: Issue Out Stock | ✅ | 2026-06-12: Slice 2 done — route `/inventory/issue-out` added with `GR_ISSUE_OUT`, form uses warehouse stock as item selector, validates available quantity before submit, posts `StockService.issueOut()` with generated `Idempotency-Key`, displays created movements and reloads stock; `npm run build` passes |
+| Frontend: Stock Adjustment | ✅ | 2026-06-12: Slice 7 done — stock dashboard row action opens `ADMIN_CATALOG_MANAGE` adjustment modal, shows current quantity and computed delta, posts `StockService.adjust()` with generated `Idempotency-Key`, reloads stock after success; i18n VI/EN added; `npm run build` passes |
+| Frontend: Catalog UI | ✅ | 2026-06-12: Slice 5 done — added `InventoryCatalogService`, catalog models, `/inventory/catalog` list with filters/create/edit modal, `/inventory/catalog/:itemCode` detail with stock summary/edit modal, sidebar/breadcrumb/i18n wiring; read routes use `GR_VIEW`, mutation controls require `ADMIN_CATALOG_MANAGE`; `npm run build` passes |
 
 ### E09: Invoice & Payment
 | Task | Status | Ghi chú |
@@ -279,6 +298,7 @@
 | Unit tests | ✅ | Invoice create/list/detail + idempotency/missing PO/vendor mismatch tests pass |
 | 3-way match API | ✅ | `POST /api/v1/invoices/{id}/match`; consumes `inventory.gr.created` into finance GR snapshots, compares PO + GR + Invoice, publishes `finance.invoice.matched` when matched |
 | Approve/dispute/payment actions | ✅ | `POST /approve`, `/dispute`, `/confirm-payment`; stores `finance.payments` and marks invoice `PAID` |
+| Frontend: Invoice & Payment UI | ✅ | 2026-06-13: `/finance/invoices/:id` now has PO/GR/Invoice 3-way match visualization with PO detail + completed GR load, aggregate GR quantities by `poLineItemId`, variance highlighting, and fallback invoice-line view; earlier list/create/actions and PO detail invoice link remain complete |
 | Budget spent ledger link | ✅ | Released commitment hold and recorded invoice spend on payment confirmation |
 
 
@@ -293,6 +313,7 @@
 | Projection/event ingestion | ✅ | Consumes `procurement.pr.submitted`, `procurement.po.issued`, `finance.invoice.matched`, `approval.sla.breached`, `approval.step.assigned`, `procurement.rfq.awarded`, `inventory.gr.created`; stores idempotent projections and refreshes executive dashboard snapshots where applicable |
 | Manager/purchasing/requester dashboards | ✅ | `/purchasing` reads PO + invoice projections; `/manager` reads PR submitted + SLA breach projections scoped by dept; `/requester` reads PR submitted projections scoped by requester; RFQ/GR-specific purchasing metrics remain follow-up |
 | KPI/report export APIs | ✅ | Async report export API, cycle-time KPI from PR submitted + PO issued projections, SLA KPI with assigned-step denominator, local PDF worker with JasperReports templates, POI-based XLSX workbook export, and type-specific report datasets for all report types. Source-enrichment contracts remain future work for IAM department labels, `departmentId`/`status` filters, RFQ baseline prices, finance budget plan snapshots, maverick-abuse events, and immutable system audit projection. |
+| Frontend: Analytics dashboard/report export UI | ✅ | 2026-06-12: `/dashboard` thay mock bằng analytics dashboard thật, permission-aware tabs executive/manager/purchasing/requester, cycle-time/SLA KPI panels, async report export form + job refresh/download; i18n VI/EN. 2026-06-13: UI plan #8 slice 8a-8d hoàn thành chart dependency/foundation, tách `ep-dashboard-control-bar`, URL tab state, freshness/cache indicator, auto-refresh visible-only, department dropdown/fallback, executive monthly/category/SLA chart thật, semantic KPI icons, KPI deep-dive chart/table cho cycle time + SLA compliance. 2026-06-14: slice 8e hoàn thành role workflow hubs cho Manager/Purchasing/Requester, gồm budget health/forecast, workflow links, requester status chart, vendor meters; recent PR detail links giữ deferred vì projection thiếu UUID route id. Slice 8f hoàn thành quick action strip theo permission, report presets theo tab, job polling, sessionStorage persistence, expiresAt/download UX. Slice 8g hoàn thành accessibility/empty-state polish cho loading region, role tables/lists, localized placeholder và report table aria. Slice 8h hoàn thành final verification; `npm run build` + `git diff --check` pass |
 
 ### E15: Testing & CI/CD
 | Task | Status | Ghi chú |

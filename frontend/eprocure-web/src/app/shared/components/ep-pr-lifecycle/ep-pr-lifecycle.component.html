@@ -1,0 +1,67 @@
+@if (!status()) {
+  <ep-empty-state
+    icon="workflow"
+    [title]="'pr.lifecycle.emptyTitle' | translate"
+    [message]="'pr.lifecycle.emptyMessage' | translate" />
+} @else {
+  <section class="pr-lifecycle" aria-labelledby="pr-lifecycle-heading">
+    <div class="pr-lifecycle__header">
+      <div>
+        <h2 id="pr-lifecycle-heading" class="pr-lifecycle__title">
+          {{ 'pr.lifecycle.title' | translate }}
+        </h2>
+        @if (hasApprovalStatus()) {
+          <p class="pr-lifecycle__subtitle">
+            {{ 'pr.lifecycle.approvalStatus' | translate }}:
+            <span>{{ 'approval.status.' + approvalStatus() | translate }}</span>
+          </p>
+        }
+      </div>
+
+      <ep-badge [tone]="terminalTone()" [labelKey]="'pr.status.' + status()" />
+    </div>
+
+    <ol class="pr-lifecycle__stages">
+      @for (stage of stages(); track stage.status; let last = $last) {
+        <li
+          class="pr-lifecycle__stage"
+          [class.pr-lifecycle__stage--complete]="isComplete(stage)"
+          [class.pr-lifecycle__stage--current]="isCurrent(stage)"
+          [class.pr-lifecycle__stage--blocked]="isBlocked(stage)">
+          <div
+            class="pr-lifecycle__marker"
+            [attr.aria-current]="isCurrent(stage) ? 'step' : null">
+            <ep-icon [name]="stage.icon" [size]="16" />
+          </div>
+
+          @if (!last) {
+            <span
+              class="pr-lifecycle__connector"
+              [class.pr-lifecycle__connector--complete]="isComplete(stage)">
+            </span>
+          }
+
+          <div class="pr-lifecycle__body">
+            <div class="pr-lifecycle__body-head">
+              <strong>{{ stage.labelKey | translate }}</strong>
+              <ep-badge [tone]="stage.tone" [labelKey]="'pr.lifecycle.state.' + stage.state" />
+            </div>
+            <p>{{ stage.descriptionKey | translate }}</p>
+          </div>
+        </li>
+      }
+    </ol>
+
+    @if (terminalStatus()) {
+      <aside class="pr-lifecycle__terminal" [class.pr-lifecycle__terminal--danger]="terminalTone() === 'danger'">
+        <span class="pr-lifecycle__terminal-icon">
+          <ep-icon [name]="terminalIcon()" [size]="16" />
+        </span>
+        <div>
+          <strong>{{ terminalLabelKey()! | translate }}</strong>
+          <p>{{ terminalDescriptionKey()! | translate }}</p>
+        </div>
+      </aside>
+    }
+  </section>
+}

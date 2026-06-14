@@ -1,0 +1,122 @@
+<section class="rfq-create-page" aria-labelledby="rfq-create-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'rfq.create.eyebrow' | translate }}</span>
+      <h1 id="rfq-create-heading" class="page-header__title">{{ 'rfq.create.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'rfq.create.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else {
+    <form class="rfq-form" [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-card">
+        <h2 class="form-card__title">
+          <ep-icon name="file-search" [size]="18" />
+          {{ 'rfq.create.section.rfq' | translate }}
+        </h2>
+
+        <div class="form-grid">
+          @if (sourcePr(); as pr) {
+            <div class="source-pr-note">
+              <ep-icon name="git-branch" [size]="16" />
+              <span>{{ 'rfq.create.sourcePrNote' | translate: { prNumber: pr.prNumber } }}</span>
+            </div>
+          }
+
+          <ep-form-field
+            class="form-field--full"
+            [label]="'rfq.create.field.pr' | translate"
+            [error]="fieldError('prId') ? (fieldError('prId')! | translate) : null">
+            <select id="rfq-pr" class="form-control" formControlName="prId">
+              <option value="">{{ 'rfq.create.field.prPlaceholder' | translate }}</option>
+              @for (pr of approvedPrs(); track pr.id) {
+                <option [value]="pr.id">{{ pr.prNumber }} — {{ pr.title }}</option>
+              }
+            </select>
+          </ep-form-field>
+
+          <ep-form-field
+            class="form-field--full"
+            [label]="'rfq.create.field.title' | translate"
+            [error]="fieldError('title') ? (fieldError('title')! | translate) : null">
+            <input
+              id="rfq-title"
+              type="text"
+              class="form-control"
+              formControlName="title"
+              [placeholder]="'rfq.create.field.titlePlaceholder' | translate">
+          </ep-form-field>
+
+          <ep-form-field
+            [label]="'rfq.create.field.deadline' | translate"
+            [error]="fieldError('submissionDeadline') ? (fieldError('submissionDeadline')! | translate) : null">
+            <input
+              id="rfq-deadline"
+              type="datetime-local"
+              class="form-control"
+              formControlName="submissionDeadline">
+          </ep-form-field>
+
+          <ep-form-field
+            class="form-field--full"
+            [label]="'rfq.create.field.requirements' | translate"
+            [error]="null">
+            <textarea
+              id="rfq-requirements"
+              class="form-control form-control--textarea"
+              formControlName="requirements"
+              rows="3"
+              [placeholder]="'rfq.create.field.requirementsPlaceholder' | translate"></textarea>
+          </ep-form-field>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-card__header">
+          <h2 class="form-card__title">
+            <ep-icon name="users" [size]="18" />
+            {{ 'rfq.create.section.vendors' | translate }}
+          </h2>
+          <span class="vendor-counter" [class.vendor-counter--ok]="canSubmit()">
+            {{ 'rfq.create.vendorCount' | translate: { count: selectedVendorCount() } }}
+          </span>
+        </div>
+
+        @if (avlVendors().length < 2) {
+          <p class="form-hint form-hint--warning">{{ 'rfq.create.noAvlVendors' | translate }}</p>
+        } @else {
+          <div class="vendor-picker">
+            @for (vendor of avlVendors(); track vendor.id) {
+              <label class="vendor-option" [class.vendor-option--selected]="isVendorSelected(vendor.id)">
+                <input
+                  type="checkbox"
+                  [checked]="isVendorSelected(vendor.id)"
+                  (change)="toggleVendor(vendor.id)">
+                <span class="vendor-option__name">{{ vendor.name }}</span>
+                <span class="vendor-option__meta mono">{{ vendor.vendorCode }}</span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="form-footer">
+        <ep-button type="button" variant="ghost" (click)="cancel()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-save-rfq"
+          type="submit"
+          variant="primary"
+          icon="save"
+          [disabled]="isSaving() || !canSubmit()">
+          {{ 'rfq.create.action.save' | translate }}
+        </ep-button>
+      </div>
+    </form>
+  }
+</section>

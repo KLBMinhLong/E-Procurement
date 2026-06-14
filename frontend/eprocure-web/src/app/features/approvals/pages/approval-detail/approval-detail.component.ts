@@ -24,6 +24,7 @@ import { EpSlaBarComponent } from '../../../../shared/components/ep-sla-bar/ep-s
 import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpApprovalStepsComponent } from '../../../../shared/components/ep-approval-steps/ep-approval-steps.component';
 import { ApprovalsService } from '../../services/approvals.service';
 import { AdminUserService } from '../../../admin/services/admin-user.service';
 import { AdminUserSummary } from '../../../admin/models/admin.model';
@@ -64,7 +65,8 @@ const STATUS_TONE: Record<string, EpBadgeTone> = {
     EpSlaBarComponent,
     EpModalComponent,
     EpFormFieldComponent,
-    EpIconComponent
+    EpIconComponent,
+    EpApprovalStepsComponent
   ],
   templateUrl: './approval-detail.component.html',
   styleUrl: './approval-detail.component.scss'
@@ -82,6 +84,8 @@ export class ApprovalDetailComponent implements OnInit {
   readonly task = computed(() => this.taskDetail()?.task);
   readonly entityPayload = computed(() => this.taskDetail()?.entitySnapshot);
   readonly process = signal<ApprovalProcessDetail | null>(null);
+  readonly approvalSteps = computed(() => this.process()?.steps ?? []);
+  readonly currentStepIndex = computed(() => this.process()?.currentStepIndex ?? null);
   readonly users = signal<AdminUserSummary[]>([]);
   readonly isLoading = signal(false);
   readonly isSubmitting = signal(false);
@@ -109,6 +113,17 @@ export class ApprovalDetailComponent implements OnInit {
   // ── Event Handlers ────────────────────────────────────────────────
   goBack(): void {
     this.router.navigate(['/approvals']);
+  }
+
+  canOpenPurchaseRequest(): boolean {
+    return this.task()?.entityType === 'PURCHASE_REQUEST' && Boolean(this.task()?.entityId);
+  }
+
+  navigateToPurchaseRequest(): void {
+    const entityId = this.task()?.entityId;
+    if (entityId) {
+      this.router.navigate(['/procurement', entityId]);
+    }
   }
 
   openModal(type: 'approve' | 'reject' | 'changes' | 'forward'): void {

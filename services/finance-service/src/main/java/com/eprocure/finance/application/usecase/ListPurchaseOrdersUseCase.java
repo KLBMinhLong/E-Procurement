@@ -47,6 +47,7 @@ public class ListPurchaseOrdersUseCase {
                 purchasingOfficerId,
                 query.status(),
                 query.vendorId(),
+                query.prId(),
                 toStartInstant(query.fromDate()),
                 toEndExclusiveInstant(query.toDate()),
                 query.page(),

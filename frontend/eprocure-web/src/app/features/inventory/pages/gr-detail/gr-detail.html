@@ -1,0 +1,348 @@
+<section class="gr-detail-page" aria-labelledby="gr-detail-heading">
+  <div class="gr-detail-page__nav">
+    <ep-breadcrumb />
+    <ep-button variant="ghost" size="sm" icon="chevron-left" (click)="goBack()">
+      {{ 'action.back' | translate }}
+    </ep-button>
+  </div>
+
+  @if (loading()) {
+    <ep-skeleton [rows]="10" />
+  } @else if (gr(); as detail) {
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'inventory.gr.detail.eyebrow' | translate }}</span>
+        <h1 id="gr-detail-heading" class="page-header__title mono">{{ detail.grNumber }}</h1>
+        <div class="page-header__badges">
+          <ep-badge [tone]="statusTone(detail.status)" [labelKey]="'inventory.gr.status.' + detail.status" />
+        </div>
+      </div>
+
+      <div class="page-header__actions">
+        <ep-button
+          id="btn-gr-stock"
+          variant="secondary"
+          icon="boxes"
+          (click)="navigateStock()">
+          {{ 'inventory.gr.detail.action.viewStock' | translate }}
+        </ep-button>
+        <ep-button
+          id="btn-gr-movements"
+          variant="secondary"
+          icon="history"
+          (click)="navigateMovements()">
+          {{ 'inventory.gr.detail.action.viewMovements' | translate }}
+        </ep-button>
+        @if (canEdit()) {
+          <ep-button
+            *epHasPermission="'GR_CREATE'"
+            id="btn-edit-gr-draft"
+            variant="secondary"
+            icon="pencil"
+            [disabled]="savingEdit() || submitting()"
+            (click)="openEditModal()">
+            {{ 'inventory.gr.detail.action.editDraft' | translate }}
+          </ep-button>
+        }
+        @if (canComplete()) {
+          <ep-button
+            *epHasPermission="'GR_CREATE'"
+            id="btn-complete-gr"
+            variant="primary"
+            icon="check-circle"
+            [disabled]="submitting()"
+            (click)="openCompleteModal()">
+            {{ 'inventory.gr.detail.action.complete' | translate }}
+          </ep-button>
+        }
+      </div>
+    </div>
+
+    <div class="gr-detail-layout">
+      <div class="gr-detail-layout__main">
+        @if (completeSummary(); as summary) {
+          <ep-card>
+            <div class="card-section">
+              <div class="section-title-row">
+                <h2 class="card-section__title">{{ 'inventory.gr.detail.section.completeSummary' | translate }}</h2>
+                <ep-badge tone="success" [labelKey]="'inventory.gr.detail.toast.completeSuccess'" />
+              </div>
+              <div class="summary-grid">
+                <div class="info-item">
+                  <span class="info-label">{{ 'inventory.gr.detail.complete.grStatus' | translate }}</span>
+                  <strong>{{ ('inventory.gr.status.' + summary.grStatus) | translate }}</strong>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">{{ 'inventory.gr.detail.complete.movementsCreated' | translate }}</span>
+                  <strong class="mono">{{ summary.movementsCreated }}</strong>
+                </div>
+              </div>
+
+              @if (summary.updatedStocks.length > 0) {
+                <div class="stock-update-list">
+                  @for (stock of summary.updatedStocks; track stock.itemCode) {
+                    <button type="button" class="stock-update" (click)="navigateMovements(stock.itemCode)">
+                      <span class="mono">{{ stock.itemCode }}</span>
+                      <strong>{{ formatQuantity(stock.newQuantityOnHand) }}</strong>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </ep-card>
+        }
+
+        <ep-card>
+          <div class="card-section">
+            <h2 class="card-section__title">{{ 'inventory.gr.detail.section.info' | translate }}</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.poNumber' | translate }}</span>
+                <strong class="mono">{{ detail.po.poNumber }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.warehouse' | translate }}</span>
+                <strong>{{ detail.warehouse.name }}</strong>
+                <small class="entity-ref mono">{{ shortId(detail.warehouse.id) }}</small>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.receivedBy' | translate }}</span>
+                <strong>{{ detail.warehouseKeeper.fullName }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'inventory.gr.detail.info.receivedDate' | translate }}</span>
+                <strong class="mono">{{ formatDateTime(detail.receivedAt) }}</strong>
+              </div>
+            </div>
+
+            @if (detail.notes) {
+              <div class="narrative-block mt-4">
+                <span class="info-label">{{ 'inventory.gr.detail.info.notes' | translate }}</span>
+                <p>{{ detail.notes }}</p>
+              </div>
+            }
+          </div>
+        </ep-card>
+
+        <ep-card>
+          <div class="card-section card-section--compact">
+            <div class="section-title-row">
+              <h2 class="card-section__title">{{ 'inventory.gr.detail.section.lineItems' | translate }}</h2>
+              <span class="info-pill">{{ 'inventory.gr.detail.line.count' | translate:{ count: detail.lineItems.length } }}</span>
+            </div>
+          </div>
+
+          <div class="gr-table-wrapper">
+            <table class="gr-table">
+              <thead>
+                <tr>
+                  <th>{{ 'inventory.gr.detail.line.item' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.ordered' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.received' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.rejected' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.lotNumber' | translate }}</th>
+                  <th>{{ 'inventory.gr.detail.line.condition' | translate }}</th>
+                  <th class="align-right">{{ 'shared.table.actions' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of detail.lineItems; track line.id) {
+                  <tr>
+                    <td>
+                      <div class="item-name">
+                        <strong>{{ line.itemName }}</strong>
+                      </div>
+                      <div class="item-meta">
+                        @if (line.itemCode) {
+                          <span class="mono">{{ line.itemCode }}</span>
+                        }
+                      </div>
+                    </td>
+                    <td>{{ line.orderedQuantity }} {{ line.unit }}</td>
+                    <td class="success-text">{{ line.receivedQuantity }} {{ line.unit }}</td>
+                    <td [class.danger-text]="line.rejectedQuantity !== '0'">
+                      {{ line.rejectedQuantity }} {{ line.unit }}
+                    </td>
+                    <td><span class="mono">{{ line.lotNumber || '-' }}</span></td>
+                    <td>{{ line.rejectionReason || '-' }}</td>
+                    <td class="align-right">
+                      @if (line.itemCode) {
+                        <ep-button
+                          [id]="'btn-gr-line-movements-' + line.id"
+                          variant="ghost"
+                          size="sm"
+                          icon="history"
+                          (click)="navigateMovements(line.itemCode)">
+                          {{ 'inventory.gr.detail.action.viewMovements' | translate }}
+                        </ep-button>
+                      }
+                    </td>
+                  </tr>
+                }
+                @if (detail.lineItems.length === 0) {
+                  <tr>
+                    <td colspan="7" class="empty-state">{{ 'inventory.gr.detail.line.empty' | translate }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </ep-card>
+      </div>
+
+      <div class="gr-detail-layout__side">
+        <ep-card>
+          <div class="card-section">
+            <h3 class="card-section__title">{{ 'inventory.gr.detail.section.system' | translate }}</h3>
+            <div class="info-list">
+              <div class="list-item">
+                <span class="label">{{ 'inventory.gr.detail.system.createdAt' | translate }}</span>
+                <span class="value mono">{{ formatDateTime(detail.createdAt) }}</span>
+              </div>
+              <div class="list-item">
+                <span class="label">{{ 'inventory.gr.detail.system.systemId' | translate }}</span>
+                <span class="value mono" [title]="detail.id">{{ shortId(detail.id) }}</span>
+              </div>
+            </div>
+          </div>
+        </ep-card>
+
+        <ep-card>
+          <div class="card-section">
+            <h3 class="card-section__title">{{ 'inventory.gr.detail.section.match' | translate }}</h3>
+            <p class="text-neutral-600 mb-4 text-sm">{{ 'inventory.gr.detail.system.matchDesc' | translate }}</p>
+            
+            <div class="workflow-steps">
+              <div class="step completed">
+                <div class="step-icon">
+                  <ep-icon name="check" [size]="14"></ep-icon>
+                </div>
+                <div class="step-content">
+                  <h4>{{ 'inventory.gr.detail.match.po' | translate }}</h4>
+                  <p class="mono">{{ detail.po.poNumber }}</p>
+                </div>
+              </div>
+              
+              <div class="step" [class.completed]="detail.status === 'COMPLETE' || detail.status === 'PARTIAL'" [class.active]="detail.status === 'DRAFT'">
+                <div class="step-icon">
+                  @if (detail.status === 'COMPLETE' || detail.status === 'PARTIAL') {
+                    <ep-icon name="check" [size]="14"></ep-icon>
+                  } @else {
+                    <div class="dot"></div>
+                  }
+                </div>
+                <div class="step-content">
+                  <h4>{{ 'inventory.gr.detail.match.gr' | translate }}</h4>
+                  <p class="mono">{{ detail.grNumber }}</p>
+                </div>
+              </div>
+              
+              <div class="step pending">
+                <div class="step-icon">
+                  <div class="dot"></div>
+                </div>
+                <div class="step-content">
+                  <h4>{{ 'inventory.gr.detail.match.invoice' | translate }}</h4>
+                  <p>{{ 'inventory.gr.detail.match.pendingInvoice' | translate }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ep-card>
+      </div>
+    </div>
+  }
+
+  <ep-modal
+    [open]="showCompleteModal()"
+    [title]="'inventory.gr.detail.modal.completeTitle' | translate"
+    (close)="closeCompleteModal()">
+    <p>{{ 'inventory.gr.detail.modal.completeMessage' | translate }}</p>
+    <div class="modal-actions">
+      <ep-button variant="ghost" (click)="closeCompleteModal()">{{ 'action.cancel' | translate }}</ep-button>
+      <ep-button
+        variant="primary"
+        icon="check-circle"
+        [disabled]="submitting()"
+        (click)="confirmComplete()">
+        {{ 'inventory.gr.detail.action.complete' | translate }}
+      </ep-button>
+    </div>
+  </ep-modal>
+
+  <ep-modal
+    [open]="showEditModal()"
+    [size]="'xl'"
+    [title]="'inventory.gr.detail.edit.title' | translate"
+    (close)="closeEditModal()">
+    <form class="edit-form" [formGroup]="editForm" (ngSubmit)="saveDraft()">
+      <div class="edit-form__grid">
+        <ep-form-field [label]="'inventory.gr.detail.edit.receivedAt' | translate">
+          <input class="form-control" type="datetime-local" formControlName="receivedAt" />
+        </ep-form-field>
+        <ep-form-field [label]="'inventory.gr.detail.edit.notes' | translate">
+          <textarea class="form-control form-control--textarea" formControlName="notes"></textarea>
+        </ep-form-field>
+      </div>
+
+      <div class="edit-lines" formArrayName="lineItems">
+        <div class="section-title-row">
+          <h3 class="card-section__title">{{ 'inventory.gr.detail.edit.lineItems' | translate }}</h3>
+          <span class="info-pill">{{ 'inventory.gr.detail.line.count' | translate:{ count: editLineItems.length } }}</span>
+        </div>
+
+        @for (lineGroup of editLineItems.controls; track lineGroup.value.poLineItemId; let i = $index) {
+          <div class="edit-line" [formGroupName]="i">
+            <div class="edit-line__header">
+              <div>
+                <strong>{{ lineGroup.value.itemName }}</strong>
+                <span class="entity-ref mono">{{ lineGroup.value.poLineItemId }}</span>
+              </div>
+              <span class="info-pill">
+                {{ lineGroup.value.orderedQuantity }} {{ lineGroup.value.unit }}
+              </span>
+            </div>
+
+            <div class="edit-line__grid">
+              <ep-form-field
+                [label]="'inventory.gr.detail.edit.receivedQuantity' | translate"
+                [required]="true"
+                [error]="lineControlError(i, 'receivedQuantity') ? (lineControlError(i, 'receivedQuantity')! | translate) : null">
+                <input class="form-control" inputmode="decimal" formControlName="receivedQuantity" />
+              </ep-form-field>
+
+              <ep-form-field
+                [label]="'inventory.gr.detail.edit.rejectedQuantity' | translate"
+                [required]="true"
+                [error]="lineControlError(i, 'rejectedQuantity') ? (lineControlError(i, 'rejectedQuantity')! | translate) : null">
+                <input class="form-control" inputmode="decimal" formControlName="rejectedQuantity" />
+              </ep-form-field>
+
+              <ep-form-field [label]="'inventory.gr.detail.edit.lotNumber' | translate">
+                <input class="form-control" formControlName="lotNumber" />
+              </ep-form-field>
+
+              <ep-form-field [label]="'inventory.gr.detail.edit.rejectionReason' | translate">
+                <input class="form-control" formControlName="rejectionReason" />
+              </ep-form-field>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions">
+        <ep-button type="button" variant="ghost" (click)="closeEditModal()">
+          {{ 'action.cancel' | translate }}
+        </ep-button>
+        <ep-button
+          type="submit"
+          variant="primary"
+          icon="save"
+          [disabled]="editForm.invalid || savingEdit()"
+          [loading]="savingEdit()">
+          {{ 'action.submit' | translate }}
+        </ep-button>
+      </div>
+    </form>
+  </ep-modal>
+</section>

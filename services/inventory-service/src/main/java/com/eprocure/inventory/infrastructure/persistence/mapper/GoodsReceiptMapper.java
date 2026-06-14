@@ -6,6 +6,7 @@ import com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptDbEn
 import com.eprocure.inventory.infrastructure.persistence.entity.GoodsReceiptLineItemDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockBalanceDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.StockMovementDbEntity;
+import com.eprocure.inventory.infrastructure.persistence.entity.WarehouseListDbEntity;
 import com.eprocure.inventory.infrastructure.persistence.entity.WarehouseSnapshotDbEntity;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -28,6 +29,10 @@ public interface GoodsReceiptMapper {
             @Param("id") UUID id,
             @Param("idempotencyKey") UUID idempotencyKey);
 
+    Optional<GoodsReceiptDbEntity> findHeaderByIdAndUpdateIdempotencyKey(
+            @Param("id") UUID id,
+            @Param("idempotencyKey") UUID idempotencyKey);
+
     List<GoodsReceiptLineItemDbEntity> findLineItemsByGoodsReceiptId(@Param("goodsReceiptId") UUID goodsReceiptId);
 
     List<GoodsReceiptDbEntity> findHeadersByFilter(@Param("filter") GoodsReceiptFilter filter);
@@ -47,6 +52,15 @@ public interface GoodsReceiptMapper {
               AND is_deleted = FALSE
             """)
     Optional<WarehouseSnapshotDbEntity> findActiveWarehouseById(@Param("warehouseId") UUID warehouseId);
+
+    @Select("""
+            SELECT id, code, name
+            FROM inventory.warehouses
+            WHERE is_active = TRUE
+              AND is_deleted = FALSE
+            ORDER BY name ASC
+            """)
+    List<WarehouseListDbEntity> findActiveWarehouses();
 
     @Select("""
             SELECT item.item_code
@@ -91,6 +105,38 @@ public interface GoodsReceiptMapper {
             )
             """)
     void insertLineItem(@Param("entity") GoodsReceiptLineItemDbEntity entity);
+
+    @Update("""
+            UPDATE inventory.goods_receipts
+            SET received_at = #{entity.receivedAt},
+                notes = #{entity.notes},
+                updated_by = #{actorId},
+                updated_at = #{updatedAt},
+                update_idempotency_key = #{idempotencyKey}
+            WHERE id = #{entity.id}
+              AND status = 'DRAFT'
+              AND is_deleted = FALSE
+            """)
+    int updateDraftHeader(
+            @Param("entity") GoodsReceiptDbEntity entity,
+            @Param("actorId") UUID actorId,
+            @Param("updatedAt") Instant updatedAt,
+            @Param("idempotencyKey") UUID idempotencyKey);
+
+    @Update("""
+            UPDATE inventory.goods_receipt_line_items
+            SET is_deleted = TRUE,
+                deleted_at = #{deletedAt},
+                deleted_by = #{actorId},
+                updated_by = #{actorId},
+                updated_at = #{deletedAt}
+            WHERE goods_receipt_id = #{goodsReceiptId}
+              AND is_deleted = FALSE
+            """)
+    void softDeleteLineItemsByGoodsReceiptId(
+            @Param("goodsReceiptId") UUID goodsReceiptId,
+            @Param("actorId") UUID actorId,
+            @Param("deletedAt") Instant deletedAt);
 
     @Update("""
             UPDATE inventory.goods_receipt_line_items

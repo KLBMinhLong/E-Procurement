@@ -1,13 +1,17 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL } from '../../../core/http/api-tokens';
+import { BYPASS_ERROR_INTERCEPTOR_TOKEN } from '../../../core/http/http-context-tokens';
 import { ApiResponse, PageMeta } from '../../../core/models/api-response.model';
 import {
+  CancelPurchaseOrderRequest,
   CreatePurchaseOrderRequest,
   PurchaseOrder,
-  PurchaseOrderListFilter
+  PurchaseOrderListFilter,
+  SendPurchaseOrderRequest,
+  UpdatePurchaseOrderDraftRequest
 } from '../models/purchase-order.model';
 
 @Injectable({ providedIn: 'root' })
@@ -15,7 +19,7 @@ export class PurchaseOrderService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  list(filter: PurchaseOrderListFilter): Observable<ApiResponse<PurchaseOrder[]> & { meta: PageMeta }> {
+  list(filter: PurchaseOrderListFilter, context?: HttpContext): Observable<ApiResponse<PurchaseOrder[]> & { meta: PageMeta }> {
     let params = new HttpParams()
       .set('page', filter.page)
       .set('size', filter.size)
@@ -23,25 +27,65 @@ export class PurchaseOrderService {
 
     if (filter.status) params = params.set('status', filter.status);
     if (filter.vendor_id) params = params.set('vendor_id', filter.vendor_id);
+    if (filter.pr_id) params = params.set('pr_id', filter.pr_id);
     if (filter.from_date) params = params.set('from_date', filter.from_date);
     if (filter.to_date) params = params.set('to_date', filter.to_date);
 
     return this.http.get<ApiResponse<PurchaseOrder[]> & { meta: PageMeta }>(
       `${this.baseUrl}/purchase-orders`,
-      { params, withCredentials: true }
+      { params, context, withCredentials: true }
     );
   }
 
-  getById(id: string): Observable<ApiResponse<PurchaseOrder>> {
+  getById(id: string, context?: HttpContext): Observable<ApiResponse<PurchaseOrder>> {
     return this.http.get<ApiResponse<PurchaseOrder>>(
       `${this.baseUrl}/purchase-orders/${id}`,
-      { withCredentials: true }
+      { context, withCredentials: true }
     );
   }
 
   create(request: CreatePurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
     return this.http.post<ApiResponse<PurchaseOrder>>(
       `${this.baseUrl}/purchase-orders`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  listByPrId(prId: string): Observable<ApiResponse<PurchaseOrder[]> & { meta: PageMeta }> {
+    const context = new HttpContext().set(BYPASS_ERROR_INTERCEPTOR_TOKEN, true);
+    return this.list({
+      page: 1,
+      size: 10,
+      sort: 'createdAt,desc',
+      pr_id: prId
+    }, context);
+  }
+
+  getByIdForMatch(id: string): Observable<ApiResponse<PurchaseOrder>> {
+    const context = new HttpContext().set(BYPASS_ERROR_INTERCEPTOR_TOKEN, true);
+    return this.getById(id, context);
+  }
+
+  updateDraft(id: string, request: UpdatePurchaseOrderDraftRequest): Observable<ApiResponse<PurchaseOrder>> {
+    return this.http.patch<ApiResponse<PurchaseOrder>>(
+      `${this.baseUrl}/purchase-orders/${id}`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  send(id: string, request: SendPurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
+    return this.http.post<ApiResponse<PurchaseOrder>>(
+      `${this.baseUrl}/purchase-orders/${id}/send`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
+  cancel(id: string, request: CancelPurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
+    return this.http.patch<ApiResponse<PurchaseOrder>>(
+      `${this.baseUrl}/purchase-orders/${id}/cancel`,
       request,
       { withCredentials: true }
     );

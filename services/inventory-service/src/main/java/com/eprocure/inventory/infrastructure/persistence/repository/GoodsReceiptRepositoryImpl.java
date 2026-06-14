@@ -49,6 +49,11 @@ public class GoodsReceiptRepositoryImpl implements GoodsReceiptRepository {
     }
 
     @Override
+    public Optional<GoodsReceipt> findByIdAndUpdateIdempotencyKey(UUID id, UUID idempotencyKey) {
+        return goodsReceiptMapper.findHeaderByIdAndUpdateIdempotencyKey(id, idempotencyKey).map(this::toDomain);
+    }
+
+    @Override
     public List<GoodsReceipt> findByFilter(GoodsReceiptFilter filter) {
         List<GoodsReceiptDbEntity> headers = goodsReceiptMapper.findHeadersByFilter(filter);
         if (headers.isEmpty()) {
@@ -86,6 +91,20 @@ public class GoodsReceiptRepositoryImpl implements GoodsReceiptRepository {
         goodsReceipt.lineItems().stream()
                 .map(lineItem -> toLineEntity(goodsReceipt, lineItem))
                 .forEach(goodsReceiptMapper::insertLineItem);
+    }
+
+    @Override
+    public boolean updateDraft(GoodsReceipt goodsReceipt, UUID actorId, Instant updatedAt, UUID idempotencyKey) {
+        GoodsReceiptDbEntity header = domainObjectMapper.convertValue(goodsReceipt, GoodsReceiptDbEntity.class);
+        int updated = goodsReceiptMapper.updateDraftHeader(header, actorId, updatedAt, idempotencyKey);
+        if (updated == 0) {
+            return false;
+        }
+        goodsReceiptMapper.softDeleteLineItemsByGoodsReceiptId(goodsReceipt.id(), actorId, updatedAt);
+        goodsReceipt.lineItems().stream()
+                .map(lineItem -> toLineEntity(goodsReceipt, lineItem))
+                .forEach(goodsReceiptMapper::insertLineItem);
+        return true;
     }
 
     @Override

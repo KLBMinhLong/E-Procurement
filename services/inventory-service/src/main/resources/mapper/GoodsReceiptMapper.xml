@@ -116,6 +116,15 @@
           AND gr.is_deleted = FALSE
     </select>
 
+    <select id="findHeaderByIdAndUpdateIdempotencyKey" resultMap="goodsReceiptHeaderResultMap">
+        SELECT
+            <include refid="goodsReceiptColumns"/>
+        <include refid="goodsReceiptFrom"/>
+        WHERE gr.id = #{id}
+          AND gr.update_idempotency_key = #{idempotencyKey}
+          AND gr.is_deleted = FALSE
+    </select>
+
     <select id="findHeadersByFilter" resultMap="goodsReceiptHeaderResultMap">
         SELECT
             <include refid="goodsReceiptColumns"/>

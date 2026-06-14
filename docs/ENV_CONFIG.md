@@ -167,7 +167,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `IAM_SERVICE_URL` | `http://iam-service:8081` | `http://iam-service:8081` | Để check user/dept |
 | `FINANCE_SERVICE_URL` | `http://finance-service:8084` | `http://finance-service:8084` | Budget check |
 | `INVENTORY_SERVICE_URL` | `http://inventory-service:8085` | `http://inventory-service:8085` | Stock check |
-| `PR_INTEGRATION_FALLBACK_ENABLED` | `false` trong Docker Compose, `true` local mặc định | `false` | `false` để publish Kafka `procurement.pr.submitted`; `true` chỉ log event khi chạy local không có Kafka |
+| `PR_INTEGRATION_FALLBACK_ENABLED` | `false` | `false` | `false` để publish Kafka `procurement.pr.submitted`; chỉ đặt `true` khi chạy local không có Kafka và chấp nhận không phát sinh approval workflow |
 
 ---
 
@@ -199,7 +199,7 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 |---|---|---|---|
 | `IAM_SERVICE_URL` | `http://iam-service:8081` | `https://iam.eprocure.internal` | Approval-service gọi IAM internal API để resolve approver |
 | `IAM_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key cho `/internal/org/approvers` |
-| `APPROVAL_INTEGRATION_FALLBACK_ENABLED` | `false` trong Docker Compose, `true` local mặc định | `false` | `false` để consume/publish Kafka; `true` tắt consumer và chỉ log `approval.step.assigned` |
+| `APPROVAL_INTEGRATION_FALLBACK_ENABLED` | `false` | `false` | `false` để consume/publish Kafka; chỉ đặt `true` khi chạy local không có Kafka vì nó sẽ tắt consumer `procurement.pr.submitted` |
 
 ### 6.4 PR Integration
 | Biến | Dev | Prod | Mô tả |

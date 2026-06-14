@@ -1,5 +1,6 @@
 package com.eprocure.inventory.presentation.mapper;
 
+import com.eprocure.inventory.application.port.in.AdjustStockCommand;
 import com.eprocure.inventory.application.port.in.GetItemStockQuery;
 import com.eprocure.inventory.application.port.in.IssueOutStockCommand;
 import com.eprocure.inventory.application.port.in.ListStockMovementsQuery;
@@ -9,6 +10,7 @@ import com.eprocure.inventory.application.service.StockEntryView;
 import com.eprocure.inventory.application.service.StockMovementView;
 import com.eprocure.inventory.common.security.UserPrincipal;
 import com.eprocure.inventory.domain.model.StockMovementType;
+import com.eprocure.inventory.presentation.request.AdjustStockRequest;
 import com.eprocure.inventory.presentation.request.IssueOutStockRequest;
 import com.eprocure.inventory.presentation.response.IssueOutStockResponse;
 import com.eprocure.inventory.presentation.response.StockEntryResponse;
@@ -75,6 +77,16 @@ public class StockPresentationMapper {
                                 item.unit()))
                         .toList(),
                 request.notes());
+    }
+
+    public AdjustStockCommand toAdjustStockCommand(UserPrincipal principal, AdjustStockRequest request) {
+        return new AdjustStockCommand(
+                principal.getId(),
+                request.warehouseId(),
+                request.itemCode(),
+                request.newQuantity(),
+                request.unit(),
+                request.reason());
     }
 
     public StockEntryResponse toResponse(StockEntryView view) {

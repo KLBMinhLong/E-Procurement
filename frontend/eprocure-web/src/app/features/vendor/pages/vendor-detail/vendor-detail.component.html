@@ -1,0 +1,187 @@
+<section class="vendor-detail-page" aria-labelledby="vendor-detail-heading">
+  <ep-breadcrumb />
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="10" />
+  } @else if (vendor(); as v) {
+    <div class="page-header">
+      <div class="page-header__meta">
+        <span class="page-header__eyebrow">{{ 'vendor.detail.eyebrow' | translate }}</span>
+        <h1 id="vendor-detail-heading" class="page-header__title">{{ v.name }}</h1>
+        <div class="page-header__badges">
+          <ep-badge [tone]="statusTone[v.status] || 'neutral'" [labelKey]="'vendor.status.' + v.status" />
+          @if (v.isOnApprovedVendorList) {
+            <ep-badge tone="success" labelKey="vendor.detail.avlBadge" />
+          }
+          <span class="mono">{{ v.vendorCode }}</span>
+        </div>
+      </div>
+      <div class="page-header__actions">
+        <ep-button variant="ghost" icon="arrow-left" (click)="navigateBack()">
+          {{ 'action.back' | translate }}
+        </ep-button>
+        @if (v.status === 'PENDING') {
+          <ep-button
+            *epHasPermission="'VENDOR_APPROVE'"
+            id="btn-approve-vendor"
+            variant="primary"
+            icon="check-circle"
+            [disabled]="isActioning()"
+            (click)="openApproveModal()">
+            {{ 'vendor.detail.action.approve' | translate }}
+          </ep-button>
+        }
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h2 class="detail-card__title">
+          <ep-icon name="building-2" [size]="18" />
+          {{ 'vendor.detail.info.title' | translate }}
+        </h2>
+        <dl class="detail-dl">
+          <div class="detail-dl__row">
+            <dt>{{ 'vendor.detail.info.taxCode' | translate }}</dt>
+            <dd class="mono">{{ v.taxCode || '--' }}</dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'vendor.detail.info.email' | translate }}</dt>
+            <dd>{{ v.email || '--' }}</dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'vendor.detail.info.phone' | translate }}</dt>
+            <dd class="mono">{{ v.phone || '--' }}</dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'vendor.detail.info.address' | translate }}</dt>
+            <dd>{{ formatAddress(v) }}</dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'vendor.detail.info.categories' | translate }}</dt>
+            <dd>
+              @if (v.categories.length) {
+                @for (cat of v.categories; track cat) {
+                  <span class="category-tag">{{ cat }}</span>
+                }
+              } @else {
+                --
+              }
+            </dd>
+          </div>
+          <div class="detail-dl__row">
+            <dt>{{ 'vendor.detail.info.createdAt' | translate }}</dt>
+            <dd class="mono">{{ formatDate(v.createdAt) }}</dd>
+          </div>
+          @if (v.notes) {
+            <div class="detail-dl__row">
+              <dt>{{ 'vendor.detail.info.notes' | translate }}</dt>
+              <dd>{{ v.notes }}</dd>
+            </div>
+          }
+        </dl>
+      </div>
+
+      <div class="detail-card">
+        <h2 class="detail-card__title">
+          <ep-icon name="star" [size]="18" />
+          {{ 'vendor.detail.score.title' | translate }}
+        </h2>
+        @if (v.scorecard) {
+          <div class="score-grid">
+            <div class="score-item">
+              <span class="score-item__label">{{ 'vendor.detail.score.quality' | translate }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.qualityScore) }}</span>
+            </div>
+            <div class="score-item">
+              <span class="score-item__label">{{ 'vendor.detail.score.delivery' | translate }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.deliveryScore) }}</span>
+            </div>
+            <div class="score-item">
+              <span class="score-item__label">{{ 'vendor.detail.score.pricing' | translate }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.priceScore) }}</span>
+            </div>
+            <div class="score-item">
+              <span class="score-item__label">{{ 'vendor.detail.score.responsiveness' | translate }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.responsivenessScore) }}</span>
+            </div>
+            <div class="score-item score-item--overall">
+              <span class="score-item__label">{{ 'vendor.detail.score.overall' | translate }}</span>
+              <span class="score-item__value">{{ scoreLabel(v.scorecard.overallScore) }}</span>
+            </div>
+          </div>
+          <div class="score-meta">
+            <small class="score-date">
+              {{ 'vendor.detail.score.lastEvaluated' | translate }}: {{ formatDate(v.scorecard.lastEvaluatedAt) }}
+            </small>
+            <small class="score-date">
+              {{ 'vendor.detail.score.totalOrders' | translate }}: {{ v.scorecard.totalOrders }}
+            </small>
+            <small class="score-date">
+              {{ 'vendor.detail.score.onTimeRate' | translate }}: {{ formatPercent(v.scorecard.onTimeDeliveryRate) }}
+            </small>
+          </div>
+        } @else {
+          <p class="detail-empty">{{ 'vendor.detail.score.empty' | translate }}</p>
+        }
+      </div>
+
+      <div class="detail-card detail-card--wide">
+        <h2 class="detail-card__title">
+          <ep-icon name="users" [size]="18" />
+          {{ 'vendor.detail.contacts.title' | translate }}
+        </h2>
+        @if (v.contacts.length) {
+          <table class="contacts-table">
+            <thead>
+              <tr>
+                <th>{{ 'vendor.detail.contacts.name' | translate }}</th>
+                <th>{{ 'vendor.detail.contacts.role' | translate }}</th>
+                <th>{{ 'vendor.detail.contacts.email' | translate }}</th>
+                <th>{{ 'vendor.detail.contacts.phone' | translate }}</th>
+                <th>{{ 'vendor.detail.contacts.primary' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (contact of v.contacts; track contact.id) {
+                <tr>
+                  <td class="contact-name">{{ contact.name }}</td>
+                  <td>{{ contact.role || '--' }}</td>
+                  <td>{{ contact.email || '--' }}</td>
+                  <td class="mono">{{ contact.phone || '--' }}</td>
+                  <td>
+                    @if (contact.isPrimary) {
+                      <ep-badge tone="success" labelKey="vendor.detail.contacts.isPrimary" />
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="detail-empty">{{ 'vendor.detail.contacts.empty' | translate }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  <ep-modal
+    [open]="showApproveModal()"
+    [title]="'vendor.detail.modal.approveTitle' | translate"
+    (close)="closeApproveModal()">
+    <p>{{ 'vendor.detail.modal.approveMessage' | translate: { name: vendor()?.name } }}</p>
+    <div class="modal-actions">
+      <ep-button variant="ghost" (click)="closeApproveModal()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button
+        id="btn-confirm-approve-vendor"
+        variant="primary"
+        icon="check-circle"
+        [disabled]="isActioning()"
+        (click)="confirmApprove()">
+        {{ 'vendor.detail.action.approve' | translate }}
+      </ep-button>
+    </div>
+  </ep-modal>
+</section>

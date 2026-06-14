@@ -1,0 +1,111 @@
+<ep-breadcrumb />
+
+<div class="page-header">
+  <div class="page-header__meta">
+    <span class="page-header__eyebrow">{{ 'dashboard.eyebrow' | translate }}</span>
+    <h1 id="dashboard-heading" class="page-header__title">{{ 'dashboard.title' | translate }}</h1>
+    <p class="page-header__subtitle">{{ 'dashboard.subtitle' | translate }}</p>
+  </div>
+  <div class="page-header__actions">
+    <ep-button
+      id="btn-dashboard-refresh"
+      variant="secondary"
+      icon="refresh-cw"
+      [loading]="refreshing"
+      [disabled]="refreshing"
+      (click)="refreshDashboard.emit()">
+      {{ 'dashboard.action.refresh' | translate }}
+    </ep-button>
+  </div>
+</div>
+
+<div class="dashboard-freshness" [attr.aria-label]="'dashboard.data.label' | translate">
+  <span class="dashboard-freshness__item">
+    <ep-icon name="clock-3" />
+    @if (lastUpdatedLabel) {
+      {{ 'dashboard.data.lastUpdated' | translate: { time: lastUpdatedLabel } }}
+    } @else {
+      {{ 'dashboard.data.notLoaded' | translate }}
+    }
+  </span>
+  @if (cachedAtLabel) {
+    <span class="dashboard-freshness__item">
+      <ep-icon name="calendar-clock" />
+      {{ 'dashboard.data.cachedAt' | translate: { time: cachedAtLabel } }}
+    </span>
+  }
+  @if (dataStale) {
+    <span class="dashboard-freshness__item dashboard-freshness__item--warning">
+      <ep-icon name="triangle-alert" />
+      {{ 'dashboard.data.stale' | translate }}
+    </span>
+  }
+</div>
+
+<form class="filter-panel" [formGroup]="filterForm" (ngSubmit)="applyFilters.emit()">
+  <ep-form-field [label]="'dashboard.filter.fiscalYear' | translate">
+    <input id="dashboard-fiscal-year" type="number" formControlName="fiscalYear">
+  </ep-form-field>
+  <ep-form-field [label]="'dashboard.filter.quarter' | translate">
+    <select id="dashboard-quarter" formControlName="quarter">
+      <option [ngValue]="null">{{ 'dashboard.filter.allQuarters' | translate }}</option>
+      @for (quarter of quarters; track quarter) {
+        <option [ngValue]="quarter">{{ 'dashboard.filter.quarterValue' | translate: { quarter } }}</option>
+      }
+    </select>
+  </ep-form-field>
+  <ep-form-field [label]="'dashboard.filter.fromDate' | translate">
+    <input id="dashboard-from-date" type="date" formControlName="fromDate">
+  </ep-form-field>
+  <ep-form-field [label]="'dashboard.filter.toDate' | translate">
+    <input id="dashboard-to-date" type="date" formControlName="toDate">
+  </ep-form-field>
+  <div class="department-field">
+    <ep-form-field [label]="'dashboard.filter.department' | translate">
+      @if (departmentsLoadFailed) {
+        <input
+          id="dashboard-department-id"
+          type="text"
+          autocomplete="off"
+          formControlName="departmentId"
+          [placeholder]="'dashboard.filter.departmentPlaceholder' | translate">
+      } @else {
+        <select
+          id="dashboard-department-id"
+          formControlName="departmentId"
+          [disabled]="departmentsLoading">
+          <option value="">{{ 'dashboard.filter.allDepartments' | translate }}</option>
+          @for (department of departmentOptions; track department.id) {
+            <option [value]="department.id">{{ department.label }}</option>
+          }
+        </select>
+      }
+    </ep-form-field>
+    @if (departmentsLoading) {
+      <small>{{ 'dashboard.filter.departmentLoading' | translate }}</small>
+    } @else if (departmentsLoadFailed) {
+      <small class="department-field__warning">{{ 'dashboard.filter.departmentLoadFailed' | translate }}</small>
+    }
+  </div>
+  <ep-button
+    id="btn-apply-dashboard-filter"
+    type="submit"
+    variant="primary"
+    icon="filter"
+    [disabled]="refreshing">
+    {{ 'dashboard.action.apply' | translate }}
+  </ep-button>
+</form>
+
+<nav class="dashboard-tabs" [attr.aria-label]="'dashboard.tabs.label' | translate">
+  @for (tab of tabs; track tab.id) {
+    <button
+      type="button"
+      class="dashboard-tab"
+      [class.dashboard-tab--active]="activeTab === tab.id"
+      [attr.aria-current]="activeTab === tab.id ? 'page' : null"
+      (click)="tabChange.emit(tab.id)">
+      {{ tab.labelKey | translate }}
+    </button>
+  }
+</nav>

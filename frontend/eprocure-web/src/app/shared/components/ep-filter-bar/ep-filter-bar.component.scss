@@ -47,3 +47,32 @@ input::placeholder {
     flex-direction: column;
   }
 }
+
+.ep-filter-bar__fields {
+  display: flex;
+  flex: 1;
+  gap: var(--spacing-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ep-filter-bar__select {
+  background: var(--color-surface-raised);
+  border: var(--border-subtle);
+  border-radius: var(--radius-2);
+  color: var(--color-text-primary);
+  min-height: var(--control-height-md);
+  padding: 0 var(--spacing-3);
+  font: inherit;
+  outline: none;
+
+  &:focus {
+    border-color: var(--color-accent);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.ep-filter-bar__total {
+  margin-left: auto;
+  white-space: nowrap;
+}

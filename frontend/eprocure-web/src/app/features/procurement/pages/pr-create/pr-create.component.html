@@ -144,12 +144,54 @@
                     <ep-form-field
                       [label]="'pr.create.lineItem.itemName' | translate"
                       [error]="getLineItemError($index, 'itemName') ? (getLineItemError($index, 'itemName')! | translate) : null">
-                      <input
-                        [id]="'line-item-name-' + $index"
-                        type="text"
-                        formControlName="itemName"
-                        class="ep-input"
-                        [placeholder]="'pr.create.lineItem.itemNamePlaceholder' | translate">
+                      <div class="autocomplete-wrapper">
+                        <input
+                          [id]="'line-item-name-' + $index"
+                          type="text"
+                          formControlName="itemName"
+                          class="ep-input"
+                          autocomplete="off"
+                          [placeholder]="'pr.create.lineItem.itemNamePlaceholder' | translate"
+                          (input)="onItemNameInput($index, $any($event.target).value)"
+                          (focus)="onItemNameFocus($index)"
+                          (blur)="onItemNameBlur($index)">
+
+                        @if (autocompleteOpen($index)) {
+                          <div
+                            class="autocomplete-dropdown"
+                            role="listbox"
+                            [attr.aria-label]="'pr.create.autocomplete.label' | translate">
+                            @if (autocompleteLoading($index)) {
+                              <div class="autocomplete-state">
+                                {{ 'pr.create.autocomplete.loading' | translate }}
+                              </div>
+                            } @else if (autocompleteItems($index).length > 0) {
+                              @for (catalogItem of autocompleteItems($index); track catalogItem.id) {
+                                <button
+                                  type="button"
+                                  class="autocomplete-option"
+                                  role="option"
+                                  (mousedown)="selectAutocompleteItem($index, catalogItem)">
+                                  <span class="autocomplete-option__info">
+                                    <span class="autocomplete-option__name">{{ catalogItem.name }}</span>
+                                    <span class="autocomplete-option__meta">
+                                      {{ catalogItem.itemCode }} · {{ catalogItem.categoryCode }} · {{ catalogItem.unit }}
+                                    </span>
+                                  </span>
+                                  <ep-amount
+                                    [value]="catalogItem.unitPrice.amount"
+                                    [currency]="catalogItem.unitPrice.currency" />
+                                </button>
+                              }
+                            } @else {
+                              <div class="autocomplete-state">
+                                {{ 'pr.create.autocomplete.noResults' | translate }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      <span class="field-hint">{{ 'pr.create.autocomplete.hint' | translate }}</span>
                     </ep-form-field>
 
                     <div class="form-row">
@@ -211,7 +253,7 @@
                     <div class="line-item__total">
                       <span class="line-item__total-label">{{ 'pr.create.lineItem.total' | translate }}</span>
                       <ep-amount
-                        [value]="(+item.get('quantityAmount')!.value * +item.get('unitPriceAmount')!.value).toFixed(4)"
+                        [value]="lineItemTotal($index)"
                         currency="VND" />
                     </div>
                   </div>
@@ -282,6 +324,13 @@
               <span class="summary-row__label">{{ 'pr.create.summary.totalAmount' | translate }}</span>
               <ep-amount [value]="totalAmount()" currency="VND" />
             </div>
+
+            @if (showValidationSummary()) {
+              <div class="summary-validation" role="alert">
+                <strong>{{ 'pr.create.summary.validationTitle' | translate }}</strong>
+                <span>{{ 'pr.create.summary.validationHint' | translate }}</span>
+              </div>
+            }
 
             <div class="summary-actions">
               <ep-button

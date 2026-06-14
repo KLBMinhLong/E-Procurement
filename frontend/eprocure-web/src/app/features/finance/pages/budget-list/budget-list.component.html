@@ -1,0 +1,258 @@
+<section class="budget-list-page" aria-labelledby="budget-list-heading">
+  <ep-breadcrumb />
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'finance.budget.list.eyebrow' | translate }}</span>
+      <h1 id="budget-list-heading" class="page-header__title">{{ 'finance.budget.list.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'finance.budget.list.subtitle' | translate }}</p>
+    </div>
+    <div class="page-header__actions">
+      <ep-button id="btn-refresh-budget-list" variant="secondary" icon="refresh-cw" (click)="loadData()">
+        {{ 'finance.budget.list.action.refresh' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <div class="summary-grid" [attr.aria-label]="'finance.budget.list.summaryLabel' | translate">
+    <div class="summary-card">
+      <ep-icon name="wallet-cards" />
+      <span class="summary-card__label">{{ 'finance.budget.kpi.totalBudgets' | translate }}</span>
+      <span class="summary-card__value">{{ meta()?.totalElements ?? items().length }}</span>
+    </div>
+    <div class="summary-card summary-card--amount">
+      <ep-icon name="badge-dollar-sign" />
+      <span class="summary-card__label">{{ 'finance.budget.kpi.totalAllocated' | translate }}</span>
+      <ep-amount class="summary-card__amount" [value]="visibleAllocated()" currency="VND" />
+    </div>
+    <div class="summary-card summary-card--amount">
+      <ep-icon name="hand-coins" />
+      <span class="summary-card__label">{{ 'finance.budget.kpi.totalAvailable' | translate }}</span>
+      <ep-amount class="summary-card__amount" [value]="visibleAvailable()" currency="VND" />
+    </div>
+    <div class="summary-card">
+      <ep-icon name="triangle-alert" />
+      <span class="summary-card__label">{{ 'finance.budget.kpi.warningCount' | translate }}</span>
+      <span class="summary-card__value">{{ warningCount() }}</span>
+    </div>
+    <div class="summary-card">
+      <ep-icon name="circle-x" />
+      <span class="summary-card__label">{{ 'finance.budget.kpi.exceededCount' | translate }}</span>
+      <span class="summary-card__value">{{ exceededCount() }}</span>
+    </div>
+  </div>
+
+  <div class="budget-toolbar">
+    <div class="filter-grid">
+      <label class="compact-field">
+        <span>{{ 'finance.budget.list.filter.fiscalYear' | translate }}</span>
+        <input
+          id="filter-budget-fiscal-year"
+          type="number"
+          class="compact-field__control"
+          [value]="fiscalYear()"
+          (change)="onFiscalYearChange($any($event.target).value)">
+      </label>
+
+      <label class="compact-field">
+        <span>{{ 'finance.budget.list.filter.quarter' | translate }}</span>
+        <select
+          id="filter-budget-quarter"
+          class="compact-field__control"
+          [value]="quarter()"
+          (change)="onQuarterChange($any($event.target).value)">
+          <option value="">{{ 'finance.budget.list.filter.allQuarters' | translate }}</option>
+          @for (item of quarters; track item) {
+            <option [value]="item">{{ 'finance.budget.list.period.quarter' | translate: { quarter: item } }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="compact-field">
+        <span>{{ 'finance.budget.list.filter.department' | translate }}</span>
+        <input
+          id="filter-budget-department"
+          type="text"
+          class="compact-field__control"
+          [value]="departmentId()"
+          [placeholder]="'finance.budget.list.filter.departmentPlaceholder' | translate"
+          (change)="onDepartmentChange($any($event.target).value)">
+      </label>
+
+      <label class="compact-field">
+        <span>{{ 'finance.budget.list.filter.glAccount' | translate }}</span>
+        <input
+          id="filter-budget-gl-account"
+          type="text"
+          class="compact-field__control"
+          [value]="glAccountCode()"
+          [placeholder]="'finance.budget.list.filter.glAccountPlaceholder' | translate"
+          (change)="onGlAccountChange($any($event.target).value)">
+      </label>
+
+      <label class="compact-field">
+        <span>{{ 'finance.budget.list.filter.status' | translate }}</span>
+        <select
+          id="filter-budget-status"
+          class="compact-field__control"
+          [value]="activeStatus()"
+          (change)="onStatusChange($any($event.target).value)">
+          <option value="">{{ 'finance.budget.list.filter.allStatus' | translate }}</option>
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ ('finance.budget.status.' + status) | translate }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="budget-toolbar__actions">
+      @if (hasActiveFilters()) {
+        <ep-button id="btn-clear-budget-filters" variant="ghost" size="sm" icon="filter-x" (click)="clearFilters()">
+          {{ 'finance.budget.list.filter.clear' | translate }}
+        </ep-button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (items().length === 0) {
+    <ep-empty-state
+      icon="wallet-cards"
+      [title]="'finance.budget.list.empty.title' | translate"
+      [message]="'finance.budget.list.empty.message' | translate" />
+  } @else {
+    <div class="budget-table-wrapper">
+      <table class="budget-table" role="grid" aria-labelledby="budget-list-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'finance.budget.col.department' | translate }}</th>
+            <th scope="col">{{ 'finance.budget.col.glAccount' | translate }}</th>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('fiscalYear')">
+                {{ 'finance.budget.col.period' | translate }}
+                <ep-icon [name]="sortIcon('fiscalYear')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('allocated')">
+                {{ 'finance.budget.col.allocated' | translate }}
+                <ep-icon [name]="sortIcon('allocated')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col" class="align-right">{{ 'finance.budget.col.committed' | translate }}</th>
+            <th scope="col" class="align-right">{{ 'finance.budget.col.spent' | translate }}</th>
+            <th scope="col" class="align-right">
+              <button class="sort-button sort-button--right" type="button" (click)="onSort('available')">
+                {{ 'finance.budget.col.available' | translate }}
+                <ep-icon [name]="sortIcon('available')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col">{{ 'finance.budget.col.utilization' | translate }}</th>
+            <th scope="col">
+              <button class="sort-button" type="button" (click)="onSort('status')">
+                {{ 'finance.budget.col.status' | translate }}
+                <ep-icon [name]="sortIcon('status')" [size]="14" />
+              </button>
+            </th>
+            <th scope="col" class="align-right">{{ 'finance.budget.col.forecast' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (budget of items(); track budget.id) {
+            <tr
+              [id]="'budget-row-' + budget.id"
+              class="budget-table__row"
+              role="button"
+              tabindex="0"
+              (click)="navigateDetail(budget.id)"
+              (keydown.enter)="navigateDetail(budget.id)">
+              <td>
+                <span class="budget-table__primary">{{ shortId(budget.departmentId) }}</span>
+                <span class="budget-table__subtitle mono">{{ budget.departmentId }}</span>
+              </td>
+              <td>
+                <span class="mono budget-table__gl">{{ budget.glAccountCode }}</span>
+              </td>
+              <td>
+                <span class="budget-table__primary">
+                  {{ periodLabelKey(budget) | translate: { quarter: budget.quarter } }}
+                </span>
+                <span class="budget-table__subtitle">{{ budget.fiscalYear }}</span>
+              </td>
+              <td class="align-right">
+                <ep-amount [value]="amount(budget, 'allocated')" />
+              </td>
+              <td class="align-right">
+                <ep-amount [value]="amount(budget, 'committed')" />
+              </td>
+              <td class="align-right">
+                <ep-amount [value]="amount(budget, 'spent')" />
+              </td>
+              <td class="align-right budget-table__available" [class.budget-table__available--risk]="health(budget) !== 'HEALTHY'">
+                <ep-amount [value]="amount(budget, 'available')" />
+                <span class="budget-table__subtitle">{{ budget.availablePercent }}%</span>
+              </td>
+              <td class="budget-table__utilization">
+                <div class="utilization">
+                  <span class="utilization__track" aria-hidden="true">
+                    <span
+                      class="utilization__bar"
+                      [class.utilization__bar--warning]="health(budget) === 'WARNING'"
+                      [class.utilization__bar--danger]="health(budget) === 'EXCEEDED'"
+                      [style.width]="utilizationWidth(budget)">
+                    </span>
+                  </span>
+                  <span class="utilization__value">{{ utilizationPercent(budget) }}%</span>
+                </div>
+              </td>
+              <td>
+                <div class="badge-stack">
+                  <ep-badge
+                    [tone]="statusTone[budget.status]"
+                    [labelKey]="'finance.budget.status.' + budget.status" />
+                  <ep-badge
+                    [tone]="healthTone[health(budget)]"
+                    [labelKey]="'finance.budget.health.' + health(budget)" />
+                </div>
+              </td>
+              <td class="align-right budget-table__date">
+                {{ formatDate(budget.forecastExhaustedAt) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as metaData) {
+      <div class="budget-pagination">
+        <span class="budget-pagination__summary">
+          {{ 'shared.table.pageSummary' | translate: { page: metaData.page, total: metaData.totalPages } }}
+          <span class="budget-pagination__dot">·</span>
+          {{ metaData.totalElements }} {{ 'finance.budget.list.totalItems' | translate }}
+        </span>
+        <div class="budget-pagination__controls">
+          <ep-button
+            id="btn-prev-budget-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-left"
+            [disabled]="metaData.isFirst"
+            (click)="onPageChange({ page: metaData.page - 1, size: metaData.size })">
+            {{ 'shared.table.previous' | translate }}
+          </ep-button>
+          <ep-button
+            id="btn-next-budget-page"
+            variant="ghost"
+            size="sm"
+            icon="chevron-right"
+            [disabled]="metaData.isLast"
+            (click)="onPageChange({ page: metaData.page + 1, size: metaData.size })">
+            {{ 'shared.table.next' | translate }}
+          </ep-button>
+        </div>
+      </div>
+    }
+  }
+</section>
