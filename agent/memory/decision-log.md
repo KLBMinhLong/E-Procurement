@@ -613,4 +613,5 @@
 - Reason: Approver eligibility must follow permission grants, so `SUPER_ADMIN` and future custom roles can approve without hardcoded role names.
 - Impact: Approval seed rules use `PR_APPROVE_L1`, `PR_APPROVE_L2`, `PR_APPROVE_L3`, `PR_APPROVE_FINANCE`, and `PR_APPROVE_EMERGENCY`; IAM resolves candidates by role-permission membership with requester exclusion and department-scope ranking.
 - Runtime note: Local approval schema was reset and reseeded; IAM V11/V12 add Super Admin approval permissions and clean overly broad seeded finance/emergency grants from Manager/Director roles while preserving the existing V10 seed.
+- Follow-up decision: Approval-service exposes `GET /api/v1/approvals/processes/{entityType}/{entityId}` for PR detail workflow display, with use-case authorization for requester `PR_VIEW_OWN`, department/all viewers, and assigned approvers.
 - Constraint: Public `/api/v1/org/approvers?role=...` remains role-based for backward compatibility; service-to-service approval routing uses permission.

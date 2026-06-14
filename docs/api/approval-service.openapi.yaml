@@ -163,7 +163,7 @@ components:
         requiredPermission: { type: string, example: PR_APPROVE_L1 }
         stepType:     { type: string, enum: [SEQUENTIAL, PARALLEL] }
         slaHours:     { type: integer, description: Giờ làm việc (8h-17h30 T2-T6) }
-        isRequired:   { type: boolean }
+        required:     { type: boolean }
 
     ApprovalRuleDetail:
       type: object
@@ -485,6 +485,8 @@ paths:
       tags: [Processes]
       summary: Lấy tiến trình phê duyệt của một entity
       operationId: getApprovalProcess
+      x-required-permission: PR_VIEW_OWN
+      description: Người tạo PR, người có quyền xem theo phòng ban/toàn bộ, hoặc approver được gán có thể xem tiến trình.
       parameters:
         - name: entityType
           in: path

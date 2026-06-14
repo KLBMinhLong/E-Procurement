@@ -231,6 +231,11 @@ class ApprovalTaskActionUseCaseTest {
         }
 
         @Override
+        public Optional<ApprovalProcess> findLatestByEntity(ApprovalEntityType entityType, UUID entityId) {
+            return Optional.empty();
+        }
+
+        @Override
         public List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit) {
             return List.of();
         }

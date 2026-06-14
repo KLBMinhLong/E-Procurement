@@ -67,6 +67,13 @@ public class ApprovalProcessRepositoryImpl implements ApprovalProcessRepository 
     }
 
     @Override
+    public Optional<ApprovalProcess> findLatestByEntity(ApprovalEntityType entityType, UUID entityId) {
+        log.debug("[REPO] findLatestByEntity approval_processes | entityType={} | entityId={}", entityType, entityId);
+        return Optional.ofNullable(mapper.findLatestByEntity(entityType.name(), entityId))
+                .map(this::toDomainWithSteps);
+    }
+
+    @Override
     public List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit) {
         log.debug("[REPO] findRunningProcessesWithOverdueSteps approval_processes | now={} | limit={}", now, limit);
         return mapper.findRunningProcessesWithOverdueSteps(now, limit).stream()

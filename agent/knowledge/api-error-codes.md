@@ -89,6 +89,7 @@
 | APR_008 | 409 | Approval process da hoan thanh, khong the thay doi |
 | APR_009 | 404 | Approval rule khong ton tai |
 | APR_010 | 409 | Approval rule name da ton tai |
+| APR_011 | 404 | Approval process khong ton tai |
 
 ### Finance (FIN_)
 | Code | HTTP | Description |

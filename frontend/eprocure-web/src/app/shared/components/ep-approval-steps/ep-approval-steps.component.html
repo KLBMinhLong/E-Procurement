@@ -22,7 +22,7 @@
           class="approval-step__trigger"
           [attr.aria-current]="isCurrent(step) ? 'step' : null"
           [attr.aria-expanded]="isExpanded(step)"
-          [attr.aria-label]="'approval.steps.stepAriaLabel' | translate: { step: step.stepIndex + 1, role: step.approverRole }"
+          [attr.aria-label]="'approval.steps.stepAriaLabel' | translate: { step: step.stepIndex + 1, permission: step.requiredPermission }"
           (click)="toggleStep(step)">
           <span class="approval-step__marker" [class.approval-step__marker--current]="isCurrent(step)">
             <ep-icon [name]="statusIcon(step.status)" [size]="16" />
@@ -46,7 +46,7 @@
             <ep-badge [tone]="statusTone(step.status)" [labelKey]="'approval.status.' + step.status" />
           </div>
 
-          <strong class="approval-step__role">{{ step.approverRole }}</strong>
+          <strong class="approval-step__role">{{ step.requiredPermission }}</strong>
 
           <span class="approval-step__approver">
             @if (hasApprover(step)) {

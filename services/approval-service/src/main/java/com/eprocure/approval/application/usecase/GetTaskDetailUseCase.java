@@ -2,6 +2,7 @@ package com.eprocure.approval.application.usecase;
 
 import com.eprocure.approval.application.port.out.UserResolverPort;
 import com.eprocure.approval.application.service.ApprovalProcessDetail;
+import com.eprocure.approval.application.service.ApprovalProcessDetailAssembler;
 import com.eprocure.approval.application.service.ApprovalTaskDetail;
 import com.eprocure.approval.application.service.ApprovalTaskSummary;
 import com.eprocure.approval.application.service.SlaStatus;
@@ -11,9 +12,7 @@ import com.eprocure.approval.domain.model.ApprovalProcess;
 import com.eprocure.approval.domain.model.ApprovalStep;
 import com.eprocure.approval.domain.repository.ApprovalProcessRepository;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,12 +27,15 @@ public class GetTaskDetailUseCase {
 
     private final ApprovalProcessRepository approvalProcessRepository;
     private final UserResolverPort userResolverPort;
+    private final ApprovalProcessDetailAssembler processDetailAssembler;
 
     public GetTaskDetailUseCase(
             ApprovalProcessRepository approvalProcessRepository,
-            UserResolverPort userResolverPort) {
+            UserResolverPort userResolverPort,
+            ApprovalProcessDetailAssembler processDetailAssembler) {
         this.approvalProcessRepository = approvalProcessRepository;
         this.userResolverPort = userResolverPort;
+        this.processDetailAssembler = processDetailAssembler;
     }
 
     @Transactional(readOnly = true)
@@ -96,52 +98,14 @@ public class GetTaskDetailUseCase {
                 process.getTotalAmount().currency(),
                 process.getPriority().name(),
                 activeStep.getStepIndex(),
-                activeStep.getRequiredPermission(),
+                activeStep.getStepType().name(),
                 sla,
                 isDelegated,
                 delegatedFrom,
                 activeStep.getAssignedAt()
         );
 
-        // 2. Build process steps history/trail
-        List<ApprovalProcessDetail.StepDetail> stepsDetailList = new ArrayList<>();
-        for (ApprovalStep step : process.getSteps()) {
-            UserResolverPort.UserSummary appInfo = userCache.computeIfAbsent(step.getApproverId(), id ->
-                    userResolverPort.getUserById(id).orElse(null)
-            );
-            ApprovalProcessDetail.Approver stepApprover;
-            if (appInfo != null) {
-                stepApprover = new ApprovalProcessDetail.Approver(step.getApproverId(), appInfo.fullName());
-            } else {
-                stepApprover = new ApprovalProcessDetail.Approver(step.getApproverId(), "User (" + step.getApproverId() + ")");
-            }
-
-            stepsDetailList.add(new ApprovalProcessDetail.StepDetail(
-                    step.getStepIndex(),
-                    step.getRequiredPermission(),
-                    stepApprover,
-                    step.getDelegateId().orElse(null),
-                    step.getStatus().name(),
-                    step.getAction().map(Enum::name).orElse(null),
-                    step.getComment().orElse(null),
-                    step.getSlaDeadline(),
-                    step.getAssignedAt(),
-                    step.getActedAt().orElse(null),
-                    step.isEscalated()
-            ));
-        }
-
-        ApprovalProcessDetail processDetail = new ApprovalProcessDetail(
-                process.getId(),
-                process.getEntityType().name(),
-                process.getEntityId(),
-                process.getEntityNumber(),
-                process.getStatus().name(),
-                process.getCurrentStepIndex(),
-                stepsDetailList,
-                process.getStartedAt(),
-                process.getCompletedAt().orElse(null)
-        );
+        ApprovalProcessDetail processDetail = processDetailAssembler.toDetail(process);
 
         log.info("[ACTION] Complete GetTaskDetail | taskId={} | actorId={}", taskId, actorId);
         return new ApprovalTaskDetail(taskSummary, processDetail, process.getEntitySnapshot());

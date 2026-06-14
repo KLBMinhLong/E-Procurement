@@ -17,6 +17,8 @@ public interface ApprovalProcessRepository {
 
     Optional<ApprovalProcess> findRunningByCamundaTaskId(String camundaTaskId);
 
+    Optional<ApprovalProcess> findLatestByEntity(ApprovalEntityType entityType, UUID entityId);
+
     List<ApprovalProcess> findRunningProcessesWithOverdueSteps(Instant now, int limit);
 
     void updateProcessRuntime(ApprovalProcess process);

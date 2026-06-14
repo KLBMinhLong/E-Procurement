@@ -32,6 +32,7 @@
       "ESCALATED": "Đã chuyển cấp",
       "SKIPPED": "Bỏ qua",
       "FORWARDED": "Chuyển tiếp",
+      "RUNNING": "Đang duyệt",
       "IN_PROGRESS": "Đang duyệt",
       "COMPLETED": "Hoàn tất",
       "CANCELLED": "Đã hủy"
@@ -49,7 +50,7 @@
       "skipped": "Đã bỏ qua",
       "escalated": "Đã chuyển cấp",
       "stepNumber": "Bước {{step}}",
-      "stepAriaLabel": "Mở chi tiết bước {{step}}: {{role}}"
+      "stepAriaLabel": "Mở chi tiết bước {{step}}: {{permission}}"
     }
   },
   "auth": {
@@ -2039,9 +2040,9 @@
       },
       "filter": {
         "title": "Bộ lọc vận hành",
-        "description": "Thu hẹp danh sách theo loại quy tắc, trạng thái hoặc tên vai trò duyệt.",
+        "description": "Thu hẹp danh sách theo loại quy tắc, trạng thái hoặc quyền phê duyệt bắt buộc.",
         "searchLabel": "Tìm quy tắc",
-        "searchPlaceholder": "Tìm tên, loại, vai trò hoặc mô tả...",
+        "searchPlaceholder": "Tìm tên, loại, quyền hoặc mô tả...",
         "type": "Loại quy tắc",
         "status": "Trạng thái",
         "allTypes": "Tất cả loại",
@@ -2098,8 +2099,8 @@
       "step": {
         "slaSummary": "{{hours}}h SLA",
         "count": "{{count}} bước",
-        "firstRole": "Bắt đầu: {{role}}",
-        "lastRole": "Kết thúc: {{role}}",
+        "firstPermission": "Bắt đầu: {{permission}}",
+        "lastPermission": "Kết thúc: {{permission}}",
         "parallelCount": "{{count}} bước song song",
         "required": "Bắt buộc",
         "optional": "Không bắt buộc"
@@ -2126,7 +2127,7 @@
         "departmentIds": "Phòng ban áp dụng",
         "priorities": "Mức độ PR",
         "stepIndex": "Thứ tự",
-        "approverRole": "Vai trò duyệt",
+        "requiredPermission": "Quyền phê duyệt",
         "stepType": "Kiểu bước",
         "slaHours": "SLA giờ",
         "required": "Bắt buộc",
@@ -2138,7 +2139,7 @@
         "money": "VD: 5000000.0000",
         "categories": "VD: SOFTWARE, SAAS",
         "departmentIds": "UUID phòng ban, phân tách bằng dấu phẩy",
-        "approverRole": "VD: MANAGER",
+        "requiredPermission": "VD: PR_APPROVE_L1",
         "description": "Mô tả phạm vi áp dụng quy tắc",
         "reason": "Nhập lý do vô hiệu hóa quy tắc"
       },

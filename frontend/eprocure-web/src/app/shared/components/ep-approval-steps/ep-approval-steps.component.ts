@@ -10,7 +10,7 @@ export type ApprovalStepStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ESCALATE
 
 export interface ApprovalStepView {
   stepIndex: number;
-  approverRole: string;
+  requiredPermission: string;
   approver?: {
     id?: string | null;
     fullName?: string | null;

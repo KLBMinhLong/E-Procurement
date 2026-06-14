@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
@@ -52,6 +53,21 @@ public interface ApprovalProcessMapper {
             @Result(property = "createdBy", column = "created_by")
     })
     ApprovalProcessDbEntity findRunningByStepId(@Param("stepId") UUID stepId);
+
+    @Select("""
+            SELECT p.*,
+                   p.entity_snapshot::text AS entity_snapshot
+            FROM approval.approval_processes p
+            WHERE p.entity_type = #{entityType}
+              AND p.entity_id = #{entityId}
+              AND p.is_deleted = FALSE
+            ORDER BY p.started_at DESC
+            LIMIT 1
+            """)
+    @ResultMap("approvalProcessResult")
+    ApprovalProcessDbEntity findLatestByEntity(
+            @Param("entityType") String entityType,
+            @Param("entityId") UUID entityId);
 
     @Select("""
             SELECT p.*,

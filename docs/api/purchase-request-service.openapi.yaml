@@ -274,7 +274,7 @@ components:
       type: object
       properties:
         stepIndex:     { type: integer }
-        approverRole:  { type: string, example: MANAGER }
+        requiredPermission: { type: string, example: PR_APPROVE_L1 }
         approver:
           type: object
           properties:

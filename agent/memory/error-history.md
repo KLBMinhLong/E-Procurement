@@ -220,5 +220,5 @@
 
 - Symptom: Submitted PRs could stay without a visible approval workflow, and approver resolution depended on seeded roles such as `MANAGER` even when the user had broader permissions like `SUPER_ADMIN`.
 - Root cause: Approval rules stored role-like values and approval-service called IAM with `role=...`; IAM seeds also granted some approval permissions too broadly, so permission eligibility and workflow routing diverged.
-- Fix: Convert approval rules/steps to `requiredPermission`, route approval-service internal calls with `permission=...`, add IAM permission-based approver lookup, reset/reseed approval schema, and add IAM V11/V12 migrations for Super Admin approval permissions plus cleanup of seeded approval grants.
-- Prevention: Approval workflow routing must be permission-driven; roles are only a way to grant permissions, not approval rule values.
+- Fix: Convert approval rules/steps to `requiredPermission`, route approval-service internal calls with `permission=...`, add IAM permission-based approver lookup, reset/reseed approval schema, add IAM V11/V12 migrations for Super Admin approval permissions plus cleanup of seeded approval grants, expose approval process detail endpoint, and make PR detail load workflow directly from approval-service.
+- Prevention: Approval workflow routing must be permission-driven; roles are only a way to grant permissions, not approval rule values. PR detail should read workflow state from approval-service instead of assuming purchase-request-service embeds `approvalProcess`.
