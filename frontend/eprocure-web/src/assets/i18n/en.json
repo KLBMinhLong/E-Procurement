@@ -2449,20 +2449,39 @@
       },
       "submit": {
         "vendor": "Vendor",
+        "selectedVendor": "Quoting vendor",
         "currency": "Currency",
         "validUntil": "Valid until",
         "paymentTerms": "Payment terms",
+        "paymentTermsPlaceholder": "Example: Net 30, payment after acceptance...",
         "notes": "Notes",
+        "notesPlaceholder": "Commercial notes, delivery conditions, or special constraints...",
         "lineItems": "Quoted line items",
         "unitPrice": "Unit price",
-        "deliveryDays": "Delivery days"
+        "deliveryDays": "Estimated delivery time (days)",
+        "warranty": "Warranty",
+        "warrantyPlaceholder": "Example: 12 months",
+        "lineTotal": "Line total",
+        "estimatedTotal": "Estimated total",
+        "completedLines": "Completed lines",
+        "completedLinesValue": "{{count}} / {{total}}",
+        "allLinesRequired": "The backend requires a quote for every RFQ line item.",
+        "noPendingVendor": "There are no invited vendors still pending quote submission.",
+        "validation": {
+          "required": "This field is required.",
+          "positive": "Value must be greater than 0.",
+          "currency": "Currency code must contain 3 ISO characters.",
+          "validUntil": "Valid-until date cannot be before today.",
+          "maxLength": "Content is too long.",
+          "invalid": "Invalid value."
+        }
       },
       "toast": {
         "evaluated": "Quote evaluated successfully.",
         "awarded": "RFQ awarded successfully.",
         "closed": "RFQ closed for evaluation.",
         "quoteSubmitted": "Quote submitted successfully.",
-        "submitValidation": "Complete vendor, validity date, and at least one unit price."
+        "submitValidation": "Complete vendor, validity date, and unit prices for every RFQ line."
       }
     },
     "create": {

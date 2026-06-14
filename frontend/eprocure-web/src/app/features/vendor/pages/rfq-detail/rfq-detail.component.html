@@ -470,64 +470,10 @@
     </div>
   </ep-modal>
 
-  <ep-modal
+  <ep-rfq-submit-quote-modal
     [open]="showSubmitQuoteModal()"
-    [title]="'rfq.detail.modal.submitQuoteTitle' | translate"
-    size="lg"
-    (close)="closeSubmitQuoteModal()">
-    <div class="submit-quote-form">
-      <label class="form-field">
-        <span>{{ 'rfq.detail.submit.vendor' | translate }}</span>
-        <select class="form-control" [(ngModel)]="submitVendorId">
-          @for (inv of pendingInvitations(); track inv.id) {
-            <option [value]="inv.vendor.id">{{ inv.vendor.name }}</option>
-          }
-        </select>
-      </label>
-      <div class="submit-quote-form__row">
-        <label class="form-field">
-          <span>{{ 'rfq.detail.submit.currency' | translate }}</span>
-          <input class="form-control mono" [(ngModel)]="submitCurrency" maxlength="3">
-        </label>
-        <label class="form-field">
-          <span>{{ 'rfq.detail.submit.validUntil' | translate }}</span>
-          <input class="form-control" type="date" [(ngModel)]="submitValidUntil">
-        </label>
-      </div>
-      <label class="form-field">
-        <span>{{ 'rfq.detail.submit.paymentTerms' | translate }}</span>
-        <input class="form-control" [(ngModel)]="submitPaymentTerms">
-      </label>
-      <label class="form-field">
-        <span>{{ 'rfq.detail.submit.notes' | translate }}</span>
-        <textarea class="form-control" [(ngModel)]="submitNotes" rows="2"></textarea>
-      </label>
-
-      <h3 class="submit-quote-form__subtitle">{{ 'rfq.detail.submit.lineItems' | translate }}</h3>
-      @for (line of submitLineDrafts; track line.rfqLineItemId; let i = $index) {
-        <div class="submit-line-row">
-          <span class="submit-line-row__name">{{ line.itemName }}</span>
-          <input
-            class="form-control mono"
-            type="number"
-            min="0"
-            step="0.0001"
-            [(ngModel)]="submitLineDrafts[i].unitPrice"
-            [placeholder]="'rfq.detail.submit.unitPrice' | translate">
-          <input
-            class="form-control mono"
-            type="number"
-            min="0"
-            [(ngModel)]="submitLineDrafts[i].deliveryDays"
-            [placeholder]="'rfq.detail.submit.deliveryDays' | translate">
-        </div>
-      }
-    </div>
-    <div class="modal-actions">
-      <ep-button variant="ghost" (click)="closeSubmitQuoteModal()">{{ 'action.cancel' | translate }}</ep-button>
-      <ep-button variant="primary" [disabled]="isActioning()" (click)="confirmSubmitQuote()">
-        {{ 'rfq.detail.action.submitQuote' | translate }}
-      </ep-button>
-    </div>
-  </ep-modal>
+    [rfq]="rfq()"
+    [loading]="isActioning()"
+    (close)="closeSubmitQuoteModal()"
+    (quoteSubmit)="submitQuote($event)" />
 </section>

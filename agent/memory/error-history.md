@@ -243,3 +243,11 @@
 - Root cause: The Angular approval rule editor loaded IAM permissions but exposed them only through an HTML `datalist`, which still behaves like free text and does not clearly show available approval permissions.
 - Fix: Replace manual permission entry with a real select control populated from IAM approval permissions, keep fallback `PR_APPROVE_*` options, and preserve existing rule permission codes when editing.
 - Prevention: Business-critical code fields should use bounded controls backed by system reference data, with free text reserved only for descriptions and comments.
+
+## [2026-06-14] Bug: RFQ quote form allowed partial and unclear quote submissions
+
+- Symptom: The RFQ detail page opened a submit-quote form, but users could submit without a clear total, without warranty fields, and without understanding that every RFQ line item must be quoted.
+- Root cause: The Angular form used loose `ngModel` state and filtered out blank line items, while `SubmitVendorQuoteUseCase` rejects partial quotes by requiring the submitted line set to match all RFQ line items exactly.
+- Fix: Move quote submission into a dedicated reactive modal component, validate vendor/date/currency/every unit price, show line totals and estimated grand total, include warranty, and document the all-lines requirement in OpenAPI.
+- Follow-up fix: Angular `input[type=number]` can provide numeric values at runtime, so quote numeric normalization must accept `string | number` instead of calling `.trim()` directly.
+- Prevention: When backend enforces set equality or all-line coverage, the UI must use bounded form validation and show the derived total before any state-changing submit.

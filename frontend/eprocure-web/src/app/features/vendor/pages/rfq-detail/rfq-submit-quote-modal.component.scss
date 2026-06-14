@@ -1,0 +1,203 @@
+.submit-quote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.submit-quote__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface-raised);
+
+  > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--spacing-1);
+  }
+
+  strong {
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.summary-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.submit-quote__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.submit-quote__grid {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.4fr) 8rem 11rem minmax(14rem, 1fr);
+  gap: var(--spacing-3);
+  align-items: start;
+}
+
+.quote-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.quote-lines__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+  }
+
+  p {
+    margin-top: var(--spacing-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.quote-line {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.2fr) minmax(8rem, 0.8fr) 7rem minmax(10rem, 0.9fr) 9rem;
+  gap: var(--spacing-3);
+  align-items: start;
+  padding: var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--color-surface);
+}
+
+.quote-line__item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding-top: var(--spacing-1);
+
+  strong {
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+}
+
+.quote-line__total {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding-top: var(--spacing-1);
+  text-align: right;
+
+  span {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: var(--color-accent);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.form-control {
+  width: 100%;
+  min-height: var(--control-height-md);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-2);
+  outline: none;
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+
+  &:focus {
+    border-color: var(--color-accent);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.form-control--textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  padding-top: var(--spacing-2);
+  border-top: var(--border-subtle);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 1024px) {
+  .submit-quote__summary,
+  .submit-quote__grid,
+  .quote-line {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quote-line__item,
+  .quote-line__total {
+    grid-column: 1 / -1;
+  }
+
+  .quote-line__total {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .submit-quote__summary,
+  .submit-quote__grid,
+  .quote-line {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+}

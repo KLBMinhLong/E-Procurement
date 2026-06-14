@@ -124,6 +124,8 @@ import {
   LucideHandCoins,
   LucideArrowLeftRight,
   LucideLockKeyhole,
+  LucideLayoutGrid,
+  LucideColumns3,
   provideLucideConfig,
   provideLucideIcons
 } from '@lucide/angular';
@@ -280,7 +282,9 @@ export const appConfig: ApplicationConfig = {
       LucideBadgeDollarSign,
       LucideHandCoins,
       LucideArrowLeftRight,
-      LucideLockKeyhole
+      LucideLockKeyhole,
+      LucideLayoutGrid,
+      LucideColumns3
     ),
     provideLucideConfig({
       strokeWidth: 1.8,

@@ -2449,20 +2449,39 @@
       },
       "submit": {
         "vendor": "Nhà cung cấp",
+        "selectedVendor": "NCC đang báo giá",
         "currency": "Tiền tệ",
         "validUntil": "Hiệu lực đến",
         "paymentTerms": "Điều khoản thanh toán",
+        "paymentTermsPlaceholder": "Ví dụ: Net 30, thanh toán sau nghiệm thu...",
         "notes": "Ghi chú",
+        "notesPlaceholder": "Ghi chú thương mại, điều kiện giao hàng hoặc ràng buộc đặc biệt...",
         "lineItems": "Chi tiết báo giá",
         "unitPrice": "Đơn giá",
-        "deliveryDays": "Ngày giao"
+        "deliveryDays": "Thời gian giao dự kiến (ngày)",
+        "warranty": "Bảo hành",
+        "warrantyPlaceholder": "Ví dụ: 12 tháng",
+        "lineTotal": "Thành tiền",
+        "estimatedTotal": "Tổng tạm tính",
+        "completedLines": "Dòng đã nhập",
+        "completedLinesValue": "{{count}} / {{total}}",
+        "allLinesRequired": "Backend yêu cầu báo giá đủ tất cả dòng hàng trong RFQ.",
+        "noPendingVendor": "Không còn nhà cung cấp nào đang chờ nộp báo giá.",
+        "validation": {
+          "required": "Trường này là bắt buộc.",
+          "positive": "Giá trị phải lớn hơn 0.",
+          "currency": "Mã tiền tệ phải gồm 3 ký tự ISO.",
+          "validUntil": "Ngày hiệu lực không được trước hôm nay.",
+          "maxLength": "Nội dung quá dài.",
+          "invalid": "Giá trị không hợp lệ."
+        }
       },
       "toast": {
         "evaluated": "Đã đánh giá báo giá.",
         "awarded": "Đã chọn thầu RFQ thành công.",
         "closed": "Đã đóng RFQ để đánh giá.",
         "quoteSubmitted": "Đã nộp báo giá thành công.",
-        "submitValidation": "Vui lòng chọn NCC, ngày hiệu lực và ít nhất một đơn giá."
+        "submitValidation": "Vui lòng chọn NCC, ngày hiệu lực và nhập đủ đơn giá cho tất cả dòng RFQ."
       }
     },
     "create": {
