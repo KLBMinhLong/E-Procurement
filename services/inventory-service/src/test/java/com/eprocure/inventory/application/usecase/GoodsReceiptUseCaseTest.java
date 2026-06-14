@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -260,21 +261,29 @@ class GoodsReceiptUseCaseTest {
     }
 
     @Test
-    void should_throw_inv001_when_catalog_item_cannot_be_resolved_for_completion() {
+    void should_auto_create_catalog_item_when_completion_item_cannot_be_resolved() {
         goodsReceiptRepository.itemCodesByPoLineItem.clear();
         createUseCase().execute(command(new BigDecimal("10.0000")), IDEMPOTENCY_KEY);
         GoodsReceipt goodsReceipt = goodsReceiptRepository.goodsReceipts.get(0);
         var useCase = completeUseCase();
 
-        assertThatThrownBy(() -> useCase.execute(
+        var result = useCase.execute(
                 new CompleteGoodsReceiptCommand(ACTOR_ID, goodsReceipt.id()),
-                COMPLETE_IDEMPOTENCY_KEY))
-                .isInstanceOf(BusinessException.class)
-                .extracting(exception -> ((BusinessException) exception).getErrorCode())
-                .isEqualTo(ErrorCode.INV_001);
-        assertThat(goodsReceiptRepository.stockMovements).isEmpty();
+                COMPLETE_IDEMPOTENCY_KEY);
+
+        assertThat(result.replayed()).isFalse();
+        assertThat(result.grStatus()).isEqualTo(GoodsReceiptStatus.COMPLETE);
+        assertThat(result.movementsCreated()).isEqualTo(1);
+        assertThat(result.updatedStocks()).singleElement().satisfies(stock -> {
+            assertThat(stock.itemCode()).isEqualTo(generatedAutoItemCode());
+            assertThat(stock.newQuantityOnHand()).isEqualByComparingTo("10.0000");
+        });
+        assertThat(goodsReceiptRepository.autoCreatedItemCodes).containsExactly(generatedAutoItemCode());
         assertThat(goodsReceiptRepository.findById(goodsReceipt.id()).orElseThrow().status())
-                .isEqualTo(GoodsReceiptStatus.DRAFT);
+                .isEqualTo(GoodsReceiptStatus.COMPLETE);
+        assertThat(goodsReceiptRepository.findById(goodsReceipt.id()).orElseThrow().lineItems().get(0).itemCode())
+                .isEqualTo(generatedAutoItemCode());
+        assertThat(grCreatedEventPublisher.events).hasSize(1);
     }
 
     private CreateGoodsReceiptUseCase createUseCase() {
@@ -369,9 +378,14 @@ class GoodsReceiptUseCaseTest {
                         "VND")));
     }
 
+    private static String generatedAutoItemCode() {
+        return ("AUTO-" + PO_LINE_ITEM_ID.toString().replace("-", "").substring(0, 15)).toUpperCase(Locale.ROOT);
+    }
+
     private static final class FakeGoodsReceiptRepository implements GoodsReceiptRepository {
         private final List<GoodsReceipt> goodsReceipts = new ArrayList<>();
         private final List<StockMovement> stockMovements = new ArrayList<>();
+        private final List<String> autoCreatedItemCodes = new ArrayList<>();
         private final Map<UUID, UUID> completeIdempotencyKeys = new HashMap<>();
         private final Map<UUID, UUID> updateIdempotencyKeys = new HashMap<>();
         private final Map<UUID, String> itemCodesByPoLineItem = new HashMap<>(Map.of(PO_LINE_ITEM_ID, "IT-LAPTOP-001"));
@@ -465,8 +479,21 @@ class GoodsReceiptUseCaseTest {
         }
 
         @Override
-        public Optional<String> findActiveItemCodeForPoLineItem(UUID poLineItemId) {
-            return Optional.ofNullable(itemCodesByPoLineItem.get(poLineItemId));
+        public Optional<String> findOrCreateActiveItemCodeForPoLineItem(
+                UUID poLineItemId,
+                String generatedItemCode,
+                UUID actorId,
+                Instant createdAt) {
+            Optional<String> existing = Optional.ofNullable(itemCodesByPoLineItem.get(poLineItemId));
+            if (existing.isPresent()) {
+                return existing;
+            }
+            if (!PO_LINE_ITEM_ID.equals(poLineItemId)) {
+                return Optional.empty();
+            }
+            itemCodesByPoLineItem.put(poLineItemId, generatedItemCode);
+            autoCreatedItemCodes.add(generatedItemCode);
+            return Optional.of(generatedItemCode);
         }
 
         @Override

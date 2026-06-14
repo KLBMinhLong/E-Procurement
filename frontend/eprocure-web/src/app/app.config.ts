@@ -126,6 +126,7 @@ import {
   LucideLockKeyhole,
   LucideLayoutGrid,
   LucideColumns3,
+  LucideCircleDollarSign,
   provideLucideConfig,
   provideLucideIcons
 } from '@lucide/angular';
@@ -284,7 +285,8 @@ export const appConfig: ApplicationConfig = {
       LucideArrowLeftRight,
       LucideLockKeyhole,
       LucideLayoutGrid,
-      LucideColumns3
+      LucideColumns3,
+      LucideCircleDollarSign
     ),
     provideLucideConfig({
       strokeWidth: 1.8,

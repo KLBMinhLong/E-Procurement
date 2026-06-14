@@ -251,3 +251,10 @@
 - Fix: Move quote submission into a dedicated reactive modal component, validate vendor/date/currency/every unit price, show line totals and estimated grand total, include warranty, and document the all-lines requirement in OpenAPI.
 - Follow-up fix: Angular `input[type=number]` can provide numeric values at runtime, so quote numeric normalization must accept `string | number` instead of calling `.trim()` directly.
 - Prevention: When backend enforces set equality or all-line coverage, the UI must use bounded form validation and show the derived total before any state-changing submit.
+
+## [2026-06-14] Bug: Goods Receipt completion failed for non-catalog PO items
+
+- Symptom: Completing a Goods Receipt created from a PO line not already present in the inventory catalog failed with `INV_001 Item not found`.
+- Root cause: GR draft lines persisted `itemCode = null`, and completion only resolved item codes by matching existing active catalog items on name/category/unit.
+- Fix: Complete GR now resolves an existing catalog item or auto-creates an active inventory item from the issued PO line snapshot using a stable `AUTO-*` item code before posting receipt stock movement.
+- Prevention: Cross-service snapshots that can contain free-text business lines must either carry a stable downstream key or the consuming service must create its own local reference before ledger posting.

@@ -108,8 +108,16 @@ public class GoodsReceiptRepositoryImpl implements GoodsReceiptRepository {
     }
 
     @Override
-    public Optional<String> findActiveItemCodeForPoLineItem(UUID poLineItemId) {
-        return goodsReceiptMapper.findActiveItemCodeForPoLineItem(poLineItemId);
+    public Optional<String> findOrCreateActiveItemCodeForPoLineItem(
+            UUID poLineItemId,
+            String generatedItemCode,
+            UUID actorId,
+            Instant createdAt) {
+        return goodsReceiptMapper.findOrCreateActiveItemCodeForPoLineItem(
+                poLineItemId,
+                generatedItemCode,
+                actorId,
+                createdAt);
     }
 
     @Override
