@@ -42,6 +42,7 @@ public class ApprovalProcessDetailAssembler {
         return new ApprovalProcessDetail.StepDetail(
                 step.getStepIndex(),
                 step.getRequiredPermission(),
+                step.getStepType().name(),
                 approver,
                 step.getDelegateId().orElse(null),
                 step.getStatus().name(),

@@ -140,6 +140,7 @@ components:
             properties:
               stepIndex:    { type: integer }
               requiredPermission: { type: string }
+              stepType:     { type: string, enum: [SEQUENTIAL, PARALLEL] }
               approver:
                 type: object
                 properties:

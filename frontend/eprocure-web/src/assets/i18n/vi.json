@@ -37,9 +37,20 @@
       "COMPLETED": "Hoàn tất",
       "CANCELLED": "Đã hủy"
     },
+    "permission": {
+      "PR_APPROVE_L1": "Duyệt cấp 1",
+      "PR_APPROVE_L2": "Duyệt cấp 2",
+      "PR_APPROVE_L3": "Duyệt cấp 3",
+      "PR_APPROVE_FINANCE": "Duyệt tài chính",
+      "PR_APPROVE_EMERGENCY": "Duyệt khẩn cấp"
+    },
     "steps": {
       "emptyTitle": "Chưa có bước phê duyệt",
       "emptyMessage": "Quy trình duyệt chưa được khởi tạo hoặc chưa trả dữ liệu.",
+      "type": {
+        "SEQUENTIAL": "Tuần tự",
+        "PARALLEL": "Song song"
+      },
       "waitingAssign": "Chờ giao việc",
       "assignedAt": "Giao lúc",
       "deadline": "Hạn xử lý",
@@ -791,6 +802,7 @@
       },
       "approval": {
         "none": "Quy trình phê duyệt sẽ được tạo sau khi gửi yêu cầu thành công. Nếu vừa gửi, hãy đợi approval service xử lý event rồi tải lại.",
+        "processName": "Quy trình {{number}}",
         "assignedAt": "Giao:",
         "deadline": "Hạn:",
         "viewInbox": "Xem hộp thư duyệt"
@@ -1978,6 +1990,7 @@
       "assignedAt": "Ngày giao",
       "deadlineAt": "Hạn xử lý",
       "processOverview": "Tổng quan quy trình phê duyệt",
+      "processName": "Quy trình {{number}}",
       "processHeader": "Quy trình phê duyệt",
       "viewFullPr": "Xem PR đầy đủ",
       "step": "Bước",

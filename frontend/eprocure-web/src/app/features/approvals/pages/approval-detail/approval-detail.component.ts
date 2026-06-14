@@ -41,10 +41,14 @@ const PRIORITY_TONE: Record<string, EpBadgeTone> = {
 
 const STATUS_TONE: Record<string, EpBadgeTone> = {
   PENDING: 'warning',
+  RUNNING: 'warning',
+  IN_PROGRESS: 'warning',
   APPROVED: 'success',
+  COMPLETED: 'success',
   REJECTED: 'danger',
   CHANGES_REQUESTED: 'warning',
   FORWARDED: 'info',
+  CANCELLED: 'neutral',
   BYPASS: 'neutral'
 };
 

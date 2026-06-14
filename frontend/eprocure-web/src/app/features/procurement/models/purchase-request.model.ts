@@ -58,6 +58,7 @@ export interface AttachmentInfo {
 export interface ApprovalStepSummary {
   stepIndex: number;
   requiredPermission: string;
+  stepType?: 'SEQUENTIAL' | 'PARALLEL';
   approver?: { id: string; fullName: string } | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ESCALATED' | 'SKIPPED' | 'FORWARDED';
   comment: string | null;

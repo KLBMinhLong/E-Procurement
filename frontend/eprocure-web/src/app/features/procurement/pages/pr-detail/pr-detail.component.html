@@ -418,7 +418,14 @@
         <ep-card tone="raised">
           <div class="card-section">
             <div class="section-title-row">
-              <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
+              <div class="section-title-stack">
+                <h2 class="card-section__title">{{ 'pr.detail.section.approval' | translate }}</h2>
+                @if (approvalProcess(); as process) {
+                  <p class="card-section__subtitle">
+                    {{ 'pr.detail.approval.processName' | translate: { number: process.entityNumber } }}
+                  </p>
+                }
+              </div>
               <div class="section-title-row__actions">
                 @if (data.status === 'PENDING_APPROVAL') {
                   <ep-button

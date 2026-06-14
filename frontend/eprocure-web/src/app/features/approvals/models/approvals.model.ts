@@ -46,6 +46,7 @@ export interface ApprovalInboxCount {
 export interface ApprovalStepDetail {
   stepIndex: number;
   requiredPermission: string;
+  stepType?: ApprovalStepType;
   approver: {
     id: string;
     fullName: string;

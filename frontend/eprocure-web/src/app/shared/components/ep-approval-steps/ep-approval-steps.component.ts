@@ -11,6 +11,7 @@ export type ApprovalStepStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ESCALATE
 export interface ApprovalStepView {
   stepIndex: number;
   requiredPermission: string;
+  stepType?: 'SEQUENTIAL' | 'PARALLEL' | null;
   approver?: {
     id?: string | null;
     fullName?: string | null;
@@ -45,6 +46,13 @@ const STATUS_ICON: Record<ApprovalStepStatus, string> = {
 };
 
 const TERMINAL_STATUSES = new Set<ApprovalStepStatus>(['APPROVED', 'REJECTED', 'ESCALATED', 'SKIPPED', 'FORWARDED']);
+const PERMISSION_LABEL_KEYS: Record<string, string> = {
+  PR_APPROVE_L1: 'approval.permission.PR_APPROVE_L1',
+  PR_APPROVE_L2: 'approval.permission.PR_APPROVE_L2',
+  PR_APPROVE_L3: 'approval.permission.PR_APPROVE_L3',
+  PR_APPROVE_FINANCE: 'approval.permission.PR_APPROVE_FINANCE',
+  PR_APPROVE_EMERGENCY: 'approval.permission.PR_APPROVE_EMERGENCY'
+};
 
 @Component({
   selector: 'ep-approval-steps',
@@ -67,7 +75,7 @@ export class EpApprovalStepsComponent {
   readonly showSlaBar = input(true);
   readonly compact = input(false);
 
-  readonly expandedStepIndex = signal<number | null>(null);
+  readonly expandedStepKey = signal<string | null>(null);
 
   readonly sortedSteps = computed(() => [...this.steps()].sort((left, right) => left.stepIndex - right.stepIndex));
 
@@ -85,15 +93,16 @@ export class EpApprovalStepsComponent {
   });
 
   toggleStep(step: ApprovalStepView): void {
-    this.expandedStepIndex.update((current) => (current === step.stepIndex ? null : step.stepIndex));
+    const key = this.stepKey(step);
+    this.expandedStepKey.update((current) => (current === key ? null : key));
   }
 
   isExpanded(step: ApprovalStepView): boolean {
-    return this.expandedStepIndex() === step.stepIndex;
+    return this.expandedStepKey() === this.stepKey(step);
   }
 
   isCurrent(step: ApprovalStepView): boolean {
-    return this.resolvedCurrentStepIndex() === step.stepIndex;
+    return step.status === 'PENDING' && this.resolvedCurrentStepIndex() === step.stepIndex;
   }
 
   isComplete(step: ApprovalStepView): boolean {
@@ -106,6 +115,14 @@ export class EpApprovalStepsComponent {
 
   statusIcon(status: ApprovalStepStatus): string {
     return STATUS_ICON[status] ?? 'circle';
+  }
+
+  stepKey(step: ApprovalStepView): string {
+    return `${step.stepIndex}:${step.requiredPermission}:${step.approver?.id ?? step.approver?.fullName ?? 'unassigned'}`;
+  }
+
+  permissionLabelKey(permission: string): string | null {
+    return PERMISSION_LABEL_KEYS[permission] ?? null;
   }
 
   connectorTone(step: ApprovalStepView): EpBadgeTone {

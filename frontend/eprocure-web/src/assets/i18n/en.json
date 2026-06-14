@@ -37,9 +37,20 @@
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
     },
+    "permission": {
+      "PR_APPROVE_L1": "Level 1 approval",
+      "PR_APPROVE_L2": "Level 2 approval",
+      "PR_APPROVE_L3": "Level 3 approval",
+      "PR_APPROVE_FINANCE": "Finance approval",
+      "PR_APPROVE_EMERGENCY": "Emergency approval"
+    },
     "steps": {
       "emptyTitle": "No approval steps yet",
       "emptyMessage": "The approval workflow has not started or has not returned step data.",
+      "type": {
+        "SEQUENTIAL": "Sequential",
+        "PARALLEL": "Parallel"
+      },
       "waitingAssign": "Waiting assignment",
       "assignedAt": "Assigned at",
       "deadline": "Deadline",
@@ -791,6 +802,7 @@
       },
       "approval": {
         "none": "The approval workflow is created after the request is submitted successfully. If it was just submitted, wait for approval-service to process the event and refresh.",
+        "processName": "Process {{number}}",
         "assignedAt": "Assigned:",
         "deadline": "Due:",
         "viewInbox": "View approval inbox"
@@ -1978,6 +1990,7 @@
       "assignedAt": "Assigned At",
       "deadlineAt": "Deadline",
       "processOverview": "Approval workflow overview",
+      "processName": "Process {{number}}",
       "processHeader": "Approval Workflow",
       "viewFullPr": "View full PR",
       "step": "Step",
