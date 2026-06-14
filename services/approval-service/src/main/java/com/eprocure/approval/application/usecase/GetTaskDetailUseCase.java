@@ -96,7 +96,7 @@ public class GetTaskDetailUseCase {
                 process.getTotalAmount().currency(),
                 process.getPriority().name(),
                 activeStep.getStepIndex(),
-                activeStep.getApproverRole(),
+                activeStep.getRequiredPermission(),
                 sla,
                 isDelegated,
                 delegatedFrom,
@@ -118,7 +118,7 @@ public class GetTaskDetailUseCase {
 
             stepsDetailList.add(new ApprovalProcessDetail.StepDetail(
                     step.getStepIndex(),
-                    step.getApproverRole(),
+                    step.getRequiredPermission(),
                     stepApprover,
                     step.getDelegateId().orElse(null),
                     step.getStatus().name(),

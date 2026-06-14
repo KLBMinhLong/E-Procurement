@@ -43,7 +43,7 @@ CREATE TABLE approval.approval_rule_steps (
     id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     rule_id         UUID            NOT NULL REFERENCES approval.approval_rules(id),
     step_index      SMALLINT        NOT NULL,
-    approver_role   VARCHAR(50)     NOT NULL,
+    required_permission   VARCHAR(50)     NOT NULL,
     step_type       VARCHAR(20)     NOT NULL DEFAULT 'SEQUENTIAL',
     sla_hours       SMALLINT        NOT NULL,
     is_required     BOOLEAN         NOT NULL DEFAULT TRUE,
@@ -93,7 +93,7 @@ CREATE TABLE approval.approval_steps (
     process_id          UUID            NOT NULL REFERENCES approval.approval_processes(id),
     step_index          SMALLINT        NOT NULL,
     step_type           VARCHAR(20)     NOT NULL DEFAULT 'SEQUENTIAL',
-    approver_role       VARCHAR(50)     NOT NULL,
+    required_permission       VARCHAR(50)     NOT NULL,
     approver_id         UUID            NOT NULL,
     delegate_id         UUID,
     status              VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
@@ -149,7 +149,7 @@ CREATE INDEX idx_approval_rules_type_active
     WHERE is_active = TRUE AND is_deleted = FALSE;
 
 CREATE UNIQUE INDEX idx_approval_rule_steps_unique_active
-    ON approval.approval_rule_steps(rule_id, step_index, approver_role)
+    ON approval.approval_rule_steps(rule_id, step_index, required_permission)
     WHERE is_deleted = FALSE;
 CREATE INDEX idx_approval_rule_steps_rule
     ON approval.approval_rule_steps(rule_id)
@@ -198,7 +198,7 @@ CREATE TRIGGER trg_approval_steps_updated_at
     EXECUTE FUNCTION approval.update_updated_at();
 
 COMMENT ON TABLE approval.approval_rules IS 'Approval rule definitions selected by value, category, department, priority or default fallback.';
-COMMENT ON TABLE approval.approval_rule_steps IS 'Ordered approver-role step templates for each approval rule.';
+COMMENT ON TABLE approval.approval_rule_steps IS 'Ordered required-permission step templates for each approval rule.';
 COMMENT ON TABLE approval.approval_processes IS 'Runtime approval process snapshot for business entities such as purchase requests.';
 COMMENT ON TABLE approval.approval_steps IS 'Resolved approval tasks assigned to approvers or delegates.';
 COMMENT ON TABLE approval.event_processing_log IS 'Idempotency log for Kafka event consumers in approval-service.';

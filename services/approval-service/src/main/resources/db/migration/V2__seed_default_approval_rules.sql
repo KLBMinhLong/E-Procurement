@@ -23,9 +23,9 @@ upsert_rules AS (
     SELECT *
     FROM (
         VALUES
-            ('EMERGENCY', 1000, TRUE, 'DEFAULT', NULL::numeric, NULL::numeric, NULL::varchar[], NULL::uuid[], ARRAY['EMERGENCY']::varchar[], 'Emergency PR uses parallel Manager and Director approval with post-audit follow-up.', (SELECT id FROM system_actor)),
-            ('CAT_CAPEX', 700, TRUE, 'CATEGORY', NULL::numeric, NULL::numeric, ARRAY['CAPEX']::varchar[], NULL::uuid[], NULL::varchar[], 'CAPEX category adds Finance Director and CEO approval.', (SELECT id FROM system_actor)),
-            ('CAT_IT_SOFTWARE', 650, TRUE, 'CATEGORY', NULL::numeric, NULL::numeric, ARRAY['SOFTWARE','SAAS','IT_SOFTWARE']::varchar[], NULL::uuid[], NULL::varchar[], 'Software and SaaS purchases add CISO and IT Manager approval.', (SELECT id FROM system_actor)),
+            ('EMERGENCY', 1000, TRUE, 'DEFAULT', NULL::numeric, NULL::numeric, NULL::varchar[], NULL::uuid[], ARRAY['EMERGENCY']::varchar[], 'Emergency PR uses emergency approval, L2 approval, and finance post-audit permissions.', (SELECT id FROM system_actor)),
+            ('CAT_CAPEX', 700, TRUE, 'CATEGORY', NULL::numeric, NULL::numeric, ARRAY['CAPEX']::varchar[], NULL::uuid[], NULL::varchar[], 'CAPEX category adds finance and L3 approval permissions.', (SELECT id FROM system_actor)),
+            ('CAT_IT_SOFTWARE', 650, TRUE, 'CATEGORY', NULL::numeric, NULL::numeric, ARRAY['SOFTWARE','SAAS','IT_SOFTWARE']::varchar[], NULL::uuid[], NULL::varchar[], 'Software and SaaS purchases add L3 approval permission.', (SELECT id FROM system_actor)),
             ('VALUE_OVER_500M', 600, TRUE, 'VALUE', 500000000.0000, NULL::numeric, NULL::varchar[], NULL::uuid[], ARRAY['NORMAL','URGENT']::varchar[], 'PR amount greater than or equal to 500M VND.', (SELECT id FROM system_actor)),
             ('VALUE_200M_500M', 500, TRUE, 'VALUE', 200000000.0000, 500000000.0000, NULL::varchar[], NULL::uuid[], ARRAY['NORMAL','URGENT']::varchar[], 'PR amount from 200M to under 500M VND.', (SELECT id FROM system_actor)),
             ('VALUE_50M_200M', 400, TRUE, 'VALUE', 50000000.0000, 200000000.0000, NULL::varchar[], NULL::uuid[], ARRAY['NORMAL','URGENT']::varchar[], 'PR amount from 50M to under 200M VND.', (SELECT id FROM system_actor)),
@@ -40,42 +40,41 @@ upsert_rules AS (
 INSERT INTO approval.approval_rule_steps (
     rule_id,
     step_index,
-    approver_role,
+    required_permission,
     step_type,
     sla_hours,
     is_required,
     created_by
 )
-SELECT rules.id, steps.step_index, steps.approver_role, steps.step_type, steps.sla_hours, TRUE, rules.created_by
+SELECT rules.id, steps.step_index, steps.required_permission, steps.step_type, steps.sla_hours, TRUE, rules.created_by
 FROM approval.approval_rules rules
 JOIN (
     VALUES
-        ('EMERGENCY', 1, 'MANAGER', 'PARALLEL', 2),
-        ('EMERGENCY', 1, 'DIRECTOR', 'PARALLEL', 4),
-        ('EMERGENCY', 2, 'POST_AUDIT', 'SEQUENTIAL', 24),
-        ('CAT_CAPEX', 1, 'FINANCE_DIRECTOR', 'SEQUENTIAL', 48),
-        ('CAT_CAPEX', 2, 'CEO', 'SEQUENTIAL', 48),
-        ('CAT_IT_SOFTWARE', 1, 'CISO', 'SEQUENTIAL', 48),
-        ('CAT_IT_SOFTWARE', 2, 'IT_MANAGER', 'SEQUENTIAL', 48),
-        ('VALUE_OVER_500M', 1, 'MANAGER', 'SEQUENTIAL', 48),
-        ('VALUE_OVER_500M', 2, 'DIRECTOR', 'SEQUENTIAL', 48),
-        ('VALUE_OVER_500M', 3, 'BOD', 'PARALLEL', 72),
-        ('VALUE_OVER_500M', 4, 'CFO', 'SEQUENTIAL', 48),
-        ('VALUE_200M_500M', 1, 'MANAGER', 'SEQUENTIAL', 48),
-        ('VALUE_200M_500M', 2, 'DIRECTOR', 'SEQUENTIAL', 48),
-        ('VALUE_200M_500M', 3, 'CEO', 'SEQUENTIAL', 48),
-        ('VALUE_200M_500M', 4, 'CFO', 'SEQUENTIAL', 48),
-        ('VALUE_50M_200M', 1, 'MANAGER', 'SEQUENTIAL', 48),
-        ('VALUE_50M_200M', 2, 'DIRECTOR', 'SEQUENTIAL', 48),
-        ('VALUE_50M_200M', 3, 'CFO', 'SEQUENTIAL', 48),
-        ('VALUE_20M_50M', 1, 'MANAGER', 'SEQUENTIAL', 48),
-        ('VALUE_20M_50M', 2, 'DIRECTOR', 'SEQUENTIAL', 48),
-        ('VALUE_20M_50M', 3, 'FINANCE', 'SEQUENTIAL', 48),
-        ('VALUE_5M_20M', 1, 'MANAGER', 'SEQUENTIAL', 48),
-        ('VALUE_5M_20M', 2, 'FINANCE', 'SEQUENTIAL', 48),
-        ('VALUE_UNDER_5M', 1, 'MANAGER', 'SEQUENTIAL', 48),
-        ('DEFAULT', 1, 'MANAGER', 'SEQUENTIAL', 48)
-) AS steps(rule_name, step_index, approver_role, step_type, sla_hours)
+        ('EMERGENCY', 1, 'PR_APPROVE_EMERGENCY', 'PARALLEL', 2),
+        ('EMERGENCY', 1, 'PR_APPROVE_L2', 'PARALLEL', 4),
+        ('EMERGENCY', 2, 'PR_APPROVE_FINANCE', 'SEQUENTIAL', 24),
+        ('CAT_CAPEX', 1, 'PR_APPROVE_FINANCE', 'SEQUENTIAL', 48),
+        ('CAT_CAPEX', 2, 'PR_APPROVE_L3', 'SEQUENTIAL', 48),
+        ('CAT_IT_SOFTWARE', 1, 'PR_APPROVE_L3', 'SEQUENTIAL', 48),
+        ('VALUE_OVER_500M', 1, 'PR_APPROVE_L1', 'SEQUENTIAL', 48),
+        ('VALUE_OVER_500M', 2, 'PR_APPROVE_L2', 'SEQUENTIAL', 48),
+        ('VALUE_OVER_500M', 3, 'PR_APPROVE_L3', 'SEQUENTIAL', 72),
+        ('VALUE_OVER_500M', 4, 'PR_APPROVE_FINANCE', 'SEQUENTIAL', 48),
+        ('VALUE_200M_500M', 1, 'PR_APPROVE_L1', 'SEQUENTIAL', 48),
+        ('VALUE_200M_500M', 2, 'PR_APPROVE_L2', 'SEQUENTIAL', 48),
+        ('VALUE_200M_500M', 3, 'PR_APPROVE_L3', 'SEQUENTIAL', 48),
+        ('VALUE_200M_500M', 4, 'PR_APPROVE_FINANCE', 'SEQUENTIAL', 48),
+        ('VALUE_50M_200M', 1, 'PR_APPROVE_L1', 'SEQUENTIAL', 48),
+        ('VALUE_50M_200M', 2, 'PR_APPROVE_L2', 'SEQUENTIAL', 48),
+        ('VALUE_50M_200M', 3, 'PR_APPROVE_FINANCE', 'SEQUENTIAL', 48),
+        ('VALUE_20M_50M', 1, 'PR_APPROVE_L1', 'SEQUENTIAL', 48),
+        ('VALUE_20M_50M', 2, 'PR_APPROVE_L2', 'SEQUENTIAL', 48),
+        ('VALUE_20M_50M', 3, 'PR_APPROVE_FINANCE', 'SEQUENTIAL', 48),
+        ('VALUE_5M_20M', 1, 'PR_APPROVE_L1', 'SEQUENTIAL', 48),
+        ('VALUE_5M_20M', 2, 'PR_APPROVE_FINANCE', 'SEQUENTIAL', 48),
+        ('VALUE_UNDER_5M', 1, 'PR_APPROVE_L1', 'SEQUENTIAL', 48),
+        ('DEFAULT', 1, 'PR_APPROVE_L1', 'SEQUENTIAL', 48)
+) AS steps(rule_name, step_index, required_permission, step_type, sla_hours)
     ON steps.rule_name = rules.rule_name
 WHERE rules.is_deleted = FALSE
 ON CONFLICT DO NOTHING;

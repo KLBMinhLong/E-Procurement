@@ -52,7 +52,7 @@ public class ApprovalChainResolutionService {
                     step.sequence(),
                     step.sourceStepIndex(),
                     step.sourceRuleName(),
-                    step.approverRole(),
+                    step.requiredPermission(),
                     step.stepType(),
                     step.slaHours(),
                     slaDeadlineCalculator.calculateDeadline(assignedAt, step.slaHours(), command.priority()),
@@ -74,7 +74,7 @@ public class ApprovalChainResolutionService {
             UUID departmentId,
             UUID requesterId) {
         List<ApproverCandidate> candidates = orgApproverPort.resolveApprovers(new ResolveApproverQuery(
-                step.approverRole(),
+                step.requiredPermission(),
                 departmentId,
                 requesterId));
         if (candidates.isEmpty()) {

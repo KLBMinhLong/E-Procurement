@@ -10,7 +10,7 @@ public class ApprovalStep {
     private final UUID processId;
     private final int stepIndex;
     private final ApprovalStepType stepType;
-    private final String approverRole;
+    private final String requiredPermission;
     private UUID approverId;
     private UUID delegateId;
     private ApprovalStepStatus status;
@@ -28,7 +28,7 @@ public class ApprovalStep {
             UUID processId,
             int stepIndex,
             ApprovalStepType stepType,
-            String approverRole,
+            String requiredPermission,
             UUID approverId,
             UUID delegateId,
             ApprovalStepStatus status,
@@ -47,10 +47,10 @@ public class ApprovalStep {
         }
         this.stepIndex = stepIndex;
         this.stepType = Objects.requireNonNull(stepType, "stepType must not be null");
-        if (approverRole == null || approverRole.isBlank()) {
-            throw new IllegalArgumentException("approverRole must not be blank");
+        if (requiredPermission == null || requiredPermission.isBlank()) {
+            throw new IllegalArgumentException("requiredPermission must not be blank");
         }
-        this.approverRole = approverRole.trim().toUpperCase();
+        this.requiredPermission = requiredPermission.trim().toUpperCase();
         this.approverId = Objects.requireNonNull(approverId, "approverId must not be null");
         this.delegateId = delegateId;
         this.status = Objects.requireNonNull(status, "status must not be null");
@@ -68,7 +68,7 @@ public class ApprovalStep {
             UUID processId,
             int stepIndex,
             ApprovalStepType stepType,
-            String approverRole,
+            String requiredPermission,
             UUID approverId,
             UUID delegateId,
             Instant slaDeadline,
@@ -78,7 +78,7 @@ public class ApprovalStep {
                 processId,
                 stepIndex,
                 stepType,
-                approverRole,
+                requiredPermission,
                 approverId,
                 delegateId,
                 ApprovalStepStatus.PENDING,
@@ -96,11 +96,11 @@ public class ApprovalStep {
             UUID processId,
             int stepIndex,
             ApprovalStepType stepType,
-            String approverRole,
+            String requiredPermission,
             UUID approverId,
             Instant slaDeadline,
             Instant assignedAt) {
-        return pending(processId, stepIndex, stepType, approverRole, approverId, null, slaDeadline, assignedAt);
+        return pending(processId, stepIndex, stepType, requiredPermission, approverId, null, slaDeadline, assignedAt);
     }
 
     public static ApprovalStep restore(
@@ -108,7 +108,7 @@ public class ApprovalStep {
             UUID processId,
             int stepIndex,
             ApprovalStepType stepType,
-            String approverRole,
+            String requiredPermission,
             UUID approverId,
             UUID delegateId,
             ApprovalStepStatus status,
@@ -125,7 +125,7 @@ public class ApprovalStep {
                 processId,
                 stepIndex,
                 stepType,
-                approverRole,
+                requiredPermission,
                 approverId,
                 delegateId,
                 status,
@@ -196,8 +196,8 @@ public class ApprovalStep {
         return stepType;
     }
 
-    public String getApproverRole() {
-        return approverRole;
+    public String getRequiredPermission() {
+        return requiredPermission;
     }
 
     public UUID getApproverId() {

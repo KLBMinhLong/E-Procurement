@@ -52,7 +52,7 @@ public class ApprovalRuleSelectionService {
                         sequence++,
                         template.stepIndex(),
                         rule.getRuleName(),
-                        template.approverRole(),
+                        template.requiredPermission(),
                         template.stepType(),
                         template.slaHours(),
                         template.required()));

@@ -153,14 +153,24 @@ public class StartApprovalProcessUseCase {
         variables.put("primaryRuleName", chain.primaryRuleName());
         variables.put("approverId", firstApproverId);
         variables.put("approvalStepCount", chain.steps().size());
-        chain.steps().forEach(step -> variables.putIfAbsent(
-                approverVariableName(step.approverRole()),
-                step.approver().id().toString()));
+        chain.steps().forEach(step -> approverVariableNames(step.requiredPermission())
+                .forEach(variableName -> variables.putIfAbsent(variableName, step.approver().id().toString())));
         return variables;
     }
 
-    private String approverVariableName(String approverRole) {
-        String[] parts = approverRole.trim().toLowerCase(Locale.ROOT).split("_");
+    private java.util.List<String> approverVariableNames(String requiredPermission) {
+        String permission = requiredPermission.trim().toUpperCase(Locale.ROOT);
+        return switch (permission) {
+            case "PR_APPROVE_L1" -> java.util.List.of("managerApproverId", permissionVariableName(permission));
+            case "PR_APPROVE_L2" -> java.util.List.of("directorApproverId", permissionVariableName(permission));
+            case "PR_APPROVE_FINANCE" -> java.util.List.of("financeApproverId", "postAuditApproverId", permissionVariableName(permission));
+            case "PR_APPROVE_EMERGENCY" -> java.util.List.of("managerApproverId", permissionVariableName(permission));
+            default -> java.util.List.of(permissionVariableName(permission));
+        };
+    }
+
+    private String permissionVariableName(String requiredPermission) {
+        String[] parts = requiredPermission.trim().toLowerCase(Locale.ROOT).split("_");
         StringBuilder builder = new StringBuilder(parts[0]);
         for (int index = 1; index < parts.length; index++) {
             if (!parts[index].isBlank()) {
@@ -185,7 +195,7 @@ public class StartApprovalProcessUseCase {
                                 process.priority(),
                                 step.sequence(),
                                 step.stepType(),
-                                step.approverRole(),
+                                step.requiredPermission(),
                                 step.approverId(),
                                 step.assignedAt(),
                                 step.slaDeadline())))
@@ -208,7 +218,7 @@ public class StartApprovalProcessUseCase {
                                 step.getId(),
                                 step.getStepIndex(),
                                 step.getStepType(),
-                                step.getApproverRole(),
+                                step.getRequiredPermission(),
                                 step.getApproverId(),
                                 step.getStatus(),
                                 step.getAssignedAt(),

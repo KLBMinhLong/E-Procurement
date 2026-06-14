@@ -17,7 +17,7 @@ public record ApprovalProcessDetail(
 
     public record StepDetail(
             int stepIndex,
-            String approverRole,
+            String requiredPermission,
             Approver approver,
             UUID delegateId,
             String status,

@@ -28,7 +28,7 @@ public record StartedApprovalProcessView(
             UUID stepId,
             int sequence,
             ApprovalStepType stepType,
-            String approverRole,
+            String requiredPermission,
             UUID approverId,
             ApprovalStepStatus status,
             Instant assignedAt,

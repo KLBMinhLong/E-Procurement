@@ -83,4 +83,65 @@
         ORDER BY u.full_name ASC, u.id ASC
         LIMIT #{limit}
     </select>
+
+    <select id="findApproversByPermission" resultType="com.eprocure.iam.infrastructure.persistence.entity.UserDbEntity">
+        SELECT DISTINCT u.id,
+               u.employee_code,
+               u.username,
+               u.email,
+               u.full_name,
+               u.phone,
+               u.avatar_url,
+               u.department_id,
+               u.org_node_id,
+               u.keycloak_username,
+               u.status,
+               u.two_factor_enabled,
+               u.last_login_at,
+               u.created_at,
+               CASE
+                   WHEN #{departmentId} IS NOT NULL
+                    AND u.department_id IN (
+                       WITH RECURSIVE department_up AS (
+                           SELECT d.id, d.parent_id
+                           FROM iam.departments d
+                           WHERE d.is_deleted = FALSE
+                             AND d.id = #{departmentId}
+                           UNION ALL
+                           SELECT parent.id, parent.parent_id
+                           FROM iam.departments parent
+                           JOIN department_up child ON child.parent_id = parent.id
+                           WHERE parent.is_deleted = FALSE
+                       ),
+                       department_down AS (
+                           SELECT d.id
+                           FROM iam.departments d
+                           WHERE d.is_deleted = FALSE
+                             AND d.id = #{departmentId}
+                           UNION ALL
+                           SELECT child.id
+                           FROM iam.departments child
+                           JOIN department_down parent ON child.parent_id = parent.id
+                           WHERE child.is_deleted = FALSE
+                       )
+                       SELECT id FROM department_up
+                       UNION
+                       SELECT id FROM department_down
+                   ) THEN 0
+                   ELSE 1
+               END AS routing_rank
+        FROM iam.users u
+        JOIN iam.user_roles ur ON ur.user_id = u.id AND ur.is_deleted = FALSE
+        JOIN iam.roles r ON r.id = ur.role_id AND r.is_deleted = FALSE
+        JOIN iam.role_permissions rp ON rp.role_id = r.id AND rp.is_deleted = FALSE
+        JOIN iam.permissions p ON p.id = rp.permission_id AND p.is_deleted = FALSE
+        WHERE u.is_deleted = FALSE
+          AND u.status = 'ACTIVE'
+          AND UPPER(p.code) = UPPER(#{permissionCode})
+        <if test="excludedUserId != null">
+          AND u.id != #{excludedUserId}
+        </if>
+        ORDER BY routing_rank ASC, u.full_name ASC, u.id ASC
+        LIMIT #{limit}
+    </select>
 </mapper>

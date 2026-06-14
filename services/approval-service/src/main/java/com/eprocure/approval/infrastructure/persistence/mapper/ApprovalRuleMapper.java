@@ -152,20 +152,20 @@ public interface ApprovalRuleMapper {
             id,
             rule_id,
             step_index,
-            approver_role,
+            required_permission,
             step_type,
             sla_hours,
             is_required AS required
         FROM approval.approval_rule_steps
         WHERE rule_id = #{ruleId}
           AND is_deleted = false
-        ORDER BY step_index ASC, approver_role ASC
+        ORDER BY step_index ASC, required_permission ASC
         """)
     @Results(id = "approvalRuleStepResult", value = {
             @Result(property = "id", column = "id"),
             @Result(property = "ruleId", column = "rule_id"),
             @Result(property = "stepIndex", column = "step_index"),
-            @Result(property = "approverRole", column = "approver_role"),
+            @Result(property = "requiredPermission", column = "required_permission"),
             @Result(property = "stepType", column = "step_type"),
             @Result(property = "slaHours", column = "sla_hours"),
             @Result(property = "required", column = "required")
@@ -243,7 +243,7 @@ public interface ApprovalRuleMapper {
             id,
             rule_id,
             step_index,
-            approver_role,
+            required_permission,
             step_type,
             sla_hours,
             is_required,
@@ -252,7 +252,7 @@ public interface ApprovalRuleMapper {
             #{entity.id},
             #{entity.ruleId},
             #{entity.stepIndex},
-            #{entity.approverRole},
+            #{entity.requiredPermission},
             #{entity.stepType},
             #{entity.slaHours},
             #{entity.required},

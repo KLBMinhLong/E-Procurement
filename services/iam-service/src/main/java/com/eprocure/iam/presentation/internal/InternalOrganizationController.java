@@ -49,17 +49,17 @@ public class InternalOrganizationController {
     @GetMapping("/approvers")
     public ResponseEntity<ApiResponse<List<UserSummaryView>>> getApprovers(
             @RequestHeader(INTERNAL_API_KEY_HEADER) String internalApiKey,
-            @RequestParam(name = "role") String roleCode,
+            @RequestParam(name = "permission") String permissionCode,
             @RequestParam(name = "department_id") UUID departmentId,
             @RequestParam(name = "requester_id") UUID requesterId,
             HttpServletRequest request) {
         internalApiKeyGuard.verify(internalApiKey);
-        log.info("[CONTROLLER] GET /internal/org/approvers | userId=internal | roleCode={} | departmentId={} | requesterId={}",
-                roleCode,
+        log.info("[CONTROLLER] GET /internal/org/approvers | userId=internal | permissionCode={} | departmentId={} | requesterId={}",
+                permissionCode,
                 LogMaskingUtil.maskId(departmentId),
                 LogMaskingUtil.maskId(requesterId));
         return ResponseEntity.ok(ApiResponse.success(
-                resolveApproversUseCase.execute(new ResolveApproversQuery(roleCode, departmentId, requesterId)),
+                resolveApproversUseCase.execute(ResolveApproversQuery.byPermission(permissionCode, departmentId, requesterId)),
                 RequestIdUtil.resolve(request)));
     }
 

@@ -180,17 +180,17 @@ class ApprovalTaskActionUseCaseTest {
                         "VALUE_DEFAULT",
                         List.of("VALUE_DEFAULT"),
                         List.of(
-                                step(1, "MANAGER", MANAGER_ID),
-                                step(2, "FINANCE", FINANCE_ID))),
+                                step(1, "PR_APPROVE_L1", MANAGER_ID),
+                                step(2, "PR_APPROVE_FINANCE", FINANCE_ID))),
                 NOW);
     }
 
-    private ResolvedApprovalStepView step(int index, String role, UUID approverId) {
+    private ResolvedApprovalStepView step(int index, String requiredPermission, UUID approverId) {
         return new ResolvedApprovalStepView(
                 index,
                 index,
                 "VALUE_DEFAULT",
-                role,
+                requiredPermission,
                 ApprovalStepType.SEQUENTIAL,
                 24,
                 NOW.plusSeconds(3600L * index),
@@ -198,10 +198,10 @@ class ApprovalTaskActionUseCaseTest {
                 null,
                 new ApproverView(
                         approverId,
-                        "EMP-" + role,
-                        role.toLowerCase(),
-                        role,
-                        role.toLowerCase() + "@eprocure.local",
+                        "EMP-" + requiredPermission,
+                        requiredPermission.toLowerCase(),
+                        requiredPermission,
+                        requiredPermission.toLowerCase() + "@eprocure.local",
                         DEPARTMENT_ID));
     }
 
@@ -332,7 +332,7 @@ class ApprovalTaskActionUseCaseTest {
     private static final class FakeOrgApproverPort implements OrgApproverPort {
         @Override
         public List<ApproverCandidate> resolveApprovers(ResolveApproverQuery query) {
-            if ("MANAGER".equals(query.approverRole())) {
+            if ("PR_APPROVE_L1".equals(query.requiredPermission())) {
                 return List.of(
                         candidate(MANAGER_ID, "manager"),
                         candidate(FORWARD_TO_ID, "manager-forward"));

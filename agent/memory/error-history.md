@@ -215,3 +215,10 @@
 - Root cause: Angular `computed()` values read `FormArray`/`FormControl` values directly; reactive form controls are not signals, so the computed summary and urgency conditional did not re-evaluate reliably under `OnPush`.
 - Fix: Add a form revision signal driven by `form.valueChanges`, use it for PR create totals and urgency display, move line-total calculation out of the template, and show validation feedback when submit is attempted with invalid fields.
 - Prevention: Any Angular `computed()` that derives from reactive forms must depend on a signal bridge such as `lineRevision`/`formRevision`; do not read form controls directly inside computed values without a signal dependency.
+
+## [2026-06-14] Bug: PR submit did not create usable approval workflow for permission-rich users
+
+- Symptom: Submitted PRs could stay without a visible approval workflow, and approver resolution depended on seeded roles such as `MANAGER` even when the user had broader permissions like `SUPER_ADMIN`.
+- Root cause: Approval rules stored role-like values and approval-service called IAM with `role=...`; IAM seeds also granted some approval permissions too broadly, so permission eligibility and workflow routing diverged.
+- Fix: Convert approval rules/steps to `requiredPermission`, route approval-service internal calls with `permission=...`, add IAM permission-based approver lookup, reset/reseed approval schema, and add IAM V11/V12 migrations for Super Admin approval permissions plus cleanup of seeded approval grants.
+- Prevention: Approval workflow routing must be permission-driven; roles are only a way to grant permissions, not approval rule values.

@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public record ApprovalStepTemplate(
         int stepIndex,
-        String approverRole,
+        String requiredPermission,
         ApprovalStepType stepType,
         int slaHours,
         boolean required) {
@@ -13,13 +13,13 @@ public record ApprovalStepTemplate(
         if (stepIndex < 1) {
             throw new IllegalArgumentException("stepIndex must be positive");
         }
-        if (approverRole == null || approverRole.isBlank()) {
-            throw new IllegalArgumentException("approverRole must not be blank");
+        if (requiredPermission == null || requiredPermission.isBlank()) {
+            throw new IllegalArgumentException("requiredPermission must not be blank");
         }
         Objects.requireNonNull(stepType, "stepType must not be null");
         if (slaHours < 1) {
             throw new IllegalArgumentException("slaHours must be positive");
         }
-        approverRole = approverRole.trim().toUpperCase();
+        requiredPermission = requiredPermission.trim().toUpperCase();
     }
 }

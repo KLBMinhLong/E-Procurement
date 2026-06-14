@@ -95,7 +95,7 @@ public class SlaEscalationUseCase {
     private Optional<UUID> resolveEscalationTarget(ApprovalProcess process, ApprovalStep step) {
         try {
             return orgApproverPort.resolveApprovers(new ResolveApproverQuery(
-                            step.getApproverRole(),
+                            step.getRequiredPermission(),
                             process.getRequesterDepartmentId(),
                             process.getRequesterId()))
                     .stream()
@@ -107,7 +107,7 @@ public class SlaEscalationUseCase {
             log.warn("[ACTION] Step SlaEscalation resolve target failed | processId={} | stepId={} | role={} | errorCode={}",
                     LogMaskingUtil.maskId(process.getId()),
                     LogMaskingUtil.maskId(step.getId()),
-                    step.getApproverRole(),
+                    step.getRequiredPermission(),
                     exception.getErrorCode().code());
             return Optional.empty();
         }
@@ -130,7 +130,7 @@ public class SlaEscalationUseCase {
                         process.getPriority(),
                         step.getStepIndex(),
                         step.getStepType(),
-                        step.getApproverRole(),
+                        step.getRequiredPermission(),
                         breachedApproverId,
                         escalatedToApproverId,
                         !breachedApproverId.equals(escalatedToApproverId),

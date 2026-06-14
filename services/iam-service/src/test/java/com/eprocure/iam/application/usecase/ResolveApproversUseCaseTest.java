@@ -18,6 +18,7 @@ import com.eprocure.iam.domain.model.UserStatus;
 import com.eprocure.iam.domain.repository.DepartmentRepository;
 import com.eprocure.iam.domain.repository.OrganizationRepository;
 import com.eprocure.iam.domain.repository.Page;
+import com.eprocure.iam.domain.repository.PermissionRepository;
 import com.eprocure.iam.domain.repository.RoleRepository;
 import com.eprocure.iam.domain.repository.UserRepository;
 import com.eprocure.iam.testsupport.StubPermissionResolutionService;
@@ -38,7 +39,7 @@ class ResolveApproversUseCaseTest {
         FakeOrganizationRepository organizationRepository = new FakeOrganizationRepository(List.of(user(APPROVER_ID, "manager")));
         ResolveApproversUseCase useCase = newUseCase(organizationRepository, new FakeRoleRepository(Set.of("MANAGER")));
 
-        List<UserSummaryView> approvers = useCase.execute(new ResolveApproversQuery("MANAGER", DEPARTMENT_ID, REQUESTER_ID));
+        List<UserSummaryView> approvers = useCase.execute(ResolveApproversQuery.byRole("MANAGER", DEPARTMENT_ID, REQUESTER_ID));
 
         assertThat(approvers).hasSize(1);
         assertThat(approvers.get(0).id()).isEqualTo(APPROVER_ID);
@@ -51,21 +52,45 @@ class ResolveApproversUseCaseTest {
                 new FakeOrganizationRepository(List.of()),
                 new FakeRoleRepository(Set.of("MANAGER")));
 
-        assertThatThrownBy(() -> useCase.execute(new ResolveApproversQuery("MANAGER", DEPARTMENT_ID, REQUESTER_ID)))
+        assertThatThrownBy(() -> useCase.execute(ResolveApproversQuery.byRole("MANAGER", DEPARTMENT_ID, REQUESTER_ID)))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.IAM_034);
     }
 
+    @Test
+    void should_return_approvers_when_permission_exists() {
+        FakeOrganizationRepository organizationRepository = new FakeOrganizationRepository(List.of(user(APPROVER_ID, "superadmin")));
+        ResolveApproversUseCase useCase = newUseCase(
+                organizationRepository,
+                new FakeRoleRepository(Set.of()),
+                new FakePermissionRepository(Set.of("PR_APPROVE_L1")));
+
+        List<UserSummaryView> approvers = useCase.execute(
+                ResolveApproversQuery.byPermission("PR_APPROVE_L1", DEPARTMENT_ID, REQUESTER_ID));
+
+        assertThat(approvers).hasSize(1);
+        assertThat(approvers.get(0).id()).isEqualTo(APPROVER_ID);
+        assertThat(organizationRepository.permissionCode).isEqualTo("PR_APPROVE_L1");
+        assertThat(organizationRepository.excludedUserId).isEqualTo(REQUESTER_ID);
+    }
+
     private static ResolveApproversUseCase newUseCase(
             FakeOrganizationRepository organizationRepository,
             FakeRoleRepository roleRepository) {
+        return newUseCase(organizationRepository, roleRepository, new FakePermissionRepository(Set.of()));
+    }
+
+    private static ResolveApproversUseCase newUseCase(
+            FakeOrganizationRepository organizationRepository,
+            FakeRoleRepository roleRepository,
+            FakePermissionRepository permissionRepository) {
         UserRepository userRepository = new EmptyUserRepository();
         UserViewAssembler assembler = new UserViewAssembler(
                 new FakeDepartmentRepository(),
                 userRepository,
                 new StubPermissionResolutionService());
-        return new ResolveApproversUseCase(organizationRepository, roleRepository, assembler);
+        return new ResolveApproversUseCase(organizationRepository, roleRepository, permissionRepository, assembler);
     }
 
     private static User user(UUID id, String username) {
@@ -83,6 +108,7 @@ class ResolveApproversUseCaseTest {
     private static final class FakeOrganizationRepository implements OrganizationRepository {
         private final List<User> approvers;
         private UUID excludedUserId;
+        private String permissionCode;
 
         private FakeOrganizationRepository(List<User> approvers) {
             this.approvers = approvers;
@@ -112,6 +138,31 @@ class ResolveApproversUseCaseTest {
         public List<User> findApprovers(String roleCode, UUID departmentId, UUID excludedUserId, int limit) {
             this.excludedUserId = excludedUserId;
             return approvers;
+        }
+
+        @Override
+        public List<User> findApproversByPermission(String permissionCode, UUID departmentId, UUID excludedUserId, int limit) {
+            this.permissionCode = permissionCode;
+            this.excludedUserId = excludedUserId;
+            return approvers;
+        }
+    }
+
+    private static final class FakePermissionRepository implements PermissionRepository {
+        private final Set<String> existingCodes;
+
+        private FakePermissionRepository(Set<String> existingCodes) {
+            this.existingCodes = existingCodes;
+        }
+
+        @Override
+        public List<com.eprocure.iam.domain.model.Permission> findAll() {
+            return List.of();
+        }
+
+        @Override
+        public Set<String> findExistingCodes(Set<String> codes) {
+            return existingCodes;
         }
     }
 

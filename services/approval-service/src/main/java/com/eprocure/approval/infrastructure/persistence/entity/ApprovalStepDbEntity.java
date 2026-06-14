@@ -8,7 +8,7 @@ public class ApprovalStepDbEntity {
     private UUID processId;
     private int stepIndex;
     private String stepType;
-    private String approverRole;
+    private String requiredPermission;
     private UUID approverId;
     private UUID delegateId;
     private String status;
@@ -54,12 +54,12 @@ public class ApprovalStepDbEntity {
         this.stepType = stepType;
     }
 
-    public String getApproverRole() {
-        return approverRole;
+    public String getRequiredPermission() {
+        return requiredPermission;
     }
 
-    public void setApproverRole(String approverRole) {
-        this.approverRole = approverRole;
+    public void setRequiredPermission(String requiredPermission) {
+        this.requiredPermission = requiredPermission;
     }
 
     public UUID getApproverId() {

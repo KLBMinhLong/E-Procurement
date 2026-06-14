@@ -323,6 +323,7 @@
 | Smoke budget seed | ✅ | Finance Flyway `V10__seed_procurement_smoke_budget.sql` adds active 2026 PROCUREMENT budget for requester department so PR submit uses real finance budget check |
 | Smoke catalog/inventory seed | ✅ | PR Flyway `V5__seed_e15_smoke_catalog_item.sql` and Inventory Flyway `V6__seed_e15_smoke_inventory_item.sql` add deterministic `E15-OFFICE-KIT` item data used by create PR and GR completion |
 | Runtime smoke local docs | ✅ | `tests/smoke/README.md` documents alternate host ports, service DNS overrides, disabled local trace export, seed actors, and script modes |
+| Approval permission routing hardening | ✅ | 2026-06-14: approval-service rule/step model chuyển từ `approverRole` sang `requiredPermission`; IAM internal approver resolver dùng `permission`; approval schema reset/reseed V1-V3; IAM V11/V12 cấp Super Admin approval permissions và cleanup seeded approval grants; `mvn -pl services/iam-service,services/approval-service test` pass; IAM/Approval Docker services healthy |
 | Newman/Postman CI pack | ⬜ | Follow-up after runtime script baseline is green on Docker |
 | JMeter/performance baseline | ⬜ | Follow-up after runtime script baseline is green on Docker |
 | Jenkins pipeline hardening | ⬜ | Follow-up after smoke/Newman/perf baseline |

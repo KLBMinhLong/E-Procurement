@@ -133,7 +133,7 @@ class SlaEscalationUseCaseTest {
                 1,
                 1,
                 "VALUE_DEFAULT",
-                "MANAGER",
+                "PR_APPROVE_L1",
                 ApprovalStepType.SEQUENTIAL,
                 2,
                 slaDeadline,

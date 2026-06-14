@@ -16,4 +16,6 @@ public interface OrganizationRepository {
     Page<User> findDepartmentMembers(UUID departmentId, int offset, int limit);
 
     List<User> findApprovers(String roleCode, UUID departmentId, UUID excludedUserId, int limit);
+
+    List<User> findApproversByPermission(String permissionCode, UUID departmentId, UUID excludedUserId, int limit);
 }

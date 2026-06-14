@@ -40,7 +40,7 @@ public class IamOrgApproverAdapter implements OrgApproverPort, DelegationResolut
     @Override
     public List<ApproverCandidate> resolveApprovers(ResolveApproverQuery query) {
         if (internalApiKey.isBlank()) {
-            log.error("[ACTION] Step ResolveApproversFromIam | roleCode={} | result=missing_api_key", query.approverRole());
+            log.error("[ACTION] Step ResolveApproversFromIam | permissionCode={} | result=missing_api_key", query.requiredPermission());
             throw new BusinessException(ErrorCode.APR_002);
         }
         try {
@@ -52,8 +52,8 @@ public class IamOrgApproverAdapter implements OrgApproverPort, DelegationResolut
                     });
 
             if (response == null || !response.success() || response.data() == null) {
-                log.warn("[ACTION] Step ResolveApproversFromIam | roleCode={} | departmentId={} | result=empty",
-                        query.approverRole(),
+                log.warn("[ACTION] Step ResolveApproversFromIam | permissionCode={} | departmentId={} | result=empty",
+                        query.requiredPermission(),
                         LogMaskingUtil.maskId(query.departmentId()));
                 throw new BusinessException(ErrorCode.APR_002);
             }
@@ -63,14 +63,14 @@ public class IamOrgApproverAdapter implements OrgApproverPort, DelegationResolut
                     .map(IamOrgApproverAdapter::toCandidate)
                     .toList();
         } catch (RestClientResponseException exception) {
-            log.warn("[ACTION] Step ResolveApproversFromIam | roleCode={} | departmentId={} | status={}",
-                    query.approverRole(),
+            log.warn("[ACTION] Step ResolveApproversFromIam | permissionCode={} | departmentId={} | status={}",
+                    query.requiredPermission(),
                     LogMaskingUtil.maskId(query.departmentId()),
                     exception.getStatusCode().value());
             throw new BusinessException(ErrorCode.APR_002);
         } catch (RestClientException exception) {
-            log.error("[EXCEPTION][APR_002] IAM approver resolution failed | roleCode={} | departmentId={} | error={}",
-                    query.approverRole(),
+            log.error("[EXCEPTION][APR_002] IAM approver resolution failed | permissionCode={} | departmentId={} | error={}",
+                    query.requiredPermission(),
                     LogMaskingUtil.maskId(query.departmentId()),
                     exception.getMessage());
             throw new BusinessException(ErrorCode.APR_002);
@@ -80,7 +80,7 @@ public class IamOrgApproverAdapter implements OrgApproverPort, DelegationResolut
     private static java.net.URI buildUri(UriBuilder uriBuilder, ResolveApproverQuery query) {
         UriBuilder builder = uriBuilder
                 .path("/internal/org/approvers")
-                .queryParam("role", query.approverRole())
+                .queryParam("permission", query.requiredPermission())
                 .queryParam("department_id", query.departmentId())
                 .queryParam("requester_id", query.requesterId());
         return builder.build();

@@ -46,4 +46,10 @@ public interface OrganizationMapper {
             @Param("departmentId") UUID departmentId,
             @Param("excludedUserId") UUID excludedUserId,
             @Param("limit") int limit);
+
+    List<UserDbEntity> findApproversByPermission(
+            @Param("permissionCode") String permissionCode,
+            @Param("departmentId") UUID departmentId,
+            @Param("excludedUserId") UUID excludedUserId,
+            @Param("limit") int limit);
 }

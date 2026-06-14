@@ -347,7 +347,7 @@ ApprovalStep
 ├── processId: ApprovalProcessId
 ├── stepIndex: int               (thứ tự trong chuỗi)
 ├── stepType: StepType           (SEQUENTIAL | PARALLEL)
-├── approverRole: String         (MANAGER | DIRECTOR | C_LEVEL | FINANCE | etc.)
+├── requiredPermission: String   (VD: PR_APPROVE_L1, PR_APPROVE_L2, PR_APPROVE_FINANCE)
 ├── approverId: UserId           (resolved từ org chart)
 ├── delegateId: UserId           (nullable, nếu đang uỷ quyền)
 ├── status: StepStatus           (PENDING | APPROVED | REJECTED | ESCALATED | SKIPPED)
@@ -378,7 +378,7 @@ ApprovalRule (Aggregate Root)
 │   └── priorities: Set<PrPriority>
 ├── approvalStepTemplates: List<ApprovalStepTemplate>
 │   ├── stepIndex: int
-│   ├── approverRole: String
+│   ├── requiredPermission: String
 │   ├── stepType: StepType       (SEQUENTIAL | PARALLEL)
 │   ├── slaHours: int            (giờ làm việc)
 │   └── isRequired: boolean
@@ -389,15 +389,15 @@ ApprovalRule (Aggregate Root)
 
 | Rule | Conditions | Steps |
 |---|---|---|
-| VALUE_UNDER_5M | value < 5M | [Manager/L1/SEQ/48h] |
-| VALUE_5M_20M | 5M ≤ value < 20M | [Manager/L1/SEQ/48h] → [Finance/FIN/SEQ/48h] |
-| VALUE_20M_50M | 20M ≤ value < 50M | [Manager/L1/SEQ/48h] → [Director/L2/SEQ/48h] → [Finance/FIN/SEQ/48h] |
-| VALUE_50M_200M | 50M ≤ value < 200M | [Manager/L1] → [Director/L2] → [CFO/FIN/SEQ] + RFQ |
-| VALUE_200M_500M | 200M ≤ value < 500M | [Manager] → [Director] → [CEO/L3] → [CFO/FIN] |
-| VALUE_OVER_500M | value ≥ 500M | [Manager] → [Director] → [BOD/L3/PAR] → [CFO/FIN] |
-| EMERGENCY | priority = EMERGENCY | [Manager/L1/PAR/2h, Director/L2/PAR/4h] → PostAudit |
-| CAT_IT_SOFTWARE | category IN (SOFTWARE, SAAS) | +[CISO, IT_MANAGER] bất kể giá trị |
-| CAT_CAPEX | isCapex = true | +[FinanceDirector, CEO] bất kể giá trị |
+| VALUE_UNDER_5M | value < 5M | [PR_APPROVE_L1/SEQ/48h] |
+| VALUE_5M_20M | 5M ≤ value < 20M | [PR_APPROVE_L1/SEQ/48h] → [PR_APPROVE_FINANCE/SEQ/48h] |
+| VALUE_20M_50M | 20M ≤ value < 50M | [PR_APPROVE_L1/SEQ/48h] → [PR_APPROVE_L2/SEQ/48h] → [PR_APPROVE_FINANCE/SEQ/48h] |
+| VALUE_50M_200M | 50M ≤ value < 200M | [PR_APPROVE_L1/SEQ/48h] → [PR_APPROVE_L2/SEQ/48h] → [PR_APPROVE_FINANCE/SEQ/48h] |
+| VALUE_200M_500M | 200M ≤ value < 500M | [PR_APPROVE_L1/SEQ/48h] → [PR_APPROVE_L2/SEQ/48h] → [PR_APPROVE_L3/SEQ/48h] → [PR_APPROVE_FINANCE/SEQ/48h] |
+| VALUE_OVER_500M | value ≥ 500M | [PR_APPROVE_L1/SEQ/48h] → [PR_APPROVE_L2/SEQ/48h] → [PR_APPROVE_L3/SEQ/72h] → [PR_APPROVE_FINANCE/SEQ/48h] |
+| EMERGENCY | priority = EMERGENCY | [PR_APPROVE_EMERGENCY/PAR/2h, PR_APPROVE_L2/PAR/4h] → [PR_APPROVE_FINANCE/SEQ/24h] |
+| CAT_IT_SOFTWARE | category IN (SOFTWARE, SAAS, IT_SOFTWARE) | +[PR_APPROVE_L3/SEQ/48h] bất kể giá trị |
+| CAT_CAPEX | category IN (CAPEX) | +[PR_APPROVE_FINANCE/SEQ/48h] → [PR_APPROVE_L3/SEQ/48h] bất kể giá trị |
 
 ---
 

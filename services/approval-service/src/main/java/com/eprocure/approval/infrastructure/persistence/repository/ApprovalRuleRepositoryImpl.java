@@ -108,7 +108,7 @@ public class ApprovalRuleRepositoryImpl implements ApprovalRuleRepository {
     private ApprovalStepTemplate toStepTemplate(ApprovalRuleStepDbEntity entity) {
         return new ApprovalStepTemplate(
                 entity.getStepIndex(),
-                entity.getApproverRole(),
+                entity.getRequiredPermission(),
                 ApprovalStepType.valueOf(entity.getStepType()),
                 entity.getSlaHours(),
                 Boolean.TRUE.equals(entity.getRequired()));
@@ -135,7 +135,7 @@ public class ApprovalRuleRepositoryImpl implements ApprovalRuleRepository {
         entity.setId(UUID.randomUUID());
         entity.setRuleId(ruleId);
         entity.setStepIndex(step.stepIndex());
-        entity.setApproverRole(step.approverRole());
+        entity.setRequiredPermission(step.requiredPermission());
         entity.setStepType(step.stepType().name());
         entity.setSlaHours(step.slaHours());
         entity.setRequired(step.required());

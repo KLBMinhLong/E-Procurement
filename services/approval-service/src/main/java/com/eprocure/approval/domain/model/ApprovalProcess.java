@@ -89,7 +89,7 @@ public class ApprovalProcess {
                         processId,
                         step.sourceStepIndex(),
                         step.stepType(),
-                        step.approverRole(),
+                        step.requiredPermission(),
                         step.approver().id(),
                         step.delegateId(),
                         step.slaDeadline(),
@@ -194,7 +194,7 @@ public class ApprovalProcess {
                 id,
                 step.getStepIndex(),
                 step.getStepType(),
-                step.getApproverRole(),
+                step.getRequiredPermission(),
                 Objects.requireNonNull(forwardToUserId, "forwardToUserId must not be null"),
                 step.getSlaDeadline(),
                 actedAt);

@@ -423,12 +423,12 @@ paths:
           required: true
           schema:
             type: string
-        - name: role
+        - name: permission
           in: query
           required: true
           schema:
             type: string
-          example: MANAGER
+          example: PR_APPROVE_L1
         - name: department_id
           in: query
           required: true

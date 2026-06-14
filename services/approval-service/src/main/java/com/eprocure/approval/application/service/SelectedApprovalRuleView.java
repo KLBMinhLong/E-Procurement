@@ -19,7 +19,7 @@ public record SelectedApprovalRuleView(
             int sequence,
             int sourceStepIndex,
             String sourceRuleName,
-            String approverRole,
+            String requiredPermission,
             ApprovalStepType stepType,
             int slaHours,
             boolean required) {
