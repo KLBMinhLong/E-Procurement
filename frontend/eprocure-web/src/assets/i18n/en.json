@@ -789,7 +789,7 @@
         "empty": "No replacement stock is available for this request."
       },
       "approval": {
-        "none": "No approval workflow has been generated for this request.",
+        "none": "The approval workflow is created after the request is submitted successfully. If it was just submitted, wait for approval-service to process the event and refresh.",
         "assignedAt": "Assigned:",
         "deadline": "Due:",
         "viewInbox": "View approval inbox"

@@ -789,7 +789,7 @@
         "empty": "Không có tồn kho có thể thay thế cho các hàng hóa trong yêu cầu."
       },
       "approval": {
-        "none": "Chưa phát sinh quy trình phê duyệt cho yêu cầu này.",
+        "none": "Quy trình phê duyệt sẽ được tạo sau khi gửi yêu cầu thành công. Nếu vừa gửi, hãy đợi approval service xử lý event rồi tải lại.",
         "assignedAt": "Giao:",
         "deadline": "Hạn:",
         "viewInbox": "Xem hộp thư duyệt"
