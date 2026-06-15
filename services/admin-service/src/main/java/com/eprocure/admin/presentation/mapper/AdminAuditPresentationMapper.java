@@ -1,13 +1,19 @@
 package com.eprocure.admin.presentation.mapper;
 
+import com.eprocure.admin.application.port.in.ExportAuditLogCommand;
+import com.eprocure.admin.domain.model.AuditExportJob;
 import com.eprocure.admin.domain.model.AuditActor;
 import com.eprocure.admin.domain.model.AuditLogEntry;
 import com.eprocure.admin.domain.model.AuditLogFilter;
+import com.eprocure.admin.common.security.UserPrincipal;
 import com.eprocure.admin.presentation.response.AuditActorResponse;
+import com.eprocure.admin.presentation.request.AuditLogExportRequest;
+import com.eprocure.admin.presentation.response.AuditExportJobResponse;
 import com.eprocure.admin.presentation.response.AuditLogEntryResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +57,20 @@ public class AdminAuditPresentationMapper {
 
     public List<AuditLogEntryResponse> toResponseList(List<AuditLogEntry> entries) {
         return entries.stream().map(this::toResponse).toList();
+    }
+
+    public ExportAuditLogCommand toCommand(UserPrincipal principal, AuditLogExportRequest request) {
+        return new ExportAuditLogCommand(
+                principal.getId(),
+                request.fromTime(),
+                request.toTime(),
+                Optional.ofNullable(request.actorId()),
+                Optional.ofNullable(request.entityType()),
+                Optional.ofNullable(request.action()));
+    }
+
+    public AuditExportJobResponse toResponse(AuditExportJob job) {
+        return new AuditExportJobResponse(job.id(), job.status());
     }
 
     private AuditLogEntryResponse toResponse(AuditLogEntry entry) {

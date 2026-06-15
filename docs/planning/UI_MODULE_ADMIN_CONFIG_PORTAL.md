@@ -1,6 +1,6 @@
 # UI Module Plan — Admin & System Config Portal
 
-> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng. Tính đến 2026-06-15, backend foundation đã có tại `services/admin-service` nhưng mới cover health/config read-only.
+> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng. Tính đến 2026-06-15, backend foundation đã có tại `services/admin-service` và cover health/config read-only, audit-log query/export.
 
 ---
 
@@ -33,8 +33,8 @@ Nguồn: `docs/api/admin-service.openapi.yaml`
 
 ### Mismatch / follow-up cần xử lý trước khi code lớn
 
-- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`, `/admin/audit-log`.
-- Chưa có controller/backend cho `/admin/audit-log/export`, `/admin/sessions`, config update/restart/rotate-key.
+- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`.
+- Chưa có controller/backend cho `/admin/sessions`, config update/restart/rotate-key.
 - `AdminOrgService` hiện gọi `/org/departments`, không phải `/admin/departments`.
 - Một số admin capability đã nằm ở service khác:
   - IAM: users, roles, RBAC, org.
@@ -69,7 +69,7 @@ Kết luận: plan này cần triển khai theo hai tầng:
 | Việc | Chi tiết |
 |---|---|
 | Backend inventory | ✅ `admin-service` mới tồn tại tại `services/admin-service`; gateway đã route `/api/v1/admin/*` sang port 8089 |
-| Controller check | ✅ Có `/admin/config/services*`, `/admin/health`, `/admin/audit-log`; chưa có `/admin/audit-log/export`, `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
+| Controller check | ✅ Có `/admin/config/services*`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`; chưa có `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
 | Decision | ✅ Chọn hướng tạo `admin-service` riêng theo spec; các capability đã có ở IAM/notification/inventory/approval vẫn giữ service owner hiện tại |
 | Docs | ✅ Cập nhật plan này, `agent/memory/decision-log.md`, `agent/memory/progress-tracker.md` |
 
@@ -112,7 +112,7 @@ Kết luận: plan này cần triển khai theo hai tầng:
 | Filters | from/to required, actor/entity/action/service/success filters |
 | Table | actor, action, entity, service, requestId, success/error, occurredAt |
 | Detail drawer | old/new values pretty JSON, description |
-| Export | POST export job nếu backend có job endpoint; disabled rõ khi filter invalid |
+| Export | POST export job đã có backend; disabled rõ khi filter invalid; hiển thị `QUEUED` job status sau khi tạo |
 | Access | `SYSTEM_AUDIT_VIEW` |
 
 ### Slice 9f — Active Sessions

@@ -420,6 +420,8 @@ paths:
       summary: Xuất audit log ra Excel (cho kiểm toán)
       operationId: exportAuditLog
       x-required-permission: SYSTEM_AUDIT_VIEW
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -447,7 +449,24 @@ paths:
                         type: object
                         properties:
                           jobId:     { type: string, format: uuid }
-                          status:    { type: string, example: QUEUED }
+                          status:    { type: string, enum: [QUEUED, PROCESSING, COMPLETED, FAILED], example: QUEUED }
+        '200':
+          description: Job cũ được replay theo Idempotency-Key
+          headers:
+            Idempotency-Replayed:
+              schema: { type: string, example: "true" }
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          jobId:     { type: string, format: uuid }
+                          status:    { type: string, enum: [QUEUED, PROCESSING, COMPLETED, FAILED], example: QUEUED }
 
   # ── Catalog Admin ─────────────────────────────────────────────
   /admin/catalog/categories:

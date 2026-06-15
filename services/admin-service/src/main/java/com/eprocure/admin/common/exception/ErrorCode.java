@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     SERVICE_CONFIG_NOT_FOUND("SYS_010", "Không tìm thấy cấu hình service", HttpStatus.NOT_FOUND),
     SYS_001("SYS_001", "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
+    SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
     IAM_004("IAM_004", "Bạn không có quyền thực hiện thao tác này", HttpStatus.FORBIDDEN),
     VAL_001("VAL_001", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST);
 

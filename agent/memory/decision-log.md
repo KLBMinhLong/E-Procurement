@@ -5,14 +5,21 @@
 - Decision: Scaffold `admin-service` as a dedicated Maven/Docker service on port 8089 behind existing gateway route `/api/v1/admin/*`, starting with read-only `SYSTEM_CONFIG` endpoints for service config and system health.
 - Reason: `docs/api/admin-service.openapi.yaml`, gateway config, Prometheus target, and Admin Config UI plan already treat admin-service as a separate operational boundary, while checkout runtime had no `services/admin-service` module.
 - Impact: `GET /api/v1/admin/config/services`, `GET /api/v1/admin/config/services/{serviceName}`, and `GET /api/v1/admin/health` now exist with gateway header authentication, permission-code guards, service health probes, infrastructure TCP checks, and masked sensitive config values.
-- Constraint: High-risk actions such as config update, service restart, encryption key rotation, audit-log export, and session invalidation remain deferred until TOTP/idempotency/audit persistence are added.
+- Constraint: High-risk actions such as config update, service restart, encryption key rotation, and session invalidation remain deferred until TOTP/idempotency/audit persistence are added.
 
 ## [2026-06-15] E13 admin audit log read API
 
 - Decision: Add `GET /api/v1/admin/audit-log` to `admin-service` as the first DB-backed admin capability, reading from owned `db_audit` / `audit.audit_logs`.
 - Reason: Audit viewing is a read-only governance workflow and should be implemented before high-risk system mutations; it also turns the documented immutable audit schema into a runtime contract.
 - Impact: Admin-service now has PostgreSQL/Flyway/MyBatis config, an audit log foundation migration, `SYSTEM_AUDIT_VIEW` guarded query endpoint, required `from_time`/`to_time` validation, optional actor/entity/action/service/success filters, and 1-based pagination metadata.
-- Constraint: Audit export jobs and audit writers from every service remain follow-up slices; this slice only creates/query-reads the audit table.
+- Constraint: Audit writers from every service remain follow-up slices; this slice only creates/query-reads the audit table.
+
+## [2026-06-15] E13 admin audit log export job
+
+- Decision: Add `POST /api/v1/admin/audit-log/export` to create a queued audit export job in `audit.audit_export_jobs`, guarded by `SYSTEM_AUDIT_VIEW`.
+- Reason: Audit export is a governance workflow but can be safely introduced as an idempotent queue request before adding file rendering workers.
+- Impact: Export requests now require `Idempotency-Key`, replay existing jobs by `(created_by, idempotency_key)`, validate `fromTime`/`toTime`, persist requested filters, and return `202 QUEUED` or `200` with `Idempotency-Replayed`.
+- Constraint: This slice does not generate XLSX files yet; the async worker/download endpoint remains a follow-up.
 
 ## [2026-06-06] E07 manual PO source contracts
 
