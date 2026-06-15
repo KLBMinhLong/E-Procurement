@@ -12,19 +12,68 @@ public class Department {
     private UUID parentId;
     private UUID headUserId;
     private Instant createdAt;
+    private Instant updatedAt;
+    private boolean deleted;
 
     private Department() {
     }
 
-    private Department(UUID id, String code, String name, Instant createdAt) {
+    private Department(
+            UUID id,
+            String code,
+            String name,
+            UUID parentId,
+            UUID headUserId,
+            Instant createdAt,
+            Instant updatedAt,
+            boolean deleted) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.code = requireText(code, "code");
         this.name = requireText(name, "name");
+        this.parentId = parentId;
+        this.headUserId = headUserId;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
+        this.updatedAt = updatedAt;
+        this.deleted = deleted;
     }
 
     public static Department create(UUID id, String code, String name, Instant createdAt) {
-        return new Department(id, code, name, createdAt);
+        return create(id, code, name, null, null, createdAt);
+    }
+
+    public static Department create(
+            UUID id,
+            String code,
+            String name,
+            UUID parentId,
+            UUID headUserId,
+            Instant createdAt) {
+        return new Department(id, code, name, parentId, headUserId, createdAt, createdAt, false);
+    }
+
+    public static Department reconstitute(
+            UUID id,
+            String code,
+            String name,
+            UUID parentId,
+            UUID headUserId,
+            Instant createdAt,
+            Instant updatedAt,
+            boolean deleted) {
+        return new Department(id, code, name, parentId, headUserId, createdAt, updatedAt, deleted);
+    }
+
+    public void update(String code, String name, UUID parentId, UUID headUserId, Instant updatedAt) {
+        this.code = requireText(code, "code");
+        this.name = requireText(name, "name");
+        this.parentId = parentId;
+        this.headUserId = headUserId;
+        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt must not be null");
+    }
+
+    public void deactivate(Instant updatedAt) {
+        this.deleted = true;
+        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt must not be null");
     }
 
     public UUID getId() {
@@ -49,6 +98,14 @@ public class Department {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Optional<Instant> getUpdatedAt() {
+        return Optional.ofNullable(updatedAt);
+    }
+
+    public boolean isDeleted() {
+        return deleted;
     }
 
     private static String requireText(String value, String fieldName) {

@@ -8,6 +8,8 @@ public enum ErrorCode {
     AUDIT_EXPORT_FILE_NOT_READY("SYS_012", "Audit export file chưa sẵn sàng", HttpStatus.NOT_FOUND),
     CATALOG_CATEGORY_NOT_FOUND("ADM_CAT_001", "Không tìm thấy danh mục catalog", HttpStatus.NOT_FOUND),
     CATALOG_CATEGORY_CONFLICT("ADM_CAT_002", "Không thể thay đổi danh mục catalog hiện tại", HttpStatus.CONFLICT),
+    DEPARTMENT_NOT_FOUND("ADM_DEPT_001", "Không tìm thấy phòng ban", HttpStatus.NOT_FOUND),
+    DEPARTMENT_CONFLICT("ADM_DEPT_002", "Không thể thay đổi phòng ban hiện tại", HttpStatus.CONFLICT),
     SYS_001("SYS_001", "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_002("SYS_002", "Dịch vụ phụ thuộc không khả dụng", HttpStatus.SERVICE_UNAVAILABLE),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),

@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface OrganizationMapper {
     @Select("""
-            SELECT id, code, name, parent_id, head_user_id, created_at
+            SELECT id, code, name, parent_id, head_user_id, created_at, updated_at, is_deleted AS deleted
             FROM iam.departments
             WHERE is_deleted = FALSE
             ORDER BY name
@@ -20,7 +20,7 @@ public interface OrganizationMapper {
     List<DepartmentDbEntity> findAllDepartments();
 
     @Select("""
-            SELECT id, code, name, parent_id, head_user_id, created_at
+            SELECT id, code, name, parent_id, head_user_id, created_at, updated_at, is_deleted AS deleted
             FROM iam.departments
             WHERE is_deleted = FALSE
               AND id = #{departmentId}

@@ -208,6 +208,18 @@ components:
         parentId:       { type: string, format: uuid, nullable: true }
         headUserId:     { type: string, format: uuid, nullable: true }
         glAccountPrefix:{ type: string, nullable: true }
+    DepartmentAdmin:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        code:            { type: string }
+        name:            { type: string }
+        parentId:        { type: string, format: uuid, nullable: true }
+        headUserId:      { type: string, format: uuid, nullable: true }
+        glAccountPrefix: { type: string, nullable: true }
+        memberCount:     { type: integer, format: int64 }
+        childCount:      { type: integer, format: int64 }
+        isDeleted:       { type: boolean }
 
 paths:
   # ── System Config Portal ──────────────────────────────────────
@@ -687,7 +699,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DepartmentAdmin'
 
   /admin/departments/{id}:
     put:
@@ -713,7 +730,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DepartmentAdmin'
 
   /admin/departments/{id}/deactivate:
     patch:
@@ -733,9 +755,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
-          description: Phòng ban còn nhân viên active — không thể vô hiệu hóa
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DepartmentAdmin'
+        '409':
+          description: Phòng ban còn nhân viên active hoặc child department — không thể vô hiệu hóa
           content:
             application/json:
               schema:
