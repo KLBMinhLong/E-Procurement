@@ -5,26 +5,28 @@
 
     <resultMap id="auditLogResultMap"
                type="com.eprocure.admin.infrastructure.persistence.entity.AuditLogDbEntity">
-        <id property="id" column="id"/>
-        <result property="actorId" column="actor_id"/>
-        <result property="actorName" column="actor_name"/>
-        <result property="actorRolesText" column="actor_roles_text"/>
-        <result property="actorIp" column="actor_ip"/>
-        <result property="action" column="action"/>
-        <result property="entityType" column="entity_type"/>
-        <result property="entityId" column="entity_id"/>
-        <result property="entityNumber" column="entity_number"/>
-        <result property="occurredAt" column="occurred_at"/>
-        <result property="httpMethod" column="http_method"/>
-        <result property="endpoint" column="endpoint"/>
-        <result property="requestId" column="request_id"/>
-        <result property="success" column="is_success"/>
-        <result property="errorCode" column="error_code"/>
-        <result property="oldValueJson" column="old_value_json"/>
-        <result property="newValueJson" column="new_value_json"/>
-        <result property="description" column="description"/>
-        <result property="serviceName" column="service_name"/>
-        <result property="totalCount" column="total_count"/>
+        <id property="id" column="id" javaType="long" jdbcType="BIGINT"/>
+        <result property="actorId" column="actor_id" javaType="java.util.UUID" jdbcType="OTHER"
+                typeHandler="com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler"/>
+        <result property="actorName" column="actor_name" javaType="string" jdbcType="VARCHAR"/>
+        <result property="actorRolesText" column="actor_roles_text" javaType="string" jdbcType="VARCHAR"/>
+        <result property="actorIp" column="actor_ip" javaType="string" jdbcType="VARCHAR"/>
+        <result property="action" column="action" javaType="string" jdbcType="VARCHAR"/>
+        <result property="entityType" column="entity_type" javaType="string" jdbcType="VARCHAR"/>
+        <result property="entityId" column="entity_id" javaType="java.util.UUID" jdbcType="OTHER"
+                typeHandler="com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler"/>
+        <result property="entityNumber" column="entity_number" javaType="string" jdbcType="VARCHAR"/>
+        <result property="occurredAt" column="occurred_at" javaType="java.time.Instant" jdbcType="TIMESTAMP"/>
+        <result property="httpMethod" column="http_method" javaType="string" jdbcType="VARCHAR"/>
+        <result property="endpoint" column="endpoint" javaType="string" jdbcType="VARCHAR"/>
+        <result property="requestId" column="request_id" javaType="string" jdbcType="VARCHAR"/>
+        <result property="success" column="is_success" javaType="boolean" jdbcType="BOOLEAN"/>
+        <result property="errorCode" column="error_code" javaType="string" jdbcType="VARCHAR"/>
+        <result property="oldValueJson" column="old_value_json" javaType="string" jdbcType="VARCHAR"/>
+        <result property="newValueJson" column="new_value_json" javaType="string" jdbcType="VARCHAR"/>
+        <result property="description" column="description" javaType="string" jdbcType="VARCHAR"/>
+        <result property="serviceName" column="service_name" javaType="string" jdbcType="VARCHAR"/>
+        <result property="totalCount" column="total_count" javaType="long" jdbcType="BIGINT"/>
     </resultMap>
 
     <sql id="auditLogWhereClause">
