@@ -30,11 +30,12 @@ public class IamSecurityConfirmationAdapter implements IamSecurityConfirmationPo
     }
 
     @Override
-    public void verifyTotp(UUID userId, String confirmationCode) {
+    public void verifyTotp(UUID userId, String confirmationCode, UUID idempotencyKey) {
         try {
             restClient.post()
                     .uri("/internal/security/totp/verify")
                     .header(INTERNAL_API_KEY_HEADER, internalApiKey)
+                    .header("Idempotency-Key", idempotencyKey.toString())
                     .body(new TotpVerificationRequest(userId, confirmationCode))
                     .retrieve()
                     .toBodilessEntity();

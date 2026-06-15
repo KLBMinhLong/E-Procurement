@@ -36,12 +36,13 @@ public class InternalTotpController {
     @PostMapping("/verify")
     public ResponseEntity<ApiResponse<Void>> verifyTotp(
             @RequestHeader(INTERNAL_API_KEY_HEADER) String internalApiKey,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody InternalTotpVerificationRequest body,
             HttpServletRequest request) {
         internalApiKeyGuard.verify(internalApiKey);
         log.info("[CONTROLLER] POST /internal/security/totp/verify | userId=internal | targetUserId={}",
                 LogMaskingUtil.maskId(body.userId()));
-        verifyUserTotpUseCase.execute(new VerifyUserTotpCommand(body.userId(), body.code()));
+        verifyUserTotpUseCase.execute(new VerifyUserTotpCommand(body.userId(), body.code()), idempotencyKey);
         return ResponseEntity.ok(ApiResponse.successMessage("TOTP verified", RequestIdUtil.resolve(request)));
     }
 }

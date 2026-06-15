@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 import com.eprocure.iam.application.port.in.VerifyUserTotpCommand;
+import com.eprocure.iam.application.service.IdempotencyGuard;
 import com.eprocure.iam.application.service.TotpSecretCipher;
 import com.eprocure.iam.application.service.TotpService;
 import com.eprocure.iam.common.exception.BusinessException;
@@ -26,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class VerifyUserTotpUseCaseTest {
     private static final UUID USER_ID = UUID.fromString("30000000-0000-4000-8000-000000000001");
     private static final UUID DEPARTMENT_ID = UUID.fromString("22222222-2222-4222-8222-222222222222");
+    private static final UUID IDEMPOTENCY_KEY = UUID.fromString("40000000-0000-4000-8000-000000000001");
     private static final String DEV_AES_KEY = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=";
     private static final String SECRET = "JBSWY3DPEHPK3PXP";
 
@@ -42,7 +44,7 @@ class VerifyUserTotpUseCaseTest {
     void setUp() {
         totpService = new TotpService("eProcure");
         totpSecretCipher = new TotpSecretCipher(DEV_AES_KEY);
-        useCase = new VerifyUserTotpUseCase(userRepository, totpService, totpSecretCipher);
+        useCase = new VerifyUserTotpUseCase(userRepository, new IdempotencyGuard(), totpService, totpSecretCipher);
     }
 
     @Test
@@ -51,7 +53,7 @@ class VerifyUserTotpUseCaseTest {
         String code = codeForNow();
         given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
 
-        useCase.execute(new VerifyUserTotpCommand(USER_ID, code));
+        useCase.execute(new VerifyUserTotpCommand(USER_ID, code), IDEMPOTENCY_KEY.toString());
     }
 
     @Test
@@ -60,7 +62,7 @@ class VerifyUserTotpUseCaseTest {
         given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
         String invalidCode = codeForNow().equals("000000") ? "111111" : "000000";
 
-        assertThatThrownBy(() -> useCase.execute(new VerifyUserTotpCommand(USER_ID, invalidCode)))
+        assertThatThrownBy(() -> useCase.execute(new VerifyUserTotpCommand(USER_ID, invalidCode), IDEMPOTENCY_KEY.toString()))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.IAM_006);
@@ -70,7 +72,7 @@ class VerifyUserTotpUseCaseTest {
     void should_throw_iam_006_when_two_factor_is_not_enabled() {
         given(userRepository.findById(USER_ID)).willReturn(Optional.of(activeUser()));
 
-        assertThatThrownBy(() -> useCase.execute(new VerifyUserTotpCommand(USER_ID, "123456")))
+        assertThatThrownBy(() -> useCase.execute(new VerifyUserTotpCommand(USER_ID, "123456"), IDEMPOTENCY_KEY.toString()))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.IAM_006);
@@ -80,7 +82,7 @@ class VerifyUserTotpUseCaseTest {
     void should_throw_iam_030_when_user_is_not_found() {
         given(userRepository.findById(USER_ID)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(new VerifyUserTotpCommand(USER_ID, "123456")))
+        assertThatThrownBy(() -> useCase.execute(new VerifyUserTotpCommand(USER_ID, "123456"), IDEMPOTENCY_KEY.toString()))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.IAM_030);

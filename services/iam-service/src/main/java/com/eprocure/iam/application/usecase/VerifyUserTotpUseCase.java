@@ -1,6 +1,7 @@
 package com.eprocure.iam.application.usecase;
 
 import com.eprocure.iam.application.port.in.VerifyUserTotpCommand;
+import com.eprocure.iam.application.service.IdempotencyGuard;
 import com.eprocure.iam.application.service.TotpSecretCipher;
 import com.eprocure.iam.application.service.TotpService;
 import com.eprocure.iam.common.exception.BusinessException;
@@ -18,20 +19,24 @@ public class VerifyUserTotpUseCase {
     private static final Logger log = LogManager.getLogger(VerifyUserTotpUseCase.class);
 
     private final UserRepository userRepository;
+    private final IdempotencyGuard idempotencyGuard;
     private final TotpService totpService;
     private final TotpSecretCipher totpSecretCipher;
 
     public VerifyUserTotpUseCase(
             UserRepository userRepository,
+            IdempotencyGuard idempotencyGuard,
             TotpService totpService,
             TotpSecretCipher totpSecretCipher) {
         this.userRepository = userRepository;
+        this.idempotencyGuard = idempotencyGuard;
         this.totpService = totpService;
         this.totpSecretCipher = totpSecretCipher;
     }
 
     @Transactional(readOnly = true)
-    public void execute(VerifyUserTotpCommand command) {
+    public void execute(VerifyUserTotpCommand command, String idempotencyKey) {
+        idempotencyGuard.verify(idempotencyKey);
         log.info("[ACTION] Start VerifyUserTotp | userId={}", LogMaskingUtil.maskId(command.userId()));
         User user = userRepository.findById(command.userId())
                 .filter(User::canLogin)

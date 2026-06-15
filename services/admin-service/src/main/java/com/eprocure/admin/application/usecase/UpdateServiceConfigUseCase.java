@@ -59,7 +59,7 @@ public class UpdateServiceConfigUseCase {
         validate(command);
         serviceConfigRepository.findByName(command.serviceName())
                 .orElseThrow(() -> new BusinessException(ErrorCode.SERVICE_CONFIG_NOT_FOUND));
-        confirmationPort.verifyTotp(command.actorId(), command.confirmationCode());
+        confirmationPort.verifyTotp(command.actorId(), command.confirmationCode(), idempotencyKey);
 
         Instant now = Instant.now(clock);
         AdminConfigAction action = AdminConfigAction.updateConfig(

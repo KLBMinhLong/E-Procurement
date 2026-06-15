@@ -52,7 +52,7 @@ public class RotateEncryptionKeyUseCase {
 
     private EncryptionKeyRotationResult createAction(RotateEncryptionKeyCommand command, UUID idempotencyKey) {
         validate(command);
-        confirmationPort.verifyTotp(command.actorId(), command.confirmationCode());
+        confirmationPort.verifyTotp(command.actorId(), command.confirmationCode(), idempotencyKey);
         Instant now = Instant.now(clock);
         AdminConfigAction action = AdminConfigAction.rotateEncryptionKey(
                 UUID.randomUUID(),

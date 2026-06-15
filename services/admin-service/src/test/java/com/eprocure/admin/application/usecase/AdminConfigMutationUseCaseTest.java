@@ -90,7 +90,7 @@ class AdminConfigMutationUseCaseTest {
         assertThat(result.status()).isEqualTo(AdminConfigActionStatus.PENDING_MANUAL_APPLY);
         assertThat(result.applied()).isFalse();
         assertThat(result.replayed()).isFalse();
-        verify(confirmationPort).verifyTotp(ACTOR_ID, "123456");
+        verify(confirmationPort).verifyTotp(ACTOR_ID, "123456", IDEMPOTENCY_KEY);
         ArgumentCaptor<AdminConfigAction> captor = ArgumentCaptor.forClass(AdminConfigAction.class);
         verify(actionRepository).save(captor.capture());
         assertThat(captor.getValue().actionType()).isEqualTo(AdminConfigActionType.UPDATE_CONFIG);
@@ -146,7 +146,7 @@ class AdminConfigMutationUseCaseTest {
         assertThat(result.rotatedAt()).isEqualTo(NOW);
         assertThat(result.oldKeyRetiredAt()).isEqualTo(NOW.plusSeconds(86_400));
         assertThat(result.applied()).isFalse();
-        verify(confirmationPort).verifyTotp(ACTOR_ID, "123456");
+        verify(confirmationPort).verifyTotp(ACTOR_ID, "123456", IDEMPOTENCY_KEY);
         ArgumentCaptor<AdminConfigAction> captor = ArgumentCaptor.forClass(AdminConfigAction.class);
         verify(actionRepository).save(captor.capture());
         assertThat(captor.getValue().actionType()).isEqualTo(AdminConfigActionType.ROTATE_ENCRYPTION_KEY);
