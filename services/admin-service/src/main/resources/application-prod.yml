@@ -1,0 +1,3 @@
+eprocure:
+  internal:
+    api-key: ${ADMIN_INTERNAL_API_KEY}

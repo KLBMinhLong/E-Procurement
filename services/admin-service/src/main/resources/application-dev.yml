@@ -1,0 +1,14 @@
+eprocure:
+  internal:
+    api-key: ${ADMIN_INTERNAL_API_KEY:change-me-internal-api-key}
+  admin:
+    infrastructure:
+      postgresql:
+        host: ${ADMIN_POSTGRES_HOST:postgres}
+        port: ${ADMIN_POSTGRES_PORT:5432}
+      redis:
+        host: ${ADMIN_REDIS_HOST:redis}
+        port: ${ADMIN_REDIS_PORT:6379}
+      kafka:
+        host: ${ADMIN_KAFKA_HOST:kafka}
+        port: ${ADMIN_KAFKA_PORT:9092}

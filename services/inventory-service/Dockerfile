@@ -10,6 +10,7 @@ COPY services/inventory-service/pom.xml services/inventory-service/pom.xml
 COPY services/vendor-service/pom.xml services/vendor-service/pom.xml
 COPY services/analytics-service/pom.xml services/analytics-service/pom.xml
 COPY services/notification-service/pom.xml services/notification-service/pom.xml
+COPY services/admin-service/pom.xml services/admin-service/pom.xml
 COPY infra/keycloak/eprocure-keycloak-provider/pom.xml infra/keycloak/eprocure-keycloak-provider/pom.xml
 RUN --mount=type=cache,target=/root/.m2 mvn -pl services/inventory-service -am dependency:go-offline
 

@@ -27,6 +27,7 @@
         <module>services/vendor-service</module>
         <module>services/analytics-service</module>
         <module>services/notification-service</module>
+        <module>services/admin-service</module>
         <module>infra/keycloak/eprocure-keycloak-provider</module>
     </modules>
 

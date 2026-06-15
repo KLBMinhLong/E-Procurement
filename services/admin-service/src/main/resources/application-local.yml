@@ -1,0 +1,12 @@
+eprocure:
+  admin:
+    infrastructure:
+      postgresql:
+        host: ${ADMIN_POSTGRES_HOST:localhost}
+        port: ${ADMIN_POSTGRES_PORT:5432}
+      redis:
+        host: ${ADMIN_REDIS_HOST:localhost}
+        port: ${ADMIN_REDIS_PORT:6379}
+      kafka:
+        host: ${ADMIN_KAFKA_HOST:localhost}
+        port: ${ADMIN_KAFKA_PORT:19092}

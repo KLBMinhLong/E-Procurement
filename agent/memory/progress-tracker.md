@@ -201,7 +201,7 @@
 | E10: Budget Management | ✅ |
 | E11: Notification & Realtime | ✅ |
 | E12: Analytics & Reports | ✅ |
-| E13: Admin & Config Portal (Rest UI/BPMN) | 🔄 | 2026-06-14: created `docs/planning/UI_MODULE_ADMIN_CONFIG_PORTAL.md`; next slice is contract truth/runtime alignment because admin-service OpenAPI includes config/audit/health/sessions but no `services/admin-service` runtime exists |
+| E13: Admin & Config Portal (Rest UI/BPMN) | 🔄 | 2026-06-15: `services/admin-service` backend foundation added as Maven/Docker/Compose service on port 8089; implemented `GET /admin/config/services`, `GET /admin/config/services/{serviceName}`, and `GET /admin/health` with `SYSTEM_CONFIG`, masked sensitive values, service health probes, and infra TCP checks; high-risk mutations/audit/session slices remain |
 | E14: Security Hardening | ⬜ |
 | E15: Testing & CI/CD | 🔄 | E15-A Runtime/API Smoke Pack baseline passed on Docker; Newman/perf/CI hardening remain |
 

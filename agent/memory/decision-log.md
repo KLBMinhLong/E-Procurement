@@ -1,5 +1,12 @@
 # Decision Log
 
+## [2026-06-15] E13 admin-service backend foundation
+
+- Decision: Scaffold `admin-service` as a dedicated Maven/Docker service on port 8089 behind existing gateway route `/api/v1/admin/*`, starting with read-only `SYSTEM_CONFIG` endpoints for service config and system health.
+- Reason: `docs/api/admin-service.openapi.yaml`, gateway config, Prometheus target, and Admin Config UI plan already treat admin-service as a separate operational boundary, while checkout runtime had no `services/admin-service` module.
+- Impact: `GET /api/v1/admin/config/services`, `GET /api/v1/admin/config/services/{serviceName}`, and `GET /api/v1/admin/health` now exist with gateway header authentication, permission-code guards, service health probes, infrastructure TCP checks, and masked sensitive config values.
+- Constraint: High-risk actions such as config update, service restart, encryption key rotation, audit-log export, and session invalidation remain deferred until TOTP/idempotency/audit persistence are added.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.

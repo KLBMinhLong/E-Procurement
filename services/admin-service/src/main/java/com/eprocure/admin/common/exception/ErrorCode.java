@@ -1,0 +1,32 @@
+package com.eprocure.admin.common.exception;
+
+import org.springframework.http.HttpStatus;
+
+public enum ErrorCode {
+    SERVICE_CONFIG_NOT_FOUND("SYS_010", "Không tìm thấy cấu hình service", HttpStatus.NOT_FOUND),
+    SYS_001("SYS_001", "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
+    IAM_004("IAM_004", "Bạn không có quyền thực hiện thao tác này", HttpStatus.FORBIDDEN),
+    VAL_001("VAL_001", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST);
+
+    private final String code;
+    private final String message;
+    private final HttpStatus status;
+
+    ErrorCode(String code, String message, HttpStatus status) {
+        this.code = code;
+        this.message = message;
+        this.status = status;
+    }
+
+    public String code() {
+        return code;
+    }
+
+    public String message() {
+        return message;
+    }
+
+    public HttpStatus status() {
+        return status;
+    }
+}

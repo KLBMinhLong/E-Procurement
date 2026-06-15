@@ -1,6 +1,6 @@
 # UI Module Plan — Admin & System Config Portal
 
-> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng trong khi checkout hiện tại chưa có module `services/admin-service`.
+> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng. Tính đến 2026-06-15, backend foundation đã có tại `services/admin-service` nhưng mới cover health/config read-only.
 
 ---
 
@@ -31,10 +31,10 @@ Nguồn: `docs/api/admin-service.openapi.yaml`
 | System health | `GET /admin/health` | `SYSTEM_CONFIG` | Operational dashboard cho service/infrastructure health |
 | Sessions | `GET /admin/sessions`, `PATCH /admin/sessions/{sessionId}/invalidate` | `SYSTEM_CONFIG` | Active sessions + forced logout |
 
-### Mismatch cần xử lý trước khi code lớn
+### Mismatch / follow-up cần xử lý trước khi code lớn
 
-- Không thấy `services/admin-service` trong repo hiện tại.
-- Không thấy controller backend cho `/admin/config`, `/admin/audit-log`, `/admin/health`, `/admin/sessions`.
+- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`.
+- Chưa có controller/backend cho `/admin/audit-log`, `/admin/sessions`, config update/restart/rotate-key.
 - `AdminOrgService` hiện gọi `/org/departments`, không phải `/admin/departments`.
 - Một số admin capability đã nằm ở service khác:
   - IAM: users, roles, RBAC, org.
@@ -44,7 +44,7 @@ Nguồn: `docs/api/admin-service.openapi.yaml`
 
 Kết luận: plan này cần triển khai theo hai tầng:
 
-1. **Contract truth slice:** xác minh backend thực sự có gì, cập nhật plan/OpenAPI nếu spec là target future.
+1. **Contract truth slice:** đã xác minh và tạo backend foundation cho `admin-service`.
 2. **UI slice theo capability có backend thật trước**, sau đó mới thêm backend/service mới cho các phần chưa tồn tại.
 
 ---
@@ -68,10 +68,10 @@ Kết luận: plan này cần triển khai theo hai tầng:
 
 | Việc | Chi tiết |
 |---|---|
-| Backend inventory | Xác minh có/không có `admin-service`; map endpoint OpenAPI sang service thật hiện có |
-| Controller check | Search controller cho `/admin/config`, `/admin/audit-log`, `/admin/health`, `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
-| Decision | Chọn hướng: tạo `admin-service` mới theo spec hay bổ sung endpoints vào IAM/notification/inventory rồi gateway route `/api/v1/admin/*` |
-| Docs | Cập nhật plan này và `agent/memory/decision-log.md` nếu có quyết định kiến trúc |
+| Backend inventory | ✅ `admin-service` mới tồn tại tại `services/admin-service`; gateway đã route `/api/v1/admin/*` sang port 8089 |
+| Controller check | ✅ Có `/admin/config/services*` và `/admin/health`; chưa có `/admin/audit-log`, `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
+| Decision | ✅ Chọn hướng tạo `admin-service` riêng theo spec; các capability đã có ở IAM/notification/inventory/approval vẫn giữ service owner hiện tại |
+| Docs | ✅ Cập nhật plan này, `agent/memory/decision-log.md`, `agent/memory/progress-tracker.md` |
 
 **Kỳ vọng:** không code UI gọi endpoint chưa tồn tại.
 
@@ -156,7 +156,7 @@ Kết luận: plan này cần triển khai theo hai tầng:
 
 1. Slice 9a — Contract truth.
 2. Nếu backend endpoint đã có: 9b + 9c health page trước.
-3. Nếu backend endpoint chưa có: tạo backend foundation cho health/config/session/audit trước khi UI.
+3. Nếu backend endpoint chưa có: tạo tiếp backend foundation cho audit/session trước khi UI.
 4. Audit log và sessions làm sau health/config vì cần chuẩn hóa pagination/filter/export.
 5. Catalog category và department mutation làm cuối vì dễ trùng với Inventory/IAM UI hiện có.
 
