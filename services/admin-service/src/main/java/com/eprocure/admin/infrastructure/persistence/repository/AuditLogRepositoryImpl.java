@@ -40,6 +40,17 @@ public class AuditLogRepositoryImpl implements AuditLogRepository {
                 PageMeta.of(total, filter.page(), filter.size(), DEFAULT_SORT));
     }
 
+    @Override
+    public List<AuditLogEntry> findForExport(AuditLogFilter filter, int limit) {
+        log.debug("[REPO] findForExport audit_logs | from={} | to={} | limit={}",
+                filter.fromTime(),
+                filter.toTime(),
+                limit);
+        return mapper.findForExport(filter, limit).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private AuditLogEntry toDomain(AuditLogDbEntity entity) {
         return new AuditLogEntry(
                 entity.getId(),

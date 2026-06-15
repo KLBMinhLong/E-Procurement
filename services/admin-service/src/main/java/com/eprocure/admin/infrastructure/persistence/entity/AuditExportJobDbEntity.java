@@ -11,6 +11,9 @@ public class AuditExportJobDbEntity {
     private UUID filterActorId;
     private String entityType;
     private String action;
+    private String fileName;
+    private String storagePath;
+    private String failureReason;
     private UUID idempotencyKey;
     private Instant requestedAt;
     private Instant completedAt;
@@ -71,6 +74,30 @@ public class AuditExportJobDbEntity {
 
     public void setAction(String action) {
         this.action = action;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getStoragePath() {
+        return storagePath;
+    }
+
+    public void setStoragePath(String storagePath) {
+        this.storagePath = storagePath;
+    }
+
+    public String getFailureReason() {
+        return failureReason;
+    }
+
+    public void setFailureReason(String failureReason) {
+        this.failureReason = failureReason;
     }
 
     public UUID getIdempotencyKey() {

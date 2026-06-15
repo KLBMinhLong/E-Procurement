@@ -1,6 +1,6 @@
 # UI Module Plan — Admin & System Config Portal
 
-> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng. Tính đến 2026-06-15, backend foundation đã có tại `services/admin-service` và cover health/config read-only, audit-log query/export.
+> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng. Tính đến 2026-06-15, backend foundation đã có tại `services/admin-service` và cover health/config read-only, audit-log query/export/status/download.
 
 ---
 
@@ -25,7 +25,7 @@ Nguồn: `docs/api/admin-service.openapi.yaml`
 |---|---|---|---|
 | System Config | `GET /admin/config/services`, `GET/PUT /admin/config/services/{serviceName}` | `SYSTEM_CONFIG` | Endpoint nhạy cảm, có sensitive masking và TOTP confirmation |
 | Restart/Key rotation | `POST /admin/config/services/{serviceName}/restart`, `POST /admin/config/encryption/rotate-key` | `SYSTEM_CONFIG` | High-risk action, phải có modal confirm + reason/TOTP |
-| Audit log | `GET /admin/audit-log`, `POST /admin/audit-log/export` | `SYSTEM_AUDIT_VIEW` | Cần filter bắt buộc `from_time`, `to_time`, pagination/export |
+| Audit log | `GET /admin/audit-log`, `POST /admin/audit-log/export`, `GET /admin/audit-log/export/{jobId}`, `GET /admin/audit-log/export/{jobId}/download` | `SYSTEM_AUDIT_VIEW` | Cần filter bắt buộc `from_time`, `to_time`, pagination/export, job polling/download |
 | Catalog categories | `/admin/catalog/categories` | `ADMIN_CATALOG_MANAGE` | Có thể trùng với inventory catalog item UI; cần làm category admin riêng |
 | Department admin | `/admin/departments` mutations | `ADMIN_DEPARTMENT_MANAGE` | Frontend hiện đang dùng `/org/departments`; cần align thật với IAM backend |
 | System health | `GET /admin/health` | `SYSTEM_CONFIG` | Operational dashboard cho service/infrastructure health |
@@ -33,7 +33,7 @@ Nguồn: `docs/api/admin-service.openapi.yaml`
 
 ### Mismatch / follow-up cần xử lý trước khi code lớn
 
-- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`.
+- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`, `/admin/audit-log/export/{jobId}`, `/admin/audit-log/export/{jobId}/download`.
 - Chưa có controller/backend cho `/admin/sessions`, config update/restart/rotate-key.
 - `AdminOrgService` hiện gọi `/org/departments`, không phải `/admin/departments`.
 - Một số admin capability đã nằm ở service khác:
@@ -69,7 +69,7 @@ Kết luận: plan này cần triển khai theo hai tầng:
 | Việc | Chi tiết |
 |---|---|
 | Backend inventory | ✅ `admin-service` mới tồn tại tại `services/admin-service`; gateway đã route `/api/v1/admin/*` sang port 8089 |
-| Controller check | ✅ Có `/admin/config/services*`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`; chưa có `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
+| Controller check | ✅ Có `/admin/config/services*`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`, export job status/download; chưa có `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
 | Decision | ✅ Chọn hướng tạo `admin-service` riêng theo spec; các capability đã có ở IAM/notification/inventory/approval vẫn giữ service owner hiện tại |
 | Docs | ✅ Cập nhật plan này, `agent/memory/decision-log.md`, `agent/memory/progress-tracker.md` |
 
@@ -112,7 +112,7 @@ Kết luận: plan này cần triển khai theo hai tầng:
 | Filters | from/to required, actor/entity/action/service/success filters |
 | Table | actor, action, entity, service, requestId, success/error, occurredAt |
 | Detail drawer | old/new values pretty JSON, description |
-| Export | POST export job đã có backend; disabled rõ khi filter invalid; hiển thị `QUEUED` job status sau khi tạo |
+| Export | POST export job, polling status và download XLSX đã có backend; disabled rõ khi filter invalid; hiển thị `QUEUED/PROCESSING/COMPLETED/FAILED` sau khi tạo |
 | Access | `SYSTEM_AUDIT_VIEW` |
 
 ### Slice 9f — Active Sessions

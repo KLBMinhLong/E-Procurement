@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 
 public enum ErrorCode {
     SERVICE_CONFIG_NOT_FOUND("SYS_010", "Không tìm thấy cấu hình service", HttpStatus.NOT_FOUND),
+    AUDIT_EXPORT_JOB_NOT_FOUND("SYS_011", "Không tìm thấy audit export job", HttpStatus.NOT_FOUND),
+    AUDIT_EXPORT_FILE_NOT_READY("SYS_012", "Audit export file chưa sẵn sàng", HttpStatus.NOT_FOUND),
     SYS_001("SYS_001", "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
     IAM_004("IAM_004", "Bạn không có quyền thực hiện thao tác này", HttpStatus.FORBIDDEN),

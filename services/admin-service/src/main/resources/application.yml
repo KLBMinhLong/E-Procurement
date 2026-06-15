@@ -46,6 +46,12 @@ eprocure:
     api-key: ${ADMIN_INTERNAL_API_KEY:change-me-internal-api-key}
   admin:
     health-timeout: ${ADMIN_HEALTH_TIMEOUT:1s}
+    audit-export-worker:
+      enabled: ${ADMIN_AUDIT_EXPORT_WORKER_ENABLED:true}
+      batch-size: ${ADMIN_AUDIT_EXPORT_BATCH_SIZE:5}
+      poll-delay-ms: ${ADMIN_AUDIT_EXPORT_POLL_DELAY_MS:60000}
+      max-rows: ${ADMIN_AUDIT_EXPORT_MAX_ROWS:5000}
+      storage-dir: ${ADMIN_AUDIT_EXPORT_STORAGE_DIR:${java.io.tmpdir}/eprocure-admin-audit-exports}
     infrastructure:
       postgresql:
         name: postgresql

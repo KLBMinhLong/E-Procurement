@@ -19,7 +19,14 @@
 - Decision: Add `POST /api/v1/admin/audit-log/export` to create a queued audit export job in `audit.audit_export_jobs`, guarded by `SYSTEM_AUDIT_VIEW`.
 - Reason: Audit export is a governance workflow but can be safely introduced as an idempotent queue request before adding file rendering workers.
 - Impact: Export requests now require `Idempotency-Key`, replay existing jobs by `(created_by, idempotency_key)`, validate `fromTime`/`toTime`, persist requested filters, and return `202 QUEUED` or `200` with `Idempotency-Replayed`.
-- Constraint: This slice does not generate XLSX files yet; the async worker/download endpoint remains a follow-up.
+- Follow-up: The worker/download follow-up was completed in the next E13 admin audit export worker slice.
+
+## [2026-06-15] E13 admin audit export worker and download
+
+- Decision: Add an admin-service scheduled worker that claims queued audit export jobs, reads filtered audit rows, renders local XLSX files with Apache POI, and serves completed files from authenticated job download endpoints.
+- Reason: The queued export API needed a complete operational loop so the Admin Portal can poll job status and download audit evidence without direct database/file access.
+- Impact: `audit.audit_export_jobs` now transitions `QUEUED -> PROCESSING -> COMPLETED/FAILED`; completed jobs store `file_name` and `storage_path`, expose `GET /api/v1/admin/audit-log/export/{jobId}` and `GET /api/v1/admin/audit-log/export/{jobId}/download`, and enforce owner/status/expiry checks before streaming files.
+- Constraint: File storage is local filesystem via `ADMIN_AUDIT_EXPORT_STORAGE_DIR`; production object storage/retention cleanup can be a later hardening slice.
 
 ## [2026-06-06] E07 manual PO source contracts
 

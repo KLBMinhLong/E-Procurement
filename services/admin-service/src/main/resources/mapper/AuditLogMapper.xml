@@ -79,4 +79,32 @@
         ORDER BY occurred_at DESC, id DESC
         LIMIT #{filter.size} OFFSET #{filter.offset}
     </select>
+
+    <select id="findForExport" resultMap="auditLogResultMap">
+        SELECT
+            id,
+            actor_id,
+            actor_name,
+            array_to_string(actor_roles, ',') AS actor_roles_text,
+            actor_ip::TEXT AS actor_ip,
+            action,
+            entity_type,
+            entity_id,
+            entity_number,
+            occurred_at,
+            http_method,
+            endpoint,
+            request_id,
+            is_success,
+            error_code,
+            old_value::TEXT AS old_value_json,
+            new_value::TEXT AS new_value_json,
+            description,
+            service_name,
+            0 AS total_count
+        FROM audit.audit_logs
+        <include refid="auditLogWhereClause"/>
+        ORDER BY occurred_at DESC, id DESC
+        LIMIT #{limit}
+    </select>
 </mapper>

@@ -9,4 +9,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface AuditLogMapper {
     List<AuditLogDbEntity> findByFilter(@Param("filter") AuditLogFilter filter);
+
+    List<AuditLogDbEntity> findForExport(@Param("filter") AuditLogFilter filter, @Param("limit") int limit);
 }

@@ -13,6 +13,9 @@ public record AuditExportJob(
         Optional<UUID> filterActorId,
         Optional<String> entityType,
         Optional<String> action,
+        Optional<String> fileName,
+        Optional<String> storagePath,
+        Optional<String> failureReason,
         UUID idempotencyKey,
         Instant requestedAt,
         Optional<Instant> completedAt,
@@ -30,6 +33,9 @@ public record AuditExportJob(
         filterActorId = filterActorId == null ? Optional.empty() : filterActorId;
         entityType = normalize(entityType);
         action = normalize(action);
+        fileName = normalize(fileName);
+        storagePath = normalize(storagePath);
+        failureReason = normalize(failureReason);
         completedAt = completedAt == null ? Optional.empty() : completedAt;
         expiresAt = expiresAt == null ? Optional.empty() : expiresAt;
     }
@@ -53,6 +59,9 @@ public record AuditExportJob(
                 filterActorId,
                 entityType,
                 action,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
                 idempotencyKey,
                 requestedAt,
                 Optional.empty(),

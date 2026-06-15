@@ -148,6 +148,22 @@ components:
             - type: boolean
         description:   { type: string, nullable: true }
         serviceName:   { type: string }
+    AuditExportJob:
+      type: object
+      properties:
+        jobId:         { type: string, format: uuid }
+        status:        { type: string, enum: [QUEUED, PROCESSING, COMPLETED, FAILED] }
+        fromTime:      { type: string, format: date-time }
+        toTime:        { type: string, format: date-time }
+        actorId:       { type: string, format: uuid, nullable: true }
+        entityType:    { type: string, nullable: true }
+        action:        { type: string, nullable: true }
+        fileName:      { type: string, nullable: true }
+        downloadUrl:   { type: string, nullable: true, example: /api/v1/admin/audit-log/export/7d88c23e-0b18-45cc-b5f1-5b6110134f12/download }
+        failureReason: { type: string, nullable: true }
+        requestedAt:   { type: string, format: date-time }
+        completedAt:   { type: string, format: date-time, nullable: true }
+        expiresAt:     { type: string, format: date-time, nullable: true }
     CatalogCategoryRequest:
       type: object
       required: [code, name]
@@ -446,10 +462,7 @@ paths:
                   - type: object
                     properties:
                       data:
-                        type: object
-                        properties:
-                          jobId:     { type: string, format: uuid }
-                          status:    { type: string, enum: [QUEUED, PROCESSING, COMPLETED, FAILED], example: QUEUED }
+                        $ref: '#/components/schemas/AuditExportJob'
         '200':
           description: Job cũ được replay theo Idempotency-Key
           headers:
@@ -463,10 +476,63 @@ paths:
                   - type: object
                     properties:
                       data:
-                        type: object
-                        properties:
-                          jobId:     { type: string, format: uuid }
-                          status:    { type: string, enum: [QUEUED, PROCESSING, COMPLETED, FAILED], example: QUEUED }
+                        $ref: '#/components/schemas/AuditExportJob'
+
+  /admin/audit-log/export/{jobId}:
+    get:
+      tags: [Audit Log]
+      summary: Xem trạng thái audit export job
+      operationId: getAuditExportJob
+      x-required-permission: SYSTEM_AUDIT_VIEW
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Trạng thái job xuất audit log
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuditExportJob'
+        '404':
+          description: Không tìm thấy job thuộc user hiện tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/audit-log/export/{jobId}/download:
+    get:
+      tags: [Audit Log]
+      summary: Download file XLSX của audit export job
+      operationId: downloadAuditExport
+      x-required-permission: SYSTEM_AUDIT_VIEW
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: File audit log XLSX
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Job chưa hoàn tất, đã hết hạn, mất file, hoặc không thuộc user hiện tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Catalog Admin ─────────────────────────────────────────────
   /admin/catalog/categories:

@@ -1,8 +1,10 @@
 package com.eprocure.admin.presentation.mapper;
 
 import com.eprocure.admin.application.port.in.ExportAuditLogCommand;
+import com.eprocure.admin.application.port.in.GetAuditExportJobQuery;
 import com.eprocure.admin.domain.model.AuditExportJob;
 import com.eprocure.admin.domain.model.AuditActor;
+import com.eprocure.admin.domain.model.AuditExportJobStatus;
 import com.eprocure.admin.domain.model.AuditLogEntry;
 import com.eprocure.admin.domain.model.AuditLogFilter;
 import com.eprocure.admin.common.security.UserPrincipal;
@@ -69,8 +71,25 @@ public class AdminAuditPresentationMapper {
                 Optional.ofNullable(request.action()));
     }
 
+    public GetAuditExportJobQuery toQuery(UserPrincipal principal, UUID jobId) {
+        return new GetAuditExportJobQuery(principal.getId(), jobId);
+    }
+
     public AuditExportJobResponse toResponse(AuditExportJob job) {
-        return new AuditExportJobResponse(job.id(), job.status());
+        return new AuditExportJobResponse(
+                job.id(),
+                job.status(),
+                job.fromTime(),
+                job.toTime(),
+                job.filterActorId().orElse(null),
+                job.entityType().orElse(null),
+                job.action().orElse(null),
+                job.fileName().orElse(null),
+                downloadUrl(job),
+                job.failureReason().orElse(null),
+                job.requestedAt(),
+                job.completedAt().orElse(null),
+                job.expiresAt().orElse(null));
     }
 
     private AuditLogEntryResponse toResponse(AuditLogEntry entry) {
@@ -110,5 +129,11 @@ public class AdminAuditPresentationMapper {
         } catch (Exception exception) {
             return value;
         }
+    }
+
+    private String downloadUrl(AuditExportJob job) {
+        return job.status() == AuditExportJobStatus.COMPLETED && job.storagePath().isPresent()
+                ? "/api/v1/admin/audit-log/export/" + job.id() + "/download"
+                : null;
     }
 }
