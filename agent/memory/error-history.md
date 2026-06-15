@@ -1,5 +1,12 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-06-15] Bug: Mockito inline failed to mock concrete service classes on Java 25
+
+- Symptom: `mvn -pl services/iam-service test` failed in `VerifyUserTotpUseCaseTest` with `Mockito cannot mock this class: class com.eprocure.iam.application.service.TotpService` and Byte Buddy reported `Java 25 (69) is not supported ... officially supports Java 23 (67)`.
+- Root cause: The local test JVM was Java 25 while the pinned Byte Buddy/Mockito inline stack cannot instrument concrete classes compiled/running at class file version 69.
+- Fix: Do not mock concrete helper services in this environment. The TOTP confirmation test now uses real `TotpService` and `TotpSecretCipher`, and only mocks the `UserRepository` interface.
+- Prevention: Prefer real instances/fakes for simple concrete services or mock interfaces/ports only; avoid adding new Mockito mocks for concrete classes unless the toolchain is upgraded.
+
 ## [2026-06-05] Bug: Analytics service startup failed with UnsatisfiedDependencyException on LocalReportFileRenderer
 
 - Symptom: Analytics service failed to start during context initialization. The log showed: `UnsatisfiedDependencyException: Error creating bean with name 'processReportExportJobsUseCase' ... Unsatisfied dependency expressed through constructor parameter 2: Error creating bean with name 'localReportFileRenderer' ... Failed to instantiate [com.eprocure.analytics.infrastructure.report.LocalReportFileRenderer]: No default constructor found`.

@@ -6,6 +6,8 @@ public enum ErrorCode {
     SERVICE_CONFIG_NOT_FOUND("SYS_010", "Không tìm thấy cấu hình service", HttpStatus.NOT_FOUND),
     AUDIT_EXPORT_JOB_NOT_FOUND("SYS_011", "Không tìm thấy audit export job", HttpStatus.NOT_FOUND),
     AUDIT_EXPORT_FILE_NOT_READY("SYS_012", "Audit export file chưa sẵn sàng", HttpStatus.NOT_FOUND),
+    CONFIG_CONFIRMATION_FAILED("SYS_013", "Mã xác nhận cấu hình không hợp lệ", HttpStatus.UNAUTHORIZED),
+    CONFIG_ACTION_CONFLICT("SYS_014", "Idempotency-Key đã được dùng cho thao tác cấu hình khác", HttpStatus.CONFLICT),
     CATALOG_CATEGORY_NOT_FOUND("ADM_CAT_001", "Không tìm thấy danh mục catalog", HttpStatus.NOT_FOUND),
     CATALOG_CATEGORY_CONFLICT("ADM_CAT_002", "Không thể thay đổi danh mục catalog hiện tại", HttpStatus.CONFLICT),
     DEPARTMENT_NOT_FOUND("ADM_DEPT_001", "Không tìm thấy phòng ban", HttpStatus.NOT_FOUND),

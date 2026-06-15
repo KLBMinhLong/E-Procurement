@@ -49,6 +49,13 @@
 - Impact: IAM exposes internal create/update/deactivate department APIs guarded by `X-Internal-Api-Key`; admin-service exposes `POST /api/v1/admin/departments`, `PUT /api/v1/admin/departments/{id}`, and `PATCH /api/v1/admin/departments/{id}/deactivate` guarded by `ADMIN_DEPARTMENT_MANAGE`; mutations require `Idempotency-Key`, validate unique active code, parent cycle risk, active head user, and block deactivate when active members or child departments remain.
 - Constraint: `glAccountPrefix` is accepted for admin contract compatibility but is not persisted until IAM schema/business ownership for GL mapping is defined; frontend org chart mutation UI remains follow-up work.
 
+## [2026-06-15] E13 admin config mutation safety boundary
+
+- Decision: Implement `SYSTEM_CONFIG` mutation endpoints as TOTP-confirmed, idempotent action requests stored in `audit.admin_config_actions`, not as immediate runtime config/restart/key-rotation executors.
+- Reason: The repo has service config discovery and Admin Portal contracts, but no orchestrator or secret manager boundary that can safely mutate environment variables, restart containers/services, or rotate runtime encryption keys directly from admin-service.
+- Impact: IAM exposes internal `POST /internal/security/totp/verify` guarded by `X-Internal-Api-Key`; admin-service exposes `PUT /api/v1/admin/config/services/{serviceName}`, `POST /api/v1/admin/config/services/{serviceName}/restart`, and `POST /api/v1/admin/config/encryption/rotate-key` guarded by `SYSTEM_CONFIG`, requiring `Idempotency-Key` and confirmation code before persisting pending action records.
+- Constraint: Responses carry `status=PENDING_MANUAL_APPLY` and `applied=false`; a future runtime executor/secret manager integration must consume or apply these requests before config values, service restarts, or encryption keys actually change.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.

@@ -105,6 +105,74 @@ components:
           items:
             $ref: '#/components/schemas/EnvVariable'
         lastHealthCheck: { type: string, format: date-time, nullable: true }
+    ServiceConfigUpdateRequest:
+      type: object
+      required: [variables, confirmationCode, changeReason]
+      properties:
+        variables:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [key, value]
+            properties:
+              key:         { type: string }
+              value:       { type: string }
+              isSensitive: { type: boolean, default: false }
+              description: { type: string, nullable: true }
+        confirmationCode:
+          type: string
+          description: TOTP 2FA code bat buoc cho SYSTEM_CONFIG changes.
+        requiresRestart:
+          type: boolean
+          default: false
+        changeReason:
+          type: string
+          minLength: 10
+    ServiceConfigUpdateResult:
+      type: object
+      properties:
+        actionId:        { type: string, format: uuid }
+        status:          { type: string, enum: [PENDING_MANUAL_APPLY] }
+        updatedCount:    { type: integer }
+        requiresRestart: { type: boolean }
+        affectedService: { type: string }
+        applied:
+          type: boolean
+          description: false khi action moi chi duoc ghi nhan, chua co runtime executor apply.
+    ServiceRestartRequest:
+      type: object
+      required: [confirmationCode, reason]
+      properties:
+        confirmationCode: { type: string }
+        reason:           { type: string, minLength: 10 }
+    ServiceRestartResult:
+      type: object
+      properties:
+        actionId: { type: string, format: uuid }
+        status:   { type: string, enum: [PENDING_MANUAL_APPLY] }
+        estimatedDowntimeSeconds: { type: integer }
+        triggeredAt: { type: string, format: date-time }
+        applied:
+          type: boolean
+          description: false khi restart moi duoc ghi nhan, chua co orchestrator thuc thi.
+    EncryptionKeyRotationRequest:
+      type: object
+      required: [confirmationCode]
+      properties:
+        confirmationCode: { type: string }
+        keySize:          { type: integer, enum: [2048, 4096], default: 2048 }
+    EncryptionKeyRotationResult:
+      type: object
+      properties:
+        actionId:         { type: string, format: uuid }
+        status:           { type: string, enum: [PENDING_MANUAL_APPLY] }
+        newKeyVersion:    { type: string, example: pending-v20260615000000 }
+        rotatedAt:        { type: string, format: date-time }
+        oldKeyRetiredAt:  { type: string, format: date-time }
+        applied:
+          type: boolean
+          description: false khi rotation moi duoc ghi nhan, chua tao key runtime that.
     AuditLogEntry:
       type: object
       properties:
@@ -285,8 +353,8 @@ paths:
       operationId: updateServiceConfig
       x-required-permission: SYSTEM_CONFIG
       description: |
-        ⚠️ Thay đổi config có thể yêu cầu restart service.  
-        ⚠️ Mọi thay đổi đều được ghi vào audit log với actor info đầy đủ.
+        Thay đổi config là thao tác nhạy cảm: admin-service xác thực TOTP, kiểm tra idempotency,
+        rồi ghi request vào `audit.admin_config_actions`. Runtime apply cần operator/orchestrator executor.
       parameters:
         - name: serviceName
           in: path
@@ -298,31 +366,10 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [variables, confirmationCode]
-              properties:
-                variables:
-                  type: array
-                  items:
-                    type: object
-                    required: [key, value]
-                    properties:
-                      key:         { type: string }
-                      value:       { type: string }
-                      isSensitive: { type: boolean, default: false }
-                      description: { type: string, nullable: true }
-                confirmationCode:
-                  type: string
-                  description: TOTP 2FA code — bắt buộc cho SYSTEM_CONFIG changes
-                requiresRestart:
-                  type: boolean
-                  default: false
-                changeReason:
-                  type: string
-                  minLength: 10
+              $ref: '#/components/schemas/ServiceConfigUpdateRequest'
       responses:
         '200':
-          description: Config đã được cập nhật
+          description: Config action đã được xác thực và ghi nhận
           content:
             application/json:
               schema:
@@ -331,11 +378,7 @@ paths:
                   - type: object
                     properties:
                       data:
-                        type: object
-                        properties:
-                          updatedCount:    { type: integer }
-                          requiresRestart: { type: boolean }
-                          affectedService: { type: string }
+                        $ref: '#/components/schemas/ServiceConfigUpdateResult'
 
   /admin/config/services/{serviceName}/restart:
     post:
@@ -354,14 +397,10 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [confirmationCode, reason]
-              properties:
-                confirmationCode: { type: string }
-                reason:           { type: string, minLength: 10 }
+              $ref: '#/components/schemas/ServiceRestartRequest'
       responses:
         '202':
-          description: Restart đã được kích hoạt (async)
+          description: Restart action đã được xác thực và ghi nhận
           content:
             application/json:
               schema:
@@ -370,10 +409,7 @@ paths:
                   - type: object
                     properties:
                       data:
-                        type: object
-                        properties:
-                          estimatedDowntimeSeconds: { type: integer }
-                          triggeredAt: { type: string, format: date-time }
+                        $ref: '#/components/schemas/ServiceRestartResult'
 
   /admin/config/encryption/rotate-key:
     post:
@@ -382,8 +418,8 @@ paths:
       operationId: rotateEncryptionKey
       x-required-permission: SYSTEM_CONFIG
       description: |
-        Tạo RSA key pair mới. Key cũ vẫn được giữ để giải mã request đang trong flight.  
-        FE sẽ tự động lấy public key mới qua `/auth/public-key` trong request tiếp theo.
+        Xác thực TOTP và ghi nhận request xoay key vào `audit.admin_config_actions`.
+        Runtime tạo key/retire key cần secret manager hoặc executor riêng.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -391,14 +427,10 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [confirmationCode]
-              properties:
-                confirmationCode: { type: string }
-                keySize:          { type: integer, enum: [2048, 4096], default: 2048 }
+              $ref: '#/components/schemas/EncryptionKeyRotationRequest'
       responses:
         '200':
-          description: Key mới đã được tạo
+          description: Rotation action đã được xác thực và ghi nhận
           content:
             application/json:
               schema:
@@ -407,11 +439,7 @@ paths:
                   - type: object
                     properties:
                       data:
-                        type: object
-                        properties:
-                          newKeyVersion:  { type: string, example: v2025-06 }
-                          rotatedAt:      { type: string, format: date-time }
-                          oldKeyRetiredAt:{ type: string, format: date-time }
+                        $ref: '#/components/schemas/EncryptionKeyRotationResult'
 
   # ── Audit Log ─────────────────────────────────────────────────
   /admin/audit-log:
