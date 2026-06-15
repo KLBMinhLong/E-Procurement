@@ -1,7 +1,10 @@
 package com.eprocure.iam.infrastructure.persistence.repository;
 
+import com.eprocure.iam.domain.model.ActiveSession;
 import com.eprocure.iam.domain.model.SessionRecord;
+import com.eprocure.iam.domain.repository.Page;
 import com.eprocure.iam.domain.repository.SessionRepository;
+import com.eprocure.iam.infrastructure.persistence.entity.ActiveSessionDbEntity;
 import com.eprocure.iam.infrastructure.persistence.entity.SessionDbEntity;
 import com.eprocure.iam.infrastructure.persistence.mapper.SessionMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,8 +41,18 @@ public class SessionRepositoryImpl implements SessionRepository {
     }
 
     @Override
+    public void revokeById(UUID sessionId, UUID revokedBy, Instant revokedAt) {
+        sessionMapper.revokeById(sessionId, revokedBy, revokedAt);
+    }
+
+    @Override
     public Optional<SessionRecord> findActiveByTokenHash(String tokenHash, Instant now) {
         return Optional.ofNullable(sessionMapper.findActiveByTokenHash(tokenHash, now)).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<SessionRecord> findActiveById(UUID sessionId, Instant now) {
+        return Optional.ofNullable(sessionMapper.findActiveById(sessionId, now)).map(this::toDomain);
     }
 
     @Override
@@ -48,7 +61,28 @@ public class SessionRepositoryImpl implements SessionRepository {
                 .orElseGet(List::of));
     }
 
+    @Override
+    public Page<ActiveSession> findActivePage(UUID userId, int offset, int limit, Instant now) {
+        List<ActiveSessionDbEntity> rows = Optional.ofNullable(sessionMapper.findActivePage(userId, offset, limit, now))
+                .orElseGet(List::of);
+        long totalElements = rows.isEmpty() ? 0L : rows.get(0).totalElements;
+        return new Page<>(rows.stream().map(this::toActiveSession).toList(), totalElements);
+    }
+
     private SessionRecord toDomain(SessionDbEntity entity) {
         return objectMapper.convertValue(entity, SessionRecord.class);
+    }
+
+    private ActiveSession toActiveSession(ActiveSessionDbEntity entity) {
+        return new ActiveSession(
+                entity.sessionId,
+                entity.userId,
+                entity.username,
+                entity.fullName,
+                Optional.ofNullable(entity.ipAddress),
+                Optional.ofNullable(entity.userAgent),
+                entity.issuedAt,
+                entity.lastActivityAt,
+                entity.expiresAt);
     }
 }

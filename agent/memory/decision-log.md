@@ -28,6 +28,13 @@
 - Impact: `audit.audit_export_jobs` now transitions `QUEUED -> PROCESSING -> COMPLETED/FAILED`; completed jobs store `file_name` and `storage_path`, expose `GET /api/v1/admin/audit-log/export/{jobId}` and `GET /api/v1/admin/audit-log/export/{jobId}/download`, and enforce owner/status/expiry checks before streaming files.
 - Constraint: File storage is local filesystem via `ADMIN_AUDIT_EXPORT_STORAGE_DIR`; production object storage/retention cleanup can be a later hardening slice.
 
+## [2026-06-15] E13 admin active sessions boundary
+
+- Decision: Keep session ownership in IAM and expose Admin Portal session operations through admin-service facade endpoints backed by IAM internal `/internal/sessions*` APIs.
+- Reason: `iam.sessions` already owns opaque session lifecycle, Redis token eviction, revocation audit columns, and single-session semantics; admin-service should not read or mutate IAM database state directly.
+- Impact: Admin-service exposes `GET /api/v1/admin/sessions` and `PATCH /api/v1/admin/sessions/{sessionId}/invalidate` guarded by `SYSTEM_CONFIG`; IAM exposes internal list/invalidate endpoints guarded by `X-Internal-Api-Key`; invalidate is idempotent, evicts Redis token cache, and does not expose token/session secrets.
+- Constraint: The frontend session page and high-risk config mutations remain follow-up slices.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.

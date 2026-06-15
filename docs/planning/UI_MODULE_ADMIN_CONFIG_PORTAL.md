@@ -1,6 +1,6 @@
 # UI Module Plan — Admin & System Config Portal
 
-> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng. Tính đến 2026-06-15, backend foundation đã có tại `services/admin-service` và cover health/config read-only, audit-log query/export/status/download.
+> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng. Tính đến 2026-06-15, backend foundation đã có tại `services/admin-service` và cover health/config read-only, audit-log query/export/status/download, active sessions list/invalidate.
 
 ---
 
@@ -33,8 +33,8 @@ Nguồn: `docs/api/admin-service.openapi.yaml`
 
 ### Mismatch / follow-up cần xử lý trước khi code lớn
 
-- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`, `/admin/audit-log/export/{jobId}`, `/admin/audit-log/export/{jobId}/download`.
-- Chưa có controller/backend cho `/admin/sessions`, config update/restart/rotate-key.
+- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`, `/admin/audit-log/export/{jobId}`, `/admin/audit-log/export/{jobId}/download`, `/admin/sessions`, `/admin/sessions/{sessionId}/invalidate`.
+- Chưa có controller/backend cho config update/restart/rotate-key.
 - `AdminOrgService` hiện gọi `/org/departments`, không phải `/admin/departments`.
 - Một số admin capability đã nằm ở service khác:
   - IAM: users, roles, RBAC, org.
@@ -69,7 +69,7 @@ Kết luận: plan này cần triển khai theo hai tầng:
 | Việc | Chi tiết |
 |---|---|
 | Backend inventory | ✅ `admin-service` mới tồn tại tại `services/admin-service`; gateway đã route `/api/v1/admin/*` sang port 8089 |
-| Controller check | ✅ Có `/admin/config/services*`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`, export job status/download; chưa có `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
+| Controller check | ✅ Có `/admin/config/services*`, `/admin/health`, `/admin/audit-log`, `/admin/audit-log/export`, export job status/download, `/admin/sessions`, `/admin/sessions/{sessionId}/invalidate`; chưa có `/admin/catalog/categories`, `/admin/departments` |
 | Decision | ✅ Chọn hướng tạo `admin-service` riêng theo spec; các capability đã có ở IAM/notification/inventory/approval vẫn giữ service owner hiện tại |
 | Docs | ✅ Cập nhật plan này, `agent/memory/decision-log.md`, `agent/memory/progress-tracker.md` |
 
@@ -119,9 +119,10 @@ Kết luận: plan này cần triển khai theo hai tầng:
 
 | Việc | Chi tiết |
 |---|---|
-| List | user, ip, userAgent, createdAt, lastActivity |
+| Backend | ✅ `admin-service` public endpoint gọi IAM-owned session store qua internal API key; IAM expose `/internal/sessions*` |
+| List | user, fullName, ip, userAgent, createdAt, lastActivity, expiresAt |
 | Filter | userId + pagination |
-| Invalidate | PATCH invalidate với reason, idempotency, confirm modal |
+| Invalidate | ✅ PATCH invalidate với reason + idempotency; frontend vẫn cần confirm modal |
 | Safety | Không hiển thị token/session secret |
 
 ### Slice 9g — Catalog Category Admin

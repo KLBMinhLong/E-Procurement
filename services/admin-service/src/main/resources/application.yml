@@ -52,6 +52,10 @@ eprocure:
       poll-delay-ms: ${ADMIN_AUDIT_EXPORT_POLL_DELAY_MS:60000}
       max-rows: ${ADMIN_AUDIT_EXPORT_MAX_ROWS:5000}
       storage-dir: ${ADMIN_AUDIT_EXPORT_STORAGE_DIR:${java.io.tmpdir}/eprocure-admin-audit-exports}
+    integration:
+      iam:
+        base-url: ${ADMIN_IAM_SERVICE_URL:${IAM_SERVICE_URL:http://localhost:8081}}
+        internal-api-key: ${IAM_INTERNAL_API_KEY:change-me-internal-api-key}
     infrastructure:
       postgresql:
         name: postgresql

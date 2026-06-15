@@ -164,6 +164,18 @@ components:
         requestedAt:   { type: string, format: date-time }
         completedAt:   { type: string, format: date-time, nullable: true }
         expiresAt:     { type: string, format: date-time, nullable: true }
+    ActiveSession:
+      type: object
+      properties:
+        sessionId:    { type: string, format: uuid }
+        userId:       { type: string, format: uuid }
+        userName:     { type: string }
+        fullName:     { type: string }
+        ipAddress:    { type: string, nullable: true }
+        userAgent:    { type: string, nullable: true }
+        createdAt:    { type: string, format: date-time }
+        lastActivity: { type: string, format: date-time }
+        expiresAt:    { type: string, format: date-time }
     CatalogCategoryRequest:
       type: object
       required: [code, name]
@@ -798,15 +810,7 @@ paths:
                       data:
                         type: array
                         items:
-                          type: object
-                          properties:
-                            sessionId:    { type: string }
-                            userId:       { type: string, format: uuid }
-                            userName:     { type: string }
-                            ipAddress:    { type: string }
-                            userAgent:    { type: string }
-                            lastActivity: { type: string, format: date-time }
-                            createdAt:    { type: string, format: date-time }
+                          $ref: '#/components/schemas/ActiveSession'
                       meta:
                         $ref: '#/components/schemas/PageMeta'
 
@@ -820,7 +824,7 @@ paths:
         - name: sessionId
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -830,7 +834,7 @@ paths:
               type: object
               required: [reason]
               properties:
-                reason: { type: string, example: "Phát hiện đăng nhập đáng ngờ từ IP lạ" }
+                reason: { type: string, minLength: 1, example: "Phát hiện đăng nhập đáng ngờ từ IP lạ" }
       responses:
         '200':
           description: Session đã bị invalidate

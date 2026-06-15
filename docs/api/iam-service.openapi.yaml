@@ -157,6 +157,35 @@ components:
         status:
           $ref: '#/components/schemas/UserStatus'
 
+    ActiveSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        fullName:
+          type: string
+        ipAddress:
+          type: string
+          nullable: true
+        userAgent:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastActivity:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
     UserDetail:
       allOf:
         - $ref: '#/components/schemas/UserSummary'
@@ -344,6 +373,19 @@ components:
           enum: [ALL, OWN_TEAM]
           default: ALL
 
+    InvalidateSessionInternalRequest:
+      type: object
+      required: [actorId, reason]
+      properties:
+        actorId:
+          type: string
+          format: uuid
+          description: User thực hiện thao tác qua admin-service.
+        reason:
+          type: string
+          minLength: 1
+          example: Phát hiện đăng nhập đáng ngờ từ IP lạ
+
     DelegationDetail:
       type: object
       properties:
@@ -404,6 +446,89 @@ components:
 
 paths:
   # ── Internal ──────────────────────────────────────────────────
+  /internal/sessions:
+    get:
+      tags: [Internal]
+      summary: Danh sách phiên đăng nhập active cho Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; không dùng session cookie.
+      operationId: internalListActiveSessions
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách active sessions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ActiveSession'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+        '403':
+          description: Internal API key không hợp lệ
+
+  /internal/sessions/{sessionId}/invalidate:
+    patch:
+      tags: [Internal]
+      summary: Revoke một phiên đăng nhập active cho Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; bắt buộc `Idempotency-Key`.
+      operationId: internalInvalidateSession
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvalidateSessionInternalRequest'
+      responses:
+        '200':
+          description: Session đã bị revoke hoặc đã không còn active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Internal API key không hợp lệ
+
   /internal/org/approvers:
     get:
       tags: [Internal]

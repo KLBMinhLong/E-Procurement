@@ -11,3 +11,8 @@ spring:
 eprocure:
   internal:
     api-key: ${ADMIN_INTERNAL_API_KEY}
+  admin:
+    integration:
+      iam:
+        base-url: ${ADMIN_IAM_SERVICE_URL}
+        internal-api-key: ${IAM_INTERNAL_API_KEY}
