@@ -14,6 +14,7 @@ tags:
   - name: Purchase Requests
   - name: Catalog
   - name: Attachments
+  - name: Internal Catalog Admin
   - name: Internal Purchase Requests
 
 security:
@@ -417,6 +418,38 @@ components:
           items:
             $ref: '#/components/schemas/CatalogCategory'
 
+    AdminCatalogCategory:
+      type: object
+      properties:
+        code:                    { type: string, example: IT_HARDWARE }
+        name:                    { type: string, example: Thiết bị Công nghệ }
+        parentCode:              { type: string, nullable: true }
+        requiresSpecialApproval: { type: boolean }
+        specialApproverRole:     { type: string, nullable: true }
+        requiresRfqAbove:        { type: string, nullable: true, example: "50000000.0000" }
+        isCapex:                 { type: boolean }
+        itemCount:               { type: integer, format: int64 }
+        isDeleted:               { type: boolean }
+
+    AdminCatalogCategoryRequest:
+      type: object
+      required: [actorId, code, name]
+      properties:
+        actorId:                 { type: string, format: uuid }
+        code:                    { type: string, pattern: '^[A-Z][A-Z0-9_]+$' }
+        name:                    { type: string, maxLength: 200 }
+        parentCode:              { type: string, nullable: true, pattern: '^[A-Z][A-Z0-9_]+$' }
+        requiresSpecialApproval: { type: boolean, default: false }
+        specialApproverRole:     { type: string, nullable: true, maxLength: 50 }
+        requiresRfqAbove:        { type: string, nullable: true, description: NUMERIC(19,4) amount string }
+        isCapex:                 { type: boolean, default: false }
+
+    AdminCatalogCategoryDeactivateRequest:
+      type: object
+      required: [actorId]
+      properties:
+        actorId: { type: string, format: uuid }
+
     CatalogItem:
       type: object
       properties:
@@ -483,6 +516,151 @@ components:
             $ref: '#/components/schemas/PoSourceLineItem'
 
 paths:
+  /internal/catalog/categories:
+    get:
+      tags: [Internal Catalog Admin]
+      summary: Danh sách catalog categories cho Admin Portal
+      operationId: internalAdminListCatalogCategories
+      description: Endpoint nội bộ cho admin-service. Bắt buộc `X-Internal-Api-Key`.
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: include_inactive
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Danh sách categories
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AdminCatalogCategory'
+        '403':
+          description: Internal API key không hợp lệ (IAM_004)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Internal Catalog Admin]
+      summary: Tạo catalog category cho Admin Portal
+      operationId: internalAdminCreateCatalogCategory
+      description: Endpoint nội bộ cho admin-service. Bắt buộc `X-Internal-Api-Key` và `Idempotency-Key`.
+      security:
+        - internalApiKey: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCatalogCategoryRequest'
+      responses:
+        '201':
+          description: Category đã tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminCatalogCategory'
+        '409':
+          description: Category đã tồn tại (PR_017)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/catalog/categories/{code}:
+    put:
+      tags: [Internal Catalog Admin]
+      summary: Cập nhật catalog category cho Admin Portal
+      operationId: internalAdminUpdateCatalogCategory
+      description: Endpoint nội bộ cho admin-service. Bắt buộc `X-Internal-Api-Key` và `Idempotency-Key`.
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[A-Z][A-Z0-9_]+$' }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCatalogCategoryRequest'
+      responses:
+        '200':
+          description: Category đã cập nhật
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminCatalogCategory'
+        '404':
+          description: Category không tồn tại hoặc đã inactive (PR_016)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/catalog/categories/{code}/deactivate:
+    patch:
+      tags: [Internal Catalog Admin]
+      summary: Soft deactivate catalog category cho Admin Portal
+      operationId: internalAdminDeactivateCatalogCategory
+      description: Endpoint nội bộ cho admin-service. Bắt buộc `X-Internal-Api-Key` và `Idempotency-Key`.
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[A-Z][A-Z0-9_]+$' }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCatalogCategoryDeactivateRequest'
+      responses:
+        '200':
+          description: Category đã inactive hoặc đã inactive trước đó
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminCatalogCategory'
+        '409':
+          description: Category còn active item nên không thể deactivate (PR_018)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /internal/purchase-requests/{id}/rfq-source:
     get:
       tags: [Internal Purchase Requests]

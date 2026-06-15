@@ -16,3 +16,6 @@ eprocure:
       iam:
         base-url: ${ADMIN_IAM_SERVICE_URL}
         internal-api-key: ${IAM_INTERNAL_API_KEY}
+      pr:
+        base-url: ${ADMIN_PR_SERVICE_URL}
+        internal-api-key: ${PR_INTERNAL_API_KEY}

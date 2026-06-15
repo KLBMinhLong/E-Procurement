@@ -187,6 +187,18 @@ components:
         specialApproverRole:  { type: string, nullable: true }
         requiresRfqAbove:     { type: string, nullable: true, description: Ngưỡng tiền bắt buộc RFQ }
         isCapex:              { type: boolean, default: false }
+    CatalogCategoryAdmin:
+      type: object
+      properties:
+        code:                    { type: string }
+        name:                    { type: string }
+        parentCode:              { type: string, nullable: true }
+        requiresSpecialApproval: { type: boolean }
+        specialApproverRole:     { type: string, nullable: true }
+        requiresRfqAbove:        { type: string, nullable: true }
+        isCapex:                 { type: boolean }
+        itemCount:               { type: integer, format: int64 }
+        isDeleted:               { type: boolean }
     DepartmentRequest:
       type: object
       required: [code, name]
@@ -570,17 +582,7 @@ paths:
                       data:
                         type: array
                         items:
-                          type: object
-                          properties:
-                            code:                    { type: string }
-                            name:                    { type: string }
-                            parentCode:              { type: string, nullable: true }
-                            requiresSpecialApproval: { type: boolean }
-                            specialApproverRole:     { type: string, nullable: true }
-                            requiresRfqAbove:        { type: string, nullable: true }
-                            isCapex:                 { type: boolean }
-                            itemCount:               { type: integer }
-                            isDeleted:               { type: boolean }
+                          $ref: '#/components/schemas/CatalogCategoryAdmin'
 
     post:
       tags: [Catalog Admin]
@@ -601,7 +603,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CatalogCategoryAdmin'
 
   /admin/catalog/categories/{code}:
     put:
@@ -627,7 +634,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CatalogCategoryAdmin'
 
   /admin/catalog/categories/{code}/deactivate:
     patch:
@@ -647,7 +659,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CatalogCategoryAdmin'
 
   # ── Department Admin ──────────────────────────────────────────
   /admin/departments:

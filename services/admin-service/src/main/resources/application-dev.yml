@@ -16,6 +16,9 @@ eprocure:
       iam:
         base-url: ${ADMIN_IAM_SERVICE_URL:http://iam-service:8081}
         internal-api-key: ${IAM_INTERNAL_API_KEY:change-me-internal-api-key}
+      pr:
+        base-url: ${ADMIN_PR_SERVICE_URL:http://pr-service:8082}
+        internal-api-key: ${PR_INTERNAL_API_KEY:change-me-internal-api-key}
     infrastructure:
       postgresql:
         host: ${ADMIN_POSTGRES_HOST:postgres}

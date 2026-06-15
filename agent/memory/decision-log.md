@@ -35,6 +35,13 @@
 - Impact: Admin-service exposes `GET /api/v1/admin/sessions` and `PATCH /api/v1/admin/sessions/{sessionId}/invalidate` guarded by `SYSTEM_CONFIG`; IAM exposes internal list/invalidate endpoints guarded by `X-Internal-Api-Key`; invalidate is idempotent, evicts Redis token cache, and does not expose token/session secrets.
 - Constraint: The frontend session page and high-risk config mutations remain follow-up slices.
 
+## [2026-06-15] E13 admin catalog category ownership
+
+- Decision: Keep category taxonomy ownership in `purchase-request-service` and expose Admin Portal category management through admin-service facade endpoints backed by PR internal APIs.
+- Reason: `pr.catalog_categories` is already the PR catalog taxonomy source; admin-service should provide a governance API under `/api/v1/admin/catalog/categories*` without direct cross-database reads or duplicate ownership.
+- Impact: PR service exposes internal list/create/update/deactivate category APIs guarded by `X-Internal-Api-Key`; admin-service exposes public list/create/update/deactivate endpoints guarded by `ADMIN_CATALOG_MANAGE`; mutations require `Idempotency-Key`, and deactivate is a soft state transition blocked when active catalog items still reference the category.
+- Constraint: The frontend category admin page and Docker runtime verification remain follow-up work.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.
