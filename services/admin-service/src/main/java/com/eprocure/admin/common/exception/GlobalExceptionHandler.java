@@ -12,6 +12,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -39,6 +41,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.VAL_001.status())
                 .body(ApiResponse.failure(ErrorCode.VAL_001.code(), ErrorCode.VAL_001.message(), details, RequestIdUtil.resolve(request)));
+    }
+
+    @ExceptionHandler({
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleInvalidRequestParameter(Exception exception, HttpServletRequest request) {
+        log.warn("[EXCEPTION][{}] Invalid request parameter | path={} | reason={}",
+                ErrorCode.VAL_001.code(),
+                request.getRequestURI(),
+                exception.getClass().getSimpleName());
+        return ResponseEntity
+                .status(ErrorCode.VAL_001.status())
+                .body(ApiResponse.failure(ErrorCode.VAL_001.code(), ErrorCode.VAL_001.message(), null, RequestIdUtil.resolve(request)));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

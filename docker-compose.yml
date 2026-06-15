@@ -692,6 +692,12 @@ services:
       ADMIN_INTERNAL_API_KEY: ${ADMIN_INTERNAL_API_KEY:-change-me-internal-api-key}
       ADMIN_HEALTH_TIMEOUT: ${ADMIN_HEALTH_TIMEOUT:-1s}
       ADMIN_SERVICE_SELF_URL: http://admin-service:8089
+      ADMIN_DB_HOST: postgres
+      ADMIN_DB_PORT: 5432
+      ADMIN_DB_NAME: db_audit
+      ADMIN_DB_SCHEMA: audit
+      ADMIN_DB_USER: ${AUDIT_DB_USER:-audit_user}
+      ADMIN_DB_PASS: ${AUDIT_DB_PASS:-audit_pass_dev}
       ADMIN_POSTGRES_HOST: postgres
       ADMIN_POSTGRES_PORT: 5432
       ADMIN_REDIS_HOST: redis

@@ -33,8 +33,8 @@ Nguồn: `docs/api/admin-service.openapi.yaml`
 
 ### Mismatch / follow-up cần xử lý trước khi code lớn
 
-- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`.
-- Chưa có controller/backend cho `/admin/audit-log`, `/admin/sessions`, config update/restart/rotate-key.
+- `services/admin-service` đã có runtime foundation: `/admin/config/services`, `/admin/config/services/{serviceName}`, `/admin/health`, `/admin/audit-log`.
+- Chưa có controller/backend cho `/admin/audit-log/export`, `/admin/sessions`, config update/restart/rotate-key.
 - `AdminOrgService` hiện gọi `/org/departments`, không phải `/admin/departments`.
 - Một số admin capability đã nằm ở service khác:
   - IAM: users, roles, RBAC, org.
@@ -69,7 +69,7 @@ Kết luận: plan này cần triển khai theo hai tầng:
 | Việc | Chi tiết |
 |---|---|
 | Backend inventory | ✅ `admin-service` mới tồn tại tại `services/admin-service`; gateway đã route `/api/v1/admin/*` sang port 8089 |
-| Controller check | ✅ Có `/admin/config/services*` và `/admin/health`; chưa có `/admin/audit-log`, `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
+| Controller check | ✅ Có `/admin/config/services*`, `/admin/health`, `/admin/audit-log`; chưa có `/admin/audit-log/export`, `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
 | Decision | ✅ Chọn hướng tạo `admin-service` riêng theo spec; các capability đã có ở IAM/notification/inventory/approval vẫn giữ service owner hiện tại |
 | Docs | ✅ Cập nhật plan này, `agent/memory/decision-log.md`, `agent/memory/progress-tracker.md` |
 

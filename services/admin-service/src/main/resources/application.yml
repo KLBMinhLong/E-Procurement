@@ -6,6 +6,21 @@ spring:
     name: ${SERVICE_NAME:admin-service}
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: ${ADMIN_DB_POOL_MIN:${DB_POOL_MIN:1}}
+      maximum-pool-size: ${ADMIN_DB_POOL_MAX:${DB_POOL_MAX:4}}
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      validation-timeout: 3000
+      connection-test-query: SELECT 1
+      pool-name: ${SERVICE_NAME:admin-service}-HikariPool
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
   jackson:
     time-zone: UTC
 
@@ -17,6 +32,13 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
 
 eprocure:
   internal:

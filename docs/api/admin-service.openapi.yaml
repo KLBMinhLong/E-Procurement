@@ -126,8 +126,26 @@ components:
         requestId:     { type: string, nullable: true }
         isSuccess:     { type: boolean }
         errorCode:     { type: string, nullable: true }
-        oldValue:      { type: object, nullable: true }
-        newValue:      { type: object, nullable: true }
+        oldValue:
+          nullable: true
+          description: JSON snapshot before the change.
+          oneOf:
+            - type: object
+            - type: array
+              items: {}
+            - type: string
+            - type: number
+            - type: boolean
+        newValue:
+          nullable: true
+          description: JSON snapshot after the change.
+          oneOf:
+            - type: object
+            - type: array
+              items: {}
+            - type: string
+            - type: number
+            - type: boolean
         description:   { type: string, nullable: true }
         serviceName:   { type: string }
     CatalogCategoryRequest:

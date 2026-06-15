@@ -7,6 +7,13 @@
 - Impact: `GET /api/v1/admin/config/services`, `GET /api/v1/admin/config/services/{serviceName}`, and `GET /api/v1/admin/health` now exist with gateway header authentication, permission-code guards, service health probes, infrastructure TCP checks, and masked sensitive config values.
 - Constraint: High-risk actions such as config update, service restart, encryption key rotation, audit-log export, and session invalidation remain deferred until TOTP/idempotency/audit persistence are added.
 
+## [2026-06-15] E13 admin audit log read API
+
+- Decision: Add `GET /api/v1/admin/audit-log` to `admin-service` as the first DB-backed admin capability, reading from owned `db_audit` / `audit.audit_logs`.
+- Reason: Audit viewing is a read-only governance workflow and should be implemented before high-risk system mutations; it also turns the documented immutable audit schema into a runtime contract.
+- Impact: Admin-service now has PostgreSQL/Flyway/MyBatis config, an audit log foundation migration, `SYSTEM_AUDIT_VIEW` guarded query endpoint, required `from_time`/`to_time` validation, optional actor/entity/action/service/success filters, and 1-based pagination metadata.
+- Constraint: Audit export jobs and audit writers from every service remain follow-up slices; this slice only creates/query-reads the audit table.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.admin.infrastructure.persistence.mapper.AuditLogMapper">
+
+    <resultMap id="auditLogResultMap"
+               type="com.eprocure.admin.infrastructure.persistence.entity.AuditLogDbEntity">
+        <id property="id" column="id"/>
+        <result property="actorId" column="actor_id"/>
+        <result property="actorName" column="actor_name"/>
+        <result property="actorRolesText" column="actor_roles_text"/>
+        <result property="actorIp" column="actor_ip"/>
+        <result property="action" column="action"/>
+        <result property="entityType" column="entity_type"/>
+        <result property="entityId" column="entity_id"/>
+        <result property="entityNumber" column="entity_number"/>
+        <result property="occurredAt" column="occurred_at"/>
+        <result property="httpMethod" column="http_method"/>
+        <result property="endpoint" column="endpoint"/>
+        <result property="requestId" column="request_id"/>
+        <result property="success" column="is_success"/>
+        <result property="errorCode" column="error_code"/>
+        <result property="oldValueJson" column="old_value_json"/>
+        <result property="newValueJson" column="new_value_json"/>
+        <result property="description" column="description"/>
+        <result property="serviceName" column="service_name"/>
+        <result property="totalCount" column="total_count"/>
+    </resultMap>
+
+    <sql id="auditLogWhereClause">
+        WHERE occurred_at &gt;= #{filter.fromTime}
+          AND occurred_at &lt;= #{filter.toTime}
+        <if test="filter.actorId != null">
+            AND actor_id = #{filter.actorId}
+        </if>
+        <if test="filter.entityType != null">
+            AND entity_type = #{filter.entityType}
+        </if>
+        <if test="filter.entityId != null">
+            AND entity_id = #{filter.entityId}
+        </if>
+        <if test="filter.action != null">
+            AND action = #{filter.action}
+        </if>
+        <if test="filter.serviceName != null">
+            AND service_name = #{filter.serviceName}
+        </if>
+        <if test="filter.success != null">
+            AND is_success = #{filter.success}
+        </if>
+    </sql>
+
+    <select id="findByFilter" resultMap="auditLogResultMap">
+        SELECT
+            id,
+            actor_id,
+            actor_name,
+            array_to_string(actor_roles, ',') AS actor_roles_text,
+            actor_ip::TEXT AS actor_ip,
+            action,
+            entity_type,
+            entity_id,
+            entity_number,
+            occurred_at,
+            http_method,
+            endpoint,
+            request_id,
+            is_success,
+            error_code,
+            old_value::TEXT AS old_value_json,
+            new_value::TEXT AS new_value_json,
+            description,
+            service_name,
+            COUNT(*) OVER() AS total_count
+        FROM audit.audit_logs
+        <include refid="auditLogWhereClause"/>
+        ORDER BY occurred_at DESC, id DESC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+</mapper>
