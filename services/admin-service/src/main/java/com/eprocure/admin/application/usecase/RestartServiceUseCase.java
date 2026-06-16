@@ -1,6 +1,7 @@
 package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.RestartServiceCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.IamSecurityConfirmationPort;
 import com.eprocure.admin.application.service.IdempotencyGuard;
 import com.eprocure.admin.application.service.ServiceRestartResult;
@@ -27,6 +28,7 @@ public class RestartServiceUseCase {
 
     private final ServiceConfigRepository serviceConfigRepository;
     private final AdminConfigActionRepository actionRepository;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IamSecurityConfirmationPort confirmationPort;
     private final IdempotencyGuard idempotencyGuard;
     private final Clock clock;
@@ -34,11 +36,13 @@ public class RestartServiceUseCase {
     public RestartServiceUseCase(
             ServiceConfigRepository serviceConfigRepository,
             AdminConfigActionRepository actionRepository,
+            AdminAuditLogWriterPort auditLogWriter,
             IamSecurityConfirmationPort confirmationPort,
             IdempotencyGuard idempotencyGuard,
             Clock clock) {
         this.serviceConfigRepository = serviceConfigRepository;
         this.actionRepository = actionRepository;
+        this.auditLogWriter = auditLogWriter;
         this.confirmationPort = confirmationPort;
         this.idempotencyGuard = idempotencyGuard;
         this.clock = clock;
@@ -68,6 +72,7 @@ public class RestartServiceUseCase {
                 now,
                 command.actorId());
         AdminConfigAction saved = actionRepository.save(action);
+        auditLogWriter.recordConfigAction(saved, command.auditContext());
         log.info("[ACTION] Complete RestartService | userId={} | service={} | actionId={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 command.serviceName(),

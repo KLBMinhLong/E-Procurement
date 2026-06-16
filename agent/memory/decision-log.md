@@ -56,6 +56,20 @@
 - Impact: IAM exposes internal `POST /internal/security/totp/verify` guarded by `X-Internal-Api-Key`; admin-service exposes `PUT /api/v1/admin/config/services/{serviceName}`, `POST /api/v1/admin/config/services/{serviceName}/restart`, and `POST /api/v1/admin/config/encryption/rotate-key` guarded by `SYSTEM_CONFIG`, requiring `Idempotency-Key` and confirmation code before persisting pending action records.
 - Constraint: Responses carry `status=PENDING_MANUAL_APPLY` and `applied=false`; a future runtime executor/secret manager integration must consume or apply these requests before config values, service restarts, or encryption keys actually change.
 
+## [2026-06-15] E13 admin config action audit writer
+
+- Decision: Write immutable `audit.audit_logs` rows for newly created admin config action requests, using sanitized action metadata only.
+- Reason: High-risk admin actions need queryable governance evidence immediately after TOTP-confirmed request creation, but audit logs must not capture config values, confirmation codes, secrets, or replayed idempotency responses.
+- Impact: Update-config, restart-service, and encryption-key-rotation use cases call an `AdminAuditLogWriterPort` after `admin_config_actions` persistence; the writer records actor/request context, action id/type/status, service or key version, counts, restart/downtime hints, and `applied=false`.
+- Constraint: This audit row records the action request boundary only; future runtime executor/secret-manager integration should append separate apply/success/failure audit records when real runtime changes occur.
+
+## [2026-06-16] E13 admin session invalidation audit writer
+
+- Decision: Write immutable `audit.audit_logs` rows after admin-service session invalidation requests are accepted by the IAM facade.
+- Reason: Session invalidation is a high-risk security operation; admin-service should provide queryable governance evidence without owning IAM session data or storing token/session secrets.
+- Impact: `PATCH /api/v1/admin/sessions/{sessionId}/invalidate` now carries request context into the use case and writes a sanitized `SESSION.INVALIDATE_REQUESTED` audit row containing actor/request metadata and the target session id only.
+- Constraint: IAM remains the source of truth for session lifecycle and idempotency; admin-service records the accepted request boundary and does not persist the invalidation reason in audit payload.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.

@@ -11,7 +11,9 @@ import com.eprocure.admin.application.port.in.ConfigVariableChange;
 import com.eprocure.admin.application.port.in.RestartServiceCommand;
 import com.eprocure.admin.application.port.in.RotateEncryptionKeyCommand;
 import com.eprocure.admin.application.port.in.UpdateServiceConfigCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.IamSecurityConfirmationPort;
+import com.eprocure.admin.application.service.AdminAuditContext;
 import com.eprocure.admin.application.service.IdempotencyGuard;
 import com.eprocure.admin.common.exception.BusinessException;
 import com.eprocure.admin.common.exception.ErrorCode;
@@ -50,6 +52,9 @@ class AdminConfigMutationUseCaseTest {
     private AdminConfigActionRepository actionRepository;
 
     @Mock
+    private AdminAuditLogWriterPort auditLogWriter;
+
+    @Mock
     private IamSecurityConfirmationPort confirmationPort;
 
     private UpdateServiceConfigUseCase updateUseCase;
@@ -62,17 +67,20 @@ class AdminConfigMutationUseCaseTest {
         updateUseCase = new UpdateServiceConfigUseCase(
                 serviceConfigRepository,
                 actionRepository,
+                auditLogWriter,
                 confirmationPort,
                 idempotencyGuard,
                 CLOCK);
         restartUseCase = new RestartServiceUseCase(
                 serviceConfigRepository,
                 actionRepository,
+                auditLogWriter,
                 confirmationPort,
                 idempotencyGuard,
                 CLOCK);
         rotateUseCase = new RotateEncryptionKeyUseCase(
                 actionRepository,
+                auditLogWriter,
                 confirmationPort,
                 idempotencyGuard,
                 CLOCK);
@@ -96,6 +104,7 @@ class AdminConfigMutationUseCaseTest {
         assertThat(captor.getValue().actionType()).isEqualTo(AdminConfigActionType.UPDATE_CONFIG);
         assertThat(captor.getValue().serviceName()).contains("iam-service");
         assertThat(captor.getValue().variableCount()).isEqualTo(2);
+        verify(auditLogWriter).recordConfigAction(captor.getValue(), auditContext());
     }
 
     @Test
@@ -116,7 +125,7 @@ class AdminConfigMutationUseCaseTest {
         assertThat(result.actionId()).isEqualTo(ACTION_ID);
         assertThat(result.replayed()).isTrue();
         assertThat(result.applied()).isFalse();
-        verifyNoInteractions(confirmationPort, serviceConfigRepository);
+        verifyNoInteractions(confirmationPort, serviceConfigRepository, auditLogWriter);
     }
 
     @Test
@@ -125,12 +134,12 @@ class AdminConfigMutationUseCaseTest {
         given(serviceConfigRepository.findByName("missing-service")).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> restartUseCase.execute(
-                new RestartServiceCommand(ACTOR_ID, "missing-service", "123456", "Apply patched runtime config"),
+                new RestartServiceCommand(ACTOR_ID, "missing-service", "123456", "Apply patched runtime config", auditContext()),
                 IDEMPOTENCY_KEY.toString()))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(error -> assertThat(((BusinessException) error).getErrorCode())
                         .isEqualTo(ErrorCode.SERVICE_CONFIG_NOT_FOUND.code()));
-        verifyNoInteractions(confirmationPort);
+        verifyNoInteractions(confirmationPort, auditLogWriter);
     }
 
     @Test
@@ -139,7 +148,7 @@ class AdminConfigMutationUseCaseTest {
         given(actionRepository.save(any(AdminConfigAction.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         var result = rotateUseCase.execute(
-                new RotateEncryptionKeyCommand(ACTOR_ID, "123456", 2048),
+                new RotateEncryptionKeyCommand(ACTOR_ID, "123456", 2048, auditContext()),
                 IDEMPOTENCY_KEY.toString());
 
         assertThat(result.newKeyVersion()).isEqualTo("pending-v20260615000000");
@@ -150,6 +159,7 @@ class AdminConfigMutationUseCaseTest {
         ArgumentCaptor<AdminConfigAction> captor = ArgumentCaptor.forClass(AdminConfigAction.class);
         verify(actionRepository).save(captor.capture());
         assertThat(captor.getValue().actionType()).isEqualTo(AdminConfigActionType.ROTATE_ENCRYPTION_KEY);
+        verify(auditLogWriter).recordConfigAction(captor.getValue(), auditContext());
     }
 
     @Test
@@ -163,13 +173,14 @@ class AdminConfigMutationUseCaseTest {
                         new ConfigVariableChange("redis_host", "redis-2", false, Optional.empty())),
                 "123456",
                 false,
-                "Update duplicated config keys");
+                "Update duplicated config keys",
+                auditContext());
 
         assertThatThrownBy(() -> updateUseCase.execute(command, IDEMPOTENCY_KEY.toString()))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(error -> assertThat(((BusinessException) error).getErrorCode())
                         .isEqualTo(ErrorCode.VAL_001.code()));
-        verifyNoInteractions(confirmationPort, serviceConfigRepository);
+        verifyNoInteractions(confirmationPort, serviceConfigRepository, auditLogWriter);
     }
 
     private UpdateServiceConfigCommand updateCommand() {
@@ -181,7 +192,19 @@ class AdminConfigMutationUseCaseTest {
                         new ConfigVariableChange("REDIS_PORT", "6379", false, Optional.empty())),
                 "123456",
                 true,
-                "Rotate database credential safely");
+                "Rotate database credential safely",
+                auditContext());
+    }
+
+    private AdminAuditContext auditContext() {
+        return new AdminAuditContext(
+                ACTOR_ID,
+                "Admin User",
+                List.of("ADMIN_CONFIG_MANAGE"),
+                Optional.of("127.0.0.1"),
+                Optional.of("PUT"),
+                Optional.of("/api/v1/admin/config/services/iam-service"),
+                Optional.of("req-admin-config"));
     }
 
     private ServiceConfig serviceConfig(String serviceName) {

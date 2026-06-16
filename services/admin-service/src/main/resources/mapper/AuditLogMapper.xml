@@ -52,6 +52,49 @@
         </if>
     </sql>
 
+    <insert id="insert">
+        INSERT INTO audit.audit_logs (
+            actor_id,
+            actor_name,
+            actor_roles,
+            actor_ip,
+            action,
+            entity_type,
+            entity_id,
+            entity_number,
+            occurred_at,
+            http_method,
+            endpoint,
+            request_id,
+            is_success,
+            error_code,
+            old_value,
+            new_value,
+            description,
+            service_name
+        )
+        VALUES (
+            #{entity.actorId,jdbcType=OTHER,typeHandler=com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler},
+            #{entity.actorName},
+            COALESCE(string_to_array(NULLIF(#{entity.actorRolesText}, ''), ','), ARRAY[]::VARCHAR[]),
+            CAST(#{entity.actorIp,jdbcType=VARCHAR} AS INET),
+            #{entity.action},
+            #{entity.entityType},
+            #{entity.entityId,jdbcType=OTHER,typeHandler=com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler},
+            #{entity.entityNumber},
+            #{entity.occurredAt},
+            #{entity.httpMethod},
+            #{entity.endpoint},
+            #{entity.requestId},
+            #{entity.success},
+            #{entity.errorCode},
+            CAST(#{entity.oldValueJson,jdbcType=VARCHAR} AS JSONB),
+            CAST(#{entity.newValueJson,jdbcType=VARCHAR} AS JSONB),
+            #{entity.description},
+            #{entity.serviceName}
+        )
+    </insert>
+
     <select id="findByFilter" resultMap="auditLogResultMap">
         SELECT
             id,

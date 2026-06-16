@@ -4,6 +4,7 @@ import com.eprocure.admin.application.port.in.ConfigVariableChange;
 import com.eprocure.admin.application.port.in.RestartServiceCommand;
 import com.eprocure.admin.application.port.in.RotateEncryptionKeyCommand;
 import com.eprocure.admin.application.port.in.UpdateServiceConfigCommand;
+import com.eprocure.admin.application.service.AdminAuditContext;
 import com.eprocure.admin.application.service.EncryptionKeyRotationResult;
 import com.eprocure.admin.application.service.ServiceConfigUpdateResult;
 import com.eprocure.admin.application.service.ServiceRestartResult;
@@ -20,6 +21,7 @@ import com.eprocure.admin.presentation.response.ServiceConfigResponse;
 import com.eprocure.admin.presentation.response.ServiceConfigSummaryResponse;
 import com.eprocure.admin.presentation.response.ServiceConfigUpdateResponse;
 import com.eprocure.admin.presentation.response.ServiceRestartResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
@@ -53,7 +55,8 @@ public class AdminConfigPresentationMapper {
     public UpdateServiceConfigCommand toCommand(
             String serviceName,
             ServiceConfigUpdateRequest request,
-            UserPrincipal principal) {
+            UserPrincipal principal,
+            AdminAuditContext auditContext) {
         return new UpdateServiceConfigCommand(
                 principal.getId(),
                 serviceName,
@@ -66,27 +69,43 @@ public class AdminConfigPresentationMapper {
                         .toList(),
                 request.confirmationCode(),
                 request.requiresRestart(),
-                request.changeReason());
+                request.changeReason(),
+                auditContext);
     }
 
     public RestartServiceCommand toCommand(
             String serviceName,
             ServiceRestartRequest request,
-            UserPrincipal principal) {
+            UserPrincipal principal,
+            AdminAuditContext auditContext) {
         return new RestartServiceCommand(
                 principal.getId(),
                 serviceName,
                 request.confirmationCode(),
-                request.reason());
+                request.reason(),
+                auditContext);
     }
 
     public RotateEncryptionKeyCommand toCommand(
             EncryptionKeyRotationRequest request,
-            UserPrincipal principal) {
+            UserPrincipal principal,
+            AdminAuditContext auditContext) {
         return new RotateEncryptionKeyCommand(
                 principal.getId(),
                 request.confirmationCode(),
-                request.keySize() == null ? 2048 : request.keySize());
+                request.keySize() == null ? 2048 : request.keySize(),
+                auditContext);
+    }
+
+    public AdminAuditContext toAuditContext(UserPrincipal principal, HttpServletRequest request, String requestId) {
+        return new AdminAuditContext(
+                principal.getId(),
+                principal.getFullName(),
+                principal.getPermissions().stream().sorted().toList(),
+                Optional.ofNullable(request.getRemoteAddr()),
+                Optional.ofNullable(request.getMethod()),
+                Optional.ofNullable(request.getRequestURI()),
+                Optional.ofNullable(requestId));
     }
 
     public ServiceConfigUpdateResponse toResponse(ServiceConfigUpdateResult result) {

@@ -6,6 +6,8 @@ import com.eprocure.admin.domain.model.AuditLogFilter;
 import java.util.List;
 
 public interface AuditLogRepository {
+    void append(AuditLogEntry entry);
+
     PageResult<AuditLogEntry> findByFilter(AuditLogFilter filter);
 
     List<AuditLogEntry> findForExport(AuditLogFilter filter, int limit);

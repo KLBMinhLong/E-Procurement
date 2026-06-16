@@ -1,6 +1,7 @@
 package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.RotateEncryptionKeyCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.IamSecurityConfirmationPort;
 import com.eprocure.admin.application.service.EncryptionKeyRotationResult;
 import com.eprocure.admin.application.service.IdempotencyGuard;
@@ -27,16 +28,19 @@ public class RotateEncryptionKeyUseCase {
             DateTimeFormatter.ofPattern("'pending-v'yyyyMMddHHmmss").withZone(ZoneOffset.UTC);
 
     private final AdminConfigActionRepository actionRepository;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IamSecurityConfirmationPort confirmationPort;
     private final IdempotencyGuard idempotencyGuard;
     private final Clock clock;
 
     public RotateEncryptionKeyUseCase(
             AdminConfigActionRepository actionRepository,
+            AdminAuditLogWriterPort auditLogWriter,
             IamSecurityConfirmationPort confirmationPort,
             IdempotencyGuard idempotencyGuard,
             Clock clock) {
         this.actionRepository = actionRepository;
+        this.auditLogWriter = auditLogWriter;
         this.confirmationPort = confirmationPort;
         this.idempotencyGuard = idempotencyGuard;
         this.clock = clock;
@@ -61,6 +65,7 @@ public class RotateEncryptionKeyUseCase {
                 now,
                 command.actorId());
         AdminConfigAction saved = actionRepository.save(action);
+        auditLogWriter.recordConfigAction(saved, command.auditContext());
         log.info("[ACTION] Complete RotateEncryptionKey | userId={} | actionId={} | keySize={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 LogMaskingUtil.maskId(saved.id()),

@@ -96,12 +96,15 @@ public class AdminConfigController {
                 LogMaskingUtil.maskId(principal.getId()),
                 body.variables().size(),
                 body.requiresRestart());
-        var result = updateServiceConfigUseCase.execute(mapper.toCommand(serviceName, body, principal), idempotencyKey);
+        String requestId = RequestIdUtil.resolve(request);
+        var result = updateServiceConfigUseCase.execute(
+                mapper.toCommand(serviceName, body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
         ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
         if (result.replayed()) {
             builder.header("Idempotency-Replayed", "true");
         }
-        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+        return builder.body(ApiResponse.success(mapper.toResponse(result), requestId));
     }
 
     @PostMapping("/{serviceName}/restart")
@@ -115,13 +118,16 @@ public class AdminConfigController {
         log.info("[CONTROLLER] POST /api/v1/admin/config/services/{}/restart | userId={}",
                 serviceName,
                 LogMaskingUtil.maskId(principal.getId()));
-        var result = restartServiceUseCase.execute(mapper.toCommand(serviceName, body, principal), idempotencyKey);
+        String requestId = RequestIdUtil.resolve(request);
+        var result = restartServiceUseCase.execute(
+                mapper.toCommand(serviceName, body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
         ResponseEntity.BodyBuilder builder = result.replayed()
                 ? ResponseEntity.ok()
                 : ResponseEntity.status(HttpStatus.ACCEPTED);
         if (result.replayed()) {
             builder.header("Idempotency-Replayed", "true");
         }
-        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+        return builder.body(ApiResponse.success(mapper.toResponse(result), requestId));
     }
 }

@@ -74,7 +74,10 @@ public class AdminSessionController {
         log.info("[CONTROLLER] PATCH /api/v1/admin/sessions/{}/invalidate | userId={}",
                 LogMaskingUtil.maskId(sessionId),
                 LogMaskingUtil.maskId(principal.getId()));
-        invalidateSessionUseCase.execute(mapper.toCommand(sessionId, body, principal), idempotencyKey);
-        return ResponseEntity.ok(ApiResponse.<Void>success(null, RequestIdUtil.resolve(request)));
+        String requestId = RequestIdUtil.resolve(request);
+        invalidateSessionUseCase.execute(
+                mapper.toCommand(sessionId, body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.<Void>success(null, requestId));
     }
 }

@@ -1,6 +1,7 @@
 package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.InvalidateSessionCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.IamSessionAdminPort;
 import com.eprocure.admin.application.service.IdempotencyGuard;
 import com.eprocure.admin.common.exception.BusinessException;
@@ -17,10 +18,15 @@ public class InvalidateSessionUseCase {
     private static final Logger log = LogManager.getLogger(InvalidateSessionUseCase.class);
 
     private final IamSessionAdminPort iamSessionAdminPort;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IdempotencyGuard idempotencyGuard;
 
-    public InvalidateSessionUseCase(IamSessionAdminPort iamSessionAdminPort, IdempotencyGuard idempotencyGuard) {
+    public InvalidateSessionUseCase(
+            IamSessionAdminPort iamSessionAdminPort,
+            AdminAuditLogWriterPort auditLogWriter,
+            IdempotencyGuard idempotencyGuard) {
         this.iamSessionAdminPort = iamSessionAdminPort;
+        this.auditLogWriter = auditLogWriter;
         this.idempotencyGuard = idempotencyGuard;
     }
 
@@ -34,6 +40,7 @@ public class InvalidateSessionUseCase {
                 LogMaskingUtil.maskId(command.actorId()),
                 LogMaskingUtil.maskId(command.sessionId()));
         iamSessionAdminPort.invalidateSession(command.sessionId(), command.actorId(), command.reason(), key);
+        auditLogWriter.recordSessionInvalidation(command.sessionId(), command.auditContext());
         log.info("[ACTION] Complete InvalidateSession | userId={} | sessionId={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 LogMaskingUtil.maskId(command.sessionId()));

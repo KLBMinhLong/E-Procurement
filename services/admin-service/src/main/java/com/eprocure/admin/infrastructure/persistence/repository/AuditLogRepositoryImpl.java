@@ -11,6 +11,7 @@ import com.eprocure.admin.infrastructure.persistence.mapper.AuditLogMapper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Repository;
@@ -24,6 +25,12 @@ public class AuditLogRepositoryImpl implements AuditLogRepository {
 
     public AuditLogRepositoryImpl(AuditLogMapper mapper) {
         this.mapper = mapper;
+    }
+
+    @Override
+    public void append(AuditLogEntry entry) {
+        log.debug("[REPO] insert audit_logs | action={} | entityType={}", entry.action(), entry.entityType());
+        mapper.insert(toEntity(entry));
     }
 
     @Override
@@ -73,6 +80,31 @@ public class AuditLogRepositoryImpl implements AuditLogRepository {
                 Optional.ofNullable(entity.getNewValueJson()),
                 Optional.ofNullable(entity.getDescription()),
                 entity.getServiceName());
+    }
+
+    private AuditLogDbEntity toEntity(AuditLogEntry entry) {
+        AuditLogDbEntity entity = new AuditLogDbEntity();
+        entity.setActorId(entry.actor().id());
+        entity.setActorName(entry.actor().name());
+        entity.setActorRolesText(entry.actor().roles().stream()
+                .filter(role -> role != null && !role.isBlank())
+                .collect(Collectors.joining(",")));
+        entity.setActorIp(entry.actor().ip());
+        entity.setAction(entry.action());
+        entity.setEntityType(entry.entityType());
+        entity.setEntityId(entry.entityId().orElse(null));
+        entity.setEntityNumber(entry.entityNumber().orElse(null));
+        entity.setOccurredAt(entry.occurredAt());
+        entity.setHttpMethod(entry.httpMethod().orElse(null));
+        entity.setEndpoint(entry.endpoint().orElse(null));
+        entity.setRequestId(entry.requestId().orElse(null));
+        entity.setSuccess(entry.success());
+        entity.setErrorCode(entry.errorCode().orElse(null));
+        entity.setOldValueJson(entry.oldValueJson().orElse(null));
+        entity.setNewValueJson(entry.newValueJson().orElse(null));
+        entity.setDescription(entry.description().orElse(null));
+        entity.setServiceName(entry.serviceName());
+        return entity;
     }
 
     private List<String> parseRoles(String value) {

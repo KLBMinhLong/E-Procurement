@@ -2,6 +2,7 @@ package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.ConfigVariableChange;
 import com.eprocure.admin.application.port.in.UpdateServiceConfigCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.IamSecurityConfirmationPort;
 import com.eprocure.admin.application.service.IdempotencyGuard;
 import com.eprocure.admin.application.service.ServiceConfigUpdateResult;
@@ -30,6 +31,7 @@ public class UpdateServiceConfigUseCase {
 
     private final ServiceConfigRepository serviceConfigRepository;
     private final AdminConfigActionRepository actionRepository;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IamSecurityConfirmationPort confirmationPort;
     private final IdempotencyGuard idempotencyGuard;
     private final Clock clock;
@@ -37,11 +39,13 @@ public class UpdateServiceConfigUseCase {
     public UpdateServiceConfigUseCase(
             ServiceConfigRepository serviceConfigRepository,
             AdminConfigActionRepository actionRepository,
+            AdminAuditLogWriterPort auditLogWriter,
             IamSecurityConfirmationPort confirmationPort,
             IdempotencyGuard idempotencyGuard,
             Clock clock) {
         this.serviceConfigRepository = serviceConfigRepository;
         this.actionRepository = actionRepository;
+        this.auditLogWriter = auditLogWriter;
         this.confirmationPort = confirmationPort;
         this.idempotencyGuard = idempotencyGuard;
         this.clock = clock;
@@ -72,6 +76,7 @@ public class UpdateServiceConfigUseCase {
                 now,
                 command.actorId());
         AdminConfigAction saved = actionRepository.save(action);
+        auditLogWriter.recordConfigAction(saved, command.auditContext());
         log.info("[ACTION] Complete UpdateServiceConfig | userId={} | service={} | actionId={} | variableCount={} | requiresRestart={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 command.serviceName(),

@@ -47,11 +47,14 @@ public class AdminEncryptionConfigController {
         log.info("[CONTROLLER] POST /api/v1/admin/config/encryption/rotate-key | userId={} | keySize={}",
                 LogMaskingUtil.maskId(principal.getId()),
                 keySize);
-        var result = rotateEncryptionKeyUseCase.execute(mapper.toCommand(body, principal), idempotencyKey);
+        String requestId = RequestIdUtil.resolve(request);
+        var result = rotateEncryptionKeyUseCase.execute(
+                mapper.toCommand(body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
         ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
         if (result.replayed()) {
             builder.header("Idempotency-Replayed", "true");
         }
-        return builder.body(ApiResponse.success(mapper.toResponse(result), RequestIdUtil.resolve(request)));
+        return builder.body(ApiResponse.success(mapper.toResponse(result), requestId));
     }
 }
