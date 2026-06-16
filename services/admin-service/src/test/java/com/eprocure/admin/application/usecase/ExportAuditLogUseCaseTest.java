@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.eprocure.admin.application.port.in.ExportAuditLogCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
+import com.eprocure.admin.application.service.AdminAuditContext;
 import com.eprocure.admin.application.service.IdempotencyGuard;
 import com.eprocure.admin.common.exception.BusinessException;
 import com.eprocure.admin.common.exception.ErrorCode;
@@ -16,6 +19,7 @@ import com.eprocure.admin.domain.repository.AuditExportJobRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,12 +43,16 @@ class ExportAuditLogUseCaseTest {
     @Mock
     private AuditExportJobRepository repository;
 
+    @Mock
+    private AdminAuditLogWriterPort auditLogWriter;
+
     private ExportAuditLogUseCase useCase;
 
     @BeforeEach
     void setUp() {
         useCase = new ExportAuditLogUseCase(
                 repository,
+                auditLogWriter,
                 new IdempotencyGuard(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
@@ -72,6 +80,7 @@ class ExportAuditLogUseCaseTest {
         assertThat(captor.getValue().filterActorId()).contains(FILTER_ACTOR_ID);
         assertThat(captor.getValue().entityType()).contains("SERVICE_CONFIG");
         assertThat(captor.getValue().action()).contains("CONFIG.UPDATED");
+        verify(auditLogWriter).recordAuditExportRequest(result.job(), auditContext());
     }
 
     @Test
@@ -89,6 +98,7 @@ class ExportAuditLogUseCaseTest {
         assertThat(result.job()).isEqualTo(existing);
         verify(repository).findByIdempotencyKey(ACTOR_ID, IDEMPOTENCY_UUID);
         verifyNoMoreInteractions(repository);
+        verifyNoInteractions(auditLogWriter);
     }
 
     @Test
@@ -99,6 +109,7 @@ class ExportAuditLogUseCaseTest {
                 .satisfies(error -> assertThat(((BusinessException) error).getErrorCode())
                         .isEqualTo(ErrorCode.SYS_005.code()));
         verifyNoMoreInteractions(repository);
+        verifyNoInteractions(auditLogWriter);
     }
 
     @Test
@@ -114,6 +125,7 @@ class ExportAuditLogUseCaseTest {
                         .isEqualTo(ErrorCode.VAL_001.code()));
         verify(repository).findByIdempotencyKey(ACTOR_ID, IDEMPOTENCY_UUID);
         verifyNoMoreInteractions(repository);
+        verifyNoInteractions(auditLogWriter);
     }
 
     private ExportAuditLogCommand command(Instant fromTime, Instant toTime) {
@@ -123,7 +135,8 @@ class ExportAuditLogUseCaseTest {
                 toTime,
                 Optional.of(FILTER_ACTOR_ID),
                 Optional.of(" SERVICE_CONFIG "),
-                Optional.of(" CONFIG.UPDATED "));
+                Optional.of(" CONFIG.UPDATED "),
+                auditContext());
     }
 
     private AuditExportJob job() {
@@ -138,5 +151,16 @@ class ExportAuditLogUseCaseTest {
                 NOW,
                 NOW.plusSeconds(7 * 24 * 60 * 60),
                 ACTOR_ID);
+    }
+
+    private AdminAuditContext auditContext() {
+        return new AdminAuditContext(
+                ACTOR_ID,
+                "Admin User",
+                List.of("SYSTEM_AUDIT_VIEW"),
+                Optional.of("127.0.0.1"),
+                Optional.of("POST"),
+                Optional.of("/api/v1/admin/audit-log/export"),
+                Optional.of("req-audit-export"));
     }
 }

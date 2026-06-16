@@ -1,6 +1,7 @@
 package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.ManageDepartmentCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.IamDepartmentAdminPort;
 import com.eprocure.admin.application.service.DepartmentAdminView;
 import com.eprocure.admin.application.service.IdempotencyGuard;
@@ -16,10 +17,15 @@ public class CreateDepartmentUseCase {
     private static final Logger log = LogManager.getLogger(CreateDepartmentUseCase.class);
 
     private final IamDepartmentAdminPort iamDepartmentAdminPort;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IdempotencyGuard idempotencyGuard;
 
-    public CreateDepartmentUseCase(IamDepartmentAdminPort iamDepartmentAdminPort, IdempotencyGuard idempotencyGuard) {
+    public CreateDepartmentUseCase(
+            IamDepartmentAdminPort iamDepartmentAdminPort,
+            AdminAuditLogWriterPort auditLogWriter,
+            IdempotencyGuard idempotencyGuard) {
         this.iamDepartmentAdminPort = iamDepartmentAdminPort;
+        this.auditLogWriter = auditLogWriter;
         this.idempotencyGuard = idempotencyGuard;
     }
 
@@ -30,6 +36,7 @@ public class CreateDepartmentUseCase {
                 LogMaskingUtil.maskId(command.actorId()),
                 command.code());
         DepartmentAdminView view = iamDepartmentAdminPort.createDepartment(command, key);
+        auditLogWriter.recordDepartmentMutation("DEPARTMENT.CREATED", view, command.auditContext());
         log.info("[ACTION] Complete CreateDepartment | actorId={} | departmentId={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 LogMaskingUtil.maskId(view.id()));

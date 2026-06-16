@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import com.eprocure.admin.domain.model.AdminConfigAction;
+import com.eprocure.admin.domain.model.AuditExportJob;
 import com.eprocure.admin.domain.model.AuditLogEntry;
 import com.eprocure.admin.domain.repository.AuditLogRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -126,6 +127,104 @@ class AdminAuditLogWriterTest {
         assertThat(payload.get("actionType").asText()).isEqualTo("INVALIDATE_SESSION");
         assertThat(payload.get("sessionId").asText()).isEqualTo(sessionId.toString());
         assertThat(payload.get("invalidated").asBoolean()).isTrue();
+    }
+
+    @Test
+    void should_write_audit_entry_when_recording_catalog_category_mutation() throws Exception {
+        CatalogCategoryAdminView category = new CatalogCategoryAdminView(
+                "OPS_SERVICE",
+                "Operational Service",
+                "OPS",
+                true,
+                "PR_APPROVE_L2",
+                "10000000.0000",
+                false,
+                3,
+                false);
+
+        new AdminAuditLogWriter(auditLogRepository, objectMapper, CLOCK)
+                .recordCatalogCategoryMutation("CATALOG_CATEGORY.UPDATED", category, auditContext());
+
+        ArgumentCaptor<AuditLogEntry> captor = ArgumentCaptor.forClass(AuditLogEntry.class);
+        verify(auditLogRepository).append(captor.capture());
+        AuditLogEntry entry = captor.getValue();
+
+        assertThat(entry.action()).isEqualTo("CATALOG_CATEGORY.UPDATED");
+        assertThat(entry.entityType()).isEqualTo("CATALOG_CATEGORY");
+        assertThat(entry.entityId()).isEmpty();
+        assertThat(entry.entityNumber()).contains("OPS_SERVICE");
+        JsonNode payload = objectMapper.readTree(entry.newValueJson().orElseThrow());
+        assertThat(payload.get("code").asText()).isEqualTo("OPS_SERVICE");
+        assertThat(payload.get("parentCode").asText()).isEqualTo("OPS");
+        assertThat(payload.get("requiresSpecialApproval").asBoolean()).isTrue();
+        assertThat(payload.get("specialApproverRole").asText()).isEqualTo("PR_APPROVE_L2");
+        assertThat(payload.get("itemCount").asLong()).isEqualTo(3);
+    }
+
+    @Test
+    void should_write_audit_entry_when_recording_department_mutation() throws Exception {
+        UUID departmentId = UUID.fromString("50000000-0000-4000-8000-000000000001");
+        DepartmentAdminView department = new DepartmentAdminView(
+                departmentId,
+                "LEGAL",
+                "Legal",
+                null,
+                ACTOR_ID,
+                4,
+                1,
+                false);
+
+        new AdminAuditLogWriter(auditLogRepository, objectMapper, CLOCK)
+                .recordDepartmentMutation("DEPARTMENT.CREATED", department, auditContext());
+
+        ArgumentCaptor<AuditLogEntry> captor = ArgumentCaptor.forClass(AuditLogEntry.class);
+        verify(auditLogRepository).append(captor.capture());
+        AuditLogEntry entry = captor.getValue();
+
+        assertThat(entry.action()).isEqualTo("DEPARTMENT.CREATED");
+        assertThat(entry.entityType()).isEqualTo("IAM_DEPARTMENT");
+        assertThat(entry.entityId()).contains(departmentId);
+        assertThat(entry.entityNumber()).contains("LEGAL");
+        JsonNode payload = objectMapper.readTree(entry.newValueJson().orElseThrow());
+        assertThat(payload.get("departmentId").asText()).isEqualTo(departmentId.toString());
+        assertThat(payload.get("code").asText()).isEqualTo("LEGAL");
+        assertThat(payload.get("headUserId").asText()).isEqualTo(ACTOR_ID.toString());
+        assertThat(payload.get("memberCount").asLong()).isEqualTo(4);
+        assertThat(payload.get("childCount").asLong()).isEqualTo(1);
+    }
+
+    @Test
+    void should_write_audit_entry_when_recording_audit_export_request() throws Exception {
+        UUID jobId = UUID.fromString("60000000-0000-4000-8000-000000000001");
+        AuditExportJob job = AuditExportJob.queued(
+                jobId,
+                Instant.parse("2026-06-01T00:00:00Z"),
+                Instant.parse("2026-06-15T00:00:00Z"),
+                Optional.of(ACTOR_ID),
+                Optional.of("SERVICE_CONFIG"),
+                Optional.of("CONFIG.UPDATED"),
+                IDEMPOTENCY_KEY,
+                NOW,
+                NOW.plusSeconds(604_800),
+                ACTOR_ID);
+
+        new AdminAuditLogWriter(auditLogRepository, objectMapper, CLOCK)
+                .recordAuditExportRequest(job, auditContext());
+
+        ArgumentCaptor<AuditLogEntry> captor = ArgumentCaptor.forClass(AuditLogEntry.class);
+        verify(auditLogRepository).append(captor.capture());
+        AuditLogEntry entry = captor.getValue();
+
+        assertThat(entry.action()).isEqualTo("AUDIT_EXPORT.REQUESTED");
+        assertThat(entry.entityType()).isEqualTo("AUDIT_EXPORT_JOB");
+        assertThat(entry.entityId()).contains(jobId);
+        assertThat(entry.entityNumber()).contains(jobId.toString());
+        assertThat(entry.occurredAt()).isEqualTo(NOW);
+        JsonNode payload = objectMapper.readTree(entry.newValueJson().orElseThrow());
+        assertThat(payload.get("jobId").asText()).isEqualTo(jobId.toString());
+        assertThat(payload.get("status").asText()).isEqualTo("QUEUED");
+        assertThat(payload.get("entityType").asText()).isEqualTo("SERVICE_CONFIG");
+        assertThat(payload.get("action").asText()).isEqualTo("CONFIG.UPDATED");
     }
 
     private AdminAuditContext auditContext() {

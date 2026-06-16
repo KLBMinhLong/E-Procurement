@@ -1,6 +1,7 @@
 package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.ExportAuditLogCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.service.AuditExportJobMutationResult;
 import com.eprocure.admin.application.service.IdempotencyGuard;
 import com.eprocure.admin.common.exception.BusinessException;
@@ -22,14 +23,17 @@ public class ExportAuditLogUseCase {
     private static final Logger log = LogManager.getLogger(ExportAuditLogUseCase.class);
 
     private final AuditExportJobRepository repository;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IdempotencyGuard idempotencyGuard;
     private final Clock clock;
 
     public ExportAuditLogUseCase(
             AuditExportJobRepository repository,
+            AdminAuditLogWriterPort auditLogWriter,
             IdempotencyGuard idempotencyGuard,
             Clock clock) {
         this.repository = repository;
+        this.auditLogWriter = auditLogWriter;
         this.idempotencyGuard = idempotencyGuard;
         this.clock = clock;
     }
@@ -62,6 +66,7 @@ public class ExportAuditLogUseCase {
                 now.plus(7, ChronoUnit.DAYS),
                 command.requestedBy());
         AuditExportJob saved = repository.saveQueued(job);
+        auditLogWriter.recordAuditExportRequest(saved, command.auditContext());
         log.info("[ACTION] Complete ExportAuditLog | userId={} | jobId={} | from={} | to={}",
                 LogMaskingUtil.maskId(command.requestedBy()),
                 LogMaskingUtil.maskId(saved.id()),

@@ -1,6 +1,7 @@
 package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.ManageCatalogCategoryCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.ProcurementCatalogAdminPort;
 import com.eprocure.admin.application.service.CatalogCategoryAdminView;
 import com.eprocure.admin.application.service.IdempotencyGuard;
@@ -16,12 +17,15 @@ public class CreateCatalogCategoryUseCase {
     private static final Logger log = LogManager.getLogger(CreateCatalogCategoryUseCase.class);
 
     private final ProcurementCatalogAdminPort procurementCatalogAdminPort;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IdempotencyGuard idempotencyGuard;
 
     public CreateCatalogCategoryUseCase(
             ProcurementCatalogAdminPort procurementCatalogAdminPort,
+            AdminAuditLogWriterPort auditLogWriter,
             IdempotencyGuard idempotencyGuard) {
         this.procurementCatalogAdminPort = procurementCatalogAdminPort;
+        this.auditLogWriter = auditLogWriter;
         this.idempotencyGuard = idempotencyGuard;
     }
 
@@ -32,6 +36,7 @@ public class CreateCatalogCategoryUseCase {
                 LogMaskingUtil.maskId(command.actorId()),
                 command.code());
         CatalogCategoryAdminView view = procurementCatalogAdminPort.createCategory(command, key);
+        auditLogWriter.recordCatalogCategoryMutation("CATALOG_CATEGORY.CREATED", view, command.auditContext());
         log.info("[ACTION] Complete CreateCatalogCategory | actorId={} | code={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 view.code());

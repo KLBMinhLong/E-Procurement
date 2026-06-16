@@ -1,6 +1,7 @@
 package com.eprocure.admin.application.usecase;
 
 import com.eprocure.admin.application.port.in.DeactivateDepartmentCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.IamDepartmentAdminPort;
 import com.eprocure.admin.application.service.DepartmentAdminView;
 import com.eprocure.admin.application.service.IdempotencyGuard;
@@ -16,10 +17,15 @@ public class DeactivateDepartmentUseCase {
     private static final Logger log = LogManager.getLogger(DeactivateDepartmentUseCase.class);
 
     private final IamDepartmentAdminPort iamDepartmentAdminPort;
+    private final AdminAuditLogWriterPort auditLogWriter;
     private final IdempotencyGuard idempotencyGuard;
 
-    public DeactivateDepartmentUseCase(IamDepartmentAdminPort iamDepartmentAdminPort, IdempotencyGuard idempotencyGuard) {
+    public DeactivateDepartmentUseCase(
+            IamDepartmentAdminPort iamDepartmentAdminPort,
+            AdminAuditLogWriterPort auditLogWriter,
+            IdempotencyGuard idempotencyGuard) {
         this.iamDepartmentAdminPort = iamDepartmentAdminPort;
+        this.auditLogWriter = auditLogWriter;
         this.idempotencyGuard = idempotencyGuard;
     }
 
@@ -30,6 +36,7 @@ public class DeactivateDepartmentUseCase {
                 LogMaskingUtil.maskId(command.actorId()),
                 LogMaskingUtil.maskId(command.departmentId()));
         DepartmentAdminView view = iamDepartmentAdminPort.deactivateDepartment(command, key);
+        auditLogWriter.recordDepartmentMutation("DEPARTMENT.DEACTIVATED", view, command.auditContext());
         log.info("[ACTION] Complete DeactivateDepartment | actorId={} | departmentId={}",
                 LogMaskingUtil.maskId(command.actorId()),
                 LogMaskingUtil.maskId(command.departmentId()));

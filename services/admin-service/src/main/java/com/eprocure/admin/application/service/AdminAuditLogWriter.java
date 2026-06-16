@@ -4,6 +4,7 @@ import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.domain.model.AdminConfigAction;
 import com.eprocure.admin.domain.model.AdminConfigActionType;
 import com.eprocure.admin.domain.model.AuditActor;
+import com.eprocure.admin.domain.model.AuditExportJob;
 import com.eprocure.admin.domain.model.AuditLogEntry;
 import com.eprocure.admin.domain.repository.AuditLogRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,6 +21,9 @@ import org.springframework.stereotype.Service;
 public class AdminAuditLogWriter implements AdminAuditLogWriterPort {
     private static final String CONFIG_ACTION_ENTITY_TYPE = "ADMIN_CONFIG_ACTION";
     private static final String SESSION_ENTITY_TYPE = "IAM_SESSION";
+    private static final String CATALOG_CATEGORY_ENTITY_TYPE = "CATALOG_CATEGORY";
+    private static final String DEPARTMENT_ENTITY_TYPE = "IAM_DEPARTMENT";
+    private static final String AUDIT_EXPORT_JOB_ENTITY_TYPE = "AUDIT_EXPORT_JOB";
     private static final String SERVICE_NAME = "admin-service";
 
     private final AuditLogRepository auditLogRepository;
@@ -78,6 +82,95 @@ public class AdminAuditLogWriter implements AdminAuditLogWriterPort {
                 SERVICE_NAME));
     }
 
+    @Override
+    public void recordCatalogCategoryMutation(String auditAction, CatalogCategoryAdminView category, AdminAuditContext context) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("code", category.code());
+        payload.put("parentCode", category.parentCode());
+        payload.put("requiresSpecialApproval", category.requiresSpecialApproval());
+        payload.put("specialApproverRole", category.specialApproverRole());
+        payload.put("requiresRfqAbove", category.requiresRfqAbove());
+        payload.put("capex", category.isCapex());
+        payload.put("itemCount", category.itemCount());
+        payload.put("deleted", category.isDeleted());
+        auditLogRepository.append(new AuditLogEntry(
+                0L,
+                actor(context),
+                auditAction,
+                CATALOG_CATEGORY_ENTITY_TYPE,
+                Optional.empty(),
+                Optional.of(category.code()),
+                Instant.now(clock),
+                context.httpMethod(),
+                context.endpoint(),
+                context.requestId(),
+                true,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of(toJson(payload)),
+                Optional.of("Admin catalog category mutation recorded"),
+                SERVICE_NAME));
+    }
+
+    @Override
+    public void recordDepartmentMutation(String auditAction, DepartmentAdminView department, AdminAuditContext context) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("departmentId", department.id());
+        payload.put("code", department.code());
+        payload.put("parentId", department.parentId());
+        payload.put("headUserId", department.headUserId());
+        payload.put("memberCount", department.memberCount());
+        payload.put("childCount", department.childCount());
+        payload.put("deleted", department.deleted());
+        auditLogRepository.append(new AuditLogEntry(
+                0L,
+                actor(context),
+                auditAction,
+                DEPARTMENT_ENTITY_TYPE,
+                Optional.of(department.id()),
+                Optional.of(department.code()),
+                Instant.now(clock),
+                context.httpMethod(),
+                context.endpoint(),
+                context.requestId(),
+                true,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of(toJson(payload)),
+                Optional.of("Admin department mutation recorded"),
+                SERVICE_NAME));
+    }
+
+    @Override
+    public void recordAuditExportRequest(AuditExportJob job, AdminAuditContext context) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("jobId", job.id());
+        payload.put("status", job.status().name());
+        payload.put("fromTime", job.fromTime().toString());
+        payload.put("toTime", job.toTime().toString());
+        payload.put("filterActorId", job.filterActorId().orElse(null));
+        payload.put("entityType", job.entityType().orElse(null));
+        payload.put("action", job.action().orElse(null));
+        payload.put("expiresAt", job.expiresAt().map(Instant::toString).orElse(null));
+        auditLogRepository.append(new AuditLogEntry(
+                0L,
+                actor(context),
+                "AUDIT_EXPORT.REQUESTED",
+                AUDIT_EXPORT_JOB_ENTITY_TYPE,
+                Optional.of(job.id()),
+                Optional.of(job.id().toString()),
+                job.requestedAt(),
+                context.httpMethod(),
+                context.endpoint(),
+                context.requestId(),
+                true,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of(toJson(payload)),
+                Optional.of("Admin audit export request recorded"),
+                SERVICE_NAME));
+    }
+
     private AuditActor actor(AdminAuditContext context) {
         return new AuditActor(context.actorId(), context.actorName(), context.actorRoles(), context.actorIp().orElse(null));
     }
@@ -116,7 +209,7 @@ public class AdminAuditLogWriter implements AdminAuditLogWriterPort {
         try {
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Unable to serialize admin config audit payload", exception);
+            throw new IllegalStateException("Unable to serialize admin audit payload", exception);
         }
     }
 }

@@ -70,6 +70,13 @@
 - Impact: `PATCH /api/v1/admin/sessions/{sessionId}/invalidate` now carries request context into the use case and writes a sanitized `SESSION.INVALIDATE_REQUESTED` audit row containing actor/request metadata and the target session id only.
 - Constraint: IAM remains the source of truth for session lifecycle and idempotency; admin-service records the accepted request boundary and does not persist the invalidation reason in audit payload.
 
+## [2026-06-16] E13 admin governance audit coverage
+
+- Decision: Extend admin-service audit writing to the remaining Admin Portal governance mutations: catalog category create/update/deactivate, department create/update/deactivate, and audit export job creation.
+- Reason: Before building the frontend, every admin mutation exposed by the current backend contract should leave a queryable immutable audit row after the owning service/facade accepts the request.
+- Impact: `AdminAuditLogWriterPort` now records `CATALOG_CATEGORY.*`, `DEPARTMENT.*`, and `AUDIT_EXPORT.REQUESTED` events with actor/request context and sanitized metadata only; idempotent audit export replays do not write duplicate audit rows.
+- Constraint: Admin-service records governance request boundaries; PR and IAM remain authoritative for catalog taxonomy and department/session lifecycle.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.

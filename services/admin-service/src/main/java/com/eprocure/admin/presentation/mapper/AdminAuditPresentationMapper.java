@@ -2,6 +2,7 @@ package com.eprocure.admin.presentation.mapper;
 
 import com.eprocure.admin.application.port.in.ExportAuditLogCommand;
 import com.eprocure.admin.application.port.in.GetAuditExportJobQuery;
+import com.eprocure.admin.application.service.AdminAuditContext;
 import com.eprocure.admin.domain.model.AuditExportJob;
 import com.eprocure.admin.domain.model.AuditActor;
 import com.eprocure.admin.domain.model.AuditExportJobStatus;
@@ -13,6 +14,7 @@ import com.eprocure.admin.presentation.request.AuditLogExportRequest;
 import com.eprocure.admin.presentation.response.AuditExportJobResponse;
 import com.eprocure.admin.presentation.response.AuditLogEntryResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -61,14 +63,29 @@ public class AdminAuditPresentationMapper {
         return entries.stream().map(this::toResponse).toList();
     }
 
-    public ExportAuditLogCommand toCommand(UserPrincipal principal, AuditLogExportRequest request) {
+    public ExportAuditLogCommand toCommand(
+            UserPrincipal principal,
+            AuditLogExportRequest request,
+            AdminAuditContext auditContext) {
         return new ExportAuditLogCommand(
                 principal.getId(),
                 request.fromTime(),
                 request.toTime(),
                 Optional.ofNullable(request.actorId()),
                 Optional.ofNullable(request.entityType()),
-                Optional.ofNullable(request.action()));
+                Optional.ofNullable(request.action()),
+                auditContext);
+    }
+
+    public AdminAuditContext toAuditContext(UserPrincipal principal, HttpServletRequest request, String requestId) {
+        return new AdminAuditContext(
+                principal.getId(),
+                principal.getFullName(),
+                principal.getPermissions().stream().sorted().toList(),
+                Optional.ofNullable(request.getRemoteAddr()),
+                Optional.ofNullable(request.getMethod()),
+                Optional.ofNullable(request.getRequestURI()),
+                Optional.ofNullable(requestId));
     }
 
     public GetAuditExportJobQuery toQuery(UserPrincipal principal, UUID jobId) {

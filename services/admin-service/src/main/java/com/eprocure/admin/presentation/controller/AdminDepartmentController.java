@@ -59,9 +59,12 @@ public class AdminDepartmentController {
         log.info("[CONTROLLER] POST /api/v1/admin/departments | userId={} | code={}",
                 LogMaskingUtil.maskId(principal.getId()),
                 body.code());
-        var view = createDepartmentUseCase.execute(mapper.toCreateCommand(body, principal), idempotencyKey);
+        String requestId = RequestIdUtil.resolve(request);
+        var view = createDepartmentUseCase.execute(
+                mapper.toCreateCommand(body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
         return ResponseEntity.created(URI.create("/api/v1/admin/departments/" + view.id()))
-                .body(ApiResponse.success(mapper.toResponse(view), RequestIdUtil.resolve(request)));
+                .body(ApiResponse.success(mapper.toResponse(view), requestId));
     }
 
     @PutMapping("/{id}")
@@ -75,8 +78,11 @@ public class AdminDepartmentController {
         log.info("[CONTROLLER] PUT /api/v1/admin/departments/{} | userId={}",
                 LogMaskingUtil.maskId(id),
                 LogMaskingUtil.maskId(principal.getId()));
-        var view = updateDepartmentUseCase.execute(mapper.toUpdateCommand(id, body, principal), idempotencyKey);
-        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), RequestIdUtil.resolve(request)));
+        String requestId = RequestIdUtil.resolve(request);
+        var view = updateDepartmentUseCase.execute(
+                mapper.toUpdateCommand(id, body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), requestId));
     }
 
     @PatchMapping("/{id}/deactivate")
@@ -89,7 +95,10 @@ public class AdminDepartmentController {
         log.info("[CONTROLLER] PATCH /api/v1/admin/departments/{}/deactivate | userId={}",
                 LogMaskingUtil.maskId(id),
                 LogMaskingUtil.maskId(principal.getId()));
-        var view = deactivateDepartmentUseCase.execute(mapper.toDeactivateCommand(id, principal), idempotencyKey);
-        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), RequestIdUtil.resolve(request)));
+        String requestId = RequestIdUtil.resolve(request);
+        var view = deactivateDepartmentUseCase.execute(
+                mapper.toDeactivateCommand(id, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), requestId));
     }
 }

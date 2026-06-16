@@ -79,9 +79,12 @@ public class AdminCatalogCategoryController {
         log.info("[CONTROLLER] POST /api/v1/admin/catalog/categories | userId={} | code={}",
                 LogMaskingUtil.maskId(principal.getId()),
                 body.code());
-        var view = createUseCase.execute(mapper.toCreateCommand(body, principal), idempotencyKey);
+        String requestId = RequestIdUtil.resolve(request);
+        var view = createUseCase.execute(
+                mapper.toCreateCommand(body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
         return ResponseEntity.created(URI.create("/api/v1/admin/catalog/categories/" + view.code()))
-                .body(ApiResponse.success(mapper.toResponse(view), RequestIdUtil.resolve(request)));
+                .body(ApiResponse.success(mapper.toResponse(view), requestId));
     }
 
     @PutMapping("/{code}")
@@ -95,8 +98,11 @@ public class AdminCatalogCategoryController {
         log.info("[CONTROLLER] PUT /api/v1/admin/catalog/categories/{} | userId={}",
                 code,
                 LogMaskingUtil.maskId(principal.getId()));
-        var view = updateUseCase.execute(mapper.toUpdateCommand(code, body, principal), idempotencyKey);
-        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), RequestIdUtil.resolve(request)));
+        String requestId = RequestIdUtil.resolve(request);
+        var view = updateUseCase.execute(
+                mapper.toUpdateCommand(code, body, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), requestId));
     }
 
     @PatchMapping("/{code}/deactivate")
@@ -109,7 +115,10 @@ public class AdminCatalogCategoryController {
         log.info("[CONTROLLER] PATCH /api/v1/admin/catalog/categories/{}/deactivate | userId={}",
                 code,
                 LogMaskingUtil.maskId(principal.getId()));
-        var view = deactivateUseCase.execute(mapper.toDeactivateCommand(code, principal), idempotencyKey);
-        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), RequestIdUtil.resolve(request)));
+        String requestId = RequestIdUtil.resolve(request);
+        var view = deactivateUseCase.execute(
+                mapper.toDeactivateCommand(code, principal, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
+        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(view), requestId));
     }
 }

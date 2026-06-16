@@ -6,11 +6,14 @@ import static org.mockito.Mockito.verify;
 
 import com.eprocure.admin.application.port.in.DeactivateCatalogCategoryCommand;
 import com.eprocure.admin.application.port.in.ManageCatalogCategoryCommand;
+import com.eprocure.admin.application.port.out.AdminAuditLogWriterPort;
 import com.eprocure.admin.application.port.out.ProcurementCatalogAdminPort;
+import com.eprocure.admin.application.service.AdminAuditContext;
 import com.eprocure.admin.application.service.CatalogCategoryAdminView;
 import com.eprocure.admin.application.service.IdempotencyGuard;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,15 +31,20 @@ class CatalogCategoryUseCaseTest {
     @Mock
     private ProcurementCatalogAdminPort procurementCatalogAdminPort;
 
+    @Mock
+    private AdminAuditLogWriterPort auditLogWriter;
+
     private CreateCatalogCategoryUseCase createUseCase;
+    private UpdateCatalogCategoryUseCase updateUseCase;
     private ListCatalogCategoriesUseCase listUseCase;
     private DeactivateCatalogCategoryUseCase deactivateUseCase;
 
     @BeforeEach
     void setUp() {
-        createUseCase = new CreateCatalogCategoryUseCase(procurementCatalogAdminPort, new IdempotencyGuard());
+        createUseCase = new CreateCatalogCategoryUseCase(procurementCatalogAdminPort, auditLogWriter, new IdempotencyGuard());
+        updateUseCase = new UpdateCatalogCategoryUseCase(procurementCatalogAdminPort, auditLogWriter, new IdempotencyGuard());
         listUseCase = new ListCatalogCategoriesUseCase(procurementCatalogAdminPort);
-        deactivateUseCase = new DeactivateCatalogCategoryUseCase(procurementCatalogAdminPort, new IdempotencyGuard());
+        deactivateUseCase = new DeactivateCatalogCategoryUseCase(procurementCatalogAdminPort, auditLogWriter, new IdempotencyGuard());
     }
 
     @Test
@@ -60,18 +68,33 @@ class CatalogCategoryUseCaseTest {
 
         assertThat(result.code()).isEqualTo("OPS_SERVICE");
         verify(procurementCatalogAdminPort).createCategory(command, IDEMPOTENCY_UUID);
+        verify(auditLogWriter).recordCatalogCategoryMutation("CATALOG_CATEGORY.CREATED", result, auditContext());
+    }
+
+    @Test
+    @DisplayName("Update category validate Idempotency-Key và ghi audit sau khi procurement port accept")
+    void should_delegate_update_with_idempotency_key_and_record_audit() {
+        var command = command();
+        given(procurementCatalogAdminPort.updateCategory(command, IDEMPOTENCY_UUID)).willReturn(category(false));
+
+        var result = updateUseCase.execute(command, IDEMPOTENCY_KEY);
+
+        assertThat(result.code()).isEqualTo("OPS_SERVICE");
+        verify(procurementCatalogAdminPort).updateCategory(command, IDEMPOTENCY_UUID);
+        verify(auditLogWriter).recordCatalogCategoryMutation("CATALOG_CATEGORY.UPDATED", result, auditContext());
     }
 
     @Test
     @DisplayName("Deactivate category validate Idempotency-Key và delegate sang procurement port")
     void should_delegate_deactivate_with_idempotency_key() {
-        var command = new DeactivateCatalogCategoryCommand(ACTOR_ID, "OPS_SERVICE");
-        given(procurementCatalogAdminPort.deactivateCategory(command, IDEMPOTENCY_UUID)).willReturn(category());
+        var command = new DeactivateCatalogCategoryCommand(ACTOR_ID, "OPS_SERVICE", auditContext());
+        given(procurementCatalogAdminPort.deactivateCategory(command, IDEMPOTENCY_UUID)).willReturn(category(true));
 
         var result = deactivateUseCase.execute(command, IDEMPOTENCY_KEY);
 
         assertThat(result.code()).isEqualTo("OPS_SERVICE");
         verify(procurementCatalogAdminPort).deactivateCategory(command, IDEMPOTENCY_UUID);
+        verify(auditLogWriter).recordCatalogCategoryMutation("CATALOG_CATEGORY.DEACTIVATED", result, auditContext());
     }
 
     private ManageCatalogCategoryCommand command() {
@@ -83,10 +106,15 @@ class CatalogCategoryUseCaseTest {
                 true,
                 "PR_APPROVE_L2",
                 new BigDecimal("10000000.0000"),
-                false);
+                false,
+                auditContext());
     }
 
     private CatalogCategoryAdminView category() {
+        return category(false);
+    }
+
+    private CatalogCategoryAdminView category(boolean deleted) {
         return new CatalogCategoryAdminView(
                 "OPS_SERVICE",
                 "Operational Service",
@@ -96,6 +124,17 @@ class CatalogCategoryUseCaseTest {
                 "10000000.0000",
                 false,
                 0,
-                false);
+                deleted);
+    }
+
+    private AdminAuditContext auditContext() {
+        return new AdminAuditContext(
+                ACTOR_ID,
+                "Admin User",
+                List.of("ADMIN_CATALOG_MANAGE"),
+                Optional.of("127.0.0.1"),
+                Optional.of("POST"),
+                Optional.of("/api/v1/admin/catalog/categories"),
+                Optional.of("req-catalog-admin"));
     }
 }

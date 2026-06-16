@@ -110,14 +110,17 @@ public class AdminAuditLogController {
                 LogMaskingUtil.maskId(principal.getId()),
                 body.fromTime(),
                 body.toTime());
-        var result = exportAuditLogUseCase.execute(mapper.toCommand(principal, body), idempotencyKey);
+        String requestId = RequestIdUtil.resolve(request);
+        var result = exportAuditLogUseCase.execute(
+                mapper.toCommand(principal, body, mapper.toAuditContext(principal, request, requestId)),
+                idempotencyKey);
         ResponseEntity.BodyBuilder builder = result.replayed()
                 ? ResponseEntity.ok()
                 : ResponseEntity.status(HttpStatus.ACCEPTED);
         if (result.replayed()) {
             builder.header("Idempotency-Replayed", "true");
         }
-        return builder.body(ApiResponse.success(mapper.toResponse(result.job()), RequestIdUtil.resolve(request)));
+        return builder.body(ApiResponse.success(mapper.toResponse(result.job()), requestId));
     }
 
     @GetMapping("/export/{jobId}")
