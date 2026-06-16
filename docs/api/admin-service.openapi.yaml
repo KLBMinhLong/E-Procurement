@@ -354,7 +354,8 @@ paths:
       x-required-permission: SYSTEM_CONFIG
       description: |
         Thay đổi config là thao tác nhạy cảm: admin-service xác thực TOTP, kiểm tra idempotency,
-        rồi ghi request vào `audit.admin_config_actions`. Runtime apply cần operator/orchestrator executor.
+        ghi request vào `audit.admin_config_actions`, và ghi audit row bất biến
+        `CONFIG.UPDATE_REQUESTED` trong `audit.audit_logs`. Runtime apply cần operator/orchestrator executor.
       parameters:
         - name: serviceName
           in: path
@@ -386,6 +387,10 @@ paths:
       summary: Restart service (graceful)
       operationId: restartService
       x-required-permission: SYSTEM_CONFIG
+      description: |
+        Xác thực TOTP, kiểm tra idempotency, ghi request restart vào `audit.admin_config_actions`,
+        và ghi audit row bất biến `SERVICE.RESTART_REQUESTED`. Runtime restart thực tế cần
+        operator/orchestrator executor.
       parameters:
         - name: serviceName
           in: path
@@ -419,6 +424,7 @@ paths:
       x-required-permission: SYSTEM_CONFIG
       description: |
         Xác thực TOTP và ghi nhận request xoay key vào `audit.admin_config_actions`.
+        Đồng thời ghi audit row bất biến `ENCRYPTION.KEY_ROTATE_REQUESTED` trong `audit.audit_logs`.
         Runtime tạo key/retire key cần secret manager hoặc executor riêng.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -500,6 +506,9 @@ paths:
       summary: Xuất audit log ra Excel (cho kiểm toán)
       operationId: exportAuditLog
       x-required-permission: SYSTEM_AUDIT_VIEW
+      description: |
+        Tạo queued audit export job và ghi audit row bất biến `AUDIT_EXPORT.REQUESTED`
+        cho request mới. Replay theo `Idempotency-Key` trả job cũ và không ghi duplicate audit row.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -629,6 +638,9 @@ paths:
       summary: Tạo danh mục mới
       operationId: createCategory
       x-required-permission: ADMIN_CATALOG_MANAGE
+      description: |
+        Admin-service ủy quyền mutation sang purchase-request-service, nơi sở hữu catalog taxonomy.
+        Sau khi PR service accept, admin-service ghi audit row bất biến `CATALOG_CATEGORY.CREATED`.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -656,6 +668,9 @@ paths:
       summary: Cập nhật danh mục
       operationId: updateCategory
       x-required-permission: ADMIN_CATALOG_MANAGE
+      description: |
+        Admin-service ủy quyền mutation sang purchase-request-service, nơi sở hữu catalog taxonomy.
+        Sau khi PR service accept, admin-service ghi audit row bất biến `CATALOG_CATEGORY.UPDATED`.
       parameters:
         - name: code
           in: path
@@ -687,6 +702,9 @@ paths:
       summary: Vô hiệu hóa danh mục (soft delete)
       operationId: deactivateCategory
       x-required-permission: ADMIN_CATALOG_MANAGE
+      description: |
+        Admin-service ủy quyền mutation sang purchase-request-service, nơi sở hữu catalog taxonomy.
+        Sau khi PR service accept, admin-service ghi audit row bất biến `CATALOG_CATEGORY.DEACTIVATED`.
       parameters:
         - name: code
           in: path
@@ -713,6 +731,9 @@ paths:
       summary: Tạo phòng ban mới
       operationId: createDepartment
       x-required-permission: ADMIN_DEPARTMENT_MANAGE
+      description: |
+        Admin-service ủy quyền mutation sang iam-service, nơi sở hữu department/org lifecycle.
+        Sau khi IAM accept, admin-service ghi audit row bất biến `DEPARTMENT.CREATED`.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -740,6 +761,9 @@ paths:
       summary: Cập nhật phòng ban
       operationId: updateDepartment
       x-required-permission: ADMIN_DEPARTMENT_MANAGE
+      description: |
+        Admin-service ủy quyền mutation sang iam-service, nơi sở hữu department/org lifecycle.
+        Sau khi IAM accept, admin-service ghi audit row bất biến `DEPARTMENT.UPDATED`.
       parameters:
         - name: id
           in: path
@@ -771,6 +795,9 @@ paths:
       summary: Vô hiệu hóa phòng ban (kiểm tra không còn nhân viên active)
       operationId: deactivateDepartment
       x-required-permission: ADMIN_DEPARTMENT_MANAGE
+      description: |
+        Admin-service ủy quyền mutation sang iam-service, nơi sở hữu department/org lifecycle.
+        Sau khi IAM accept, admin-service ghi audit row bất biến `DEPARTMENT.DEACTIVATED`.
       parameters:
         - name: id
           in: path
@@ -892,6 +919,10 @@ paths:
       summary: Buộc đăng xuất một phiên cụ thể
       operationId: invalidateSession
       x-required-permission: SYSTEM_CONFIG
+      description: |
+        Admin-service ủy quyền invalidation sang IAM, không trả hoặc ghi token/session secret.
+        Sau khi IAM accept, admin-service ghi audit row bất biến `SESSION.INVALIDATE_REQUESTED`;
+        audit payload không chứa reason raw.
       parameters:
         - name: sessionId
           in: path
