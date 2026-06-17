@@ -17,7 +17,7 @@
 | 6 | `UI_MODULE_INVOICE_3WAY_MATCH.md` | Invoice 3-Way Match Visualization | ✅ Hoàn thành | Build pass 2026-06-13; dùng GR status `COMPLETE` theo contract thật |
 | 7 | `UI_MODULE_RFQ_QUOTE_COMPARISON.md` | RFQ Quote Comparison Table | ✅ Hoàn thành | Build pass 2026-06-13; align RFQ status frontend với backend + comparison table |
 | 8 | `UI_MODULE_DASHBOARD_CHARTS.md` | Dashboard Operations & Charts Upgrade | ✅ Hoàn thành | Build pass 2026-06-14; không mở browser test; dashboard operational command center hoàn tất |
-| 9 | `UI_MODULE_ADMIN_CONFIG_PORTAL.md` | Admin Config Portal | 🔄 Sẵn sàng triển khai | E13 còn thiếu contract/runtime truth: admin-service OpenAPI có config/audit/health/sessions nhưng backend service chưa tồn tại |
+| 9 | `UI_MODULE_ADMIN_CONFIG_PORTAL.md` | Admin Config Portal | 🔄 Sẵn sàng code frontend | Backend `admin-service` đã có runtime contract; còn thiếu route/nav/service/model/pages frontend |
 
 ---
 
@@ -165,12 +165,12 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 ---
 
 #### 9. `UI_MODULE_ADMIN_CONFIG_PORTAL.md` — Admin Config Portal
-**Trạng thái:** 🔄 Sẵn sàng triển khai từ 2026-06-14. Plan đã rà soát frontend/backend hiện tại: frontend mới có admin user/RBAC/org/template/rule screens; `docs/api/admin-service.openapi.yaml` mô tả System Config, Audit Log, Catalog Admin, Department Admin, Health, Sessions nhưng chưa có `services/admin-service` hoặc controller runtime tương ứng.
+**Trạng thái:** 🔄 Sẵn sàng code frontend từ 2026-06-16. Plan đã rà lại theo backend thật: `services/admin-service` hiện có controller runtime cho System Config, Audit Log/export, Catalog Category Admin, Department Admin mutations, System Health, Sessions và gateway `/api/v1/admin/*`. Frontend còn thiếu route/nav/service/model/pages cho các capability này.
 
 | Bước | Nội dung |
 |---|---|
-| 9a | Contract truth + implementation strategy: chốt endpoint nào dùng IAM/notification/inventory/approval hiện có, endpoint nào cần backend foundation |
-| 9b | Admin Config shell + route/nav foundation |
+| 9a | ✅ Contract truth + implementation strategy: backend admin-service, permissions, gateway và OpenAPI audit side effects đã align |
+| 9b | Admin operations foundation: models/service, parent `/admin` guard, route/i18n base |
 | 9c | System Health page |
 | 9d | Service Config read-only + risky mutation workflow |
 | 9e | Audit Log query + export |
@@ -179,7 +179,7 @@ Tạo hoàn toàn mới — không có code cũ để sửa:
 | 9h | Department Admin mutation alignment |
 | 9i | Verification |
 
-**Lý do ưu tiên tiếp theo:** Đây là gap E13 còn lại sau dashboard: người vận hành chưa có console tập trung cho health/config/audit/session, và OpenAPI hiện đang vượt runtime backend nên phải xử lý contract truth trước khi làm UI sâu.
+**Lý do ưu tiên tiếp theo:** Đây là gap E13 còn lại sau dashboard: người vận hành chưa có console tập trung cho health/config/audit/session/catalog taxonomy. Backend đã đủ contract để bắt đầu từ foundation + System Health page, sau đó đi qua config, audit, sessions, catalog, department theo thứ tự kiểm chứng được.
 
 ---
 
