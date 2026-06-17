@@ -1,0 +1,204 @@
+<div class="catalog-container">
+  <header class="catalog-header">
+    <div class="header-content">
+      <span class="eyebrow">{{ 'adminOps.catalog.eyebrow' | translate }}</span>
+      <h1 class="title">{{ 'adminOps.catalog.title' | translate }}</h1>
+      <p class="subtitle">{{ 'adminOps.catalog.subtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <button class="ep-button ep-button--outline" (click)="loadCategories()" [disabled]="loading()">
+        <ep-icon name="refresh-cw" [class.spin]="loading()" />
+      </button>
+      <button class="ep-button ep-button--primary" (click)="openCreateModal()">
+        <ep-icon name="plus" /> {{ 'adminOps.catalog.action.create' | translate }}
+      </button>
+    </div>
+  </header>
+
+  <div class="filter-bar">
+    <label class="ep-checkbox-wrapper">
+      <input type="checkbox" class="ep-checkbox" [checked]="includeInactive()" (change)="toggleInactive($event)" />
+      <span>{{ 'adminOps.catalog.filter.includeInactive' | translate }}</span>
+    </label>
+  </div>
+
+  <!-- Error / Data -->
+  @if (error()) {
+    <div class="ep-empty-state error mt-6">
+      <ep-icon name="alert-triangle" [size]="48" />
+      <p>{{ error() }}</p>
+      <button class="ep-button ep-button--primary" (click)="loadCategories()">
+        {{ 'action.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+    <div class="ep-table-container mt-4">
+      <table class="ep-table table-fixed">
+        <thead>
+          <tr>
+            <th class="w-1/3">{{ 'adminOps.catalog.col.name' | translate }}</th>
+            <th class="w-1/6">{{ 'adminOps.catalog.col.code' | translate }}</th>
+            <th class="w-1/6">{{ 'adminOps.catalog.col.rules' | translate }}</th>
+            <th class="w-1/12 text-center">{{ 'adminOps.catalog.col.items' | translate }}</th>
+            <th class="w-1/12 text-center">{{ 'adminOps.catalog.col.status' | translate }}</th>
+            <th class="w-1/6 text-right">{{ 'shared.table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading() && flatTree().length === 0) {
+            <tr>
+              <td colspan="6" class="text-center py-8">
+                <ep-icon name="loader-circle" class="spin" [size]="32" />
+              </td>
+            </tr>
+          } @else if (flatTree().length === 0) {
+            <tr>
+              <td colspan="6" class="text-center py-8 text-muted">
+                {{ 'shared.empty.message' | translate }}
+              </td>
+            </tr>
+          } @else {
+            @for (cat of flatTree(); track cat.code) {
+              <tr class="hoverable" [class.inactive]="cat.isDeleted">
+                <td>
+                  <div class="tree-node" [style.padding-left.rem]="cat.level * 1.5">
+                    @if (cat.children.length > 0) {
+                      <ep-icon name="folder-open" class="mr-2 text-muted" [size]="16" />
+                    } @else {
+                      <ep-icon name="minus" class="mr-2 text-muted" [size]="16" />
+                    }
+                    <span class="node-name" [class.font-semibold]="cat.level === 0">{{ cat.name }}</span>
+                  </div>
+                </td>
+                <td class="font-mono text-sm text-muted">{{ cat.code }}</td>
+                <td>
+                  <div class="flex flex-col gap-1">
+                    @if (cat.isCapex) {
+                      <span class="badge badge--warning text-xs">CAPEX</span>
+                    }
+                    @if (cat.requiresSpecialApproval) {
+                      <span class="badge badge--info text-xs" [title]="'adminOps.catalog.rules.specialApproval' | translate">
+                        {{ cat.specialApproverRole }}
+                      </span>
+                    }
+                    @if (cat.requiresRfqAbove) {
+                      <span class="text-xs text-muted" [title]="'adminOps.catalog.rules.rfqAbove' | translate">
+                        RFQ > {{ cat.requiresRfqAbove | number:'1.0-0' }}
+                      </span>
+                    }
+                  </div>
+                </td>
+                <td class="text-center">{{ cat.itemCount }}</td>
+                <td class="text-center">
+                  @if (cat.isDeleted) {
+                    <span class="badge badge--danger">{{ 'shared.status.inactive' | translate }}</span>
+                  } @else {
+                    <span class="badge badge--success">{{ 'shared.status.active' | translate }}</span>
+                  }
+                </td>
+                <td class="text-right">
+                  <div class="action-buttons">
+                    <button class="ep-button-icon" (click)="openUpdateModal(cat)" [title]="'shared.action.edit' | translate">
+                      <ep-icon name="edit-2" />
+                    </button>
+                    @if (!cat.isDeleted) {
+                      <button class="ep-button-icon text-danger" (click)="deactivate(cat.code)" [title]="'shared.action.deactivate' | translate">
+                        <ep-icon name="trash-2" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal: Create / Update -->
+@if (isModalOpen()) {
+  <div class="ep-modal-backdrop" (click)="closeModal()">
+    <div class="ep-modal ep-modal--large" (click)="$event.stopPropagation()">
+      <div class="ep-modal-header">
+        <h2 class="ep-modal-title">
+          {{ modalMode() === 'CREATE' ? ('adminOps.catalog.modal.createTitle' | translate) : ('adminOps.catalog.modal.updateTitle' | translate) }}
+        </h2>
+        <button class="ep-button-icon" (click)="closeModal()">
+          <ep-icon name="x" />
+        </button>
+      </div>
+      <div class="ep-modal-body">
+        <form [formGroup]="categoryForm" id="categoryForm" (ngSubmit)="submitCategory()">
+          
+          <div class="form-row grid grid-cols-2 gap-4">
+            <div class="form-group">
+              <label class="ep-label required">{{ 'adminOps.catalog.col.code' | translate }}</label>
+              <input type="text" class="ep-input w-full font-mono uppercase" formControlName="code" 
+                     placeholder="E.g., IT_HARDWARE" [class.readonly]="modalMode() === 'UPDATE'" />
+            </div>
+            <div class="form-group">
+              <label class="ep-label required">{{ 'adminOps.catalog.col.name' | translate }}</label>
+              <input type="text" class="ep-input w-full" formControlName="name" placeholder="E.g., IT Hardware" />
+            </div>
+          </div>
+
+          <div class="form-group mt-4">
+            <label class="ep-label">{{ 'adminOps.catalog.modal.parent' | translate }}</label>
+            <select class="ep-select w-full" formControlName="parentCode">
+              <option value="">-- {{ 'shared.dropdown.none' | translate }} --</option>
+              @for (p of getAvailableParents(); track p.code) {
+                <option [value]="p.code">{{ p.name }} ({{ p.code }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="rules-section mt-6 p-4 bg-surface-hover rounded-lg border border-border">
+            <h3 class="text-sm font-semibold mb-4">{{ 'adminOps.catalog.modal.rulesTitle' | translate }}</h3>
+            
+            <div class="form-group mb-4">
+              <label class="ep-checkbox-wrapper">
+                <input type="checkbox" class="ep-checkbox" formControlName="isCapex" />
+                <span>{{ 'adminOps.catalog.modal.isCapex' | translate }}</span>
+              </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="ep-checkbox-wrapper mb-2">
+                  <input type="checkbox" class="ep-checkbox" formControlName="requiresSpecialApproval" />
+                  <span>{{ 'adminOps.catalog.modal.requiresSpecialApproval' | translate }}</span>
+                </label>
+                @if (categoryForm.get('requiresSpecialApproval')?.value) {
+                  <input type="text" class="ep-input w-full mt-1" formControlName="specialApproverRole" 
+                         placeholder="E.g., IT_DIRECTOR" />
+                }
+              </div>
+
+              <div class="form-group">
+                <label class="ep-label">{{ 'adminOps.catalog.modal.requiresRfqAbove' | translate }}</label>
+                <div class="input-with-currency">
+                  <input type="number" class="ep-input w-full" formControlName="requiresRfqAbove" placeholder="0.00" />
+                  <span class="currency-addon">VND</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="ep-modal-footer">
+        <button class="ep-button ep-button--outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+          {{ 'action.cancel' | translate }}
+        </button>
+        <button class="ep-button ep-button--primary" form="categoryForm" type="submit" [disabled]="modalSubmitting()">
+          @if (modalSubmitting()) {
+            <ep-icon name="loader-circle" class="spin" />
+          }
+          {{ 'action.save' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

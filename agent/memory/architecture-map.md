@@ -55,6 +55,7 @@
 │          Admin Service :8089          │
 │  System Config, Audit Log, Health     │
 │  (Tách biệt với hệ thống nghiệp vụ) │
+│  (Cung cấp facade API cho Org/Catalog)│
 └──────────────────────────────────────┘
 ```
 

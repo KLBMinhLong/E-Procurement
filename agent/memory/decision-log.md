@@ -692,3 +692,10 @@
 - Runtime note: Local approval schema was reset and reseeded; IAM V11/V12 add Super Admin approval permissions and clean overly broad seeded finance/emergency grants from Manager/Director roles while preserving the existing V10 seed.
 - Follow-up decision: Approval-service exposes `GET /api/v1/approvals/processes/{entityType}/{entityId}` for PR detail workflow display, with use-case authorization for requester `PR_VIEW_OWN`, department/all viewers, and assigned approvers.
 - Constraint: Public `/api/v1/org/approvers?role=...` remains role-based for backward compatibility; service-to-service approval routing uses permission.
+
+## [2026-06-17] E13-A Admin Portal Frontend closure for Catalog and Org Chart
+
+- Decision: Finalized frontend interfaces for Catalog Categories (`/admin/catalog-categories`) and Department Org Chart (`/admin/org-chart`), moving their mutations strictly to the new `admin-service` facades and establishing visual management flows.
+- Reason: The backend facade APIs for cross-service mutations were complete, and the frontend needed robust UI representations to allow safe governance mutations without touching IAM or PR services directly.
+- Impact: `OrgChartComponent` handles structured nested data, deactivation safeguards, and specific metadata like `glAccountPrefix` and `headUserId`. `CatalogCategoriesComponent` surfaces CAPEX toggles and recursive flattening. Both screens pass full compilation, integrate flawlessly with translated keys, and employ `Idempotency-Key` headers correctly.
+- Constraint: High-level System Config update application executors still require future secret-manager integration beyond the current `admin_config_actions` logging.

@@ -77,6 +77,11 @@ export class ShellComponent implements OnInit {
     { icon: 'shield', labelKey: 'nav.adminRbac', route: '/admin/rbac', permissions: ['ADMIN_ROLE_MANAGE'] },
     { icon: 'network', labelKey: 'nav.adminOrgChart', route: '/admin/org-chart', permissions: ['ORG_VIEW', 'ADMIN_DEPARTMENT_MANAGE'] },
     { icon: 'file-code-2', labelKey: 'nav.notificationTemplates', route: '/admin/notification-templates', permissions: ['SYSTEM_CONFIG'] },
+    { icon: 'settings', labelKey: 'nav.systemConfig', route: '/admin/config', permissions: ['SYSTEM_CONFIG'] },
+    { icon: 'history', labelKey: 'nav.auditLog', route: '/admin/audit-log', permissions: ['SYSTEM_AUDIT_VIEW'] },
+    { icon: 'users-round', labelKey: 'nav.sessions', route: '/admin/sessions', permissions: ['SYSTEM_CONFIG'] },
+    { icon: 'folders', labelKey: 'nav.catalogCategories', route: '/admin/catalog-categories', permissions: ['ADMIN_CATALOG_MANAGE'] },
+    { icon: 'activity', labelKey: 'nav.systemHealth', route: '/admin/health', permissions: ['SYSTEM_CONFIG'] },
     { icon: 'workflow', labelKey: 'nav.approvalRules', route: '/approvals/rules', permissions: ['ADMIN_APPROVAL_RULE'] }
   ].filter((item) => this.permissionService.hasAnyPermission(item.permissions)));
 

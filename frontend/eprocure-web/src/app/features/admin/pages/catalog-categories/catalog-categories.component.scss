@@ -1,0 +1,145 @@
+.catalog-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6) 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.catalog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--spacing-4);
+  border-bottom: 1px solid var(--border-color);
+
+  .header-content {
+    .eyebrow {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--spacing-2);
+      display: block;
+    }
+
+    .title {
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 var(--spacing-2);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: var(--font-size-base);
+      color: var(--text-muted);
+      margin: 0;
+      max-width: 600px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-3);
+  }
+}
+
+.filter-bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.table-fixed {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  
+  .node-name {
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.inactive {
+  opacity: 0.6;
+  background: var(--surface-hover);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-2);
+  justify-content: flex-end;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.readonly {
+  background-color: var(--surface-hover);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.bg-surface-hover {
+  background-color: var(--surface-hover);
+}
+
+.border-border {
+  border-color: var(--border-color);
+}
+
+.input-with-currency {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .ep-input {
+    padding-right: 4rem;
+  }
+
+  .currency-addon {
+    position: absolute;
+    right: 1px;
+    top: 1px;
+    bottom: 1px;
+    background: var(--surface-hover);
+    border-left: 1px solid var(--border-color);
+    padding: 0 var(--spacing-3);
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    border-top-right-radius: calc(var(--radius-md) - 1px);
+    border-bottom-right-radius: calc(var(--radius-md) - 1px);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.text-danger { color: var(--danger-color); }

@@ -1,0 +1,203 @@
+<section class="health-page">
+  <!-- ── Page Header ─────────────────────────────────────────── -->
+  <header class="health-page__header">
+    <div>
+      <span class="health-page__eyebrow">{{ 'adminOps.health.eyebrow' | translate }}</span>
+      <h1 class="health-page__title">{{ 'adminOps.health.title' | translate }}</h1>
+      <p class="health-page__subtitle">{{ 'adminOps.health.subtitle' | translate }}</p>
+    </div>
+    <ep-button variant="ghost" [disabled]="loading()" (click)="loadHealth()">
+      <ep-icon name="refresh-cw" [size]="16"></ep-icon>
+      {{ 'adminOps.health.refresh' | translate }}
+    </ep-button>
+  </header>
+
+  <!-- ── Loading Skeleton ──────────────────────────────────── -->
+  @if (loading() && !healthData()) {
+  <div class="health-skeleton" aria-busy="true" role="status">
+    <div class="health-skeleton__strip"></div>
+    <div class="health-skeleton__grid">
+      @for (_ of [1,2,3]; track $index) {
+      <div class="health-skeleton__card"></div>
+      }
+    </div>
+    <div class="health-skeleton__table"></div>
+  </div>
+  }
+
+  <!-- ── Error State ───────────────────────────────────────── -->
+  @if (error() && !loading()) {
+  <div class="health-error">
+    <ep-icon name="alert-triangle" [size]="40"></ep-icon>
+    <h3>{{ 'adminOps.health.errorTitle' | translate }}</h3>
+    <p>{{ error() }}</p>
+    <ep-button variant="primary" (click)="loadHealth()">
+      <ep-icon name="refresh-cw" [size]="16"></ep-icon>
+      {{ 'adminOps.health.retry' | translate }}
+    </ep-button>
+  </div>
+  }
+
+  <!-- ── Health Dashboard ──────────────────────────────────── -->
+  @if (healthData(); as data) {
+  <div class="health-dashboard" [class.health-dashboard--refreshing]="loading()">
+
+    <!-- Overall Status Strip -->
+    <div class="health-strip" [attr.data-tone]="statusTone(overallStatus())">
+      <div class="health-strip__indicator">
+        <ep-icon [name]="statusIcon(overallStatus())" [size]="22"></ep-icon>
+        <span class="health-strip__status">{{ 'adminOps.health.overall.' + overallStatus() | translate }}</span>
+      </div>
+      <div class="health-strip__meta">
+        <div class="health-strip__counters">
+          <span class="health-strip__counter" data-tone="success">
+            <ep-icon name="check-circle" [size]="14"></ep-icon>
+            {{ upCount() }} {{ 'adminOps.health.up' | translate }}
+          </span>
+          @if (degradedCount() > 0) {
+          <span class="health-strip__counter" data-tone="warning">
+            <ep-icon name="alert-triangle" [size]="14"></ep-icon>
+            {{ degradedCount() }} {{ 'adminOps.health.degraded' | translate }}
+          </span>
+          }
+          @if (downCount() > 0) {
+          <span class="health-strip__counter" data-tone="danger">
+            <ep-icon name="x-circle" [size]="14"></ep-icon>
+            {{ downCount() }} {{ 'adminOps.health.down' | translate }}
+          </span>
+          }
+        </div>
+        <div class="health-strip__checked">
+          @if (isStale()) {
+          <span class="health-strip__stale">
+            <ep-icon name="alert-triangle" [size]="12"></ep-icon>
+            {{ 'adminOps.health.stale' | translate }}
+          </span>
+          }
+          <span>{{ 'adminOps.health.checkedAt' | translate }} {{ checkedAt() | date:'medium' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Infrastructure Cards -->
+    <div class="health-infra">
+      <!-- PostgreSQL -->
+      @if (infra()?.postgresql; as pg) {
+      <article class="infra-card" [attr.data-tone]="statusTone(pg.status)">
+        <header class="infra-card__header">
+          <ep-icon name="database" [size]="18"></ep-icon>
+          <h3>PostgreSQL</h3>
+          <span class="infra-card__badge" [attr.data-tone]="statusTone(pg.status)">{{ pg.status }}</span>
+        </header>
+        <div class="infra-card__body">
+          <div class="infra-metric">
+            <span class="infra-metric__label">{{ 'adminOps.health.connections' | translate }}</span>
+            <div class="infra-metric__bar-wrap">
+              <div class="infra-metric__bar" [style.width.%]="pgConnectionPercent()"
+                   [attr.data-tone]="pgConnectionTone(pgConnectionPercent())"></div>
+            </div>
+            <span class="infra-metric__value" [attr.data-tone]="pgConnectionTone(pgConnectionPercent())">
+              {{ pg.connections }} / {{ pg.maxConnections }}
+            </span>
+          </div>
+        </div>
+      </article>
+      }
+
+      <!-- Redis -->
+      @if (infra()?.redis; as redis) {
+      <article class="infra-card" [attr.data-tone]="statusTone(redis.status)">
+        <header class="infra-card__header">
+          <ep-icon name="hard-drive" [size]="18"></ep-icon>
+          <h3>Redis</h3>
+          <span class="infra-card__badge" [attr.data-tone]="statusTone(redis.status)">{{ redis.status }}</span>
+        </header>
+        <div class="infra-card__body">
+          <div class="infra-metric">
+            <span class="infra-metric__label">{{ 'adminOps.health.memory' | translate }}</span>
+            <span class="infra-metric__value">{{ redis.usedMemory }} / {{ redis.maxMemory }}</span>
+          </div>
+          <div class="infra-metric">
+            <span class="infra-metric__label">{{ 'adminOps.health.keys' | translate }}</span>
+            <span class="infra-metric__value">{{ redis.keyCount | number }}</span>
+          </div>
+        </div>
+      </article>
+      }
+
+      <!-- Kafka -->
+      @if (infra()?.kafka; as kafka) {
+      <article class="infra-card" [attr.data-tone]="statusTone(kafka.status)">
+        <header class="infra-card__header">
+          <ep-icon name="radio" [size]="18"></ep-icon>
+          <h3>Kafka</h3>
+          <span class="infra-card__badge" [attr.data-tone]="statusTone(kafka.status)">{{ kafka.status }}</span>
+        </header>
+        <div class="infra-card__body">
+          <div class="infra-metric">
+            <span class="infra-metric__label">{{ 'adminOps.health.topics' | translate }}</span>
+            <span class="infra-metric__value">{{ kafka.topicCount }}</span>
+          </div>
+          @if (kafka.lagByGroup?.length) {
+          <div class="infra-metric infra-metric--lag">
+            <span class="infra-metric__label">{{ 'adminOps.health.consumerLag' | translate }}</span>
+            <div class="lag-list">
+              @for (group of kafka.lagByGroup; track group.group) {
+              <div class="lag-item">
+                <span class="lag-item__group">{{ group.group }}</span>
+                <span class="lag-item__value" [attr.data-tone]="kafkaLagTone(group.lag)">{{ group.lag | number }}</span>
+              </div>
+              }
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+      }
+    </div>
+
+    <!-- Service Table -->
+    <div class="health-services">
+      <h2 class="health-services__title">
+        <ep-icon name="server" [size]="18"></ep-icon>
+        {{ 'adminOps.health.servicesTitle' | translate }}
+        <small>({{ totalServices() }})</small>
+      </h2>
+      <div class="health-table-wrap">
+        <table class="health-table" [attr.aria-label]="'adminOps.health.servicesTitle' | translate">
+          <thead>
+            <tr>
+              <th>{{ 'adminOps.health.col.service' | translate }}</th>
+              <th>{{ 'adminOps.health.col.status' | translate }}</th>
+              <th class="health-table__right">{{ 'adminOps.health.col.responseTime' | translate }}</th>
+              <th>{{ 'adminOps.health.col.uptime' | translate }}</th>
+              <th>{{ 'adminOps.health.col.lastCheck' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (svc of services(); track svc.name) {
+            <tr>
+              <td class="health-table__service">
+                <ep-icon [name]="statusIcon(svc.status)" [size]="14"></ep-icon>
+                {{ svc.name }}
+              </td>
+              <td>
+                <span class="health-badge" [attr.data-tone]="statusTone(svc.status)">{{ svc.status }}</span>
+              </td>
+              <td class="health-table__right">
+                <span class="health-rt" [attr.data-tone]="responseTimeTone(svc.responseTime)">
+                  {{ svc.responseTime }}ms
+                </span>
+              </td>
+              <td class="health-table__muted">{{ svc.uptime ?? '—' }}</td>
+              <td class="health-table__muted">{{ svc.lastCheck | date:'short' }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  }
+</section>

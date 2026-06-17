@@ -21,6 +21,7 @@ import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-moda
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { AdminOrgService } from '../../services/admin-org.service';
 import { AdminUserService } from '../../services/admin-user.service';
+import { AdminOperationsService } from '../../services/admin-operations.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AdminDepartment, AdminUserSummary } from '../../models/admin.model';
 
@@ -44,6 +45,7 @@ import { AdminDepartment, AdminUserSummary } from '../../models/admin.model';
 })
 export class OrgChartComponent implements OnInit {
   private readonly orgService = inject(AdminOrgService);
+  private readonly opsService = inject(AdminOperationsService);
   private readonly userService = inject(AdminUserService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
@@ -67,8 +69,9 @@ export class OrgChartComponent implements OnInit {
   readonly deptForm: FormGroup = this.fb.group({
     code: ['', [Validators.required, Validators.pattern(/^[A-Z0-9_]+$/)]],
     name: ['', [Validators.required]],
-    parentCode: [''],
-    managerId: ['']
+    parentId: [''],
+    headUserId: [''],
+    glAccountPrefix: ['']
   });
 
   // Flatten tree for list tree rendering with indentation
@@ -171,8 +174,9 @@ export class OrgChartComponent implements OnInit {
     this.deptForm.reset({
       code: '',
       name: '',
-      parentCode: parentDept ? parentDept.code : '',
-      managerId: ''
+      parentId: parentDept ? parentDept.id : '',
+      headUserId: '',
+      glAccountPrefix: ''
     });
     this.deptForm.get('code')?.enable();
     this.isModalOpen.set(true);
@@ -181,11 +185,19 @@ export class OrgChartComponent implements OnInit {
   openEditModal(dept: AdminDepartment): void {
     this.modalMode.set('edit');
     this.selectedDeptId.set(dept.id);
+    // Find parentId from flat select list using parentCode, if any
+    let parentId = '';
+    if (dept.parentCode) {
+      const parentNode = this.flatSelectDepartments().find(d => d.code === dept.parentCode);
+      if (parentNode) parentId = parentNode.id;
+    }
+
     this.deptForm.reset({
       code: dept.code,
       name: dept.name,
-      parentCode: dept.parentCode || '',
-      managerId: dept.managerId || ''
+      parentId: parentId,
+      headUserId: dept.managerId || '',
+      glAccountPrefix: '' // glAccountPrefix may not be available on read model yet, leave empty or populate if added
     });
     this.deptForm.get('code')?.disable();
     this.isModalOpen.set(true);
@@ -203,18 +215,19 @@ export class OrgChartComponent implements OnInit {
 
     this.isSubmitting.set(true);
     const formValue = this.deptForm.getRawValue();
+    const idempotencyKey = crypto.randomUUID();
+
+    const request = {
+      code: formValue.code,
+      name: formValue.name,
+      parentId: formValue.parentId || null,
+      headUserId: formValue.headUserId || null,
+      glAccountPrefix: formValue.glAccountPrefix || null
+    };
+
     const obs$ = this.modalMode() === 'create'
-      ? this.orgService.createDepartment({
-          code: formValue.code,
-          name: formValue.name,
-          parentCode: formValue.parentCode || null,
-          managerId: formValue.managerId || null
-        })
-      : this.orgService.updateDepartment(this.selectedDeptId()!, {
-          name: formValue.name,
-          parentCode: formValue.parentCode || null,
-          managerId: formValue.managerId || null
-        });
+      ? this.opsService.createDepartment(request, idempotencyKey)
+      : this.opsService.updateDepartment(this.selectedDeptId()!, request, idempotencyKey);
 
     obs$
       .pipe(
@@ -233,6 +246,26 @@ export class OrgChartComponent implements OnInit {
         },
         error: (err: any) => {
           this.toastService.error(err.message || 'Save department failed');
+        }
+      });
+  }
+
+  deactivateDept(deptId: string): void {
+    if (!confirm('Are you sure you want to deactivate this department?')) return;
+    const idempotencyKey = crypto.randomUUID();
+    this.isSubmitting.set(true);
+    this.opsService.deactivateDepartment(deptId, idempotencyKey)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isSubmitting.set(false))
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.successKey('org.toast.deactivateSuccess');
+          this.loadData();
+        },
+        error: (err: any) => {
+          this.toastService.error(err.message || 'adminOps.org.toast.deactivateFailed');
         }
       });
   }

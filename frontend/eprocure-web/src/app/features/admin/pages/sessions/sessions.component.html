@@ -1,0 +1,172 @@
+<div class="sessions-container">
+  <header class="sessions-header">
+    <div class="header-content">
+      <span class="eyebrow">{{ 'adminOps.sessions.eyebrow' | translate }}</span>
+      <h1 class="title">{{ 'adminOps.sessions.title' | translate }}</h1>
+      <p class="subtitle">{{ 'adminOps.sessions.subtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <button class="ep-button ep-button--outline" (click)="loadSessions()" [disabled]="loading()">
+        <ep-icon name="refresh-cw" [class.spin]="loading()" /> {{ 'action.refresh' | translate }}
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter -->
+  <div class="filter-panel">
+    <form [formGroup]="filterForm" (ngSubmit)="loadSessions(0)" class="filter-flex">
+      <div class="form-group flex-1 max-w-sm">
+        <label class="ep-label">{{ 'adminOps.sessions.filter.userId' | translate }}</label>
+        <div class="input-with-icon">
+          <ep-icon name="search" class="input-icon" />
+          <input type="text" class="ep-input w-full pl-10" formControlName="user_id" [placeholder]="'adminOps.sessions.filter.userIdHint' | translate" />
+        </div>
+      </div>
+      <div class="filter-actions align-bottom">
+        <button type="button" class="ep-button ep-button--text" (click)="resetFilters()" [disabled]="loading()">
+          {{ 'action.clear' | translate }}
+        </button>
+        <button type="submit" class="ep-button ep-button--primary" [disabled]="loading()">
+          {{ 'action.search' | translate }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Error / Data -->
+  @if (error()) {
+    <div class="ep-empty-state error mt-6">
+      <ep-icon name="alert-triangle" [size]="48" />
+      <p>{{ error() }}</p>
+      <button class="ep-button ep-button--primary" (click)="loadSessions(currentPage())">
+        {{ 'adminOps.sessions.action.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+    <div class="ep-table-container mt-6">
+      <table class="ep-table">
+        <thead>
+          <tr>
+            <th>{{ 'adminOps.sessions.col.user' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.ip' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.device' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.created' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.lastActivity' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.expires' | translate }}</th>
+            <th class="text-right">{{ 'shared.table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading() && sessions().length === 0) {
+            <tr>
+              <td colspan="7" class="text-center py-8">
+                <ep-icon name="loader-circle" class="spin" [size]="32" />
+              </td>
+            </tr>
+          } @else if (sessions().length === 0) {
+            <tr>
+              <td colspan="7" class="text-center py-8 text-muted">
+                {{ 'shared.empty.message' | translate }}
+              </td>
+            </tr>
+          } @else {
+            @for (session of sessions(); track session.sessionId) {
+              <tr class="hoverable">
+                <td>
+                  <div class="user-info">
+                    <span class="user-name">{{ session.fullName }} ({{ session.userName }})</span>
+                    <span class="user-id font-mono">{{ session.userId }}</span>
+                  </div>
+                </td>
+                <td><span class="font-mono text-sm">{{ session.ipAddress || '-' }}</span></td>
+                <td>
+                  <div class="device-info" [title]="session.userAgent || ''">
+                    <ep-icon [name]="(session.userAgent | lowercase)?.includes('mobile') ? 'smartphone' : 'monitor'" [size]="16" />
+                    <span class="text-sm truncate max-w-[200px] inline-block align-bottom">{{ session.userAgent || '-' }}</span>
+                  </div>
+                </td>
+                <td class="text-sm">{{ session.createdAt | date:'short' }}</td>
+                <td class="text-sm text-primary">{{ session.lastActivity | date:'short' }}</td>
+                <td class="text-sm text-muted">{{ session.expiresAt | date:'short' }}</td>
+                <td class="text-right">
+                  <button class="ep-button ep-button--danger-outline ep-button--small" (click)="openInvalidateModal(session)">
+                    <ep-icon name="power-off" /> {{ 'adminOps.sessions.action.invalidate' | translate }}
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+      
+      @if (meta(); as m) {
+        <div class="ep-pagination">
+          <span class="pagination-info">
+            {{ 'shared.table.pageSummary' | translate: { page: m.page + 1, total: m.totalPages } }}
+            ({{ m.totalElements }} {{ 'adminOps.sessions.totalItems' | translate }})
+          </span>
+          <div class="pagination-controls">
+            <button class="ep-button ep-button--outline ep-button--small" 
+                    [disabled]="m.page === 0" 
+                    (click)="onPageChange(m.page - 1)">
+              {{ 'shared.table.previous' | translate }}
+            </button>
+            <button class="ep-button ep-button--outline ep-button--small" 
+                    [disabled]="m.page >= m.totalPages - 1" 
+                    (click)="onPageChange(m.page + 1)">
+              {{ 'shared.table.next' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal: Invalidate Session -->
+@if (activeModal() === 'invalidate') {
+  <div class="ep-modal-backdrop" (click)="closeModal()">
+    <div class="ep-modal" (click)="$event.stopPropagation()">
+      <div class="ep-modal-header">
+        <h2 class="ep-modal-title text-danger">{{ 'adminOps.sessions.modal.invalidateTitle' | translate }}</h2>
+        <button class="ep-button-icon" (click)="closeModal()">
+          <ep-icon name="x" />
+        </button>
+      </div>
+      <div class="ep-modal-body">
+        <div class="alert alert--danger mb-4">
+          <ep-icon name="alert-triangle" />
+          <div class="alert-content">
+            <strong>{{ 'adminOps.sessions.modal.dangerTitle' | translate }}</strong>
+            <p>{{ 'adminOps.sessions.modal.invalidateWarning' | translate: { user: selectedSession()?.userName } }}</p>
+          </div>
+        </div>
+
+        <form [formGroup]="invalidateForm" id="invalidateForm" (ngSubmit)="submitInvalidate()">
+          <div class="form-group">
+            <label class="ep-label required">{{ 'adminOps.sessions.modal.reason' | translate }}</label>
+            <textarea class="ep-textarea w-full" formControlName="reason" rows="3" 
+                      [placeholder]="'adminOps.sessions.modal.reasonHint' | translate"></textarea>
+          </div>
+
+          <div class="form-group mt-4">
+            <label class="ep-label required">{{ 'adminOps.sessions.modal.confirmationCode' | translate }}</label>
+            <input type="text" class="ep-input w-full" formControlName="confirmationCode" placeholder="123456" maxlength="6" />
+            <small class="ep-hint">{{ 'adminOps.sessions.modal.totpHint' | translate }}</small>
+          </div>
+        </form>
+      </div>
+      <div class="ep-modal-footer">
+        <button class="ep-button ep-button--outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+          {{ 'action.cancel' | translate }}
+        </button>
+        <button class="ep-button ep-button--danger" form="invalidateForm" type="submit" [disabled]="modalSubmitting()">
+          @if (modalSubmitting()) {
+            <ep-icon name="loader-circle" class="spin" />
+          }
+          {{ 'adminOps.sessions.action.confirmInvalidate' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

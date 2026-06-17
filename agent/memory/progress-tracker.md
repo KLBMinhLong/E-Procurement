@@ -164,7 +164,8 @@
 | Create Admin HTTP Services (User, RBAC, Org Chart tree) | ✅ |
 | Frontend UI: User Management Screen (CRUD & Lock/Unlock) | ✅ |
 | Frontend UI: Role-Permission Matrix Screen (RBAC mapping) | ✅ |
-| Frontend UI: Org Chart Visual Tree Screen (Department hierarchy) | ✅ |
+| Frontend UI: Org Chart Visual Tree Screen (Department hierarchy) | ✅ | 2026-06-17: Updated with deactivate action, headUserId, glAccountPrefix. |
+| Frontend UI: Catalog Category Management | ✅ | 2026-06-17: Complete CRUD with recursive tree flattening, CAPEX flags, special approval threshold rules. |
 | i18n localization (VI/EN) & Integration tests | ✅ |
 
 ### E05: Approval Engine
