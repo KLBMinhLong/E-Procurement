@@ -1,13 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, finalize, of } from 'rxjs';
 
 import { AdminOperationsService } from '../../services/admin-operations.service';
-import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { CatalogCategoryAdmin, CatalogCategoryRequest } from '../../models/admin-operations.model';
+
+import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
+import { EpStatCardComponent } from '../../../../shared/components/ep-stat-card/ep-stat-card.component';
+import { EpFilterBarComponent } from '../../../../shared/components/ep-filter-bar/ep-filter-bar.component';
+import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
+import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
+import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
+import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
+import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
+import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 
 interface CategoryNode extends CatalogCategoryAdmin {
   level: number;
@@ -15,9 +24,22 @@ interface CategoryNode extends CatalogCategoryAdmin {
 }
 
 @Component({
-  selector: 'app-catalog-categories',
+  selector: 'ep-admin-catalog-categories',
   standalone: true,
-  imports: [CommonModule, TranslateModule, EpIconComponent, FormsModule, ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    EpBreadcrumbComponent,
+    EpStatCardComponent,
+    EpFilterBarComponent,
+    EpSkeletonComponent,
+    EpEmptyStateComponent,
+    EpBadgeComponent,
+    EpModalComponent,
+    EpFormFieldComponent,
+    EpIconComponent,
+    EpButtonComponent
+  ],
   templateUrl: './catalog-categories.component.html',
   styleUrl: './catalog-categories.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -31,9 +53,18 @@ export class CatalogCategoriesComponent implements OnInit {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly includeInactive = signal(false);
-  
+
   readonly categories = signal<CatalogCategoryAdmin[]>([]);
-  
+
+  // Client-side filter
+  readonly searchQuery = signal('');
+
+  // Deactivate target
+  readonly deactivateTarget = signal<CategoryNode | null>(null);
+
+  // Modal state — supports create, edit, deactivate modes
+  readonly activeModal = signal<'create' | 'edit' | 'deactivate' | null>(null);
+
   // Computed Tree (flattened for table display)
   readonly flatTree = computed(() => {
     const list = this.categories();
@@ -71,12 +102,31 @@ export class CatalogCategoriesComponent implements OnInit {
     return flattened;
   });
 
-  // Modal State
-  readonly isModalOpen = signal(false);
-  readonly modalMode = signal<'CREATE' | 'UPDATE'>('CREATE');
-  readonly selectedCode = signal<string | null>(null);
-  readonly modalSubmitting = signal(false);
+  // Filtered tree — applies searchQuery client-side filter over flatTree
+  readonly filteredTree = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (!q) return this.flatTree();
+    return this.flatTree().filter(
+      node =>
+        node.name.toLowerCase().includes(q) ||
+        node.code.toLowerCase().includes(q)
+    );
+  });
 
+  // Computed stats
+  readonly activeCount = computed(() =>
+    this.categories().filter(c => !c.isDeleted).length
+  );
+
+  readonly totalItems = computed(() =>
+    this.categories().reduce((sum, c) => sum + c.itemCount, 0)
+  );
+
+  readonly specialApprovalCount = computed(() =>
+    this.categories().filter(c => c.requiresSpecialApproval === true).length
+  );
+
+  // Form (create / edit category)
   readonly categoryForm = this.fb.group({
     code: ['', [Validators.required, Validators.pattern('^[A-Z0-9_-]+$')]],
     name: ['', Validators.required],
@@ -86,6 +136,10 @@ export class CatalogCategoriesComponent implements OnInit {
     requiresRfqAbove: [''],
     isCapex: [false]
   });
+
+  // Legacy modal signals kept for template compatibility
+  readonly modalSubmitting = signal(false);
+  readonly selectedCode = signal<string | null>(null);
 
   ngOnInit() {
     this.loadCategories();
@@ -128,22 +182,21 @@ export class CatalogCategoriesComponent implements OnInit {
       });
   }
 
-  // --- Modal Logic ---
+  // --- Create / Edit Modal Logic ---
+
   openCreateModal() {
-    this.modalMode.set('CREATE');
     this.selectedCode.set(null);
     this.categoryForm.reset({
       requiresSpecialApproval: false,
       isCapex: false
     });
     this.categoryForm.get('code')?.enable();
-    this.isModalOpen.set(true);
+    this.activeModal.set('create');
   }
 
   openUpdateModal(cat: CatalogCategoryAdmin) {
-    this.modalMode.set('UPDATE');
     this.selectedCode.set(cat.code);
-    
+
     this.categoryForm.patchValue({
       code: cat.code,
       name: cat.name,
@@ -154,12 +207,12 @@ export class CatalogCategoriesComponent implements OnInit {
       isCapex: cat.isCapex
     });
     this.categoryForm.get('code')?.disable(); // Code cannot be changed
-    
-    this.isModalOpen.set(true);
+
+    this.activeModal.set('edit');
   }
 
   closeModal() {
-    this.isModalOpen.set(false);
+    this.activeModal.set(null);
   }
 
   submitCategory() {
@@ -182,7 +235,8 @@ export class CatalogCategoriesComponent implements OnInit {
     this.modalSubmitting.set(true);
     const idempotencyKey = crypto.randomUUID();
 
-    const obs$ = this.modalMode() === 'CREATE'
+    const mode = this.activeModal();
+    const obs$ = mode === 'create'
       ? this.opsService.createCatalogCategory(request, idempotencyKey)
       : this.opsService.updateCatalogCategory(this.selectedCode()!, request, idempotencyKey);
 
@@ -201,23 +255,38 @@ export class CatalogCategoriesComponent implements OnInit {
     });
   }
 
-  deactivate(code: string) {
-    if (!confirm(`Are you sure you want to deactivate category: ${code}?`)) {
-      return;
-    }
+  // --- Deactivate Modal Logic ---
+
+  /** Opens the deactivate confirmation modal — replaces the browser confirm() dialog. */
+  openDeactivateModal(cat: CategoryNode) {
+    this.deactivateTarget.set(cat);
+    this.activeModal.set('deactivate');
+  }
+
+  /** Executes deactivation after user confirms in the modal. */
+  submitDeactivate() {
+    const cat = this.deactivateTarget();
+    if (!cat) return;
 
     const idempotencyKey = crypto.randomUUID();
-    this.opsService.deactivateCatalogCategory(code, idempotencyKey)
+
+    this.opsService.deactivateCatalogCategory(cat.code, idempotencyKey)
       .pipe(
         catchError(err => {
-          // If conflict due to active items, show detailed error
-          this.toast.error(err.error?.message || 'adminOps.catalog.toast.deactivateFailed');
+          if (err.status === 409) {
+            // Conflict — category still has active items or children
+            this.toast.error(err.error?.message || 'adminOps.catalog.toast.deactivateConflict');
+          } else {
+            this.toast.error(err.error?.message || 'adminOps.catalog.toast.deactivateFailed');
+          }
           return of(null);
         })
       )
       .subscribe(res => {
         if (res?.success) {
           this.toast.success('adminOps.catalog.toast.deactivateSuccess');
+          this.closeModal();
+          this.deactivateTarget.set(null);
           this.loadCategories();
         }
       });
@@ -227,9 +296,8 @@ export class CatalogCategoriesComponent implements OnInit {
   getAvailableParents() {
     const list = this.categories().filter(c => !c.isDeleted);
     // If updating, prevent selecting self or children
-    if (this.modalMode() === 'UPDATE' && this.selectedCode()) {
+    if (this.activeModal() === 'edit' && this.selectedCode()) {
       const selfCode = this.selectedCode()!;
-      // Quick filter: no self. Advanced: no descendants. Let's just exclude self for simplicity here.
       return list.filter(c => c.code !== selfCode);
     }
     return list;

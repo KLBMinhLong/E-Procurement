@@ -1,20 +1,52 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal
+} from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, interval, of, switchMap, takeWhile } from 'rxjs';
 
 import { AdminOperationsService } from '../../services/admin-operations.service';
-import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PageMeta } from '../../../../core/models/api-response.model';
 import { AuditLogEntry, AuditLogFilter, AuditExportJob } from '../../models/admin-operations.model';
 
+import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
+import { EpStatCardComponent } from '../../../../shared/components/ep-stat-card/ep-stat-card.component';
+import { EpFilterBarComponent } from '../../../../shared/components/ep-filter-bar/ep-filter-bar.component';
+import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
+import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
+import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
+import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
+import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
+
+// Default date range: last 7 days
+const defaultFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+const defaultTo = new Date().toISOString();
+
 @Component({
-  selector: 'app-audit-log',
+  selector: 'ep-admin-audit-log',
   standalone: true,
-  imports: [CommonModule, TranslateModule, EpIconComponent, FormsModule, ReactiveFormsModule],
+  imports: [
+    TranslatePipe,
+    DatePipe,
+    EpBreadcrumbComponent,
+    EpStatCardComponent,
+    EpFilterBarComponent,
+    EpSkeletonComponent,
+    EpEmptyStateComponent,
+    EpBadgeComponent,
+    EpModalComponent,
+    EpIconComponent,
+    EpButtonComponent
+  ],
   templateUrl: './audit-log.component.html',
   styleUrl: './audit-log.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -22,81 +54,78 @@ import { AuditLogEntry, AuditLogFilter, AuditExportJob } from '../../models/admi
 export class AuditLogComponent implements OnInit {
   private readonly opsService = inject(AdminOperationsService);
   private readonly toast = inject(ToastService);
-  private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
-  // State
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
-  
-  readonly logs = signal<AuditLogEntry[]>([]);
-  readonly meta = signal<PageMeta | null>(null);
-  
-  readonly selectedLog = signal<AuditLogEntry | null>(null);
-  
-  readonly exportJob = signal<AuditExportJob | null>(null);
-  readonly exportPolling = signal(false);
-
-  // Filters Form
-  readonly filterForm = this.fb.group({
-    from_time: ['', Validators.required],
-    to_time: ['', Validators.required],
-    actor_id: [''],
-    entity_type: [''],
-    entity_id: [''],
-    action: [''],
-    service_name: [''],
-    is_success: [null as boolean | null]
-  });
-
+  // Filter signals (replace FormBuilder/filterForm)
+  readonly fromTime = signal<string>(defaultFrom);
+  readonly toTime = signal<string>(defaultTo);
+  readonly searchQuery = signal('');
+  readonly successFilter = signal<boolean | null>(null);
   readonly currentPage = signal(0);
   readonly pageSize = signal(20);
 
+  // State signals
+  readonly isLoading = signal(false);
+  readonly error = signal<string | null>(null);
+
+  readonly logs = signal<AuditLogEntry[]>([]);
+  readonly meta = signal<PageMeta | null>(null);
+
+  // Detail modal
+  readonly selectedLog = signal<AuditLogEntry | null>(null);
+  readonly activeModal = signal<'detail' | null>(null);
+
+  // Export signals
+  readonly exportJob = signal<AuditExportJob | null>(null);
+  readonly exportPolling = signal(false);
+
+  // Computed signals
+  readonly successCount = computed(() =>
+    this.logs().filter(log => log.isSuccess === true).length
+  );
+
+  readonly failureCount = computed(() =>
+    this.logs().filter(log => log.isSuccess === false).length
+  );
+
+  readonly isExporting = computed(() => {
+    const job = this.exportJob();
+    if (!job) return false;
+    return job.status !== 'COMPLETED' && job.status !== 'FAILED';
+  });
+
+  readonly exportJobStatus = computed(() => this.exportJob()?.status ?? null);
+
   ngOnInit() {
-    // Set default dates: Last 7 days
-    const to = new Date();
-    const from = new Date();
-    from.setDate(from.getDate() - 7);
-
-    this.filterForm.patchValue({
-      from_time: from.toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm
-      to_time: to.toISOString().slice(0, 16)
-    });
-
     this.loadLogs();
   }
 
   loadLogs(pageIndex = 0) {
-    if (this.filterForm.invalid) {
-      this.filterForm.markAllAsTouched();
-      return;
-    }
-
-    this.loading.set(true);
+    this.isLoading.set(true);
     this.error.set(null);
     this.currentPage.set(pageIndex);
 
-    const fv = this.filterForm.getRawValue();
     const filter: AuditLogFilter = {
-      from_time: new Date(fv.from_time!).toISOString(),
-      to_time: new Date(fv.to_time!).toISOString(),
+      from_time: this.fromTime(),
+      to_time: this.toTime(),
       page: pageIndex,
       size: this.pageSize()
     };
 
-    if (fv.actor_id) filter.actor_id = fv.actor_id;
-    if (fv.entity_type) filter.entity_type = fv.entity_type;
-    if (fv.entity_id) filter.entity_id = fv.entity_id;
-    if (fv.action) filter.action = fv.action;
-    if (fv.service_name) filter.service_name = fv.service_name;
-    if (fv.is_success !== null && fv.is_success !== undefined) {
-      // Form might return string 'true'/'false' depending on select setup, convert it
-      filter.is_success = String(fv.is_success) === 'true';
+    const query = this.searchQuery().trim();
+    if (query) {
+      filter.actor_id = query;
+    }
+
+    const success = this.successFilter();
+    if (success !== null) {
+      filter.is_success = success;
     }
 
     this.opsService.queryAuditLog(filter)
       .pipe(
-        finalize(() => this.loading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoading.set(false)),
         catchError(err => {
           this.error.set(err.error?.message || 'Failed to load audit logs');
           return of(null);
@@ -116,32 +145,37 @@ export class AuditLogComponent implements OnInit {
 
   openDetail(log: AuditLogEntry) {
     this.selectedLog.set(log);
+    this.activeModal.set('detail');
   }
 
   closeDetail() {
     this.selectedLog.set(null);
+    this.activeModal.set(null);
+  }
+
+  resetFilters() {
+    this.fromTime.set(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+    this.toTime.set(new Date().toISOString());
+    this.searchQuery.set('');
+    this.successFilter.set(null);
+    this.loadLogs(0);
   }
 
   // --- Export Logic ---
   exportLogs() {
-    if (this.filterForm.invalid) {
-      this.toast.error('adminOps.audit.validation.datesRequired');
-      return;
-    }
-
-    const fv = this.filterForm.getRawValue();
     const request = {
-      fromTime: new Date(fv.from_time!).toISOString(),
-      toTime: new Date(fv.to_time!).toISOString(),
-      actorId: fv.actor_id || null,
-      entityType: fv.entity_type || null,
-      action: fv.action || null
+      fromTime: this.fromTime(),
+      toTime: this.toTime(),
+      actorId: null as string | null,
+      entityType: null as string | null,
+      action: null as string | null
     };
 
     const idempotencyKey = crypto.randomUUID();
 
     this.opsService.exportAuditLog(request, idempotencyKey)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         catchError(err => {
           this.toast.error(err.error?.message || 'Failed to start export job');
           return of(null);
@@ -160,17 +194,17 @@ export class AuditLogComponent implements OnInit {
 
   private pollExportJob(jobId: string) {
     this.exportPolling.set(true);
-    
+
     interval(5000).pipe(
       takeUntilDestroyed(this.destroyRef),
       switchMap(() => this.opsService.getAuditExportJob(jobId).pipe(
         catchError(() => of(null))
       )),
       takeWhile(res => {
-        if (!res?.success) return true; // Keep polling if minor error? Or maybe stop. Let's stop if error.
+        if (!res?.success) return true;
         const status = res.data.status;
         return status !== 'COMPLETED' && status !== 'FAILED';
-      }, true) // inclusive to emit the final state
+      }, true) // inclusive: emit the final terminal state
     ).subscribe(res => {
       if (!res?.success) {
         this.exportPolling.set(false);
@@ -194,7 +228,8 @@ export class AuditLogComponent implements OnInit {
     if (!job || job.status !== 'COMPLETED') return;
 
     this.opsService.downloadAuditExport(job.jobId).pipe(
-      catchError(err => {
+      takeUntilDestroyed(this.destroyRef),
+      catchError(() => {
         this.toast.error('adminOps.audit.toast.downloadFailed');
         return of(null);
       })
@@ -219,17 +254,5 @@ export class AuditLogComponent implements OnInit {
     } catch {
       return String(obj);
     }
-  }
-
-  resetFilters() {
-    const to = new Date();
-    const from = new Date();
-    from.setDate(from.getDate() - 7);
-
-    this.filterForm.reset({
-      from_time: from.toISOString().slice(0, 16),
-      to_time: to.toISOString().slice(0, 16)
-    });
-    this.loadLogs(0);
   }
 }

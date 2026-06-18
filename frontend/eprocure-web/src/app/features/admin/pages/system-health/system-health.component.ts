@@ -11,8 +11,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
+import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
+import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
+import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
+import { EpStatCardComponent } from '../../../../shared/components/ep-stat-card/ep-stat-card.component';
 import { AdminOperationsService } from '../../services/admin-operations.service';
 import {
   InfraKafkaHealth,
@@ -27,7 +32,18 @@ import {
 @Component({
   selector: 'ep-system-health',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TranslatePipe, EpButtonComponent, EpIconComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    TranslatePipe,
+    HasPermissionDirective,
+    EpBadgeComponent,
+    EpBreadcrumbComponent,
+    EpButtonComponent,
+    EpIconComponent,
+    EpSkeletonComponent,
+    EpStatCardComponent,
+  ],
   templateUrl: './system-health.component.html',
   styleUrl: './system-health.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -36,7 +52,7 @@ export class SystemHealthComponent implements OnInit {
   private readonly adminOps = inject(AdminOperationsService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly loading = signal(true);
+  readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
   readonly healthData = signal<SystemHealthData | null>(null);
 
@@ -68,13 +84,13 @@ export class SystemHealthComponent implements OnInit {
   }
 
   loadHealth(): void {
-    this.loading.set(true);
+    this.isLoading.set(true);
     this.error.set(null);
 
     this.adminOps.getSystemHealth()
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false))
+        finalize(() => this.isLoading.set(false))
       )
       .subscribe({
         next: (response) => {

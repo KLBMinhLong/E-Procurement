@@ -1,33 +1,62 @@
-<div class="ops-console">
-  <header class="ops-header">
-    <div class="ops-header-content">
-      <span class="eyebrow">{{ 'adminOps.config.eyebrow' | translate }}</span>
-      <h1 class="title">{{ 'adminOps.config.title' | translate }}</h1>
-      <p class="subtitle">{{ 'adminOps.config.subtitle' | translate }}</p>
+<section class="config-page" aria-labelledby="config-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ─────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'adminOps.config.eyebrow' | translate }}</span>
+      <h1 id="config-heading" class="page-header__title">{{ 'adminOps.config.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'adminOps.config.subtitle' | translate }}</p>
     </div>
-    <div class="ops-header-actions">
-      <button class="ep-button ep-button--warning" (click)="openRotateKeyModal()">
-        <ep-icon name="key" /> {{ 'adminOps.config.action.rotateKey' | translate }}
-      </button>
-      <button class="ep-button ep-button--outline" (click)="loadConfigs()" [disabled]="loading()">
-        <ep-icon name="refresh-cw" [class.spin]="loading()" /> {{ 'adminOps.config.refresh' | translate }}
-      </button>
+    <div class="page-header__actions">
+      <ep-button id="btn-config-rotate" variant="warning" icon="key"
+                 *epHasPermission="'OPS_CONFIG_WRITE'"
+                 (click)="openRotateKeyModal()">
+        {{ 'adminOps.config.action.rotateKey' | translate }}
+      </ep-button>
+      <ep-button id="btn-config-refresh" variant="outline" icon="refresh-cw"
+                 [disabled]="isLoading()" (click)="loadConfigs()">
+        {{ 'adminOps.config.refresh' | translate }}
+      </ep-button>
     </div>
-  </header>
+  </div>
+
+  <!-- ── Summary Stat Cards ──────────────────────────────────── -->
+  @if (summary()) {
+    <div class="summary-grid" aria-label="System config summary">
+      <ep-stat-card icon="server"
+        [title]="'adminOps.health.col.service' | translate"
+        [value]="summary()!.totalServices.toString()" />
+      <ep-stat-card icon="check-circle"
+        [title]="'adminOps.health.up' | translate"
+        [value]="summary()!.upCount.toString()" />
+      <ep-stat-card icon="alert-triangle"
+        [title]="'adminOps.health.degraded' | translate"
+        [value]="summary()!.degradedCount.toString()" />
+      <ep-stat-card icon="x-circle"
+        [title]="'adminOps.health.down' | translate"
+        [value]="summary()!.downCount.toString()" />
+    </div>
+  }
 
   @if (error()) {
-    <div class="ep-empty-state error">
-      <ep-icon name="alert-triangle" [size]="48" />
-      <h3>{{ 'adminOps.config.errorTitle' | translate }}</h3>
-      <p>{{ error() }}</p>
-      <button class="ep-button ep-button--primary" (click)="loadConfigs()">
+    <ep-empty-state
+      icon="alert-triangle"
+      [title]="'adminOps.config.errorTitle' | translate"
+      [description]="error()">
+      <ep-button variant="primary" (click)="loadConfigs()">
         {{ 'adminOps.config.retry' | translate }}
-      </button>
-    </div>
-  } @else if (loading() && services().length === 0) {
-    <div class="ops-skeleton">
-      <div class="skeleton-sidebar"></div>
-      <div class="skeleton-content"></div>
+      </ep-button>
+    </ep-empty-state>
+  } @else if (isLoading() && services().length === 0) {
+    <!-- Skeleton -->
+    <div class="config-layout config-layout--skeleton">
+      <div class="service-list-skeleton">
+        <ep-skeleton [rows]="6" />
+      </div>
+      <div class="config-details-skeleton">
+        <ep-skeleton [rows]="12" />
+      </div>
     </div>
   } @else {
     <div class="config-layout">
@@ -62,18 +91,8 @@
         @if (selectedService(); as srv) {
           <div class="detail-header">
             <div class="detail-title-group">
-              <div class="status-badge" [ngClass]="srv.status.toLowerCase()">
-                @if (srv.status === 'UP') {
-                  <ep-icon name="check-circle" />
-                } @else if (srv.status === 'DOWN') {
-                  <ep-icon name="x-circle" />
-                } @else if (srv.status === 'DEGRADED') {
-                  <ep-icon name="alert-triangle" />
-                } @else {
-                  <ep-icon name="help-circle" />
-                }
-                {{ 'adminOps.config.status.' + srv.status | translate }}
-              </div>
+              <ep-badge [tone]="statusTone(srv.status)"
+                        [labelKey]="'adminOps.config.status.' + srv.status" />
               <h2>{{ srv.displayName }}</h2>
               @if (srv.version) {
                 <span class="version-tag">v{{ srv.version }}</span>
@@ -81,12 +100,16 @@
             </div>
             
             <div class="detail-actions">
-              <button class="ep-button ep-button--danger-outline" (click)="openRestartModal()">
-                <ep-icon name="radio" /> {{ 'adminOps.config.action.restart' | translate }}
-              </button>
-              <button class="ep-button ep-button--primary" (click)="openUpdateModal()">
-                <ep-icon name="settings" /> {{ 'adminOps.config.action.update' | translate }}
-              </button>
+              <ep-button variant="outline" icon="radio"
+                         *epHasPermission="'OPS_CONFIG_WRITE'"
+                         (click)="openRestartModal()">
+                {{ 'adminOps.config.action.restart' | translate }}
+              </ep-button>
+              <ep-button variant="primary" icon="settings"
+                         *epHasPermission="'OPS_CONFIG_WRITE'"
+                         (click)="openUpdateModal()">
+                {{ 'adminOps.config.action.update' | translate }}
+              </ep-button>
             </div>
           </div>
 
@@ -116,7 +139,7 @@
                       <td class="font-mono">
                         @if (v.isSensitive) {
                           <span class="sensitive-value">********</span>
-                          <span class="badge badge--warning ml-2">{{ 'adminOps.config.sensitive' | translate }}</span>
+                          <ep-badge tone="warning" [labelKey]="'adminOps.config.sensitive'" />
                         } @else {
                           {{ v.value }}
                         }
@@ -144,174 +167,132 @@
   }
 
   <!-- Modal: Update Config -->
-  @if (activeModal() === 'update') {
-    <div class="ep-modal-backdrop" (click)="closeModal()">
-      <div class="ep-modal ep-modal--large" (click)="$event.stopPropagation()">
-        <div class="ep-modal-header">
-          <h2 class="ep-modal-title">{{ 'adminOps.config.modal.updateTitle' | translate }}</h2>
-          <button class="ep-button-icon" (click)="closeModal()">
-            <ep-icon name="x" />
-          </button>
-        </div>
-        <div class="ep-modal-body">
-          <div class="alert alert--warning mb-4">
-            <ep-icon name="alert-triangle" />
-            <div class="alert-content">
-              <strong>{{ 'adminOps.config.modal.warningTitle' | translate }}</strong>
-              <p>{{ 'adminOps.config.modal.updateWarning' | translate }}</p>
-            </div>
-          </div>
+  <ep-modal [open]="activeModal() === 'update'" [title]="'adminOps.config.modal.updateTitle' | translate" size="lg" (close)="closeModal()">
+    <div class="alert alert--warning mb-4">
+      <ep-icon name="alert-triangle" />
+      <div class="alert-content">
+        <strong>{{ 'adminOps.config.modal.warningTitle' | translate }}</strong>
+        <p>{{ 'adminOps.config.modal.updateWarning' | translate }}</p>
+      </div>
+    </div>
 
-          <form [formGroup]="updateForm" id="updateConfigForm" (ngSubmit)="submitUpdate()">
-            <!-- Variables Table -->
-            <div class="variables-edit-list mb-6" formArrayName="variables">
-              @for (ctrl of variablesFormArray.controls; track i; let i = $index) {
-                <div class="form-group row" [formGroupName]="i">
-                  <div class="col-4">
-                    <label class="ep-label">{{ ctrl.get('key')?.value }}</label>
-                  </div>
-                  <div class="col-8">
-                    @if (ctrl.get('isSensitive')?.value) {
-                      <input type="password" class="ep-input w-full" formControlName="value" placeholder="********" />
-                      <small class="ep-hint text-warning">{{ 'adminOps.config.modal.sensitiveHint' | translate }}</small>
-                    } @else {
-                      <input type="text" class="ep-input w-full" formControlName="value" />
-                    }
-                  </div>
-                </div>
+    <form [formGroup]="updateForm" id="updateConfigForm" (ngSubmit)="submitUpdate()">
+      <!-- Variables Table -->
+      <div class="variables-edit-list mb-6" formArrayName="variables">
+        @for (ctrl of variablesFormArray.controls; track i; let i = $index) {
+          <div class="form-group row" [formGroupName]="i">
+            <div class="col-4">
+              <label class="ep-label">{{ ctrl.get('key')?.value }}</label>
+            </div>
+            <div class="col-8">
+              @if (ctrl.get('isSensitive')?.value) {
+                <input type="password" class="ep-input w-full" formControlName="value" placeholder="********" />
+                <small class="ep-hint text-warning">{{ 'adminOps.config.modal.sensitiveHint' | translate }}</small>
+              } @else {
+                <input type="text" class="ep-input w-full" formControlName="value" />
               }
             </div>
-
-            <hr class="my-4">
-
-            <div class="form-group">
-              <label class="ep-checkbox-wrapper">
-                <input type="checkbox" formControlName="requiresRestart" class="ep-checkbox" />
-                <span>{{ 'adminOps.config.modal.requiresRestart' | translate }}</span>
-              </label>
-            </div>
-
-            <div class="form-group mt-4">
-              <label class="ep-label required">{{ 'adminOps.config.modal.changeReason' | translate }}</label>
-              <textarea class="ep-textarea w-full" formControlName="changeReason" rows="3" 
-                        [placeholder]="'adminOps.config.modal.changeReasonHint' | translate"></textarea>
-            </div>
-
-            <div class="form-group mt-4">
-              <label class="ep-label required">{{ 'adminOps.config.modal.confirmationCode' | translate }}</label>
-              <input type="text" class="ep-input w-full" formControlName="confirmationCode" placeholder="123456" maxlength="6" />
-              <small class="ep-hint">{{ 'adminOps.config.modal.totpHint' | translate }}</small>
-            </div>
-          </form>
-        </div>
-        <div class="ep-modal-footer">
-          <button class="ep-button ep-button--outline" (click)="closeModal()" [disabled]="modalSubmitting()">
-            {{ 'action.cancel' | translate }}
-          </button>
-          <button class="ep-button ep-button--primary" form="updateConfigForm" type="submit" [disabled]="modalSubmitting()">
-            @if (modalSubmitting()) {
-              <ep-icon name="loader-circle" class="spin" />
-            }
-            {{ 'adminOps.config.action.applyUpdate' | translate }}
-          </button>
-        </div>
+          </div>
+        }
       </div>
+
+      <hr class="my-4">
+
+      <div class="form-group">
+        <label class="ep-checkbox-wrapper">
+          <input type="checkbox" formControlName="requiresRestart" class="ep-checkbox" />
+          <span>{{ 'adminOps.config.modal.requiresRestart' | translate }}</span>
+        </label>
+      </div>
+
+      <div class="form-group mt-4">
+        <label class="ep-label required">{{ 'adminOps.config.modal.changeReason' | translate }}</label>
+        <textarea class="ep-textarea w-full" formControlName="changeReason" rows="3" 
+                  [placeholder]="'adminOps.config.modal.changeReasonHint' | translate"></textarea>
+      </div>
+
+      <div class="form-group mt-4">
+        <label class="ep-label required">{{ 'adminOps.config.modal.confirmationCode' | translate }}</label>
+        <input type="text" class="ep-input w-full" formControlName="confirmationCode" placeholder="123456" maxlength="6" />
+        <small class="ep-hint">{{ 'adminOps.config.modal.totpHint' | translate }}</small>
+      </div>
+    </form>
+    
+    <div class="modal-actions-footer mt-6">
+      <ep-button variant="outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button variant="primary" type="submit" form="updateConfigForm" [disabled]="modalSubmitting()" [isLoading]="modalSubmitting()">
+        {{ 'adminOps.config.action.applyUpdate' | translate }}
+      </ep-button>
     </div>
-  }
+  </ep-modal>
 
   <!-- Modal: Restart Service -->
-  @if (activeModal() === 'restart') {
-    <div class="ep-modal-backdrop" (click)="closeModal()">
-      <div class="ep-modal" (click)="$event.stopPropagation()">
-        <div class="ep-modal-header">
-          <h2 class="ep-modal-title text-danger">{{ 'adminOps.config.modal.restartTitle' | translate }}</h2>
-          <button class="ep-button-icon" (click)="closeModal()">
-            <ep-icon name="x" />
-          </button>
-        </div>
-        <div class="ep-modal-body">
-          <div class="alert alert--danger mb-4">
-            <ep-icon name="radio" />
-            <div class="alert-content">
-              <strong>{{ 'adminOps.config.modal.dangerTitle' | translate }}</strong>
-              <p>{{ 'adminOps.config.modal.restartWarning' | translate: { service: selectedService()?.displayName } }}</p>
-            </div>
-          </div>
-
-          <form [formGroup]="restartForm" id="restartForm" (ngSubmit)="submitRestart()">
-            <div class="form-group">
-              <label class="ep-label required">{{ 'adminOps.config.modal.changeReason' | translate }}</label>
-              <textarea class="ep-textarea w-full" formControlName="reason" rows="3" 
-                        [placeholder]="'adminOps.config.modal.restartReasonHint' | translate"></textarea>
-            </div>
-
-            <div class="form-group mt-4">
-              <label class="ep-label required">{{ 'adminOps.config.modal.confirmationCode' | translate }}</label>
-              <input type="text" class="ep-input w-full" formControlName="confirmationCode" placeholder="123456" maxlength="6" />
-            </div>
-          </form>
-        </div>
-        <div class="ep-modal-footer">
-          <button class="ep-button ep-button--outline" (click)="closeModal()" [disabled]="modalSubmitting()">
-            {{ 'action.cancel' | translate }}
-          </button>
-          <button class="ep-button ep-button--danger" form="restartForm" type="submit" [disabled]="modalSubmitting()">
-            @if (modalSubmitting()) {
-              <ep-icon name="loader-circle" class="spin" />
-            }
-            {{ 'adminOps.config.action.confirmRestart' | translate }}
-          </button>
-        </div>
+  <ep-modal [open]="activeModal() === 'restart'" [title]="'adminOps.config.modal.restartTitle' | translate" (close)="closeModal()">
+    <div class="alert alert--danger mb-4">
+      <ep-icon name="radio" />
+      <div class="alert-content">
+        <strong>{{ 'adminOps.config.modal.dangerTitle' | translate }}</strong>
+        <p>{{ 'adminOps.config.modal.restartWarning' | translate: { service: selectedService()?.displayName } }}</p>
       </div>
     </div>
-  }
+
+    <form [formGroup]="restartForm" id="restartForm" (ngSubmit)="submitRestart()">
+      <div class="form-group">
+        <label class="ep-label required">{{ 'adminOps.config.modal.changeReason' | translate }}</label>
+        <textarea class="ep-textarea w-full" formControlName="reason" rows="3" 
+                  [placeholder]="'adminOps.config.modal.restartReasonHint' | translate"></textarea>
+      </div>
+
+      <div class="form-group mt-4">
+        <label class="ep-label required">{{ 'adminOps.config.modal.confirmationCode' | translate }}</label>
+        <input type="text" class="ep-input w-full" formControlName="confirmationCode" placeholder="123456" maxlength="6" />
+      </div>
+    </form>
+    
+    <div class="modal-actions-footer mt-6">
+      <ep-button variant="outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button variant="danger" type="submit" form="restartForm" [disabled]="modalSubmitting()" [isLoading]="modalSubmitting()">
+        {{ 'adminOps.config.action.confirmRestart' | translate }}
+      </ep-button>
+    </div>
+  </ep-modal>
 
   <!-- Modal: Rotate Key -->
-  @if (activeModal() === 'rotateKey') {
-    <div class="ep-modal-backdrop" (click)="closeModal()">
-      <div class="ep-modal" (click)="$event.stopPropagation()">
-        <div class="ep-modal-header">
-          <h2 class="ep-modal-title text-warning">{{ 'adminOps.config.modal.rotateKeyTitle' | translate }}</h2>
-          <button class="ep-button-icon" (click)="closeModal()">
-            <ep-icon name="x" />
-          </button>
-        </div>
-        <div class="ep-modal-body">
-          <div class="alert alert--warning mb-4">
-            <ep-icon name="key" />
-            <div class="alert-content">
-              <strong>{{ 'adminOps.config.modal.dangerTitle' | translate }}</strong>
-              <p>{{ 'adminOps.config.modal.rotateKeyWarning' | translate }}</p>
-            </div>
-          </div>
-
-          <form [formGroup]="rotateKeyForm" id="rotateKeyForm" (ngSubmit)="submitRotateKey()">
-            <div class="form-group">
-              <label class="ep-label">{{ 'adminOps.config.modal.keySize' | translate }}</label>
-              <select class="ep-select w-full" formControlName="keySize">
-                <option [ngValue]="2048">2048-bit (Standard)</option>
-                <option [ngValue]="4096">4096-bit (High Security)</option>
-              </select>
-            </div>
-
-            <div class="form-group mt-4">
-              <label class="ep-label required">{{ 'adminOps.config.modal.confirmationCode' | translate }}</label>
-              <input type="text" class="ep-input w-full" formControlName="confirmationCode" placeholder="123456" maxlength="6" />
-            </div>
-          </form>
-        </div>
-        <div class="ep-modal-footer">
-          <button class="ep-button ep-button--outline" (click)="closeModal()" [disabled]="modalSubmitting()">
-            {{ 'action.cancel' | translate }}
-          </button>
-          <button class="ep-button ep-button--warning" form="rotateKeyForm" type="submit" [disabled]="modalSubmitting()">
-            @if (modalSubmitting()) {
-              <ep-icon name="loader-circle" class="spin" />
-            }
-            {{ 'adminOps.config.action.confirmRotate' | translate }}
-          </button>
-        </div>
+  <ep-modal [open]="activeModal() === 'rotateKey'" [title]="'adminOps.config.modal.rotateKeyTitle' | translate" (close)="closeModal()">
+    <div class="alert alert--warning mb-4">
+      <ep-icon name="key" />
+      <div class="alert-content">
+        <strong>{{ 'adminOps.config.modal.dangerTitle' | translate }}</strong>
+        <p>{{ 'adminOps.config.modal.rotateKeyWarning' | translate }}</p>
       </div>
     </div>
-  }
-</div>
+
+    <form [formGroup]="rotateKeyForm" id="rotateKeyForm" (ngSubmit)="submitRotateKey()">
+      <div class="form-group">
+        <label class="ep-label">{{ 'adminOps.config.modal.keySize' | translate }}</label>
+        <select class="ep-select w-full" formControlName="keySize">
+          <option [ngValue]="2048">2048-bit (Standard)</option>
+          <option [ngValue]="4096">4096-bit (High Security)</option>
+        </select>
+      </div>
+
+      <div class="form-group mt-4">
+        <label class="ep-label required">{{ 'adminOps.config.modal.confirmationCode' | translate }}</label>
+        <input type="text" class="ep-input w-full" formControlName="confirmationCode" placeholder="123456" maxlength="6" />
+      </div>
+    </form>
+    
+    <div class="modal-actions-footer mt-6">
+      <ep-button variant="outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+        {{ 'action.cancel' | translate }}
+      </ep-button>
+      <ep-button variant="warning" type="submit" form="rotateKeyForm" [disabled]="modalSubmitting()" [isLoading]="modalSubmitting()">
+        {{ 'adminOps.config.action.confirmRotate' | translate }}
+      </ep-button>
+    </div>
+  </ep-modal>
+</section>

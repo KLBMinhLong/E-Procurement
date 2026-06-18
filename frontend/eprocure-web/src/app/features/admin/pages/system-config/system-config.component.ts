@@ -1,25 +1,44 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators, FormArray } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, finalize, of } from 'rxjs';
+import { ReactiveFormsModule, FormBuilder, Validators, FormArray } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+import { finalize, catchError, of } from 'rxjs';
 
 import { AdminOperationsService } from '../../services/admin-operations.service';
-import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import {
   ServiceConfig,
   ServiceConfigSummary,
-  EnvVariable
 } from '../../models/admin-operations.model';
 
-type ModalType = 'none' | 'update' | 'restart' | 'rotateKey';
+import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
+import { EpStatCardComponent } from '../../../../shared/components/ep-stat-card/ep-stat-card.component';
+import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
+import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
+import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
+import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
+import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
+import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
+import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
+import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
 
 @Component({
-  selector: 'app-system-config',
+  selector: 'ep-admin-system-config',
   standalone: true,
-  imports: [CommonModule, TranslateModule, EpIconComponent, FormsModule, ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    EpBreadcrumbComponent,
+    EpStatCardComponent,
+    EpSkeletonComponent,
+    EpEmptyStateComponent,
+    EpModalComponent,
+    EpFormFieldComponent,
+    EpBadgeComponent,
+    EpIconComponent,
+    EpButtonComponent,
+    HasPermissionDirective,
+  ],
   templateUrl: './system-config.component.html',
   styleUrl: './system-config.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,18 +47,19 @@ export class SystemConfigComponent implements OnInit {
   private readonly opsService = inject(AdminOperationsService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   // State
-  readonly loading = signal(true);
+  readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
-  
+
   readonly summary = signal<ServiceConfigSummary | null>(null);
   readonly services = signal<ServiceConfig[]>([]);
   readonly selectedService = signal<ServiceConfig | null>(null);
   readonly selectedServiceLoading = signal(false);
 
   // Modals state
-  readonly activeModal = signal<ModalType>('none');
+  readonly activeModal = signal<'update' | 'restart' | 'rotateKey' | null>(null);
   readonly modalSubmitting = signal(false);
 
   // Update Config Form
@@ -71,12 +91,13 @@ export class SystemConfigComponent implements OnInit {
   }
 
   loadConfigs() {
-    this.loading.set(true);
+    this.isLoading.set(true);
     this.error.set(null);
 
     this.opsService.listServiceConfigs()
       .pipe(
-        finalize(() => this.loading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoading.set(false)),
         catchError(err => {
           this.error.set(err.error?.message || 'Failed to load configurations');
           return of(null);
@@ -97,6 +118,7 @@ export class SystemConfigComponent implements OnInit {
     this.selectedServiceLoading.set(true);
     this.opsService.getServiceConfig(serviceName)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.selectedServiceLoading.set(false)),
         catchError(err => {
           this.toast.error(err.error?.message || 'Failed to load service configuration');
@@ -110,7 +132,28 @@ export class SystemConfigComponent implements OnInit {
       });
   }
 
-  // --- Update Config Flow ---
+  // ── Status helpers ──────────────────────────────────────────────
+
+  statusIcon(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'UP':       return 'check-circle';
+      case 'DOWN':     return 'x-circle';
+      case 'DEGRADED': return 'alert-triangle';
+      default:         return 'help-circle';
+    }
+  }
+
+  statusTone(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'UP':       return 'success';
+      case 'DOWN':     return 'danger';
+      case 'DEGRADED': return 'warning';
+      default:         return 'neutral';
+    }
+  }
+
+  // ── Update Config Flow ──────────────────────────────────────────
+
   get variablesFormArray() {
     return this.updateForm.get('variables') as FormArray;
   }
@@ -121,7 +164,7 @@ export class SystemConfigComponent implements OnInit {
 
     this.updateForm.reset();
     this.variablesFormArray.clear();
-    
+
     // Populate variables
     srv.variables.forEach((v: any) => {
       this.variablesFormArray.push(this.fb.group({
@@ -136,7 +179,7 @@ export class SystemConfigComponent implements OnInit {
   }
 
   closeModal() {
-    this.activeModal.set('none');
+    this.activeModal.set(null);
   }
 
   submitUpdate() {
@@ -150,10 +193,8 @@ export class SystemConfigComponent implements OnInit {
 
     this.modalSubmitting.set(true);
     const formValue = this.updateForm.getRawValue();
-    
-    // Filter out unchanged or dummy sensitive values if we don't support updating them safely yet
-    // Actually, user might change a value. If it's '********', we should probably strip it out or backend ignores it.
-    // Let's pass what's in the form.
+
+    // Filter out unchanged or dummy sensitive values
     const variables = formValue.variables
       .filter((v: any) => v.value !== '********') // Don't send masked dummy values
       .map((v: any) => ({
@@ -172,6 +213,7 @@ export class SystemConfigComponent implements OnInit {
       requiresRestart: formValue.requiresRestart
     }, idempotencyKey)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.modalSubmitting.set(false)),
         catchError(err => {
           this.toast.error(err.error?.message || 'Failed to update configuration');
@@ -187,7 +229,8 @@ export class SystemConfigComponent implements OnInit {
       });
   }
 
-  // --- Restart Service Flow ---
+  // ── Restart Service Flow ────────────────────────────────────────
+
   openRestartModal() {
     if (!this.selectedService()) return;
     this.restartForm.reset();
@@ -212,6 +255,7 @@ export class SystemConfigComponent implements OnInit {
       confirmationCode: formValue.confirmationCode
     }, idempotencyKey)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.modalSubmitting.set(false)),
         catchError(err => {
           this.toast.error(err.error?.message || 'Failed to trigger restart');
@@ -227,7 +271,8 @@ export class SystemConfigComponent implements OnInit {
       });
   }
 
-  // --- Rotate Key Flow ---
+  // ── Rotate Key Flow ─────────────────────────────────────────────
+
   openRotateKeyModal() {
     this.rotateKeyForm.reset({ keySize: 2048 });
     this.activeModal.set('rotateKey');
@@ -248,6 +293,7 @@ export class SystemConfigComponent implements OnInit {
       confirmationCode: formValue.confirmationCode
     }, idempotencyKey)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.modalSubmitting.set(false)),
         catchError(err => {
           this.toast.error(err.error?.message || 'Failed to rotate key');
