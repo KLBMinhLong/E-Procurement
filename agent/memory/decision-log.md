@@ -699,3 +699,16 @@
 - Reason: The backend facade APIs for cross-service mutations were complete, and the frontend needed robust UI representations to allow safe governance mutations without touching IAM or PR services directly.
 - Impact: `OrgChartComponent` handles structured nested data, deactivation safeguards, and specific metadata like `glAccountPrefix` and `headUserId`. `CatalogCategoriesComponent` surfaces CAPEX toggles and recursive flattening. Both screens pass full compilation, integrate flawlessly with translated keys, and employ `Idempotency-Key` headers correctly.
 - Constraint: High-level System Config update application executors still require future secret-manager integration beyond the current `admin_config_actions` logging.
+
+## [2026-06-18] E12 Report generation robustness and transaction boundary tuning
+
+- Decision: Compiled `.jrxml` templates into `.jasper` binary files at build time and loaded them via `JRLoader` in `LocalReportFileRenderer.java`. Tuned transaction boundaries in `ProcessReportExportJobsUseCase.java` using programmatic `TransactionTemplate` demarcation, and added system-level dependencies (`fontconfig`, `ttf-dejavu`) and `-Djava.awt.headless=true` to the dockerized runtime environment.
+- Reason: Executing XML parsing and compilation at runtime caused parser exceptions and unnecessary CPU/memory overhead. Furthermore, holding DB transactions open across slow CPU/IO operations (like PDF/XLSX rendering) caused connection pool exhaustion and application restarts. In headless Alpine Docker containers, missing OS font packages caused JVM crashes during PDF generation.
+- Impact: Pre-compiled `.jasper` assets ensure rapid, error-free report rendering. The decoupled transaction boundary ensures DB connections are released immediately before launching heavy report compilation/rendering, eliminating connection depletion risks. The added Alpine packages and JVM headless flag ensure stable, correct PDF output in the containerized production environment.
+
+## [2026-06-18] E12 Query parameter type casting for report datasets
+
+- Decision: Applied explicit PostgreSQL type casting (`::timestamptz`, `::uuid`, `::varchar`) to all parameters in MyBatis `IS NULL` filters within `ReportDatasetMapper.java`.
+- Reason: Checking dynamic parameters against NULL without explicit casting in PostgreSQL query blocks causes "could not determine data type of parameter" exceptions at runtime. Unlike H2, PostgreSQL is strictly typed and needs explicit context to determine parameter types.
+- Impact: Report dataset queries are fully compatible with both PostgreSQL and H2 databases, preventing any runtime crashes when exporting reports with partial or null filter criteria.
+

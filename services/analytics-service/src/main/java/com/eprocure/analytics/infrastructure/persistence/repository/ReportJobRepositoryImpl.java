@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,9 +55,18 @@ public class ReportJobRepositoryImpl implements ReportJobRepository {
 
     @Override
     public List<ReportJob> claimQueuedForProcessing(int limit, Instant claimedAt) {
-        return mapper.claimQueuedForProcessing(limit, claimedAt).stream()
-                .map(this::toDomain)
-                .toList();
+        List<ReportJobDbEntity> entities = mapper.selectQueuedForProcessing(limit);
+        if (entities.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<UUID> ids = entities.stream().map(ReportJobDbEntity::getId).toList();
+        mapper.updateStatusToProcessing(ids, claimedAt);
+
+        return entities.stream().map(entity -> {
+            entity.setStatus("PROCESSING");
+            return toDomain(entity);
+        }).toList();
     }
 
     @Override

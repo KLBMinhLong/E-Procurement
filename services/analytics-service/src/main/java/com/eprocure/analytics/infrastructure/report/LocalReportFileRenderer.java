@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import net.sf.jasperreports.engine.util.JRLoader;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -72,16 +72,16 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
         try {
             String templateName = job.reportType().name().toLowerCase().replace('_', '-');
             JasperReport jasperReport;
-            try (InputStream is = getClass().getResourceAsStream("/reports/" + templateName + ".jrxml")) {
+            try (InputStream is = getClass().getResourceAsStream("/reports/" + templateName + ".jasper")) {
                 if (is == null) {
-                    try (InputStream defaultIs = getClass().getResourceAsStream("/reports/default.jrxml")) {
+                    try (InputStream defaultIs = getClass().getResourceAsStream("/reports/default.jasper")) {
                         if (defaultIs == null) {
                             throw new IllegalStateException("Default report template not found");
                         }
-                        jasperReport = JasperCompileManager.compileReport(defaultIs);
+                        jasperReport = (JasperReport) JRLoader.loadObject(defaultIs);
                     }
                 } else {
-                    jasperReport = JasperCompileManager.compileReport(is);
+                    jasperReport = (JasperReport) JRLoader.loadObject(is);
                 }
             }
 

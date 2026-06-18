@@ -654,21 +654,21 @@ services:
       kafka:
         condition: service_started
     cpus: 0.25
-    mem_limit: 256m
+    mem_limit: 384m
     deploy:
       resources:
         limits:
           cpus: "0.25"
-          memory: 256M
+          memory: 384M
         reservations:
           cpus: "0.10"
-          memory: 128M
+          memory: 192M
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8087/actuator/health"]
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 10
-      start_period: 75s
+      start_period: 180s
     logging: *default-logging
 
   admin-service:

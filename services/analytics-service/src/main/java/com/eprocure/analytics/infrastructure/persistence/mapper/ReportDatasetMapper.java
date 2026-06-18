@@ -15,10 +15,10 @@ public interface ReportDatasetMapper {
                 SELECT po.po_id, po.pr_id, po.vendor_name, po.total_amount
                 FROM analytics.po_issued_projections po
                 WHERE po.is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_line_projections filter_line
                       WHERE filter_line.po_id = po.po_id
@@ -31,7 +31,7 @@ public interface ReportDatasetMapper {
                 FROM analytics.po_issued_line_projections line
                 JOIN po ON po.po_id = line.po_id
                 WHERE line.is_deleted = FALSE
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
             )
             SELECT 'Issued PO count' AS label, COUNT(*)::TEXT AS value FROM po
             UNION ALL
@@ -60,10 +60,10 @@ public interface ReportDatasetMapper {
                 SELECT po.pr_id, po.pr_number, po.issued_at
                 FROM analytics.po_issued_projections po
                 WHERE po.is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_line_projections filter_line
                       WHERE filter_line.po_id = po.po_id
@@ -94,8 +94,8 @@ public interface ReportDatasetMapper {
                 SELECT approver_role, assigned_at, breached_at
                 FROM analytics.approval_sla_breach_projections
                 WHERE is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR breached_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR breached_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR breached_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR breached_at < #{toExclusive,jdbcType=TIMESTAMP})
             )
             SELECT 'SLA breach count' AS label, COUNT(*)::TEXT AS value FROM breach
             UNION ALL
@@ -120,9 +120,9 @@ public interface ReportDatasetMapper {
                 SELECT invoice_id, invoice_number, po_id, total_amount, matched_at
                 FROM analytics.invoice_matched_projections
                 WHERE is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR matched_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR matched_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR matched_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR matched_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR vendor_id = #{vendorId,jdbcType=OTHER})
             )
             SELECT 'Matched invoice count' AS label, COUNT(*)::TEXT AS value FROM invoice
             UNION ALL
@@ -156,10 +156,10 @@ public interface ReportDatasetMapper {
                 WHERE pr.is_deleted = FALSE
                   AND po.is_deleted = FALSE
                   AND po.issued_at >= pr.submitted_at
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR pr.submitted_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR pr.submitted_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR pr.submitted_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR pr.submitted_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_line_projections filter_line
                       WHERE filter_line.po_id = po.po_id
@@ -208,10 +208,10 @@ public interface ReportDatasetMapper {
                 SELECT po.po_id, po.vendor_id, po.vendor_name, po.total_amount, po.issued_at
                 FROM analytics.po_issued_projections po
                 WHERE po.is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_line_projections filter_line
                       WHERE filter_line.po_id = po.po_id
@@ -224,8 +224,8 @@ public interface ReportDatasetMapper {
                 FROM analytics.invoice_matched_projections inv
                 JOIN po ON po.po_id = inv.po_id
                 WHERE inv.is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR inv.matched_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR inv.matched_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR inv.matched_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR inv.matched_at < #{toExclusive,jdbcType=TIMESTAMP})
             )
             SELECT 'Vendor count' AS label, COUNT(DISTINCT vendor_id)::TEXT AS value FROM po WHERE vendor_id IS NOT NULL
             UNION ALL
@@ -259,7 +259,7 @@ public interface ReportDatasetMapper {
                     po.po_id,
                     po.pr_id,
                     CASE
-                        WHEN #{categoryCode,jdbcType=VARCHAR} IS NULL THEN po.total_amount
+                        WHEN #{categoryCode,jdbcType=VARCHAR}::varchar IS NULL THEN po.total_amount
                         ELSE COALESCE((
                             SELECT SUM(filter_line.total_price)
                             FROM analytics.po_issued_line_projections filter_line
@@ -271,10 +271,10 @@ public interface ReportDatasetMapper {
                 FROM analytics.po_issued_projections po
                 WHERE po.is_deleted = FALSE
                   AND po.pr_id IS NOT NULL
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_line_projections filter_line
                       WHERE filter_line.po_id = po.po_id
@@ -331,7 +331,7 @@ public interface ReportDatasetMapper {
                     po.po_id,
                     po.currency,
                     CASE
-                        WHEN #{categoryCode,jdbcType=VARCHAR} IS NULL THEN po.total_amount
+                        WHEN #{categoryCode,jdbcType=VARCHAR}::varchar IS NULL THEN po.total_amount
                         ELSE COALESCE((
                             SELECT SUM(filter_line.total_price)
                             FROM analytics.po_issued_line_projections filter_line
@@ -343,10 +343,10 @@ public interface ReportDatasetMapper {
                     po.issued_at
                 FROM analytics.po_issued_projections po
                 WHERE po.is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR po.issued_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_line_projections filter_line
                       WHERE filter_line.po_id = po.po_id
@@ -359,7 +359,7 @@ public interface ReportDatasetMapper {
                 FROM analytics.po_issued_line_projections line
                 JOIN po ON po.po_id = line.po_id
                 WHERE line.is_deleted = FALSE
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
             )
             SELECT 'Actual PO spend' AS label, COALESCE(ROUND(SUM(actual_spend), 4), 0)::TEXT AS value FROM po
             UNION ALL
@@ -392,10 +392,10 @@ public interface ReportDatasetMapper {
                 SELECT rfq.rfq_id, rfq.rfq_number, rfq.vendor_id, rfq.vendor_name, rfq.total_amount, rfq.awarded_at
                 FROM analytics.rfq_awarded_projections rfq
                 WHERE rfq.is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR rfq.awarded_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR rfq.awarded_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR rfq.vendor_id = #{vendorId,jdbcType=OTHER})
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR rfq.awarded_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR rfq.awarded_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR rfq.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.rfq_awarded_line_projections filter_line
                       WHERE filter_line.rfq_id = rfq.rfq_id
@@ -408,7 +408,7 @@ public interface ReportDatasetMapper {
                 FROM analytics.rfq_awarded_line_projections line
                 JOIN rfq ON rfq.rfq_id = line.rfq_id
                 WHERE line.is_deleted = FALSE
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR line.category_code = #{categoryCode,jdbcType=VARCHAR})
             )
             SELECT 'Awarded RFQ count' AS label, COUNT(*)::TEXT AS value FROM rfq
             UNION ALL
@@ -449,9 +449,9 @@ public interface ReportDatasetMapper {
                 FROM analytics.goods_receipt_created_projections gr
                 LEFT JOIN analytics.po_issued_projections po ON po.po_id = gr.po_id AND po.is_deleted = FALSE
                 WHERE gr.is_deleted = FALSE
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR gr.completed_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR gr.completed_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR gr.completed_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR gr.completed_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR po.vendor_id = #{vendorId,jdbcType=OTHER})
             ),
             line AS (
                 SELECT
@@ -470,7 +470,7 @@ public interface ReportDatasetMapper {
                   ON po_line.po_line_item_id = line.po_line_item_id
                  AND po_line.is_deleted = FALSE
                 WHERE line.is_deleted = FALSE
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR po_line.category_code = #{categoryCode,jdbcType=VARCHAR})
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR po_line.category_code = #{categoryCode,jdbcType=VARCHAR})
             )
             SELECT 'Goods receipt count' AS label, COUNT(DISTINCT gr_id)::TEXT AS value FROM line
             UNION ALL
@@ -510,16 +510,16 @@ public interface ReportDatasetMapper {
                 FROM analytics.pr_submitted_projections pr
                 WHERE pr.is_deleted = FALSE
                   AND UPPER(pr.priority) = 'EMERGENCY'
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR pr.submitted_at >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR pr.submitted_at < #{toExclusive,jdbcType=TIMESTAMP})
-                  AND (#{vendorId,jdbcType=OTHER} IS NULL OR EXISTS (
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR pr.submitted_at >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR pr.submitted_at < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{vendorId,jdbcType=OTHER}::uuid IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_projections po
                       WHERE po.pr_id = pr.pr_id
                         AND po.is_deleted = FALSE
                         AND po.vendor_id = #{vendorId,jdbcType=OTHER}
                   ))
-                  AND (#{categoryCode,jdbcType=VARCHAR} IS NULL OR EXISTS (
+                  AND (#{categoryCode,jdbcType=VARCHAR}::varchar IS NULL OR EXISTS (
                       SELECT 1
                       FROM analytics.po_issued_projections po
                       JOIN analytics.po_issued_line_projections line ON line.po_id = po.po_id
@@ -562,8 +562,8 @@ public interface ReportDatasetMapper {
                 FROM analytics.event_processing_log
                 WHERE is_deleted = FALSE
                   AND status = 'PROCESSED'
-                  AND (#{fromInclusive,jdbcType=TIMESTAMP} IS NULL OR event_timestamp >= #{fromInclusive,jdbcType=TIMESTAMP})
-                  AND (#{toExclusive,jdbcType=TIMESTAMP} IS NULL OR event_timestamp < #{toExclusive,jdbcType=TIMESTAMP})
+                  AND (#{fromInclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR event_timestamp >= #{fromInclusive,jdbcType=TIMESTAMP})
+                  AND (#{toExclusive,jdbcType=TIMESTAMP}::timestamptz IS NULL OR event_timestamp < #{toExclusive,jdbcType=TIMESTAMP})
             )
             SELECT 'Processed analytics event count' AS label, COUNT(*)::TEXT AS value FROM processed_event
             UNION ALL
