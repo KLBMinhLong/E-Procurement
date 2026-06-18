@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
@@ -71,18 +72,12 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
     private byte[] renderPdf(ReportJob job, ReportDataset dataset) {
         try {
             String templateName = job.reportType().name().toLowerCase().replace('_', '-');
-            JasperReport jasperReport;
-            try (InputStream is = getClass().getResourceAsStream("/reports/" + templateName + ".jasper")) {
-                if (is == null) {
-                    try (InputStream defaultIs = getClass().getResourceAsStream("/reports/default.jasper")) {
-                        if (defaultIs == null) {
-                            throw new IllegalStateException("Default report template not found");
-                        }
-                        jasperReport = (JasperReport) JRLoader.loadObject(defaultIs);
-                    }
-                } else {
-                    jasperReport = (JasperReport) JRLoader.loadObject(is);
-                }
+            JasperReport jasperReport = loadJasperReport(templateName);
+            if (jasperReport == null) {
+                jasperReport = loadJasperReport("default");
+            }
+            if (jasperReport == null) {
+                throw new IllegalStateException("No report template found for '" + templateName + "' or 'default'");
             }
 
             ReportLayoutTemplate template = ReportLayoutTemplate.resolve(job.reportType());
@@ -293,5 +288,29 @@ public class LocalReportFileRenderer implements ReportFileRenderer {
 
     private String sheetName(String reportType) {
         return truncate(reportType.replace('_', ' ').replaceAll("[\\\\/?*\\[\\]:]", " "), 31);
+    }
+
+    /**
+     * Load a JasperReport by name. Tries pre-compiled .jasper first, then
+     * falls back to compiling from .jrxml source at runtime.
+     */
+    private JasperReport loadJasperReport(String templateName) {
+        // 1. Try pre-compiled .jasper (if a build plugin produced it)
+        try (InputStream is = getClass().getResourceAsStream("/reports/" + templateName + ".jasper")) {
+            if (is != null) {
+                return (JasperReport) JRLoader.loadObject(is);
+            }
+        } catch (Exception ignored) {
+            // fall through to .jrxml
+        }
+        // 2. Compile .jrxml on-the-fly
+        try (InputStream is = getClass().getResourceAsStream("/reports/" + templateName + ".jrxml")) {
+            if (is != null) {
+                return JasperCompileManager.compileReport(is);
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to compile report template: " + templateName + ".jrxml", e);
+        }
+        return null;
     }
 }
