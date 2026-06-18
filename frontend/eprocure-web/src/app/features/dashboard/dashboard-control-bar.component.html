@@ -72,8 +72,7 @@
       } @else {
         <select
           id="dashboard-department-id"
-          formControlName="departmentId"
-          [disabled]="departmentsLoading">
+          formControlName="departmentId">
           <option value="">{{ 'dashboard.filter.allDepartments' | translate }}</option>
           @for (department of departmentOptions; track department.id) {
             <option [value]="department.id">{{ department.label }}</option>

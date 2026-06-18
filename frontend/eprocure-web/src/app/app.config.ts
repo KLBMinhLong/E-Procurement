@@ -132,6 +132,11 @@ import {
   LucideLayoutGrid,
   LucideColumns3,
   LucideCircleDollarSign,
+  LucideFolders,
+  LucideMinus,
+  LucideEdit2,
+  LucideMonitor,
+  LucidePowerOff,
   provideLucideConfig,
   provideLucideIcons
 } from '@lucide/angular';
@@ -296,7 +301,12 @@ export const appConfig: ApplicationConfig = {
       LucideLockKeyhole,
       LucideLayoutGrid,
       LucideColumns3,
-      LucideCircleDollarSign
+      LucideCircleDollarSign,
+      LucideFolders,
+      LucideMinus,
+      LucideEdit2,
+      LucideMonitor,
+      LucidePowerOff
     ),
     provideLucideConfig({
       strokeWidth: 1.8,
