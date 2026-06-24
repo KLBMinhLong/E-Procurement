@@ -9,12 +9,12 @@
       <p class="page-header__subtitle">{{ 'adminOps.config.subtitle' | translate }}</p>
     </div>
     <div class="page-header__actions">
-      <ep-button id="btn-config-rotate" variant="warning" icon="key"
+      <ep-button id="btn-config-rotate" variant="danger" icon="key"
                  *epHasPermission="'OPS_CONFIG_WRITE'"
                  (click)="openRotateKeyModal()">
         {{ 'adminOps.config.action.rotateKey' | translate }}
       </ep-button>
-      <ep-button id="btn-config-refresh" variant="outline" icon="refresh-cw"
+      <ep-button id="btn-config-refresh" variant="ghost" icon="refresh-cw"
                  [disabled]="isLoading()" (click)="loadConfigs()">
         {{ 'adminOps.config.refresh' | translate }}
       </ep-button>
@@ -43,7 +43,7 @@
     <ep-empty-state
       icon="alert-triangle"
       [title]="'adminOps.config.errorTitle' | translate"
-      [description]="error()">
+      [message]="error()">
       <ep-button variant="primary" (click)="loadConfigs()">
         {{ 'adminOps.config.retry' | translate }}
       </ep-button>
@@ -100,7 +100,7 @@
             </div>
             
             <div class="detail-actions">
-              <ep-button variant="outline" icon="radio"
+              <ep-button variant="ghost" icon="radio"
                          *epHasPermission="'OPS_CONFIG_WRITE'"
                          (click)="openRestartModal()">
                 {{ 'adminOps.config.action.restart' | translate }}
@@ -219,10 +219,10 @@
     </form>
     
     <div class="modal-actions-footer mt-6">
-      <ep-button variant="outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+      <ep-button variant="ghost" (click)="closeModal()" [disabled]="modalSubmitting()">
         {{ 'action.cancel' | translate }}
       </ep-button>
-      <ep-button variant="primary" type="submit" form="updateConfigForm" [disabled]="modalSubmitting()" [isLoading]="modalSubmitting()">
+      <ep-button variant="primary" type="submit" form="updateConfigForm" [disabled]="modalSubmitting()" [loading]="modalSubmitting()">
         {{ 'adminOps.config.action.applyUpdate' | translate }}
       </ep-button>
     </div>
@@ -252,10 +252,10 @@
     </form>
     
     <div class="modal-actions-footer mt-6">
-      <ep-button variant="outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+      <ep-button variant="ghost" (click)="closeModal()" [disabled]="modalSubmitting()">
         {{ 'action.cancel' | translate }}
       </ep-button>
-      <ep-button variant="danger" type="submit" form="restartForm" [disabled]="modalSubmitting()" [isLoading]="modalSubmitting()">
+      <ep-button variant="danger" type="submit" form="restartForm" [disabled]="modalSubmitting()" [loading]="modalSubmitting()">
         {{ 'adminOps.config.action.confirmRestart' | translate }}
       </ep-button>
     </div>
@@ -287,10 +287,10 @@
     </form>
     
     <div class="modal-actions-footer mt-6">
-      <ep-button variant="outline" (click)="closeModal()" [disabled]="modalSubmitting()">
+      <ep-button variant="ghost" (click)="closeModal()" [disabled]="modalSubmitting()">
         {{ 'action.cancel' | translate }}
       </ep-button>
-      <ep-button variant="warning" type="submit" form="rotateKeyForm" [disabled]="modalSubmitting()" [isLoading]="modalSubmitting()">
+      <ep-button variant="danger" type="submit" form="rotateKeyForm" [disabled]="modalSubmitting()" [loading]="modalSubmitting()">
         {{ 'adminOps.config.action.confirmRotate' | translate }}
       </ep-button>
     </div>

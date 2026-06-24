@@ -11,13 +11,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
-import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
 import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
 import { EpBreadcrumbComponent } from '../../../../shared/components/ep-breadcrumb/ep-breadcrumb.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { EpStatCardComponent } from '../../../../shared/components/ep-stat-card/ep-stat-card.component';
+import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
 import { AdminOperationsService } from '../../services/admin-operations.service';
 import {
   InfraKafkaHealth,
@@ -36,13 +36,13 @@ import {
     DatePipe,
     DecimalPipe,
     TranslatePipe,
-    HasPermissionDirective,
     EpBadgeComponent,
     EpBreadcrumbComponent,
-    EpButtonComponent,
     EpIconComponent,
     EpSkeletonComponent,
-    EpStatCardComponent,
+    EpEmptyStateComponent,
+    EpButtonComponent,
+    EpStatCardComponent
   ],
   templateUrl: './system-health.component.html',
   styleUrl: './system-health.component.scss',
@@ -106,8 +106,8 @@ export class SystemHealthComponent implements OnInit {
       });
   }
 
-  statusIcon(status: ServiceHealthStatus | OverallHealthStatus | string): string {
-    switch (status) {
+  statusIcon(status: string): string {
+    switch (status?.toUpperCase()) {
       case 'UP': return 'check-circle';
       case 'DOWN': return 'x-circle';
       case 'DEGRADED': return 'alert-triangle';
@@ -115,12 +115,12 @@ export class SystemHealthComponent implements OnInit {
     }
   }
 
-  statusTone(status: ServiceHealthStatus | OverallHealthStatus | string): string {
-    switch (status) {
+  statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' | 'info' {
+    switch (status?.toUpperCase()) {
       case 'UP': return 'success';
       case 'DOWN': return 'danger';
       case 'DEGRADED': return 'warning';
-      default: return 'muted';
+      default: return 'neutral';
     }
   }
 

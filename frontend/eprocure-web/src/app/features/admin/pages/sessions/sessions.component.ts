@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, DestroyRef } from '@angular/core';
+import { DatePipe, LowerCasePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of } from 'rxjs';
 
 import { AdminOperationsService } from '../../services/admin-operations.service';
@@ -25,6 +26,7 @@ import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.c
   imports: [
     TranslatePipe,
     DatePipe,
+    LowerCasePipe,
     EpBreadcrumbComponent,
     EpStatCardComponent,
     EpFilterBarComponent,
@@ -43,6 +45,7 @@ import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.c
 export class SessionsComponent implements OnInit {
   private readonly opsService = inject(AdminOperationsService);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // State
   readonly isLoading = signal(false);
@@ -94,6 +97,7 @@ export class SessionsComponent implements OnInit {
 
     this.opsService.listActiveSessions(filter)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isLoading.set(false)),
         catchError(err => {
           this.error.set(err.error?.message || 'Failed to load active sessions');
@@ -141,6 +145,7 @@ export class SessionsComponent implements OnInit {
 
     this.opsService.invalidateSession(this.selectedSession()!.sessionId, reason, idempotencyKey)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.modalSubmitting.set(false)),
         catchError(err => {
           this.toast.error(err.error?.message || 'adminOps.sessions.toast.invalidateFailed');

@@ -23,7 +23,7 @@ RUN addgroup -S app && adduser -S app -G app && mkdir -p /app/logs /app/agents &
 WORKDIR /app
 
 ENV TZ=Asia/Ho_Chi_Minh
-ENV JAVA_OPTS="-Xms96m -Xmx192m -javaagent:/app/agents/opentelemetry-javaagent.jar"
+ENV JAVA_OPTS="-Xms96m -Xmx192m -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=96m -javaagent:/app/agents/opentelemetry-javaagent.jar"
 
 COPY infra/otel/opentelemetry-javaagent.jar /app/agents/opentelemetry-javaagent.jar
 COPY --from=builder /workspace/services/inventory-service/target/inventory-service-*.jar /app/app.jar

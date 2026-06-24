@@ -16,11 +16,11 @@ import { EpStatCardComponent } from '../../../../shared/components/ep-stat-card/
 import { EpSkeletonComponent } from '../../../../shared/components/ep-skeleton/ep-skeleton.component';
 import { EpEmptyStateComponent } from '../../../../shared/components/ep-empty-state/ep-empty-state.component';
 import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-modal.component';
-import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpBadgeComponent } from '../../../../shared/components/ep-badge/ep-badge.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
 import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
+import { NgClass, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'ep-admin-system-config',
@@ -28,12 +28,13 @@ import { HasPermissionDirective } from '../../../../core/permissions/has-permiss
   imports: [
     ReactiveFormsModule,
     TranslatePipe,
+    DatePipe,
+    NgClass,
     EpBreadcrumbComponent,
     EpStatCardComponent,
     EpSkeletonComponent,
     EpEmptyStateComponent,
     EpModalComponent,
-    EpFormFieldComponent,
     EpBadgeComponent,
     EpIconComponent,
     EpButtonComponent,
@@ -143,7 +144,7 @@ export class SystemConfigComponent implements OnInit {
     }
   }
 
-  statusTone(status: string): string {
+  statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' | 'info' {
     switch (status?.toUpperCase()) {
       case 'UP':       return 'success';
       case 'DOWN':     return 'danger';

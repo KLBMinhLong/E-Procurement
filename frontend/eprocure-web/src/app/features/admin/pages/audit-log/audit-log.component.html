@@ -27,13 +27,13 @@
               {{ 'adminOps.audit.action.download' | translate }}
             </ep-button>
           } @else if (job.status === 'FAILED') {
-            <ep-button variant="outline" icon="refresh-cw" (click)="exportLogs()">
+            <ep-button variant="ghost" icon="refresh-cw" (click)="exportLogs()">
               {{ 'adminOps.audit.action.retryExport' | translate }}
             </ep-button>
           }
         </div>
       } @else {
-        <ep-button variant="outline" icon="download" *epHasPermission="'SYSTEM_AUDIT_VIEW'" (click)="exportLogs()">
+        <ep-button variant="ghost" icon="download" *epHasPermission="'SYSTEM_AUDIT_VIEW'" (click)="exportLogs()">
           {{ 'adminOps.audit.action.export' | translate }}
         </ep-button>
       }
@@ -83,7 +83,7 @@
           </div>
         </div>
         <div class="filter-group action">
-          <ep-button variant="text" (click)="resetFilters()">{{ 'action.clear' | translate }}</ep-button>
+          <ep-button variant="ghost" (click)="resetFilters()">{{ 'action.clear' | translate }}</ep-button>
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@
     <ep-empty-state
       icon="alert-triangle"
       [title]="'adminOps.config.errorTitle' | translate"
-      [description]="error()">
+      [message]="error()">
       <ep-button variant="primary" (click)="loadLogs(currentPage())">
         {{ 'adminOps.audit.action.retry' | translate }}
       </ep-button>
@@ -105,7 +105,7 @@
     <ep-empty-state
       icon="search"
       [title]="'shared.empty.title' | translate"
-      [description]="'shared.empty.message' | translate">
+      [message]="'shared.empty.message' | translate">
     </ep-empty-state>
   } @else {
     <div class="audit-table-wrapper">
@@ -138,7 +138,7 @@
                 <div class="entity-info">
                   <span class="entity-type font-mono text-sm">{{ log.entityType }}</span>
                   @if (log.entityNumber) {
-                    <ep-badge [label]="log.entityNumber" />
+                    <span class="badge badge--neutral text-xs">{{ log.entityNumber }}</span>
                   }
                 </div>
               </td>
@@ -166,10 +166,10 @@
             ({{ m.totalElements }} {{ 'adminOps.audit.totalItems' | translate }})
           </span>
           <div class="pagination-controls">
-            <ep-button variant="outline" [disabled]="m.page === 0" (click)="onPageChange(m.page - 1)">
+            <ep-button variant="ghost" [disabled]="m.page === 0" (click)="onPageChange(m.page - 1)">
               {{ 'shared.table.previous' | translate }}
             </ep-button>
-            <ep-button variant="outline" [disabled]="m.page >= m.totalPages - 1" (click)="onPageChange(m.page + 1)">
+            <ep-button variant="ghost" [disabled]="m.page >= m.totalPages - 1" (click)="onPageChange(m.page + 1)">
               {{ 'shared.table.next' | translate }}
             </ep-button>
           </div>

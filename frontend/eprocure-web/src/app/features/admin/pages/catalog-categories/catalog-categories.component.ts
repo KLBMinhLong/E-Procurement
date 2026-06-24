@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of } from 'rxjs';
 
 import { AdminOperationsService } from '../../services/admin-operations.service';
@@ -17,6 +19,7 @@ import { EpModalComponent } from '../../../../shared/components/ep-modal/ep-moda
 import { EpFormFieldComponent } from '../../../../shared/components/ep-form-field/ep-form-field.component';
 import { EpIconComponent } from '../../../../shared/components/ep-icon/ep-icon.component';
 import { EpButtonComponent } from '../../../../shared/components/ep-button/ep-button.component';
+import { HasPermissionDirective } from '../../../../core/permissions/has-permission.directive';
 
 interface CategoryNode extends CatalogCategoryAdmin {
   level: number;
@@ -28,6 +31,7 @@ interface CategoryNode extends CatalogCategoryAdmin {
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    DecimalPipe,
     TranslatePipe,
     EpBreadcrumbComponent,
     EpStatCardComponent,
@@ -38,7 +42,8 @@ interface CategoryNode extends CatalogCategoryAdmin {
     EpModalComponent,
     EpFormFieldComponent,
     EpIconComponent,
-    EpButtonComponent
+    EpButtonComponent,
+    HasPermissionDirective
   ],
   templateUrl: './catalog-categories.component.html',
   styleUrl: './catalog-categories.component.scss',
@@ -48,6 +53,7 @@ export class CatalogCategoriesComponent implements OnInit {
   private readonly opsService = inject(AdminOperationsService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   // State
   readonly loading = signal(false);
@@ -144,17 +150,18 @@ export class CatalogCategoriesComponent implements OnInit {
   ngOnInit() {
     this.loadCategories();
 
-    // Toggle special approver role field based on checkbox
-    this.categoryForm.get('requiresSpecialApproval')?.valueChanges.subscribe(req => {
-      const roleCtrl = this.categoryForm.get('specialApproverRole');
-      if (req) {
-        roleCtrl?.setValidators([Validators.required]);
-      } else {
-        roleCtrl?.clearValidators();
-        roleCtrl?.setValue('');
-      }
-      roleCtrl?.updateValueAndValidity();
-    });
+    this.categoryForm.get('requiresSpecialApproval')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(req => {
+        const roleCtrl = this.categoryForm.get('specialApproverRole');
+        if (req) {
+          roleCtrl?.setValidators([Validators.required]);
+        } else {
+          roleCtrl?.clearValidators();
+          roleCtrl?.setValue('');
+        }
+        roleCtrl?.updateValueAndValidity();
+      });
   }
 
   toggleInactive(event: Event) {
@@ -169,6 +176,7 @@ export class CatalogCategoriesComponent implements OnInit {
 
     this.opsService.listCatalogCategories(this.includeInactive())
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.loading.set(false)),
         catchError(err => {
           this.error.set(err.error?.message || 'Failed to load categories');
@@ -241,6 +249,7 @@ export class CatalogCategoriesComponent implements OnInit {
       : this.opsService.updateCatalogCategory(this.selectedCode()!, request, idempotencyKey);
 
     obs$.pipe(
+      takeUntilDestroyed(this.destroyRef),
       finalize(() => this.modalSubmitting.set(false)),
       catchError(err => {
         this.toast.error(err.error?.message || 'adminOps.catalog.toast.saveFailed');
@@ -272,6 +281,7 @@ export class CatalogCategoriesComponent implements OnInit {
 
     this.opsService.deactivateCatalogCategory(cat.code, idempotencyKey)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         catchError(err => {
           if (err.status === 409) {
             // Conflict — category still has active items or children

@@ -37,15 +37,20 @@
   @if (isLoading() && !healthData()) {
     <ep-skeleton [rows]="8" />
   } @else if (error() && !isLoading()) {
-    <div class="health-error">
-      <ep-icon name="alert-triangle" [size]="40"></ep-icon>
-      <h3>{{ 'adminOps.health.errorTitle' | translate }}</h3>
-      <p>{{ error() }}</p>
+    <ep-empty-state
+      icon="alert-triangle"
+      [title]="'adminOps.health.errorTitle' | translate"
+      [message]="error()!">
       <ep-button variant="primary" (click)="loadHealth()">
-        <ep-icon name="refresh-cw" [size]="16"></ep-icon>
         {{ 'adminOps.health.retry' | translate }}
       </ep-button>
-    </div>
+    </ep-empty-state>
+  } @else if (!isLoading() && services().length === 0) {
+    <ep-empty-state
+      icon="server"
+      [title]="'shared.empty.title' | translate"
+      [message]="'shared.empty.message' | translate">
+    </ep-empty-state>
   } @else if (healthData(); as data) {
     <div class="health-dashboard" [class.health-dashboard--refreshing]="isLoading()">
 

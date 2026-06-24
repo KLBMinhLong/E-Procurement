@@ -7,7 +7,7 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, interval, of, switchMap, takeWhile } from 'rxjs';
@@ -37,6 +37,7 @@ const defaultTo = new Date().toISOString();
   imports: [
     TranslatePipe,
     DatePipe,
+    NgClass,
     EpBreadcrumbComponent,
     EpStatCardComponent,
     EpFilterBarComponent,

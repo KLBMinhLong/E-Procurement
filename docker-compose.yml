@@ -456,15 +456,15 @@ services:
       kafka:
         condition: service_healthy
     cpus: 0.25
-    mem_limit: 256m
+    mem_limit: 384m
     deploy:
       resources:
         limits:
           cpus: "0.25"
-          memory: 256M
+          memory: 384M
         reservations:
           cpus: "0.10"
-          memory: 128M
+          memory: 192M
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8085/actuator/health"]
       interval: 15s
