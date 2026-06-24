@@ -1,5 +1,82 @@
 # Decision Log
 
+## [2026-06-15] E13 admin-service backend foundation
+
+- Decision: Scaffold `admin-service` as a dedicated Maven/Docker service on port 8089 behind existing gateway route `/api/v1/admin/*`, starting with read-only `SYSTEM_CONFIG` endpoints for service config and system health.
+- Reason: `docs/api/admin-service.openapi.yaml`, gateway config, Prometheus target, and Admin Config UI plan already treat admin-service as a separate operational boundary, while checkout runtime had no `services/admin-service` module.
+- Impact: `GET /api/v1/admin/config/services`, `GET /api/v1/admin/config/services/{serviceName}`, and `GET /api/v1/admin/health` now exist with gateway header authentication, permission-code guards, service health probes, infrastructure TCP checks, and masked sensitive config values.
+- Constraint: High-risk actions such as config update, service restart, encryption key rotation, and session invalidation remain deferred until TOTP/idempotency/audit persistence are added.
+
+## [2026-06-15] E13 admin audit log read API
+
+- Decision: Add `GET /api/v1/admin/audit-log` to `admin-service` as the first DB-backed admin capability, reading from owned `db_audit` / `audit.audit_logs`.
+- Reason: Audit viewing is a read-only governance workflow and should be implemented before high-risk system mutations; it also turns the documented immutable audit schema into a runtime contract.
+- Impact: Admin-service now has PostgreSQL/Flyway/MyBatis config, an audit log foundation migration, `SYSTEM_AUDIT_VIEW` guarded query endpoint, required `from_time`/`to_time` validation, optional actor/entity/action/service/success filters, and 1-based pagination metadata.
+- Constraint: Audit writers from every service remain follow-up slices; this slice only creates/query-reads the audit table.
+
+## [2026-06-15] E13 admin audit log export job
+
+- Decision: Add `POST /api/v1/admin/audit-log/export` to create a queued audit export job in `audit.audit_export_jobs`, guarded by `SYSTEM_AUDIT_VIEW`.
+- Reason: Audit export is a governance workflow but can be safely introduced as an idempotent queue request before adding file rendering workers.
+- Impact: Export requests now require `Idempotency-Key`, replay existing jobs by `(created_by, idempotency_key)`, validate `fromTime`/`toTime`, persist requested filters, and return `202 QUEUED` or `200` with `Idempotency-Replayed`.
+- Follow-up: The worker/download follow-up was completed in the next E13 admin audit export worker slice.
+
+## [2026-06-15] E13 admin audit export worker and download
+
+- Decision: Add an admin-service scheduled worker that claims queued audit export jobs, reads filtered audit rows, renders local XLSX files with Apache POI, and serves completed files from authenticated job download endpoints.
+- Reason: The queued export API needed a complete operational loop so the Admin Portal can poll job status and download audit evidence without direct database/file access.
+- Impact: `audit.audit_export_jobs` now transitions `QUEUED -> PROCESSING -> COMPLETED/FAILED`; completed jobs store `file_name` and `storage_path`, expose `GET /api/v1/admin/audit-log/export/{jobId}` and `GET /api/v1/admin/audit-log/export/{jobId}/download`, and enforce owner/status/expiry checks before streaming files.
+- Constraint: File storage is local filesystem via `ADMIN_AUDIT_EXPORT_STORAGE_DIR`; production object storage/retention cleanup can be a later hardening slice.
+
+## [2026-06-15] E13 admin active sessions boundary
+
+- Decision: Keep session ownership in IAM and expose Admin Portal session operations through admin-service facade endpoints backed by IAM internal `/internal/sessions*` APIs.
+- Reason: `iam.sessions` already owns opaque session lifecycle, Redis token eviction, revocation audit columns, and single-session semantics; admin-service should not read or mutate IAM database state directly.
+- Impact: Admin-service exposes `GET /api/v1/admin/sessions` and `PATCH /api/v1/admin/sessions/{sessionId}/invalidate` guarded by `SYSTEM_CONFIG`; IAM exposes internal list/invalidate endpoints guarded by `X-Internal-Api-Key`; invalidate is idempotent, evicts Redis token cache, and does not expose token/session secrets.
+- Constraint: The frontend session page and high-risk config mutations remain follow-up slices.
+
+## [2026-06-15] E13 admin catalog category ownership
+
+- Decision: Keep category taxonomy ownership in `purchase-request-service` and expose Admin Portal category management through admin-service facade endpoints backed by PR internal APIs.
+- Reason: `pr.catalog_categories` is already the PR catalog taxonomy source; admin-service should provide a governance API under `/api/v1/admin/catalog/categories*` without direct cross-database reads or duplicate ownership.
+- Impact: PR service exposes internal list/create/update/deactivate category APIs guarded by `X-Internal-Api-Key`; admin-service exposes public list/create/update/deactivate endpoints guarded by `ADMIN_CATALOG_MANAGE`; mutations require `Idempotency-Key`, and deactivate is a soft state transition blocked when active catalog items still reference the category.
+- Constraint: The frontend category admin page and Docker runtime verification remain follow-up work.
+
+## [2026-06-15] E13 admin department ownership
+
+- Decision: Keep department ownership in `iam-service` and expose Admin Portal department mutations through admin-service facade endpoints backed by IAM internal APIs.
+- Reason: `iam.departments` already anchors users, org tree, approver resolution, and delegation scope; admin-service must not mutate IAM database state directly.
+- Impact: IAM exposes internal create/update/deactivate department APIs guarded by `X-Internal-Api-Key`; admin-service exposes `POST /api/v1/admin/departments`, `PUT /api/v1/admin/departments/{id}`, and `PATCH /api/v1/admin/departments/{id}/deactivate` guarded by `ADMIN_DEPARTMENT_MANAGE`; mutations require `Idempotency-Key`, validate unique active code, parent cycle risk, active head user, and block deactivate when active members or child departments remain.
+- Constraint: `glAccountPrefix` is accepted for admin contract compatibility but is not persisted until IAM schema/business ownership for GL mapping is defined; frontend org chart mutation UI remains follow-up work.
+
+## [2026-06-15] E13 admin config mutation safety boundary
+
+- Decision: Implement `SYSTEM_CONFIG` mutation endpoints as TOTP-confirmed, idempotent action requests stored in `audit.admin_config_actions`, not as immediate runtime config/restart/key-rotation executors.
+- Reason: The repo has service config discovery and Admin Portal contracts, but no orchestrator or secret manager boundary that can safely mutate environment variables, restart containers/services, or rotate runtime encryption keys directly from admin-service.
+- Impact: IAM exposes internal `POST /internal/security/totp/verify` guarded by `X-Internal-Api-Key`; admin-service exposes `PUT /api/v1/admin/config/services/{serviceName}`, `POST /api/v1/admin/config/services/{serviceName}/restart`, and `POST /api/v1/admin/config/encryption/rotate-key` guarded by `SYSTEM_CONFIG`, requiring `Idempotency-Key` and confirmation code before persisting pending action records.
+- Constraint: Responses carry `status=PENDING_MANUAL_APPLY` and `applied=false`; a future runtime executor/secret manager integration must consume or apply these requests before config values, service restarts, or encryption keys actually change.
+
+## [2026-06-15] E13 admin config action audit writer
+
+- Decision: Write immutable `audit.audit_logs` rows for newly created admin config action requests, using sanitized action metadata only.
+- Reason: High-risk admin actions need queryable governance evidence immediately after TOTP-confirmed request creation, but audit logs must not capture config values, confirmation codes, secrets, or replayed idempotency responses.
+- Impact: Update-config, restart-service, and encryption-key-rotation use cases call an `AdminAuditLogWriterPort` after `admin_config_actions` persistence; the writer records actor/request context, action id/type/status, service or key version, counts, restart/downtime hints, and `applied=false`.
+- Constraint: This audit row records the action request boundary only; future runtime executor/secret-manager integration should append separate apply/success/failure audit records when real runtime changes occur.
+
+## [2026-06-16] E13 admin session invalidation audit writer
+
+- Decision: Write immutable `audit.audit_logs` rows after admin-service session invalidation requests are accepted by the IAM facade.
+- Reason: Session invalidation is a high-risk security operation; admin-service should provide queryable governance evidence without owning IAM session data or storing token/session secrets.
+- Impact: `PATCH /api/v1/admin/sessions/{sessionId}/invalidate` now carries request context into the use case and writes a sanitized `SESSION.INVALIDATE_REQUESTED` audit row containing actor/request metadata and the target session id only.
+- Constraint: IAM remains the source of truth for session lifecycle and idempotency; admin-service records the accepted request boundary and does not persist the invalidation reason in audit payload.
+
+## [2026-06-16] E13 admin governance audit coverage
+
+- Decision: Extend admin-service audit writing to the remaining Admin Portal governance mutations: catalog category create/update/deactivate, department create/update/deactivate, and audit export job creation.
+- Reason: Before building the frontend, every admin mutation exposed by the current backend contract should leave a queryable immutable audit row after the owning service/facade accepts the request.
+- Impact: `AdminAuditLogWriterPort` now records `CATALOG_CATEGORY.*`, `DEPARTMENT.*`, and `AUDIT_EXPORT.REQUESTED` events with actor/request context and sanitized metadata only; idempotent audit export replays do not write duplicate audit rows.
+- Constraint: Admin-service records governance request boundaries; PR and IAM remain authoritative for catalog taxonomy and department/session lifecycle.
+
 ## [2026-06-06] E07 manual PO source contracts
 
 - Decision: Implement direct/manual PO through trusted service-to-service sources: PR exposes `GET /internal/purchase-requests/{id}/po-source` and `PATCH /internal/purchase-requests/{id}/converted-to-po`; Vendor exposes `GET /internal/vendors/{id}/po-source`; Finance `POST /api/v1/purchase-orders` creates a DRAFT PO from those snapshots.
@@ -615,3 +692,23 @@
 - Runtime note: Local approval schema was reset and reseeded; IAM V11/V12 add Super Admin approval permissions and clean overly broad seeded finance/emergency grants from Manager/Director roles while preserving the existing V10 seed.
 - Follow-up decision: Approval-service exposes `GET /api/v1/approvals/processes/{entityType}/{entityId}` for PR detail workflow display, with use-case authorization for requester `PR_VIEW_OWN`, department/all viewers, and assigned approvers.
 - Constraint: Public `/api/v1/org/approvers?role=...` remains role-based for backward compatibility; service-to-service approval routing uses permission.
+
+## [2026-06-17] E13-A Admin Portal Frontend closure for Catalog and Org Chart
+
+- Decision: Finalized frontend interfaces for Catalog Categories (`/admin/catalog-categories`) and Department Org Chart (`/admin/org-chart`), moving their mutations strictly to the new `admin-service` facades and establishing visual management flows.
+- Reason: The backend facade APIs for cross-service mutations were complete, and the frontend needed robust UI representations to allow safe governance mutations without touching IAM or PR services directly.
+- Impact: `OrgChartComponent` handles structured nested data, deactivation safeguards, and specific metadata like `glAccountPrefix` and `headUserId`. `CatalogCategoriesComponent` surfaces CAPEX toggles and recursive flattening. Both screens pass full compilation, integrate flawlessly with translated keys, and employ `Idempotency-Key` headers correctly.
+- Constraint: High-level System Config update application executors still require future secret-manager integration beyond the current `admin_config_actions` logging.
+
+## [2026-06-18] E12 Report generation robustness and transaction boundary tuning
+
+- Decision: Compiled `.jrxml` templates into `.jasper` binary files at build time and loaded them via `JRLoader` in `LocalReportFileRenderer.java`. Tuned transaction boundaries in `ProcessReportExportJobsUseCase.java` using programmatic `TransactionTemplate` demarcation, and added system-level dependencies (`fontconfig`, `ttf-dejavu`) and `-Djava.awt.headless=true` to the dockerized runtime environment.
+- Reason: Executing XML parsing and compilation at runtime caused parser exceptions and unnecessary CPU/memory overhead. Furthermore, holding DB transactions open across slow CPU/IO operations (like PDF/XLSX rendering) caused connection pool exhaustion and application restarts. In headless Alpine Docker containers, missing OS font packages caused JVM crashes during PDF generation.
+- Impact: Pre-compiled `.jasper` assets ensure rapid, error-free report rendering. The decoupled transaction boundary ensures DB connections are released immediately before launching heavy report compilation/rendering, eliminating connection depletion risks. The added Alpine packages and JVM headless flag ensure stable, correct PDF output in the containerized production environment.
+
+## [2026-06-18] E12 Query parameter type casting for report datasets
+
+- Decision: Applied explicit PostgreSQL type casting (`::timestamptz`, `::uuid`, `::varchar`) to all parameters in MyBatis `IS NULL` filters within `ReportDatasetMapper.java`.
+- Reason: Checking dynamic parameters against NULL without explicit casting in PostgreSQL query blocks causes "could not determine data type of parameter" exceptions at runtime. Unlike H2, PostgreSQL is strictly typed and needs explicit context to determine parameter types.
+- Impact: Report dataset queries are fully compatible with both PostgreSQL and H2 databases, preventing any runtime crashes when exporting reports with partial or null filter criteria.
+

@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${ADMIN_DB_HOST:localhost}:${ADMIN_DB_PORT:5432}/${ADMIN_DB_NAME:db_audit}
+    username: ${ADMIN_DB_USER:${AUDIT_DB_USER:audit_user}}
+    password: ${ADMIN_DB_PASS:${AUDIT_DB_PASS:audit_pass_dev}}
+    hikari:
+      connection-init-sql: SET search_path TO ${ADMIN_DB_SCHEMA:audit}
+  flyway:
+    schemas: ${ADMIN_DB_SCHEMA:audit}
+
+eprocure:
+  admin:
+    infrastructure:
+      postgresql:
+        host: ${ADMIN_POSTGRES_HOST:localhost}
+        port: ${ADMIN_POSTGRES_PORT:5432}
+      redis:
+        host: ${ADMIN_REDIS_HOST:localhost}
+        port: ${ADMIN_REDIS_PORT:6379}
+      kafka:
+        host: ${ADMIN_KAFKA_HOST:localhost}
+        port: ${ADMIN_KAFKA_PORT:19092}

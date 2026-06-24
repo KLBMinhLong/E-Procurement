@@ -157,6 +157,35 @@ components:
         status:
           $ref: '#/components/schemas/UserStatus'
 
+    ActiveSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        fullName:
+          type: string
+        ipAddress:
+          type: string
+          nullable: true
+        userAgent:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastActivity:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
     UserDetail:
       allOf:
         - $ref: '#/components/schemas/UserSummary'
@@ -313,6 +342,67 @@ components:
               items:
                 $ref: '#/components/schemas/DepartmentSummary'
 
+    DepartmentAdmin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        headUserId:
+          type: string
+          format: uuid
+          nullable: true
+        memberCount:
+          type: integer
+          format: int64
+        childCount:
+          type: integer
+          format: int64
+        deleted:
+          type: boolean
+
+    InternalDepartmentRequest:
+      type: object
+      required: [actorId, code, name]
+      properties:
+        actorId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 200
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        headUserId:
+          type: string
+          format: uuid
+          nullable: true
+        glAccountPrefix:
+          type: string
+          nullable: true
+          description: Reserved for admin contract; IAM schema does not persist this field yet.
+
+    InternalDepartmentDeactivateRequest:
+      type: object
+      required: [actorId]
+      properties:
+        actorId:
+          type: string
+          format: uuid
+
     DelegationRequest:
       type: object
       required: [delegateId, startAt, endAt]
@@ -343,6 +433,32 @@ components:
           type: string
           enum: [ALL, OWN_TEAM]
           default: ALL
+
+    InvalidateSessionInternalRequest:
+      type: object
+      required: [actorId, reason]
+      properties:
+        actorId:
+          type: string
+          format: uuid
+          description: User thực hiện thao tác qua admin-service.
+        reason:
+          type: string
+          minLength: 1
+          example: Phát hiện đăng nhập đáng ngờ từ IP lạ
+
+    InternalTotpVerificationRequest:
+      type: object
+      required: [userId, code]
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: User cần xác nhận TOTP cho thao tác service-to-service.
+        code:
+          type: string
+          minLength: 1
+          description: TOTP 2FA code; không log và không lưu trữ.
 
     DelegationDetail:
       type: object
@@ -404,6 +520,127 @@ components:
 
 paths:
   # ── Internal ──────────────────────────────────────────────────
+  /internal/sessions:
+    get:
+      tags: [Internal]
+      summary: Danh sách phiên đăng nhập active cho Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; không dùng session cookie.
+      operationId: internalListActiveSessions
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Danh sách active sessions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ActiveSession'
+                      meta:
+                        $ref: '#/components/schemas/PageMeta'
+        '403':
+          description: Internal API key không hợp lệ
+
+  /internal/sessions/{sessionId}/invalidate:
+    patch:
+      tags: [Internal]
+      summary: Revoke một phiên đăng nhập active cho Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; bắt buộc `Idempotency-Key`.
+      operationId: internalInvalidateSession
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvalidateSessionInternalRequest'
+      responses:
+        '200':
+          description: Session đã bị revoke hoặc đã không còn active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Internal API key không hợp lệ
+
+  /internal/security/totp/verify:
+    post:
+      tags: [Internal]
+      summary: Xác nhận TOTP cho thao tác nhạy cảm của Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; không dùng session cookie và không trả về secret/token.
+      operationId: internalVerifyUserTotp
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalTotpVerificationRequest'
+      responses:
+        '200':
+          description: TOTP hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: TOTP không hợp lệ hoặc 2FA chưa bật
+        '403':
+          description: Internal API key không hợp lệ
+
   /internal/org/approvers:
     get:
       tags: [Internal]
@@ -533,6 +770,136 @@ paths:
                         $ref: '#/components/schemas/ActiveDelegationResult'
         '403':
           description: Internal API key không hợp lệ
+
+  /internal/org/departments:
+    post:
+      tags: [Internal]
+      summary: Tạo phòng ban cho Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; bắt buộc `Idempotency-Key`.
+      operationId: internalCreateDepartment
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalDepartmentRequest'
+      responses:
+        '201':
+          description: Phòng ban đã tạo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DepartmentAdmin'
+        '403':
+          description: Internal API key không hợp lệ
+        '409':
+          description: Mã phòng ban active đã tồn tại
+
+  /internal/org/departments/{id}:
+    put:
+      tags: [Internal]
+      summary: Cập nhật phòng ban cho Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; bắt buộc `Idempotency-Key`.
+      operationId: internalUpdateDepartment
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalDepartmentRequest'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DepartmentAdmin'
+        '403':
+          description: Internal API key không hợp lệ
+        '404':
+          description: Không tìm thấy phòng ban
+        '409':
+          description: Mã phòng ban active đã tồn tại
+
+  /internal/org/departments/{id}/deactivate:
+    patch:
+      tags: [Internal]
+      summary: Vô hiệu hóa phòng ban cho Admin Portal
+      description: Endpoint service-to-service dùng `X-Internal-Api-Key`; bắt buộc `Idempotency-Key`.
+      operationId: internalDeactivateDepartment
+      security:
+        - internalApiKey: []
+      parameters:
+        - name: X-Internal-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalDepartmentDeactivateRequest'
+      responses:
+        '200':
+          description: Đã vô hiệu hóa
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DepartmentAdmin'
+        '403':
+          description: Internal API key không hợp lệ
+        '404':
+          description: Không tìm thấy phòng ban
+        '409':
+          description: Phòng ban còn active member hoặc child department
 
   # ── Auth ──────────────────────────────────────────────────────
   /auth/public-key:

@@ -10,4 +10,6 @@ public class DepartmentDbEntity {
     public UUID parentId;
     public UUID headUserId;
     public Instant createdAt;
+    public Instant updatedAt;
+    public Boolean deleted;
 }

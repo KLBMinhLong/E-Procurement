@@ -95,6 +95,14 @@ public class SessionService {
         sessionCachePort.evict(tokenHash);
     }
 
+    public void revokeActiveSession(UUID sessionId, UUID revokedBy, Instant revokedAt) {
+        sessionRepository.findActiveById(sessionId, revokedAt)
+                .ifPresent(session -> {
+                    sessionCachePort.evict(session.getTokenHash());
+                    sessionRepository.revokeById(sessionId, revokedBy, revokedAt);
+                });
+    }
+
     public void revokeActiveForUser(UUID userId, UUID revokedBy, Instant revokedAt) {
         sessionRepository.findActiveTokenHashesByUserId(userId, revokedAt).forEach(sessionCachePort::evict);
         sessionRepository.revokeActiveByUserId(userId, revokedBy, revokedAt);

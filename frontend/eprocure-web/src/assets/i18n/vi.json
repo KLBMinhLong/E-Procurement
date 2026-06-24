@@ -447,6 +447,11 @@
     "adminRbac": "Ma trận phân quyền",
     "adminOrgChart": "Sơ đồ phòng ban",
     "notificationTemplates": "Mẫu thông báo",
+    "systemConfig": "Cấu hình hệ thống",
+    "auditLog": "Nhật ký kiểm toán",
+    "sessions": "Phiên hoạt động",
+    "catalogCategories": "Danh mục HH/DV",
+    "systemHealth": "Sức khỏe hệ thống",
     "approvalRules": "Quy tắc phê duyệt",
     "approvals": "Phê duyệt",
     "dashboard": "Tổng quan",
@@ -482,7 +487,12 @@
       "roles": "Quản lý vai trò",
       "rbac": "Ma trận phân quyền",
       "orgChart": "Sơ đồ phòng ban",
-      "notificationTemplates": "Mẫu thông báo"
+      "notificationTemplates": "Mẫu thông báo",
+      "config": "Cấu hình hệ thống",
+      "auditLog": "Nhật ký kiểm toán",
+      "sessions": "Phiên hoạt động",
+      "catalogCategories": "Danh mục HH/DV",
+      "health": "Sức khỏe hệ thống"
     },
     "approvals": {
       "self": "Phê duyệt",
@@ -1742,7 +1752,8 @@
         "parentCode": "Bộ phận cha trực thuộc",
         "selectParentPlaceholder": "Không có (Bộ phận gốc)",
         "manager": "Quản lý / Trưởng bộ phận",
-        "selectManagerPlaceholder": "Lựa chọn trưởng bộ phận quản lý"
+        "selectManagerPlaceholder": "Lựa chọn trưởng bộ phận quản lý",
+        "glAccountPrefix": "Tiền tố tài khoản GL"
       },
       "validation": {
         "required": "Thông tin này là bắt buộc",
@@ -1750,7 +1761,9 @@
       },
       "toast": {
         "createSuccess": "Đã tạo phòng ban bộ phận mới thành công.",
-        "updateSuccess": "Đã cập nhật chi tiết phòng ban thành công."
+        "updateSuccess": "Đã cập nhật chi tiết phòng ban thành công.",
+        "deactivateSuccess": "Đã ngừng hoạt động phòng ban thành công.",
+        "deactivateFailed": "Không thể ngừng hoạt động. Vui lòng đảm bảo không có bộ phận con hoặc người dùng trực thuộc."
       },
       "empty": {
         "title": "Không tìm thấy phòng ban",
@@ -2941,6 +2954,229 @@
         "emptyDescription": "Chưa có mô tả.",
         "notFoundTitle": "Không tìm thấy item",
         "notFoundMessage": "Item catalog không tồn tại hoặc bạn không có quyền xem."
+      }
+    }
+  },
+  "adminOps": {
+    "health": {
+      "eyebrow": "Bảng điều khiển vận hành",
+      "title": "Sức khỏe hệ thống",
+      "subtitle": "Trạng thái thời gian thực của tất cả microservices và thành phần hạ tầng.",
+      "refresh": "Tải lại",
+      "errorTitle": "Kiểm tra sức khỏe thất bại",
+      "retry": "Thử lại",
+      "stale": "Dữ liệu cũ",
+      "checkedAt": "Kiểm tra lúc:",
+      "up": "Hoạt động",
+      "down": "Ngừng",
+      "degraded": "Suy giảm",
+      "connections": "Kết nối đang dùng",
+      "memory": "Bộ nhớ sử dụng",
+      "keys": "Số lượng key",
+      "topics": "Topics",
+      "consumerLag": "Độ trễ consumer",
+      "servicesTitle": "Dịch vụ ứng dụng",
+      "overall": {
+        "UP": "Tất cả hệ thống hoạt động bình thường",
+        "DEGRADED": "Phát hiện suy giảm một phần",
+        "DOWN": "Sự cố nghiêm trọng",
+        "UNKNOWN": "Chưa xác định trạng thái"
+      },
+      "col": {
+        "service": "Dịch vụ",
+        "status": "Trạng thái",
+        "responseTime": "Thời gian phản hồi",
+        "uptime": "Uptime",
+        "lastCheck": "Kiểm tra cuối"
+      }
+    },
+    "config": {
+      "eyebrow": "Cấu hình hệ thống",
+      "title": "Cấu hình toàn cục",
+      "subtitle": "Quản lý biến môi trường của các microservices, áp dụng cấu hình động và xoay vòng khóa mã hóa.",
+      "refresh": "Tải lại",
+      "errorTitle": "Không tải được cấu hình",
+      "retry": "Thử lại",
+      "servicesListTitle": "Dịch vụ",
+      "lastHealthCheck": "Kiểm tra cuối",
+      "variablesTitle": "Biến môi trường",
+      "emptyVariables": "Không có biến môi trường nào được phơi bày cho dịch vụ này.",
+      "sensitive": "NHẠY CẢM",
+      "status": {
+        "UP": "Hoạt động",
+        "DOWN": "Ngừng",
+        "DEGRADED": "Suy giảm",
+        "UNKNOWN": "Chưa xác định"
+      },
+      "col": {
+        "key": "Khóa",
+        "value": "Giá trị",
+        "description": "Mô tả",
+        "lastUpdated": "Cập nhật lần cuối"
+      },
+      "action": {
+        "rotateKey": "Đổi khóa toàn cục",
+        "restart": "Khởi động lại",
+        "update": "Sửa cấu hình",
+        "applyUpdate": "Áp dụng thay đổi",
+        "confirmRestart": "Xác nhận khởi động lại",
+        "confirmRotate": "Xác nhận đổi khóa"
+      },
+      "modal": {
+        "updateTitle": "Cập nhật cấu hình dịch vụ",
+        "warningTitle": "Thao tác rủi ro cao",
+        "updateWarning": "Thay đổi cấu hình trực tiếp trong runtime có thể gây mất ổn định. Một bản ghi audit sẽ được tạo.",
+        "sensitiveHint": "Để nguyên ******** để giữ giá trị hiện tại. Chỉ nhập giá trị mới nếu muốn thay đổi.",
+        "requiresRestart": "Khởi động lại dịch vụ ngay sau khi áp dụng",
+        "changeReason": "Lý do thay đổi",
+        "changeReasonHint": "Mô tả ngắn gọn lý do tại sao cấu hình này bị thay đổi...",
+        "confirmationCode": "Mã xác nhận (TOTP)",
+        "totpHint": "Nhập mã 6 chữ số từ ứng dụng xác thực của bạn",
+        "restartTitle": "Khởi động lại dịch vụ",
+        "dangerTitle": "Hành động cực kỳ rủi ro",
+        "restartWarning": "Khởi động lại {{service}} sẽ gây ra downtime ngắn và có thể làm gián đoạn các thao tác đang diễn ra.",
+        "restartReasonHint": "Tại sao bạn cần khởi động lại dịch vụ này?",
+        "rotateKeyTitle": "Đổi khóa mã hóa (Rotate Key)",
+        "rotateKeyWarning": "Rotate key là một thao tác toàn cục cập nhật khóa mã hóa dùng cho dữ liệu nhạy cảm. Khóa cũ vẫn được giữ để giải mã nhưng dữ liệu mới sẽ dùng khóa mới.",
+        "keySize": "Độ dài khóa"
+      },
+      "toast": {
+        "updatePending": "Yêu cầu cập nhật đã được gửi. Đang chờ xác nhận áp dụng thủ công từ người vận hành (Pending Manual Apply).",
+        "restartPending": "Tín hiệu khởi động lại đã được gửi đến dịch vụ.",
+        "rotatePending": "Đã khởi tạo tiến trình đổi khóa mã hóa."
+      }
+    },
+    "audit": {
+      "eyebrow": "Bảo mật & Tuân thủ",
+      "title": "Nhật ký kiểm toán (Audit Log)",
+      "subtitle": "Theo dõi các thao tác quản trị, sự kiện hệ thống và thay đổi dữ liệu trên toàn bộ microservices.",
+      "totalItems": "bản ghi",
+      "exportStatus": {
+        "QUEUED": "Đang chờ xuất file...",
+        "PROCESSING": "Đang xử lý xuất file...",
+        "COMPLETED": "File đã sẵn sàng",
+        "FAILED": "Xuất file thất bại"
+      },
+      "action": {
+        "export": "Xuất Excel",
+        "download": "Tải xuống file",
+        "retryExport": "Thử xuất lại",
+        "retry": "Tải lại dữ liệu"
+      },
+      "filter": {
+        "fromTime": "Từ ngày",
+        "toTime": "Đến ngày",
+        "actorId": "Người thực hiện (ID)",
+        "actorHint": "UUID của User",
+        "entityType": "Loại đối tượng",
+        "entityTypeHint": "VD: PurchaseRequest",
+        "entityId": "ID đối tượng",
+        "action": "Hành động",
+        "serviceName": "Dịch vụ",
+        "allServices": "Tất cả dịch vụ",
+        "status": "Trạng thái",
+        "allStatus": "Tất cả trạng thái",
+        "success": "Thành công",
+        "failed": "Thất bại"
+      },
+      "col": {
+        "date": "Thời gian",
+        "actor": "Người thực hiện",
+        "action": "Hành động",
+        "entity": "Đối tượng",
+        "service": "Dịch vụ",
+        "status": "Trạng thái"
+      },
+      "detail": {
+        "title": "Chi tiết bản ghi Audit",
+        "requestInfo": "Thông tin Request",
+        "actorInfo": "Thông tin người dùng",
+        "entityInfo": "Chi tiết thao tác",
+        "changes": "Dữ liệu thay đổi (JSON)",
+        "oldValue": "Giá trị / Trạng thái Cũ",
+        "newValue": "Giá trị / Trạng thái Mới"
+      },
+      "validation": {
+        "datesRequired": "Bắt buộc chọn cả Từ ngày và Đến ngày để xuất báo cáo."
+      },
+      "toast": {
+        "exportStarted": "Đã bắt đầu tiến trình xuất file. Vui lòng chờ trong giây lát...",
+        "exportCompleted": "Quá trình xuất file hoàn tất. File đã sẵn sàng để tải xuống.",
+        "exportFailed": "Quá trình xuất file thất bại. Vui lòng thử lại với khoảng thời gian ngắn hơn.",
+        "downloadFailed": "Không thể tải xuống file đã xuất."
+      }
+    },
+    "sessions": {
+      "eyebrow": "Quản lý truy cập",
+      "title": "Phiên hoạt động (Sessions)",
+      "subtitle": "Theo dõi và quản lý các phiên đăng nhập đang hoạt động trên toàn hệ thống.",
+      "totalItems": "phiên",
+      "action": {
+        "retry": "Tải lại dữ liệu",
+        "invalidate": "Hủy phiên",
+        "confirmInvalidate": "Xác nhận Hủy phiên"
+      },
+      "filter": {
+        "userId": "ID Người dùng",
+        "userIdHint": "Tìm kiếm theo chính xác UUID..."
+      },
+      "col": {
+        "user": "Người dùng",
+        "ip": "Địa chỉ IP",
+        "device": "Thiết bị / Trình duyệt",
+        "created": "Đăng nhập lúc",
+        "lastActivity": "Hoạt động cuối",
+        "expires": "Hết hạn lúc"
+      },
+      "modal": {
+        "invalidateTitle": "Hủy phiên hoạt động",
+        "dangerTitle": "Đăng xuất bắt buộc",
+        "invalidateWarning": "Bạn sắp buộc đăng xuất {{user}}. Hành động này sẽ ngay lập tức vô hiệu hóa token truy cập hiện tại của họ.",
+        "reason": "Lý do hủy phiên",
+        "reasonHint": "VD: Rủi ro bảo mật, thiết bị bị xâm nhập...",
+        "confirmationCode": "Mã xác nhận (TOTP)",
+        "totpHint": "Nhập mã 6 chữ số từ ứng dụng xác thực của bạn"
+      },
+      "toast": {
+        "invalidateSuccess": "Đã hủy phiên hoạt động thành công.",
+        "invalidateFailed": "Không thể hủy phiên hoạt động."
+      }
+    },
+    "catalog": {
+      "eyebrow": "Thiết lập Mua sắm",
+      "title": "Danh mục Hàng hóa / Dịch vụ",
+      "subtitle": "Quản lý cây danh mục hàng hóa và thiết lập các quy tắc phê duyệt kinh doanh.",
+      "action": {
+        "create": "Thêm danh mục"
+      },
+      "filter": {
+        "includeInactive": "Hiển thị đã ngừng HĐ"
+      },
+      "col": {
+        "name": "Tên danh mục",
+        "code": "Mã",
+        "rules": "Quy tắc / Luồng",
+        "items": "Số lượng mặt hàng",
+        "status": "Trạng thái"
+      },
+      "rules": {
+        "specialApproval": "Yêu cầu phê duyệt đặc biệt từ Role được chỉ định",
+        "rfqAbove": "Bắt buộc mở thầu (RFQ) nếu vượt ngưỡng giá trị"
+      },
+      "modal": {
+        "createTitle": "Tạo danh mục mới",
+        "updateTitle": "Cập nhật danh mục",
+        "parent": "Danh mục cha",
+        "rulesTitle": "Quy tắc kinh doanh",
+        "isCapex": "Phân loại là Chi phí Đầu tư (CAPEX)",
+        "requiresSpecialApproval": "Yêu cầu Phê duyệt Đặc biệt",
+        "requiresRfqAbove": "Ngưỡng giá trị bắt buộc RFQ"
+      },
+      "toast": {
+        "saveSuccess": "Đã lưu danh mục thành công.",
+        "saveFailed": "Không thể lưu danh mục.",
+        "deactivateSuccess": "Đã ngừng hoạt động danh mục thành công.",
+        "deactivateFailed": "Không thể ngừng hoạt động. Vui lòng đảm bảo không có mặt hàng nào đang liên kết."
       }
     }
   }

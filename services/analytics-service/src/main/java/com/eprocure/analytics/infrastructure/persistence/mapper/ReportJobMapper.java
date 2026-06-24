@@ -1,6 +1,7 @@
 package com.eprocure.analytics.infrastructure.persistence.mapper;
 
 import com.eprocure.analytics.infrastructure.persistence.entity.ReportJobDbEntity;
+import com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -8,6 +9,10 @@ import java.util.UUID;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Result;
+import org.apache.ibatis.annotations.ResultMap;
+import org.apache.ibatis.annotations.ResultType;
+import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -18,11 +23,27 @@ public interface ReportJobMapper {
                    filters::TEXT AS filters_json,
                    created_at, completed_at, expires_at, created_by, idempotency_key
             FROM analytics.report_export_jobs
-            WHERE created_by = #{actorId}
-              AND idempotency_key = #{idempotencyKey}
+            WHERE created_by = #{actorId,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}
+              AND idempotency_key = #{idempotencyKey,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}
               AND is_deleted = FALSE
             LIMIT 1
             """)
+    @ResultType(ReportJobDbEntity.class)
+    @Results(id = "reportJobResult", value = {
+            @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
+            @Result(property = "reportType", column = "report_type"),
+            @Result(property = "format", column = "format"),
+            @Result(property = "status", column = "status"),
+            @Result(property = "downloadUrl", column = "download_url"),
+            @Result(property = "storagePath", column = "storage_path"),
+            @Result(property = "failureReason", column = "failure_reason"),
+            @Result(property = "filtersJson", column = "filters_json"),
+            @Result(property = "createdAt", column = "created_at"),
+            @Result(property = "completedAt", column = "completed_at"),
+            @Result(property = "expiresAt", column = "expires_at"),
+            @Result(property = "createdBy", column = "created_by", typeHandler = UuidTypeHandler.class),
+            @Result(property = "idempotencyKey", column = "idempotency_key", typeHandler = UuidTypeHandler.class)
+    })
     Optional<ReportJobDbEntity> findByIdempotencyKey(
             @Param("actorId") UUID actorId,
             @Param("idempotencyKey") UUID idempotencyKey);
@@ -32,11 +53,12 @@ public interface ReportJobMapper {
                    filters::TEXT AS filters_json,
                    created_at, completed_at, expires_at, created_by, idempotency_key
             FROM analytics.report_export_jobs
-            WHERE id = #{jobId}
-              AND created_by = #{actorId}
+            WHERE id = #{jobId,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}
+              AND created_by = #{actorId,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}
               AND is_deleted = FALSE
             LIMIT 1
             """)
+    @ResultMap("reportJobResult")
     Optional<ReportJobDbEntity> findByIdAndActorId(
             @Param("jobId") UUID jobId,
             @Param("actorId") UUID actorId);
@@ -47,8 +69,11 @@ public interface ReportJobMapper {
                 created_at, completed_at, expires_at, created_by
             )
             VALUES (
-                #{id}, #{reportType}, #{format}, #{status}, CAST(#{filtersJson} AS jsonb), #{downloadUrl},
-                #{idempotencyKey}, #{createdAt}, #{completedAt}, #{expiresAt}, #{createdBy}
+                #{id,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler},
+                #{reportType}, #{format}, #{status}, CAST(#{filtersJson} AS jsonb), #{downloadUrl},
+                #{idempotencyKey,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler},
+                #{createdAt}, #{completedAt}, #{expiresAt},
+                #{createdBy,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}
             )
             """)
     void insertQueued(
@@ -65,27 +90,31 @@ public interface ReportJobMapper {
             @Param("createdBy") UUID createdBy);
 
     @Select("""
-            WITH claimed AS (
-                SELECT id
-                FROM analytics.report_export_jobs
-                WHERE status = 'QUEUED'
-                  AND is_deleted = FALSE
-                ORDER BY created_at ASC
-                LIMIT #{limit}
-                FOR UPDATE SKIP LOCKED
-            )
-            UPDATE analytics.report_export_jobs job
-            SET status = 'PROCESSING',
-                updated_at = #{claimedAt}
-            FROM claimed
-            WHERE job.id = claimed.id
-            RETURNING job.id, job.report_type, job.format, job.status, job.download_url,
-                      job.storage_path, job.failure_reason, job.created_at, job.completed_at,
-                      job.filters::TEXT AS filters_json, job.expires_at, job.created_by, job.idempotency_key
+            SELECT id, report_type, format, status, download_url, storage_path, failure_reason,
+                   filters::TEXT AS filters_json,
+                   created_at, completed_at, expires_at, created_by, idempotency_key
+            FROM analytics.report_export_jobs
+            WHERE status = 'QUEUED'
+              AND is_deleted = FALSE
+            ORDER BY created_at ASC
+            LIMIT #{limit}
+            FOR UPDATE SKIP LOCKED
             """)
-    List<ReportJobDbEntity> claimQueuedForProcessing(
-            @Param("limit") int limit,
-            @Param("claimedAt") Instant claimedAt);
+    @ResultMap("reportJobResult")
+    List<ReportJobDbEntity> selectQueuedForProcessing(@Param("limit") int limit);
+
+    @Update({
+            "<script>",
+            "UPDATE analytics.report_export_jobs",
+            "SET status = 'PROCESSING',",
+            "    updated_at = #{claimedAt}",
+            "WHERE id IN",
+            "<foreach item='id' collection='ids' open='(' separator=',' close=')'>",
+            "    #{id,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}",
+            "</foreach>",
+            "</script>"
+    })
+    int updateStatusToProcessing(@Param("ids") List<UUID> ids, @Param("claimedAt") Instant claimedAt);
 
     @Update("""
             UPDATE analytics.report_export_jobs
@@ -96,7 +125,7 @@ public interface ReportJobMapper {
                 completed_at = #{completedAt},
                 expires_at = #{expiresAt},
                 updated_at = #{completedAt}
-            WHERE id = #{jobId}
+            WHERE id = #{jobId,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}
               AND status = 'PROCESSING'
               AND is_deleted = FALSE
             """)
@@ -113,7 +142,7 @@ public interface ReportJobMapper {
                 failure_reason = #{failureReason},
                 completed_at = #{failedAt},
                 updated_at = #{failedAt}
-            WHERE id = #{jobId}
+            WHERE id = #{jobId,typeHandler=com.eprocure.analytics.infrastructure.persistence.typehandler.UuidTypeHandler}
               AND status = 'PROCESSING'
               AND is_deleted = FALSE
             """)

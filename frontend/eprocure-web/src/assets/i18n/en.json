@@ -447,6 +447,11 @@
     "adminRbac": "Permissions Matrix",
     "adminOrgChart": "Department Chart",
     "notificationTemplates": "Notification Templates",
+    "systemConfig": "System Config",
+    "auditLog": "Audit Log",
+    "sessions": "Active Sessions",
+    "catalogCategories": "Catalog Categories",
+    "systemHealth": "System Health",
     "approvalRules": "Approval Rules",
     "approvals": "Approvals",
     "dashboard": "Dashboard",
@@ -482,7 +487,12 @@
       "roles": "Role Manager",
       "rbac": "Permissions Matrix",
       "orgChart": "Department Chart",
-      "notificationTemplates": "Notification Templates"
+      "notificationTemplates": "Notification Templates",
+      "config": "System Config",
+      "auditLog": "Audit Log",
+      "sessions": "Active Sessions",
+      "catalogCategories": "Catalog Categories",
+      "health": "System Health"
     },
     "approvals": {
       "self": "Approvals",
@@ -1742,7 +1752,8 @@
         "parentCode": "Parent Department",
         "selectParentPlaceholder": "None (Root department)",
         "manager": "Department Manager",
-        "selectManagerPlaceholder": "Select department manager"
+        "selectManagerPlaceholder": "Select department manager",
+        "glAccountPrefix": "GL Account Prefix"
       },
       "validation": {
         "required": "This field is mandatory",
@@ -1750,7 +1761,9 @@
       },
       "toast": {
         "createSuccess": "Department successfully created.",
-        "updateSuccess": "Department details successfully updated."
+        "updateSuccess": "Department details successfully updated.",
+        "deactivateSuccess": "Department deactivated successfully.",
+        "deactivateFailed": "Failed to deactivate. Make sure there are no active sub-departments or users."
       },
       "empty": {
         "title": "No departments found",
@@ -2941,6 +2954,229 @@
         "emptyDescription": "No description.",
         "notFoundTitle": "Item not found",
         "notFoundMessage": "The catalog item does not exist or you do not have access."
+      }
+    }
+  },
+  "adminOps": {
+    "health": {
+      "eyebrow": "Operations console",
+      "title": "System Health",
+      "subtitle": "Real-time status of all microservices and infrastructure components.",
+      "refresh": "Refresh",
+      "errorTitle": "Health check failed",
+      "retry": "Retry",
+      "stale": "Stale",
+      "checkedAt": "Checked:",
+      "up": "Healthy",
+      "down": "Down",
+      "degraded": "Degraded",
+      "connections": "Active connections",
+      "memory": "Memory usage",
+      "keys": "Key count",
+      "topics": "Topics",
+      "consumerLag": "Consumer lag",
+      "servicesTitle": "Application services",
+      "overall": {
+        "UP": "All systems operational",
+        "DEGRADED": "Partial degradation detected",
+        "DOWN": "Critical outage",
+        "UNKNOWN": "Status unknown"
+      },
+      "col": {
+        "service": "Service",
+        "status": "Status",
+        "responseTime": "Response time",
+        "uptime": "Uptime",
+        "lastCheck": "Last check"
+      }
+    },
+    "config": {
+      "eyebrow": "System configurations",
+      "title": "Global System Config",
+      "subtitle": "Manage microservices configurations, apply dynamic updates, and rotate encryption keys.",
+      "refresh": "Refresh",
+      "errorTitle": "Failed to load configs",
+      "retry": "Retry",
+      "servicesListTitle": "Services",
+      "lastHealthCheck": "Last check",
+      "variablesTitle": "Environment Variables",
+      "emptyVariables": "No variables exposed for this service.",
+      "sensitive": "SENSITIVE",
+      "status": {
+        "UP": "Running",
+        "DOWN": "Down",
+        "DEGRADED": "Degraded",
+        "UNKNOWN": "Unknown"
+      },
+      "col": {
+        "key": "Key",
+        "value": "Value",
+        "description": "Description",
+        "lastUpdated": "Last Updated"
+      },
+      "action": {
+        "rotateKey": "Rotate Global Key",
+        "restart": "Restart Service",
+        "update": "Edit Config",
+        "applyUpdate": "Apply Config Update",
+        "confirmRestart": "Confirm Restart",
+        "confirmRotate": "Confirm Key Rotation"
+      },
+      "modal": {
+        "updateTitle": "Update Service Configuration",
+        "warningTitle": "High-Risk Operation",
+        "updateWarning": "Changing configurations directly in the runtime may cause instability. An audit log will be created.",
+        "sensitiveHint": "Leave as ******** to keep the current value. Only type a new value to change it.",
+        "requiresRestart": "Restart service immediately after applying",
+        "changeReason": "Reason for change",
+        "changeReasonHint": "Briefly describe why this configuration is being changed...",
+        "confirmationCode": "Confirmation Code (TOTP)",
+        "totpHint": "Enter the 6-digit code from your authenticator app",
+        "restartTitle": "Restart Service",
+        "dangerTitle": "Critical Action",
+        "restartWarning": "Restarting {{service}} will cause brief downtime and may interrupt active operations.",
+        "restartReasonHint": "Why are you restarting this service?",
+        "rotateKeyTitle": "Rotate Encryption Key",
+        "rotateKeyWarning": "Key rotation is a global operation that updates the encryption key used for sensitive data. Old keys are retained for decryption but new data will use the new key.",
+        "keySize": "Key Size"
+      },
+      "toast": {
+        "updatePending": "Update request submitted. It is pending manual apply by operators.",
+        "restartPending": "Restart signal sent to the service.",
+        "rotatePending": "Encryption key rotation initiated successfully."
+      }
+    },
+    "audit": {
+      "eyebrow": "Security & Compliance",
+      "title": "Audit Log",
+      "subtitle": "Track administrative actions, system events, and data mutations across all microservices.",
+      "totalItems": "records",
+      "exportStatus": {
+        "QUEUED": "Job Queued...",
+        "PROCESSING": "Processing Export...",
+        "COMPLETED": "Export Ready",
+        "FAILED": "Export Failed"
+      },
+      "action": {
+        "export": "Export to Excel",
+        "download": "Download File",
+        "retryExport": "Retry Export",
+        "retry": "Retry Loading"
+      },
+      "filter": {
+        "fromTime": "From",
+        "toTime": "To",
+        "actorId": "Actor ID",
+        "actorHint": "User UUID",
+        "entityType": "Entity Type",
+        "entityTypeHint": "e.g., PurchaseRequest",
+        "entityId": "Entity ID",
+        "action": "Action",
+        "serviceName": "Service",
+        "allServices": "All Services",
+        "status": "Status",
+        "allStatus": "All Results",
+        "success": "Success",
+        "failed": "Failed"
+      },
+      "col": {
+        "date": "Occurred At",
+        "actor": "Actor",
+        "action": "Action",
+        "entity": "Entity",
+        "service": "Service",
+        "status": "Status"
+      },
+      "detail": {
+        "title": "Audit Record Details",
+        "requestInfo": "Request Context",
+        "actorInfo": "Actor Information",
+        "entityInfo": "Operation Details",
+        "changes": "Data Changes (JSON)",
+        "oldValue": "Old Value / State",
+        "newValue": "New Value / State"
+      },
+      "validation": {
+        "datesRequired": "Both From and To dates are required for export."
+      },
+      "toast": {
+        "exportStarted": "Audit export job started. This may take a moment depending on the data volume.",
+        "exportCompleted": "Export job finished. The file is ready to download.",
+        "exportFailed": "Export job failed. Please try again with a smaller date range.",
+        "downloadFailed": "Failed to download the exported file."
+      }
+    },
+    "sessions": {
+      "eyebrow": "Access Management",
+      "title": "Active Sessions",
+      "subtitle": "Monitor and manage currently active user sessions across the system.",
+      "totalItems": "sessions",
+      "action": {
+        "retry": "Retry Loading",
+        "invalidate": "Invalidate",
+        "confirmInvalidate": "Confirm Invalidation"
+      },
+      "filter": {
+        "userId": "User ID",
+        "userIdHint": "Search by exact User UUID..."
+      },
+      "col": {
+        "user": "User",
+        "ip": "IP Address",
+        "device": "Device / Browser",
+        "created": "Created At",
+        "lastActivity": "Last Activity",
+        "expires": "Expires At"
+      },
+      "modal": {
+        "invalidateTitle": "Invalidate Session",
+        "dangerTitle": "Force Logout",
+        "invalidateWarning": "You are about to force logout {{user}}. This action will immediately invalidate their current access token.",
+        "reason": "Reason for Invalidation",
+        "reasonHint": "e.g., Security risk, compromised device...",
+        "confirmationCode": "Confirmation Code (TOTP)",
+        "totpHint": "Enter the 6-digit code from your authenticator app"
+      },
+      "toast": {
+        "invalidateSuccess": "Session invalidated successfully.",
+        "invalidateFailed": "Failed to invalidate session."
+      }
+    },
+    "catalog": {
+      "eyebrow": "Procurement Setup",
+      "title": "Catalog Categories",
+      "subtitle": "Manage the hierarchical taxonomy of procurement catalog and associate business approval rules.",
+      "action": {
+        "create": "Add Category"
+      },
+      "filter": {
+        "includeInactive": "Show Inactive"
+      },
+      "col": {
+        "name": "Category Name",
+        "code": "Code",
+        "rules": "Business Rules",
+        "items": "Items",
+        "status": "Status"
+      },
+      "rules": {
+        "specialApproval": "Requires Special Approval from specified role",
+        "rfqAbove": "Requires RFQ if amount exceeds threshold"
+      },
+      "modal": {
+        "createTitle": "Create Catalog Category",
+        "updateTitle": "Update Catalog Category",
+        "parent": "Parent Category",
+        "rulesTitle": "Business Rules",
+        "isCapex": "Classify as Capital Expenditure (CAPEX)",
+        "requiresSpecialApproval": "Requires Special Approval",
+        "requiresRfqAbove": "Mandatory RFQ Threshold"
+      },
+      "toast": {
+        "saveSuccess": "Catalog category saved successfully.",
+        "saveFailed": "Failed to save category.",
+        "deactivateSuccess": "Catalog category deactivated successfully.",
+        "deactivateFailed": "Failed to deactivate. Make sure no active items are linked."
       }
     }
   }

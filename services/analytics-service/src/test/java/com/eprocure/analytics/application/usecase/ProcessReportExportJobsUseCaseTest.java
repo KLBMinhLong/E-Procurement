@@ -27,6 +27,17 @@ class ProcessReportExportJobsUseCaseTest {
     private static final UUID ACTOR_ID = UUID.fromString("30000000-0000-4000-8000-000000000001");
     private static final UUID IDEMPOTENCY_KEY = UUID.fromString("10000000-0000-4000-8000-000000000001");
 
+    private final org.springframework.transaction.PlatformTransactionManager transactionManager = new org.springframework.transaction.PlatformTransactionManager() {
+        @Override
+        public org.springframework.transaction.TransactionStatus getTransaction(org.springframework.transaction.TransactionDefinition definition) {
+            return new org.springframework.transaction.support.SimpleTransactionStatus();
+        }
+        @Override
+        public void commit(org.springframework.transaction.TransactionStatus status) {}
+        @Override
+        public void rollback(org.springframework.transaction.TransactionStatus status) {}
+    };
+
     @Test
     void should_complete_claimed_report_job_when_renderer_succeeds() {
         FakeReportJobRepository repository = new FakeReportJobRepository();
@@ -36,7 +47,8 @@ class ProcessReportExportJobsUseCaseTest {
                 repository,
                 datasetProvider,
                 (job, dataset) -> new RenderedReport("D:/tmp/report.pdf", "/api/v1/reports/jobs/" + job.id() + "/download"),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                transactionManager);
 
         int processed = useCase.execute(5);
 
@@ -61,7 +73,8 @@ class ProcessReportExportJobsUseCaseTest {
                 repository,
                 job -> new ReportDataset(List.of(new ReportDatasetRow("Metric", "Value"))),
                 failingRenderer,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                transactionManager);
 
         int processed = useCase.execute(5);
 

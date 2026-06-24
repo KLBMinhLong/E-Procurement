@@ -16,6 +16,9 @@ public enum ErrorCode {
     PR_013("PR_013", "Need-by date must not be in the past", HttpStatus.BAD_REQUEST),
     PR_014("PR_014", "Justification must be at least 50 characters", HttpStatus.UNPROCESSABLE_ENTITY),
     PR_015("PR_015", "Catalog item is not found or inactive", HttpStatus.UNPROCESSABLE_ENTITY),
+    PR_016("PR_016", "Catalog category is not found or inactive", HttpStatus.NOT_FOUND),
+    PR_017("PR_017", "Catalog category already exists", HttpStatus.CONFLICT),
+    PR_018("PR_018", "Catalog category cannot be deactivated while active items exist", HttpStatus.CONFLICT),
     SYS_001("SYS_001", "Unexpected system error", HttpStatus.INTERNAL_SERVER_ERROR),
     SYS_005("SYS_005", "Idempotency-Key is required and must be UUID v4", HttpStatus.BAD_REQUEST),
     VAL_001("VAL_001", "Validation failed", HttpStatus.BAD_REQUEST);

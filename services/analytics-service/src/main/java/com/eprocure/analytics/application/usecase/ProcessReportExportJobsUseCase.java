@@ -13,7 +13,8 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class ProcessReportExportJobsUseCase {
@@ -26,23 +27,27 @@ public class ProcessReportExportJobsUseCase {
     private final ReportDatasetProvider datasetProvider;
     private final ReportFileRenderer renderer;
     private final Clock clock;
+    private final TransactionTemplate transactionTemplate;
 
     public ProcessReportExportJobsUseCase(
             ReportJobRepository repository,
             ReportDatasetProvider datasetProvider,
             ReportFileRenderer renderer,
-            Clock clock) {
+            Clock clock,
+            PlatformTransactionManager transactionManager) {
         this.repository = repository;
         this.datasetProvider = datasetProvider;
         this.renderer = renderer;
         this.clock = clock;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
-    @Transactional
     public int execute(int requestedLimit) {
         int limit = Math.max(1, Math.min(requestedLimit, MAX_BATCH_SIZE));
-        List<ReportJob> jobs = repository.claimQueuedForProcessing(limit, Instant.now(clock));
-        if (jobs.isEmpty()) {
+        List<ReportJob> jobs = transactionTemplate.execute(status ->
+            repository.claimQueuedForProcessing(limit, Instant.now(clock))
+        );
+        if (jobs == null || jobs.isEmpty()) {
             return 0;
         }
         log.info("[ACTION] Start ProcessReportExportJobs | count={}", jobs.size());
@@ -58,19 +63,23 @@ public class ProcessReportExportJobsUseCase {
             ReportDataset dataset = datasetProvider.load(job);
             RenderedReport renderedReport = renderer.render(job, dataset);
             Instant completedAt = Instant.now(clock);
-            repository.markCompleted(
-                    job.id(),
-                    renderedReport.downloadUrl(),
-                    renderedReport.storagePath(),
-                    completedAt,
-                    completedAt.plusSeconds(DEFAULT_EXPIRY_SECONDS));
+            transactionTemplate.executeWithoutResult(status ->
+                repository.markCompleted(
+                        job.id(),
+                        renderedReport.downloadUrl(),
+                        renderedReport.storagePath(),
+                        completedAt,
+                        completedAt.plusSeconds(DEFAULT_EXPIRY_SECONDS))
+            );
             log.info("[ACTION] Complete ReportExportJob | jobId={} | reportType={} | format={}",
                     LogMaskingUtil.maskId(job.id()),
                     job.reportType(),
                     job.format());
         } catch (RuntimeException exception) {
             Instant failedAt = Instant.now(clock);
-            repository.markFailed(job.id(), failureReason(exception), failedAt);
+            transactionTemplate.executeWithoutResult(status ->
+                repository.markFailed(job.id(), failureReason(exception), failedAt)
+            );
             log.error("[EXCEPTION][ANL_REPORT] Report export job failed | jobId={} | reportType={} | format={} | error={}",
                     LogMaskingUtil.maskId(job.id()),
                     job.reportType(),

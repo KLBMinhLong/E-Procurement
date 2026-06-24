@@ -393,6 +393,9 @@ SYS_002  503  Dịch vụ phụ thuộc không khả dụng
 SYS_003  500  Lỗi mã hóa/giải mã payload
 SYS_004  400  Payload đã mã hóa không hợp lệ hoặc bị giả mạo
 SYS_005  400  Idempotency-Key header bắt buộc nhưng không có
+SYS_010  404  Cấu hình service không tồn tại
+SYS_011  404  Audit export job không tồn tại
+SYS_012  404  Audit export file chưa sẵn sàng
 
 ── Validation ───────────────────────────────────────────────
 VAL_001  400  Dữ liệu không hợp lệ (xem details)

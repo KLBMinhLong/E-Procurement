@@ -1,0 +1,276 @@
+<section class="audit-page" aria-labelledby="audit-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ─────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'adminOps.audit.eyebrow' | translate }}</span>
+      <h1 id="audit-heading" class="page-header__title">{{ 'adminOps.audit.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'adminOps.audit.subtitle' | translate }}</p>
+    </div>
+    
+    <div class="page-header__actions">
+      @if (exportJob(); as job) {
+        <div class="export-status-indicator" [ngClass]="job.status.toLowerCase()">
+          <span class="status-label">
+            @if (exportPolling() || job.status === 'QUEUED' || job.status === 'PROCESSING') {
+              <ep-icon name="loader-circle" class="spin" />
+            } @else if (job.status === 'COMPLETED') {
+              <ep-icon name="check-circle" />
+            } @else {
+              <ep-icon name="alert-triangle" />
+            }
+            {{ 'adminOps.audit.exportStatus.' + job.status | translate }}
+          </span>
+          @if (job.status === 'COMPLETED') {
+            <ep-button variant="primary" icon="download" (click)="downloadExport()">
+              {{ 'adminOps.audit.action.download' | translate }}
+            </ep-button>
+          } @else if (job.status === 'FAILED') {
+            <ep-button variant="ghost" icon="refresh-cw" (click)="exportLogs()">
+              {{ 'adminOps.audit.action.retryExport' | translate }}
+            </ep-button>
+          }
+        </div>
+      } @else {
+        <ep-button variant="ghost" icon="download" *epHasPermission="'SYSTEM_AUDIT_VIEW'" (click)="exportLogs()">
+          {{ 'adminOps.audit.action.export' | translate }}
+        </ep-button>
+      }
+    </div>
+  </div>
+
+  <!-- ── Summary Stat Cards ──────────────────────────────────── -->
+  <div class="summary-grid" aria-label="Audit log summary">
+    <ep-stat-card icon="list"
+      [title]="'adminOps.audit.totalItems' | translate"
+      [value]="meta() ? meta()!.totalElements.toString() : '0'" />
+    <ep-stat-card icon="check-circle"
+      [title]="'adminOps.audit.filter.success' | translate"
+      [value]="successCount().toString()" />
+    <ep-stat-card icon="alert-triangle"
+      [title]="'adminOps.audit.filter.failed' | translate"
+      [value]="failureCount().toString()" />
+    <ep-stat-card icon="download"
+      [title]="'adminOps.audit.exportStatus.title' | translate"
+      [value]="(exportJobStatus() ? 'adminOps.audit.exportStatus.' + exportJobStatus() : 'adminOps.audit.exportStatus.NONE') | translate" />
+  </div>
+
+  <!-- ── Toolbar & Filters ───────────────────────────────────── -->
+  <div class="audit-toolbar">
+    <div class="audit-toolbar__top">
+      <ep-filter-bar 
+        [value]="searchQuery()" 
+        (valueChange)="searchQuery.set($event); loadLogs(0)"
+        [placeholderKey]="'adminOps.audit.filter.actorHint'"
+        (refresh)="loadLogs(0)"
+      />
+      <div class="custom-filters">
+        <div class="filter-group">
+          <label class="ep-label">{{ 'adminOps.audit.filter.fromTime' | translate }}</label>
+          <input type="datetime-local" class="ep-input" [value]="fromTime()" (change)="fromTime.set($any($event.target).value); loadLogs(0)" />
+        </div>
+        <div class="filter-group">
+          <label class="ep-label">{{ 'adminOps.audit.filter.toTime' | translate }}</label>
+          <input type="datetime-local" class="ep-input" [value]="toTime()" (change)="toTime.set($any($event.target).value); loadLogs(0)" />
+        </div>
+        <div class="filter-group chips">
+          <label class="ep-label">{{ 'adminOps.audit.filter.status' | translate }}</label>
+          <div class="chip-group">
+            <button class="filter-chip" [class.active]="successFilter() === null" (click)="successFilter.set(null); loadLogs(0)">{{ 'adminOps.audit.filter.allStatus' | translate }}</button>
+            <button class="filter-chip" [class.active]="successFilter() === true" (click)="successFilter.set(true); loadLogs(0)">{{ 'adminOps.audit.filter.success' | translate }}</button>
+            <button class="filter-chip" [class.active]="successFilter() === false" (click)="successFilter.set(false); loadLogs(0)">{{ 'adminOps.audit.filter.failed' | translate }}</button>
+          </div>
+        </div>
+        <div class="filter-group action">
+          <ep-button variant="ghost" (click)="resetFilters()">{{ 'action.clear' | translate }}</ep-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Table ──────────────────────────────────────────── -->
+  @if (error()) {
+    <ep-empty-state
+      icon="alert-triangle"
+      [title]="'adminOps.config.errorTitle' | translate"
+      [message]="error()">
+      <ep-button variant="primary" (click)="loadLogs(currentPage())">
+        {{ 'adminOps.audit.action.retry' | translate }}
+      </ep-button>
+    </ep-empty-state>
+  } @else if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (logs().length === 0) {
+    <ep-empty-state
+      icon="search"
+      [title]="'shared.empty.title' | translate"
+      [message]="'shared.empty.message' | translate">
+    </ep-empty-state>
+  } @else {
+    <div class="audit-table-wrapper">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>{{ 'adminOps.audit.col.date' | translate }}</th>
+            <th>{{ 'adminOps.audit.col.actor' | translate }}</th>
+            <th>{{ 'adminOps.audit.col.action' | translate }}</th>
+            <th>{{ 'adminOps.audit.col.entity' | translate }}</th>
+            <th>{{ 'adminOps.audit.col.service' | translate }}</th>
+            <th>{{ 'adminOps.audit.col.status' | translate }}</th>
+            <th class="text-right">{{ 'shared.table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr class="audit-table__row" (click)="openDetail(log)">
+              <td class="text-sm">
+                {{ log.occurredAt | date:'short' }}
+              </td>
+              <td>
+                <div class="actor-info">
+                  <span class="actor-name">{{ log.actor.name }}</span>
+                  <span class="actor-ip font-mono text-muted">{{ log.actor.ip }}</span>
+                </div>
+              </td>
+              <td><span class="font-mono text-sm">{{ log.action }}</span></td>
+              <td>
+                <div class="entity-info">
+                  <span class="entity-type font-mono text-sm">{{ log.entityType }}</span>
+                  @if (log.entityNumber) {
+                    <span class="badge badge--neutral text-xs">{{ log.entityNumber }}</span>
+                  }
+                </div>
+              </td>
+              <td class="text-sm text-muted">{{ log.serviceName }}</td>
+              <td>
+                @if (log.isSuccess) {
+                  <ep-badge tone="success" [labelKey]="'adminOps.audit.filter.success'" />
+                } @else {
+                  <ep-badge tone="danger" [labelKey]="'adminOps.audit.filter.failed'" [title]="log.errorCode" />
+                }
+              </td>
+              <td class="text-right">
+                <ep-button variant="ghost" icon="eye" (click)="openDetail(log); $event.stopPropagation()">
+                </ep-button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      
+      @if (meta(); as m) {
+        <div class="audit-pagination">
+          <span class="pagination-info">
+            {{ 'shared.table.pageSummary' | translate: { page: m.page + 1, total: m.totalPages } }}
+            ({{ m.totalElements }} {{ 'adminOps.audit.totalItems' | translate }})
+          </span>
+          <div class="pagination-controls">
+            <ep-button variant="ghost" [disabled]="m.page === 0" (click)="onPageChange(m.page - 1)">
+              {{ 'shared.table.previous' | translate }}
+            </ep-button>
+            <ep-button variant="ghost" [disabled]="m.page >= m.totalPages - 1" (click)="onPageChange(m.page + 1)">
+              {{ 'shared.table.next' | translate }}
+            </ep-button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+<!-- ── Log Detail Modal ──────────────────────────────────────── -->
+<ep-modal [open]="activeModal() === 'detail'" [title]="'adminOps.audit.detail.title' | translate" size="lg" (close)="closeDetail()">
+  @if (selectedLog(); as detail) {
+    <div class="drawer-content">
+      <div class="detail-section">
+        <h3 class="section-title">{{ 'adminOps.audit.detail.requestInfo' | translate }}</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">ID</span>
+            <span class="value">{{ detail.id }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">{{ 'adminOps.audit.col.date' | translate }}</span>
+            <span class="value">{{ detail.occurredAt | date:'medium' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Request ID</span>
+            <span class="value font-mono">{{ detail.requestId || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Endpoint</span>
+            <span class="value font-mono">{{ detail.httpMethod || '' }} {{ detail.endpoint || '-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="section-title">{{ 'adminOps.audit.detail.actorInfo' | translate }}</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">User</span>
+            <span class="value">{{ detail.actor.name }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">User ID</span>
+            <span class="value font-mono">{{ detail.actor.id }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">IP Address</span>
+            <span class="value font-mono">{{ detail.actor.ip }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Roles</span>
+            <span class="value">{{ detail.actor.roles.join(', ') || '-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="section-title">{{ 'adminOps.audit.detail.entityInfo' | translate }}</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">{{ 'adminOps.audit.col.action' | translate }}</span>
+            <span class="value font-mono">{{ detail.action }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Entity Type</span>
+            <span class="value font-mono">{{ detail.entityType }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Entity ID</span>
+            <span class="value font-mono">{{ detail.entityId || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Status</span>
+            <span class="value">
+              @if (detail.isSuccess) {
+                <span class="text-success">{{ 'adminOps.audit.filter.success' | translate }}</span>
+              } @else {
+                <span class="text-danger">{{ 'adminOps.audit.filter.failed' | translate }} ({{ detail.errorCode }})</span>
+              }
+            </span>
+          </div>
+        </div>
+        @if (detail.description) {
+          <p class="description mt-2 text-sm text-muted">{{ detail.description }}</p>
+        }
+      </div>
+
+      <div class="detail-section changes-section">
+        <h3 class="section-title">{{ 'adminOps.audit.detail.changes' | translate }}</h3>
+        <div class="json-compare">
+          <div class="json-block">
+            <h4>{{ 'adminOps.audit.detail.oldValue' | translate }}</h4>
+            <pre><code>{{ formatJson(detail.oldValue) }}</code></pre>
+          </div>
+          <div class="json-block">
+            <h4>{{ 'adminOps.audit.detail.newValue' | translate }}</h4>
+            <pre><code>{{ formatJson(detail.newValue) }}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</ep-modal>

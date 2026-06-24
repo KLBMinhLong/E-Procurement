@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eprocure.admin.infrastructure.persistence.mapper.AuditLogMapper">
+
+    <resultMap id="auditLogResultMap"
+               type="com.eprocure.admin.infrastructure.persistence.entity.AuditLogDbEntity">
+        <id property="id" column="id" javaType="long" jdbcType="BIGINT"/>
+        <result property="actorId" column="actor_id" javaType="java.util.UUID" jdbcType="OTHER"
+                typeHandler="com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler"/>
+        <result property="actorName" column="actor_name" javaType="string" jdbcType="VARCHAR"/>
+        <result property="actorRolesText" column="actor_roles_text" javaType="string" jdbcType="VARCHAR"/>
+        <result property="actorIp" column="actor_ip" javaType="string" jdbcType="VARCHAR"/>
+        <result property="action" column="action" javaType="string" jdbcType="VARCHAR"/>
+        <result property="entityType" column="entity_type" javaType="string" jdbcType="VARCHAR"/>
+        <result property="entityId" column="entity_id" javaType="java.util.UUID" jdbcType="OTHER"
+                typeHandler="com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler"/>
+        <result property="entityNumber" column="entity_number" javaType="string" jdbcType="VARCHAR"/>
+        <result property="occurredAt" column="occurred_at" javaType="java.time.Instant" jdbcType="TIMESTAMP"/>
+        <result property="httpMethod" column="http_method" javaType="string" jdbcType="VARCHAR"/>
+        <result property="endpoint" column="endpoint" javaType="string" jdbcType="VARCHAR"/>
+        <result property="requestId" column="request_id" javaType="string" jdbcType="VARCHAR"/>
+        <result property="success" column="is_success" javaType="boolean" jdbcType="BOOLEAN"/>
+        <result property="errorCode" column="error_code" javaType="string" jdbcType="VARCHAR"/>
+        <result property="oldValueJson" column="old_value_json" javaType="string" jdbcType="VARCHAR"/>
+        <result property="newValueJson" column="new_value_json" javaType="string" jdbcType="VARCHAR"/>
+        <result property="description" column="description" javaType="string" jdbcType="VARCHAR"/>
+        <result property="serviceName" column="service_name" javaType="string" jdbcType="VARCHAR"/>
+        <result property="totalCount" column="total_count" javaType="long" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="auditLogWhereClause">
+        WHERE occurred_at &gt;= #{filter.fromTime}
+          AND occurred_at &lt;= #{filter.toTime}
+        <if test="filter.actorId != null">
+            AND actor_id = #{filter.actorId}
+        </if>
+        <if test="filter.entityType != null">
+            AND entity_type = #{filter.entityType}
+        </if>
+        <if test="filter.entityId != null">
+            AND entity_id = #{filter.entityId}
+        </if>
+        <if test="filter.action != null">
+            AND action = #{filter.action}
+        </if>
+        <if test="filter.serviceName != null">
+            AND service_name = #{filter.serviceName}
+        </if>
+        <if test="filter.success != null">
+            AND is_success = #{filter.success}
+        </if>
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO audit.audit_logs (
+            actor_id,
+            actor_name,
+            actor_roles,
+            actor_ip,
+            action,
+            entity_type,
+            entity_id,
+            entity_number,
+            occurred_at,
+            http_method,
+            endpoint,
+            request_id,
+            is_success,
+            error_code,
+            old_value,
+            new_value,
+            description,
+            service_name
+        )
+        VALUES (
+            #{entity.actorId,jdbcType=OTHER,typeHandler=com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler},
+            #{entity.actorName},
+            COALESCE(string_to_array(NULLIF(#{entity.actorRolesText}, ''), ','), ARRAY[]::VARCHAR[]),
+            CAST(#{entity.actorIp,jdbcType=VARCHAR} AS INET),
+            #{entity.action},
+            #{entity.entityType},
+            #{entity.entityId,jdbcType=OTHER,typeHandler=com.eprocure.admin.infrastructure.persistence.typehandler.UuidTypeHandler},
+            #{entity.entityNumber},
+            #{entity.occurredAt},
+            #{entity.httpMethod},
+            #{entity.endpoint},
+            #{entity.requestId},
+            #{entity.success},
+            #{entity.errorCode},
+            CAST(#{entity.oldValueJson,jdbcType=VARCHAR} AS JSONB),
+            CAST(#{entity.newValueJson,jdbcType=VARCHAR} AS JSONB),
+            #{entity.description},
+            #{entity.serviceName}
+        )
+    </insert>
+
+    <select id="findByFilter" resultMap="auditLogResultMap">
+        SELECT
+            id,
+            actor_id,
+            actor_name,
+            array_to_string(actor_roles, ',') AS actor_roles_text,
+            actor_ip::TEXT AS actor_ip,
+            action,
+            entity_type,
+            entity_id,
+            entity_number,
+            occurred_at,
+            http_method,
+            endpoint,
+            request_id,
+            is_success,
+            error_code,
+            old_value::TEXT AS old_value_json,
+            new_value::TEXT AS new_value_json,
+            description,
+            service_name,
+            COUNT(*) OVER() AS total_count
+        FROM audit.audit_logs
+        <include refid="auditLogWhereClause"/>
+        ORDER BY occurred_at DESC, id DESC
+        LIMIT #{filter.size} OFFSET #{filter.offset}
+    </select>
+
+    <select id="findForExport" resultMap="auditLogResultMap">
+        SELECT
+            id,
+            actor_id,
+            actor_name,
+            array_to_string(actor_roles, ',') AS actor_roles_text,
+            actor_ip::TEXT AS actor_ip,
+            action,
+            entity_type,
+            entity_id,
+            entity_number,
+            occurred_at,
+            http_method,
+            endpoint,
+            request_id,
+            is_success,
+            error_code,
+            old_value::TEXT AS old_value_json,
+            new_value::TEXT AS new_value_json,
+            description,
+            service_name,
+            0 AS total_count
+        FROM audit.audit_logs
+        <include refid="auditLogWhereClause"/>
+        ORDER BY occurred_at DESC, id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

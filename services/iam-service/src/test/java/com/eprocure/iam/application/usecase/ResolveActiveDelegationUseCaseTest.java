@@ -244,5 +244,52 @@ class ResolveActiveDelegationUseCaseTest {
         public Optional<Department> findById(UUID id) {
             return Optional.of(Department.create(DEPARTMENT_ID, "PROCUREMENT", "Procurement", Instant.parse("2026-05-17T00:00:00Z")));
         }
+
+        @Override
+        public Optional<Department> findByIdIncludingInactive(UUID id) {
+            return findById(id);
+        }
+
+        @Override
+        public Optional<Department> findByCode(String code) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean existsActiveByCode(String code) {
+            return false;
+        }
+
+        @Override
+        public boolean existsActiveByCodeExceptId(String code, UUID excludedId) {
+            return false;
+        }
+
+        @Override
+        public boolean isDescendant(UUID candidateParentId, UUID departmentId) {
+            return false;
+        }
+
+        @Override
+        public long countActiveMembersByDepartmentId(UUID departmentId) {
+            return 0;
+        }
+
+        @Override
+        public long countActiveChildrenByDepartmentId(UUID departmentId) {
+            return 0;
+        }
+
+        @Override
+        public void save(Department department, UUID actorId) {
+        }
+
+        @Override
+        public void update(Department department, UUID actorId) {
+        }
+
+        @Override
+        public void deactivate(UUID departmentId, UUID actorId, Instant deletedAt) {
+        }
     }
 }

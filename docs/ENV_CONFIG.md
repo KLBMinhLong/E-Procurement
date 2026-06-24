@@ -345,6 +345,10 @@ Biến môi trường ghi đè application.yml qua cú pháp:
 | `ADMIN_DB_SCHEMA` | `audit` | `audit` | |
 | `ADMIN_DB_USER` | `audit_user` | `audit_user` | |
 | `ADMIN_DB_PASS` | `audit_pass_dev` | `***SENSITIVE***` | |
+| `ADMIN_IAM_SERVICE_URL` | `http://iam-service:8081` | `https://iam.eprocure.internal` | Override IAM internal base URL cho Admin session facade; fallback sang `IAM_SERVICE_URL` |
+| `IAM_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key khi admin-service gọi IAM `/internal/sessions*` |
+| `ADMIN_PR_SERVICE_URL` | `http://pr-service:8082` | `https://pr.eprocure.internal` | Override PR internal base URL cho Admin catalog facade; fallback sang `PR_SERVICE_URL` |
+| `PR_INTERNAL_API_KEY` | `change-me-internal-api-key` | `***SENSITIVE***` | Shared key khi admin-service gọi PR `/internal/catalog/categories*` |
 | `AUDIT_LOG_RETENTION_YEARS` | `5` | `5` | Giữ audit log 5 năm |
 | `SYSTEM_CONFIG_2FA_REQUIRED` | `false` | `true` | 2FA bắt buộc cho SYSTEM_CONFIG |
 

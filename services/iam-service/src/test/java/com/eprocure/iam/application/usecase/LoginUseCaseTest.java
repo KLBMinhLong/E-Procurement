@@ -17,6 +17,7 @@ import com.eprocure.iam.application.service.TwoFactorChallengeService;
 import com.eprocure.iam.common.exception.BusinessException;
 import com.eprocure.iam.common.exception.ErrorCode;
 import com.eprocure.iam.testsupport.StubPermissionResolutionService;
+import com.eprocure.iam.domain.model.ActiveSession;
 import com.eprocure.iam.domain.model.SessionRecord;
 import com.eprocure.iam.domain.model.SortDirection;
 import com.eprocure.iam.domain.model.User;
@@ -280,13 +281,27 @@ class LoginUseCaseTest {
         }
 
         @Override
+        public void revokeById(UUID sessionId, UUID revokedBy, Instant revokedAt) {
+        }
+
+        @Override
         public Optional<SessionRecord> findActiveByTokenHash(String tokenHash, Instant now) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<SessionRecord> findActiveById(UUID sessionId, Instant now) {
             return Optional.empty();
         }
 
         @Override
         public List<String> findActiveTokenHashesByUserId(UUID userId, Instant now) {
             return List.of();
+        }
+
+        @Override
+        public Page<ActiveSession> findActivePage(UUID userId, int offset, int limit, Instant now) {
+            return new Page<>(List.of(), 0);
         }
     }
 

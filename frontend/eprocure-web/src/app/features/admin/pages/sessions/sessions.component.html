@@ -1,0 +1,151 @@
+<section class="sessions-page" aria-labelledby="sessions-heading">
+  <ep-breadcrumb />
+
+  <!-- ── Page Header ─────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">{{ 'adminOps.sessions.eyebrow' | translate }}</span>
+      <h1 id="sessions-heading" class="page-header__title">{{ 'adminOps.sessions.title' | translate }}</h1>
+      <p class="page-header__subtitle">{{ 'adminOps.sessions.subtitle' | translate }}</p>
+    </div>
+    
+    <div class="page-header__actions">
+      <ep-button variant="ghost" icon="refresh-cw" (click)="loadSessions()" [disabled]="isLoading()">
+        {{ 'action.refresh' | translate }}
+      </ep-button>
+    </div>
+  </div>
+
+  <!-- ── Summary Stat Cards ──────────────────────────────────── -->
+  <div class="summary-grid" aria-label="Active sessions summary">
+    <ep-stat-card icon="users"
+      [title]="'adminOps.sessions.totalItems' | translate"
+      [value]="meta() ? meta()!.totalElements.toString() : '0'" />
+    <ep-stat-card icon="activity"
+      [title]="'adminOps.sessions.summary.recentActive' | translate"
+      [value]="recentSessionCount().toString()" />
+    <ep-stat-card icon="clock"
+      [title]="'adminOps.sessions.summary.expiringSoon' | translate"
+      [value]="expiringSoonCount().toString()" />
+  </div>
+
+  <!-- ── Toolbar ─────────────────────────────────────────────── -->
+  <div class="sessions-toolbar">
+    <ep-filter-bar 
+      [value]="userIdFilter()" 
+      (valueChange)="userIdFilter.set($event); loadSessions(0)"
+      [placeholderKey]="'adminOps.sessions.filter.userIdHint'"
+      (refresh)="loadSessions(0)"
+    />
+  </div>
+
+  <!-- ── Main Content ────────────────────────────────────────── -->
+  @if (error()) {
+    <ep-empty-state
+      icon="alert-triangle"
+      [title]="'adminOps.config.errorTitle' | translate"
+      [message]="error()">
+      <ep-button variant="primary" (click)="loadSessions(currentPage())">
+        {{ 'adminOps.sessions.action.retry' | translate }}
+      </ep-button>
+    </ep-empty-state>
+  } @else if (isLoading()) {
+    <ep-skeleton [rows]="8" />
+  } @else if (sessions().length === 0) {
+    <ep-empty-state
+      icon="search"
+      [title]="'shared.empty.title' | translate"
+      [message]="'shared.empty.message' | translate">
+    </ep-empty-state>
+  } @else {
+    <div class="sessions-table-wrapper">
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>{{ 'adminOps.sessions.col.user' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.ip' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.device' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.created' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.lastActivity' | translate }}</th>
+            <th>{{ 'adminOps.sessions.col.expires' | translate }}</th>
+            <th class="text-right">{{ 'shared.table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (session of sessions(); track session.sessionId) {
+            <tr class="sessions-table__row">
+              <td>
+                <div class="user-info">
+                  <span class="user-name">{{ session.fullName }} ({{ session.userName }})</span>
+                  <span class="user-id font-mono">{{ session.userId }}</span>
+                </div>
+              </td>
+              <td><span class="font-mono text-sm">{{ session.ipAddress || '-' }}</span></td>
+              <td>
+                <div class="device-info" [title]="session.userAgent || ''">
+                  <ep-icon [name]="(session.userAgent | lowercase)?.includes('mobile') ? 'smartphone' : 'monitor'" [size]="16" />
+                  <span class="text-sm truncate inline-block align-bottom">{{ shortAgent(session.userAgent) }}</span>
+                </div>
+              </td>
+              <td class="text-sm">{{ session.createdAt | date:'short' }}</td>
+              <td class="text-sm text-primary">{{ session.lastActivity | date:'short' }}</td>
+              <td class="text-sm text-muted">{{ session.expiresAt | date:'short' }}</td>
+              <td class="text-right">
+                <ep-button variant="danger" icon="power-off" *epHasPermission="'OPS_CONFIG_WRITE'" (click)="openInvalidateModal(session)">
+                  {{ 'adminOps.sessions.action.invalidate' | translate }}
+                </ep-button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      
+      @if (meta(); as m) {
+        <div class="sessions-pagination">
+          <span class="pagination-info">
+            {{ 'shared.table.pageSummary' | translate: { page: m.page + 1, total: m.totalPages } }}
+            ({{ m.totalElements }} {{ 'adminOps.sessions.totalItems' | translate }})
+          </span>
+          <div class="pagination-controls">
+            <ep-button variant="ghost" [disabled]="m.page === 0" (click)="onPageChange(m.page - 1)">
+              {{ 'shared.table.previous' | translate }}
+            </ep-button>
+            <ep-button variant="ghost" [disabled]="m.page >= m.totalPages - 1" (click)="onPageChange(m.page + 1)">
+              {{ 'shared.table.next' | translate }}
+            </ep-button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+<!-- ── Modal: Invalidate Session ──────────────────────────────── -->
+<ep-modal [open]="activeModal() === 'invalidate'" [title]="'adminOps.sessions.modal.invalidateTitle' | translate" (close)="closeModal()">
+  <div class="alert alert--danger mb-4">
+    <ep-icon name="alert-triangle" />
+    <div class="alert-content">
+      <strong>{{ 'adminOps.sessions.modal.dangerTitle' | translate }}</strong>
+      <p>{{ 'adminOps.sessions.modal.invalidateWarning' | translate: { user: selectedSession()?.userName } }}</p>
+    </div>
+  </div>
+
+  <form id="invalidateForm" (ngSubmit)="submitInvalidate()">
+    <div class="form-group">
+      <label class="ep-label required">{{ 'adminOps.sessions.modal.reason' | translate }}</label>
+      <textarea class="ep-textarea w-full" rows="3" 
+                [placeholder]="'adminOps.sessions.modal.reasonHint' | translate"
+                [value]="invalidateReason()"
+                (input)="invalidateReason.set($any($event.target).value)"></textarea>
+    </div>
+  </form>
+  
+  <div class="modal-actions-footer mt-6">
+    <ep-button variant="ghost" (click)="closeModal()" [disabled]="modalSubmitting()">
+      {{ 'action.cancel' | translate }}
+    </ep-button>
+    <ep-button variant="danger" type="submit" form="invalidateForm" [disabled]="modalSubmitting()" [loading]="modalSubmitting()">
+      {{ 'adminOps.sessions.action.confirmInvalidate' | translate }}
+    </ep-button>
+  </div>
+</ep-modal>

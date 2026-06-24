@@ -1,5 +1,26 @@
 # Error History (Những lỗi đã xảy ra — agent phải tránh)
 
+## [2026-06-18] Bug: PostgreSQL error "could not determine data type of parameter $1" in report query execution
+
+- Symptom: When running reports with null parameters, the PostgreSQL database threw an exception: `org.postgresql.util.PSQLException: ERROR: could not determine data type of parameter $1`.
+- Root cause: MyBatis generated queries where parameters were checked against NULL (`#{param} IS NULL`). Since PostgreSQL is strongly typed, it cannot infer the type of a generic query parameter compared to NULL without context (unlike H2, which infers it dynamically).
+- Fix: Add explicit type casting (`::timestamptz`, `::uuid`, `::varchar`) to all parameters in the `IS NULL` checks within `ReportDatasetMapper.java`.
+- Prevention: When writing queries for PostgreSQL that check query parameters against `NULL` (e.g. `#{param} IS NULL`), always cast the parameter explicitly to its SQL type (e.g., `#{param}::uuid IS NULL` or `#{param}::timestamptz IS NULL`).
+
+## [2026-06-18] Bug: Analytics report export worker failed with null ReportJob id
+
+- Symptom: Docker logs for `analytics-service` repeated `[EXCEPTION][ANL_REPORT] Report export worker failed | error=id must not be null`; report export jobs stayed unusable because the scheduler failed while claiming queued jobs.
+- Root cause: `ReportJobMapper` relied on implicit MyBatis column mapping for report job rows returned by the queued-job claim path. Runtime mapping produced a `ReportJobDbEntity` with missing required fields, so `ReportJobDbEntity.toDomain()` constructed `ReportJob` with `id = null`.
+- Fix: Add an explicit annotation result map for `ReportJobDbEntity`, use it for idempotency, lookup, and queued-job claim selects, keep the claim transition to `PROCESSING`, and add repository tests for filter parsing, status transition, and empty queue behavior.
+- Prevention: MyBatis mappers returning domain-critical UUID/job rows should use explicit `@Results` or XML `resultMap`; do not rely on implicit mapping for worker claim paths that immediately construct non-null domain records.
+
+## [2026-06-15] Bug: Mockito inline failed to mock concrete service classes on Java 25
+
+- Symptom: `mvn -pl services/iam-service test` failed in `VerifyUserTotpUseCaseTest` with `Mockito cannot mock this class: class com.eprocure.iam.application.service.TotpService` and Byte Buddy reported `Java 25 (69) is not supported ... officially supports Java 23 (67)`.
+- Root cause: The local test JVM was Java 25 while the pinned Byte Buddy/Mockito inline stack cannot instrument concrete classes compiled/running at class file version 69.
+- Fix: Do not mock concrete helper services in this environment. The TOTP confirmation test now uses real `TotpService` and `TotpSecretCipher`, and only mocks the `UserRepository` interface.
+- Prevention: Prefer real instances/fakes for simple concrete services or mock interfaces/ports only; avoid adding new Mockito mocks for concrete classes unless the toolchain is upgraded.
+
 ## [2026-06-05] Bug: Analytics service startup failed with UnsatisfiedDependencyException on LocalReportFileRenderer
 
 - Symptom: Analytics service failed to start during context initialization. The log showed: `UnsatisfiedDependencyException: Error creating bean with name 'processReportExportJobsUseCase' ... Unsatisfied dependency expressed through constructor parameter 2: Error creating bean with name 'localReportFileRenderer' ... Failed to instantiate [com.eprocure.analytics.infrastructure.report.LocalReportFileRenderer]: No default constructor found`.

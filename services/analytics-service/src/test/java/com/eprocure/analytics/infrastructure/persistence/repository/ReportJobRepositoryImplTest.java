@@ -1,7 +1,11 @@
 package com.eprocure.analytics.infrastructure.persistence.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.eprocure.analytics.domain.model.report.ReportFormat;
@@ -37,7 +41,7 @@ class ReportJobRepositoryImplTest {
                   "category_code": "IT-HARDWARE"
                 }
                 """);
-        when(mapper.claimQueuedForProcessing(1, NOW)).thenReturn(List.of(row));
+        when(mapper.selectQueuedForProcessing(1)).thenReturn(List.of(row));
         ReportJobRepositoryImpl repository = new ReportJobRepositoryImpl(mapper, new ObjectMapper());
 
         var jobs = repository.claimQueuedForProcessing(1, NOW);
@@ -50,6 +54,21 @@ class ReportJobRepositoryImplTest {
         assertThat(filters.quarter()).isNull();
         assertThat(filters.vendorId()).isEqualTo(VENDOR_ID);
         assertThat(filters.categoryCode()).isEqualTo("IT-HARDWARE");
+        assertThat(jobs.get(0).status()).isEqualTo(ReportJobStatus.PROCESSING);
+        verify(mapper).updateStatusToProcessing(List.of(JOB_ID), NOW);
+    }
+
+    @Test
+    void should_not_update_processing_status_when_no_queued_jobs_exist() {
+        ReportJobMapper mapper = mock(ReportJobMapper.class);
+        when(mapper.selectQueuedForProcessing(5)).thenReturn(List.of());
+        ReportJobRepositoryImpl repository = new ReportJobRepositoryImpl(mapper, new ObjectMapper());
+
+        var jobs = repository.claimQueuedForProcessing(5, NOW);
+
+        assertThat(jobs).isEmpty();
+        verify(mapper).selectQueuedForProcessing(5);
+        verify(mapper, never()).updateStatusToProcessing(anyList(), any());
     }
 
     private ReportJobDbEntity row() {

@@ -91,6 +91,16 @@
                       [ariaLabel]="'shared.action.edit' | translate"
                       (click)="openEditModal(item.node)">
                     </ep-button>
+
+                    <ep-button
+                      [id]="'btn-deactivate-dept-' + item.node.id"
+                      variant="ghost"
+                      size="sm"
+                      icon="trash-2"
+                      class="text-danger"
+                      [ariaLabel]="'shared.action.deactivate' | translate"
+                      (click)="deactivateDept(item.node.id)">
+                    </ep-button>
                   </div>
                 </td>
               </tr>
@@ -138,13 +148,13 @@
       <ep-form-field
         [label]="'org.field.parentCode' | translate">
         <select
-          id="dept-parentCode"
-          formControlName="parentCode"
+          id="dept-parentId"
+          formControlName="parentId"
           class="form-select">
           <option value="">{{ 'org.field.selectParentPlaceholder' | translate }}</option>
           @for (d of flatSelectDepartments(); track d.id) {
             @if (modalMode() === 'create' || d.id !== selectedDeptId()) {
-              <option [value]="d.code">{{ d.name }}</option>
+              <option [value]="d.id">{{ d.name }}</option>
             }
           }
         </select>
@@ -154,14 +164,25 @@
       <ep-form-field
         [label]="'org.field.manager' | translate">
         <select
-          id="dept-managerId"
-          formControlName="managerId"
+          id="dept-headUserId"
+          formControlName="headUserId"
           class="form-select">
           <option value="">{{ 'org.field.selectManagerPlaceholder' | translate }}</option>
           @for (u of managers(); track u.id) {
             <option [value]="u.id">{{ u.fullName }} (@{{ u.username }})</option>
           }
         </select>
+      </ep-form-field>
+
+      <!-- GL Account Prefix -->
+      <ep-form-field
+        [label]="'org.field.glAccountPrefix' | translate">
+        <input
+          id="dept-glAccountPrefix"
+          type="text"
+          formControlName="glAccountPrefix"
+          class="form-input"
+          placeholder="E.g., 501" />
       </ep-form-field>
     </div>
 

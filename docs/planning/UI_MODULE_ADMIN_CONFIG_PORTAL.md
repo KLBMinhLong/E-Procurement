@@ -1,6 +1,8 @@
 # UI Module Plan — Admin & System Config Portal
 
-> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này không chỉ thêm màn hình, mà phải kiểm tra lại backend/runtime contract vì `docs/api/admin-service.openapi.yaml` mô tả một `admin-service` riêng trong khi checkout hiện tại chưa có module `services/admin-service`.
+> Mục tiêu: hoàn thiện phần E13 còn thiếu sau khi các UI nghiệp vụ chính đã có. Plan này đã được rà lại theo frontend route hiện tại, `services/admin-service` runtime code, gateway route, permission seed, và `docs/api/admin-service.openapi.yaml`.
+
+**Cập nhật 2026-06-16:** backend `admin-service` đã có đủ foundation cho health/config read/update/restart/key rotation, audit-log query/export/status/download, active sessions list/invalidate, catalog category admin facade, và department mutation facade. OpenAPI đã document audit side effects/idempotency replay. Từ thời điểm này, trọng tâm chuyển sang frontend implementation.
 
 ---
 
@@ -17,48 +19,47 @@
 | Notification templates | `/admin/notification-templates` | ✅ Có UI qua notification-service |
 | Approval rules | `/approvals/rules` | ✅ Có UI, redirect từ `/admin/approval-rules` |
 
-### Contract còn thiếu UI hoặc chưa rõ backend
+### Backend contract hiện có cho frontend
 
-Nguồn: `docs/api/admin-service.openapi.yaml`
+Nguồn đã đối chiếu: `docs/api/admin-service.openapi.yaml`, `services/admin-service/src/main/java/com/eprocure/admin/presentation/controller`, `docker-compose.yml`, `infra/nginx/templates/default.conf.template`, IAM permission seeds.
 
-| Nhóm | Endpoint | Permission | Ghi chú |
+| Nhóm | Endpoint | Permission | UI cần làm |
 |---|---|---|---|
-| System Config | `GET /admin/config/services`, `GET/PUT /admin/config/services/{serviceName}` | `SYSTEM_CONFIG` | Endpoint nhạy cảm, có sensitive masking và TOTP confirmation |
-| Restart/Key rotation | `POST /admin/config/services/{serviceName}/restart`, `POST /admin/config/encryption/rotate-key` | `SYSTEM_CONFIG` | High-risk action, phải có modal confirm + reason/TOTP |
-| Audit log | `GET /admin/audit-log`, `POST /admin/audit-log/export` | `SYSTEM_AUDIT_VIEW` | Cần filter bắt buộc `from_time`, `to_time`, pagination/export |
-| Catalog categories | `/admin/catalog/categories` | `ADMIN_CATALOG_MANAGE` | Có thể trùng với inventory catalog item UI; cần làm category admin riêng |
-| Department admin | `/admin/departments` mutations | `ADMIN_DEPARTMENT_MANAGE` | Frontend hiện đang dùng `/org/departments`; cần align thật với IAM backend |
-| System health | `GET /admin/health` | `SYSTEM_CONFIG` | Operational dashboard cho service/infrastructure health |
-| Sessions | `GET /admin/sessions`, `PATCH /admin/sessions/{sessionId}/invalidate` | `SYSTEM_CONFIG` | Active sessions + forced logout |
+| System health | `GET /admin/health` | `SYSTEM_CONFIG` | Operational dashboard dense, service/infra health, retry |
+| System config read | `GET /admin/config/services`, `GET /admin/config/services/{serviceName}` | `SYSTEM_CONFIG` | Config list/detail, masked sensitive values |
+| System config mutation | `PUT /admin/config/services/{serviceName}` | `SYSTEM_CONFIG` | Modal TOTP + reason + variable diff; kết quả `PENDING_MANUAL_APPLY` |
+| Restart/key rotation | `POST /admin/config/services/{serviceName}/restart`, `POST /admin/config/encryption/rotate-key` | `SYSTEM_CONFIG` | High-risk confirm modal; không mô tả là đã apply runtime |
+| Audit log | `GET /admin/audit-log` | `SYSTEM_AUDIT_VIEW` | Required from/to filter, pagination, detail drawer |
+| Audit export | `POST /admin/audit-log/export`, `GET /admin/audit-log/export/{jobId}`, `GET /admin/audit-log/export/{jobId}/download` | `SYSTEM_AUDIT_VIEW` | Create job, poll, download XLSX, replay-aware UX |
+| Active sessions | `GET /admin/sessions`, `PATCH /admin/sessions/{sessionId}/invalidate` | `SYSTEM_CONFIG` | Session table, user filter, invalidate confirm reason |
+| Catalog categories | `/admin/catalog/categories*` | `ADMIN_CATALOG_MANAGE` | Category taxonomy admin, not inventory item catalog |
+| Department mutations | `/admin/departments*` | `ADMIN_DEPARTMENT_MANAGE` | Move org mutation calls to audited admin facade; keep `/org/departments` for read tree |
 
-### Mismatch cần xử lý trước khi code lớn
+### Frontend gaps phải xử lý trước khi code sâu
 
-- Không thấy `services/admin-service` trong repo hiện tại.
-- Không thấy controller backend cho `/admin/config`, `/admin/audit-log`, `/admin/health`, `/admin/sessions`.
-- `AdminOrgService` hiện gọi `/org/departments`, không phải `/admin/departments`.
-- Một số admin capability đã nằm ở service khác:
-  - IAM: users, roles, RBAC, org.
-  - Notification: templates.
-  - Inventory: catalog items.
-  - Approval: approval rules.
+- Parent route `/admin` guard hiện mới gồm `ADMIN_USER_VIEW`, `ADMIN_ROLE_MANAGE`, `SYSTEM_CONFIG`, `ADMIN_APPROVAL_RULE`; cần thêm `SYSTEM_AUDIT_VIEW`, `ADMIN_CATALOG_MANAGE`, `ADMIN_DEPARTMENT_MANAGE`, `ORG_VIEW` để không chặn user có quyền child route.
+- Shell nav chưa có System Config, Audit Log, System Health, Sessions, Catalog Category Admin.
+- `frontend/eprocure-web/src/app/features/admin/models/admin.model.ts` chưa có model cho admin-service contracts.
+- Chưa có service frontend cho `admin-service`; nên thêm service riêng theo API `/api/v1/admin/*`.
+- `AdminOrgService` đang mutate `/org/departments`; sau slice department alignment phải dùng `/admin/departments*` cho create/update/deactivate để có audit row bất biến.
+- `ApiService` hiện không có helper blob download; audit export download cần dùng direct `HttpClient` với `responseType: 'blob'` hoặc mở rộng `ApiService` có chủ đích.
+- Existing `/inventory/catalog` là inventory item catalog. `/admin/catalog-categories` phải là taxonomy admin riêng, tránh trộn item stock/catalog UI.
 
-Kết luận: plan này cần triển khai theo hai tầng:
-
-1. **Contract truth slice:** xác minh backend thực sự có gì, cập nhật plan/OpenAPI nếu spec là target future.
-2. **UI slice theo capability có backend thật trước**, sau đó mới thêm backend/service mới cho các phần chưa tồn tại.
+Kết luận: plan hiện đã sẵn sàng để code frontend. Không còn backend blocker cho các page E13 chính, ngoại trừ runtime executor/secret-manager apply là boundary vận hành có chủ ý và UI phải hiển thị là pending manual apply.
 
 ---
 
 ## 2. Nguyên Tắc Triển Khai
 
 - Không tạo HTTP DELETE; deactivate/invalidate/restart/rotate đều là state transition.
-- `SYSTEM_CONFIG` là quyền nhạy cảm: UI phải có cảnh báo, confirm code/TOTP, reason, disabled state rõ ràng.
-- Không log hoặc hiển thị secret thật. GET config chỉ hiển thị masked sensitive values.
-- POST/PUT/PATCH phải có `Idempotency-Key`; ưu tiên dùng `ApiService`.
+- `SYSTEM_CONFIG` là quyền nhạy cảm: UI phải có cảnh báo, TOTP/confirmation code, reason, disabled state rõ ràng.
+- Không hiển thị secret thật. GET config chỉ hiển thị masked sensitive values; không có nút reveal nếu backend không có endpoint riêng.
+- POST/PUT/PATCH dựa vào `idempotencyInterceptor` hoặc idempotency key explicit khi cần replay tracking.
 - Mọi visible text dùng i18n VI/EN.
-- SCSS dùng design tokens `var(--...)`.
-- Không tạo dead link sidebar: chỉ thêm nav khi route/component/service đã tồn tại trong cùng slice.
-- Nếu endpoint OpenAPI chưa có backend controller thật, không dựng UI giả gọi endpoint đó mà ghi rõ backend slice cần làm.
+- SCSS dùng design tokens `var(--...)`, không hardcode màu.
+- Component mới phải `ChangeDetectionStrategy.OnPush`, standalone, signals/computed, `takeUntilDestroyed`.
+- Không tạo dead link sidebar: nav chỉ thêm cùng slice với route/component hoạt động.
+- UI là operational console: dense, scan nhanh, bảng/filter/action rõ ràng, không landing/hero.
 
 ---
 
@@ -68,106 +69,120 @@ Kết luận: plan này cần triển khai theo hai tầng:
 
 | Việc | Chi tiết |
 |---|---|
-| Backend inventory | Xác minh có/không có `admin-service`; map endpoint OpenAPI sang service thật hiện có |
-| Controller check | Search controller cho `/admin/config`, `/admin/audit-log`, `/admin/health`, `/admin/sessions`, `/admin/catalog/categories`, `/admin/departments` |
-| Decision | Chọn hướng: tạo `admin-service` mới theo spec hay bổ sung endpoints vào IAM/notification/inventory rồi gateway route `/api/v1/admin/*` |
-| Docs | Cập nhật plan này và `agent/memory/decision-log.md` nếu có quyết định kiến trúc |
+| Backend inventory | ✅ `admin-service` tồn tại tại `services/admin-service`; gateway route `/api/v1/admin/*` sang port 8089 |
+| Controller check | ✅ Có config read/update/restart, rotate key, health, audit query/export/status/download, sessions list/invalidate, catalog categories, departments |
+| Permission check | ✅ IAM seeds có `SYSTEM_CONFIG`, `SYSTEM_AUDIT_VIEW`, `ADMIN_CATALOG_MANAGE`, `ADMIN_DEPARTMENT_MANAGE` |
+| Contract sync | ✅ OpenAPI đã document audit side effects/idempotency replay |
+| Decision | ✅ UI dùng service-owner boundary: IAM/PR/Admin facade; không gọi cross-DB |
 
-**Kỳ vọng:** không code UI gọi endpoint chưa tồn tại.
+**Kỳ vọng:** không code UI giả; tất cả page trong plan gọi endpoint thật hoặc service owner hiện có.
 
-### Slice 9b — Admin Config shell + route/nav foundation
+### Slice 9b — Admin operations foundation
 
 | Việc | Chi tiết |
 |---|---|
-| Models/service | Tạo `admin-config.model.ts`, `admin-config.service.ts` theo contract đã xác minh |
-| Routes | Thêm lazy routes chỉ cho phần có backend thật |
-| Nav | Thêm nav `System Config`, `Audit Log`, `System Health`, `Sessions` theo permission |
-| i18n | Thêm `nav.systemConfig`, `nav.auditLog`, `nav.systemHealth`, `nav.sessions`, route keys |
+| Models | Thêm `admin-operations.model.ts` hoặc mở rộng admin model có typed contract cho ServiceConfig, health, audit, session, category, department |
+| Service | Thêm `admin-operations.service.ts` gọi `/admin/*`; download dùng blob-safe method |
+| Parent route guard | Mở rộng `/admin` required permissions: `ADMIN_USER_VIEW`, `ADMIN_ROLE_MANAGE`, `SYSTEM_CONFIG`, `SYSTEM_AUDIT_VIEW`, `ADMIN_APPROVAL_RULE`, `ADMIN_CATALOG_MANAGE`, `ADMIN_DEPARTMENT_MANAGE`, `ORG_VIEW` |
+| Route keys | Thêm i18n route/nav keys cho từng page, nhưng nav link chỉ bật khi page trong slice đã có component |
+| Shared helpers | Status tone mapping, date/time formatting, JSON pretty helper nếu cần |
 
 ### Slice 9c — System Health page
 
 | Việc | Chi tiết |
 |---|---|
-| Page | `/admin/health` dense operational dashboard |
-| UI | Overall status, service table, infra PostgreSQL/Redis/Kafka panels |
-| State | Loading/empty/error/retry |
-| Access | `SYSTEM_CONFIG` |
+| Route/nav | `/admin/health`, nav `System Health`, permission `SYSTEM_CONFIG` |
+| Page | Dense operational dashboard |
+| UI | Overall status strip, service table, PostgreSQL/Redis/Kafka panels, checkedAt, response time |
+| State | Loading skeleton, empty/error/retry, stale checkedAt warning |
+| Verify | `npm run build` |
 
-Đây là slice UI an toàn nhất nếu backend health endpoint có thật hoặc được thêm trước.
+Đây là slice code đầu tiên nên làm vì ít mutation, kiểm route/nav/service foundation nhanh nhất.
 
-### Slice 9d — Service Config read-only + risky mutation workflow
+### Slice 9d — Service Config + high-risk actions
 
 | Việc | Chi tiết |
 |---|---|
-| List/detail | Service config list, status summary, variables table |
-| Sensitive values | Masked values only; không có “reveal secret” nếu backend không có endpoint riêng |
-| Update config | Modal yêu cầu `confirmationCode`, `changeReason`, `requiresRestart` |
-| Restart | Modal riêng, reason + confirmation code |
-| Rotate key | Cảnh báo high-risk; chỉ enable khi backend thật và permission đúng |
+| Route/nav | `/admin/system-config`, nav `System Config`, permission `SYSTEM_CONFIG` |
+| List/detail | Service cards/table, status summary, variables table |
+| Sensitive values | Masked values only; không có reveal |
+| Update config | Modal có variable diff, `confirmationCode`, `changeReason`, `requiresRestart` |
+| Restart | Modal riêng có reason + confirmation code |
+| Rotate key | Cảnh báo high-risk, keySize selector, confirmation code |
+| Result UX | Hiển thị `PENDING_MANUAL_APPLY`, `applied=false`, actionId; không nói runtime đã đổi thật |
 
 ### Slice 9e — Audit Log query + export
 
 | Việc | Chi tiết |
 |---|---|
+| Route/nav | `/admin/audit-log`, nav `Audit Log`, permission `SYSTEM_AUDIT_VIEW` |
 | Filters | from/to required, actor/entity/action/service/success filters |
 | Table | actor, action, entity, service, requestId, success/error, occurredAt |
-| Detail drawer | old/new values pretty JSON, description |
-| Export | POST export job nếu backend có job endpoint; disabled rõ khi filter invalid |
-| Access | `SYSTEM_AUDIT_VIEW` |
+| Detail drawer | old/new values pretty JSON, description, endpoint/http method |
+| Export | POST export job, poll status, download XLSX khi `COMPLETED`; disable rõ khi filter invalid |
+| Replay UX | Nếu backend trả replay job, không tạo duplicate card/job trong UI |
 
 ### Slice 9f — Active Sessions
 
 | Việc | Chi tiết |
 |---|---|
-| List | user, ip, userAgent, createdAt, lastActivity |
-| Filter | userId + pagination |
-| Invalidate | PATCH invalidate với reason, idempotency, confirm modal |
-| Safety | Không hiển thị token/session secret |
+| Route/nav | `/admin/sessions`, nav `Sessions`, permission `SYSTEM_CONFIG` |
+| List | userName/fullName, ipAddress, userAgent, createdAt, lastActivity, expiresAt |
+| Filter | userId + pagination; nếu cần UX tốt hơn có thể mở lookup sau, không tự gọi API chưa có |
+| Invalidate | Confirm modal có reason; PATCH idempotent |
+| Safety | Không hiển thị token/session secret; reason không cần hiển thị lại sau action |
 
 ### Slice 9g — Catalog Category Admin
 
 | Việc | Chi tiết |
 |---|---|
-| List | categories tree/table, include inactive toggle |
+| Route/nav | `/admin/catalog-categories`, nav `Catalog Categories`, permission `ADMIN_CATALOG_MANAGE` |
+| List | Category tree/table, include inactive toggle, itemCount, status |
 | Create/update | code/name/parent/special approval/RFQ threshold/CAPEX |
-| Deactivate | PATCH deactivate, disabled khi category có active constraints nếu backend trả lỗi |
-| Integration | Không trùng item catalog UI; đây là category taxonomy admin |
+| Deactivate | PATCH deactivate, disabled/copy rõ khi backend trả conflict |
+| Integration | Không trùng `/inventory/catalog`; page này quản trị taxonomy mua sắm |
 
 ### Slice 9h — Department Admin mutation alignment
 
 | Việc | Chi tiết |
 |---|---|
-| Contract align | So sánh `/org/departments` hiện có với `/admin/departments` OpenAPI |
-| UI | Extend org chart with create/update/deactivate only if backend supports it |
-| Safety | Deactivate must explain active employee constraint |
+| Route | Giữ `/admin/org-chart` cho read tree và mutation UX |
+| Read | Tiếp tục dùng `/org/departments` nếu cần tree hiện tại |
+| Mutation | Chuyển create/update sang `/admin/departments*`, thêm deactivate |
+| Contract align | `parentId/headUserId/glAccountPrefix` theo admin-service; không dùng `parentCode/managerId` cho mutation mới |
+| Safety | Deactivate phải giải thích active employee/child department constraint khi lỗi 409 |
 
 ### Slice 9i — Verification
 
 | Lệnh | Kỳ vọng |
 |---|---|
 | `npm run build` trong `frontend/eprocure-web` | Pass; ghi rõ warning cũ nếu còn |
-| Targeted backend tests nếu thêm endpoint | `mvn -pl services/{service} test` |
 | `git diff --check` | Pass |
+| Backend tests | Chỉ chạy nếu frontend change phát hiện cần chỉnh backend |
 | Browser test | Chỉ mở nếu user yêu cầu |
 
 ---
 
 ## 4. Thứ Tự Thực Hiện Đúng Nhất
 
-1. Slice 9a — Contract truth.
-2. Nếu backend endpoint đã có: 9b + 9c health page trước.
-3. Nếu backend endpoint chưa có: tạo backend foundation cho health/config/session/audit trước khi UI.
-4. Audit log và sessions làm sau health/config vì cần chuẩn hóa pagination/filter/export.
-5. Catalog category và department mutation làm cuối vì dễ trùng với Inventory/IAM UI hiện có.
+1. Slice 9b + 9c: foundation + System Health page.
+2. Slice 9d: System Config read/mutation workflow, vì đây là core `SYSTEM_CONFIG`.
+3. Slice 9e: Audit Log query/export để kiểm chứng audit rows từ các mutation.
+4. Slice 9f: Active Sessions và invalidate.
+5. Slice 9g: Catalog Category Admin.
+6. Slice 9h: Department mutation alignment trong Org Chart.
+7. Slice 9i: final build/diff verification và cập nhật tracker.
 
 ---
 
 ## 5. Acceptance Criteria
 
 - Không còn route/nav admin trỏ vào màn hình không tồn tại.
-- E13 Admin & Config Portal có kế hoạch rõ theo backend thật, không dựa vào OpenAPI aspirational.
+- Parent `/admin` route không chặn sai user có quyền child route.
+- E13 Admin & Config Portal bám backend thật, không dựa vào OpenAPI aspirational.
 - Mọi action nhạy cảm có reason/confirmation code/idempotency.
-- Config values sensitive không bị expose.
+- Config values sensitive không bị expose, không có reveal secret giả.
+- Pending runtime actions hiển thị đúng là `PENDING_MANUAL_APPLY`.
 - Audit/session pages có filter/loading/empty/error states.
 - i18n VI/EN đầy đủ.
 - Build pass và tracker được cập nhật theo từng slice.

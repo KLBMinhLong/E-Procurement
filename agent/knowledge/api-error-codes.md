@@ -151,6 +151,9 @@
 | SYS_003 | 500 | Loi ma hoa/giai ma payload |
 | SYS_004 | 400 | Payload ma hoa khong hop le hoac bi gia mao |
 | SYS_005 | 400 | Thieu hoac sai dinh dang Idempotency-Key bat buoc |
+| SYS_010 | 404 | Cau hinh service khong ton tai |
+| SYS_011 | 404 | Audit export job khong ton tai |
+| SYS_012 | 404 | Audit export file chua san sang |
 
 ### Validation (VAL_)
 | Code | HTTP | Description |

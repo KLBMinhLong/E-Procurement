@@ -456,15 +456,15 @@ services:
       kafka:
         condition: service_healthy
     cpus: 0.25
-    mem_limit: 256m
+    mem_limit: 384m
     deploy:
       resources:
         limits:
           cpus: "0.25"
-          memory: 256M
+          memory: 384M
         reservations:
           cpus: "0.10"
-          memory: 128M
+          memory: 192M
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8085/actuator/health"]
       interval: 15s
@@ -654,6 +654,84 @@ services:
       kafka:
         condition: service_started
     cpus: 0.25
+    mem_limit: 384m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 384M
+        reservations:
+          cpus: "0.10"
+          memory: 192M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8087/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+    logging: *default-logging
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: services/admin-service/Dockerfile
+    container_name: eprocure-admin-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVICE_NAME: admin-service
+      SERVER_PORT: 8089
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      OTEL_SERVICE_NAME: admin-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PROPAGATORS: tracecontext,baggage
+      ADMIN_INTERNAL_API_KEY: ${ADMIN_INTERNAL_API_KEY:-change-me-internal-api-key}
+      ADMIN_HEALTH_TIMEOUT: ${ADMIN_HEALTH_TIMEOUT:-1s}
+      ADMIN_SERVICE_SELF_URL: http://admin-service:8089
+      ADMIN_DB_HOST: postgres
+      ADMIN_DB_PORT: 5432
+      ADMIN_DB_NAME: db_audit
+      ADMIN_DB_SCHEMA: audit
+      ADMIN_DB_USER: ${AUDIT_DB_USER:-audit_user}
+      ADMIN_DB_PASS: ${AUDIT_DB_PASS:-audit_pass_dev}
+      ADMIN_POSTGRES_HOST: postgres
+      ADMIN_POSTGRES_PORT: 5432
+      ADMIN_REDIS_HOST: redis
+      ADMIN_REDIS_PORT: 6379
+      ADMIN_KAFKA_HOST: kafka
+      ADMIN_KAFKA_PORT: 9092
+      IAM_SERVICE_URL: http://iam-service:8081
+      PR_SERVICE_URL: http://pr-service:8082
+      APPROVAL_SERVICE_URL: http://approval-service:8083
+      FINANCE_SERVICE_URL: http://finance-service:8084
+      INVENTORY_SERVICE_URL: http://inventory-service:8085
+      VENDOR_SERVICE_URL: http://vendor-service:8086
+      ANALYTICS_SERVICE_URL: http://analytics-service:8087
+      NOTIFICATION_SERVICE_URL: http://notification-service:8088
+      IAM_INTERNAL_API_KEY: ${IAM_INTERNAL_API_KEY:-change-me-internal-api-key}
+      PR_INTERNAL_API_KEY: ${PR_INTERNAL_API_KEY:-change-me-internal-api-key}
+      APPROVAL_INTERNAL_API_KEY: ${APPROVAL_INTERNAL_API_KEY:-change-me-internal-api-key}
+      FINANCE_INTERNAL_API_KEY: ${FINANCE_INTERNAL_API_KEY:-change-me-internal-api-key}
+      INVENTORY_INTERNAL_API_KEY: ${INVENTORY_INTERNAL_API_KEY:-change-me-internal-api-key}
+      VENDOR_INTERNAL_API_KEY: ${VENDOR_INTERNAL_API_KEY:-change-me-internal-api-key}
+      ANALYTICS_INTERNAL_API_KEY: ${ANALYTICS_INTERNAL_API_KEY:-change-me-internal-api-key}
+      NOTIFICATION_INTERNAL_API_KEY: ${NOTIFICATION_INTERNAL_API_KEY:-change-me-internal-api-key}
+    ports:
+      - "${ADMIN_SERVICE_PORT:-8089}:8089"
+    networks:
+      - eprocure-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    cpus: 0.25
     mem_limit: 256m
     deploy:
       resources:
@@ -664,7 +742,7 @@ services:
           cpus: "0.10"
           memory: 128M
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8087/actuator/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8089/actuator/health"]
       interval: 15s
       timeout: 5s
       retries: 10

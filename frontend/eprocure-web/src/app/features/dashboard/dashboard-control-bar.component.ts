@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -23,7 +23,7 @@ import { DashboardDepartmentOption, DashboardTab, DashboardTabItem } from './das
   styleUrl: './dashboard-control-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardControlBarComponent {
+export class DashboardControlBarComponent implements OnChanges {
   @Input({ required: true }) filterForm!: FormGroup;
   @Input({ required: true }) tabs: DashboardTabItem[] = [];
   @Input({ required: true }) quarters: readonly number[] = [];
@@ -39,4 +39,17 @@ export class DashboardControlBarComponent {
   @Output() readonly applyFilters = new EventEmitter<void>();
   @Output() readonly refreshDashboard = new EventEmitter<void>();
   @Output() readonly tabChange = new EventEmitter<DashboardTab>();
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['departmentsLoading'] && this.filterForm) {
+      const ctrl = this.filterForm.get('departmentId');
+      if (ctrl) {
+        if (this.departmentsLoading) {
+          ctrl.disable({ emitEvent: false });
+        } else {
+          ctrl.enable({ emitEvent: false });
+        }
+      }
+    }
+  }
 }
